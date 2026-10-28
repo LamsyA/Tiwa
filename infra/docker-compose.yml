@@ -1,0 +1,68 @@
+# P0-T06: local dependencies. Dev-only credentials — never use in staging/prod.
+# Buckets (created by s3-init): tiwa-media (all user uploads), tiwa-exports
+# (generated ZIPs/PDFs). Ports: 5432 pg · 6379 redis · 9090 s3 ·
+# 8025 mailpit UI · 1025 mailpit SMTP.
+#
+# NOTE (decision log 2026-10-28): arc.md names MinIO for the S3 role, but
+# MinIO's images left Docker Hub and quay.io is unreachable from here, so
+# local dev uses adobe/s3mock (S3 API-compatible incl. multipart). Production
+# stays MinIO/R2. packages/storage targets the generic S3 API via
+# endpoint env, so no code impact; buckets are ensured by name on start.
+name: tiwa
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: tiwa
+      POSTGRES_PASSWORD: tiwa
+      POSTGRES_DB: tiwa
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tiwa -d tiwa']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  s3:
+    image: adobe/s3mock:latest
+    ports:
+      - '9090:9090'
+
+  s3-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      - s3
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["/bin/sh", "-c", "for i in $(seq 1 30); do aws --endpoint-url http://s3:9090 s3 mb s3://tiwa-media 2>/dev/null; aws --endpoint-url http://s3:9090 s3 mb s3://tiwa-exports 2>/dev/null; aws --endpoint-url http://s3:9090 s3 ls s3://tiwa-media >/dev/null 2>&1 && aws --endpoint-url http://s3:9090 s3 ls s3://tiwa-exports >/dev/null 2>&1 && exit 0; sleep 3; done; echo 's3-init: could not reach s3mock' >&2; exit 1"]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+    volumes:
+      - mailpitdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
+  mailpitdata:

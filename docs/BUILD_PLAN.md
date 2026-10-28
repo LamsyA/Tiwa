@@ -59,7 +59,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P0-T03 ESLint (Next + TypeScript + import rules) and Prettier; dependency boundaries from `arc.md §3` enforced (dependency-cruiser or `import/no-restricted-paths`).
 - [x] P0-T04 Next.js app in `apps/web` (App Router, TypeScript, Tailwind) with a placeholder home page.
 - [x] P0-T05 Worker app in `apps/worker` (Node + BullMQ) with a `ping` job and graceful shutdown; Dockerfile including ffmpeg.
-- [ ] P0-T06 `infra/docker-compose.yml`: Postgres (with postgis), Redis, MinIO (create both buckets on start), Mailpit. Scripts `pnpm db:up` / `db:down`.
+- [x] P0-T06 `infra/docker-compose.yml`: Postgres (with postgis), Redis, MinIO (create both buckets on start), Mailpit. Scripts `pnpm db:up` / `db:down`.
 - [ ] P0-T07 `packages/db` with Prisma, initial empty schema with datasource + extensions; `pnpm db:migrate`, `pnpm db:seed` scripts (seed is a stub for now).
 - [ ] P0-T08 `packages/config/env.ts` (Zod-validated env, see `arc.md §8`), `.env.example` complete, `flags.ts` with all flags OFF in production and ON elsewhere.
 - [ ] P0-T09 `packages/core/shared`: `money.ts` (BigInt helpers: add, sub, mulBps, allocate) with property-based tests; `ids.ts` (uuidv7, slug, token); `errors.ts` (DomainError classes); `time.ts`.
