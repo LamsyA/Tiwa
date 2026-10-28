@@ -82,7 +82,7 @@ Use the latest **stable** version of each tool at project start and pin exact ve
 | ORM | Prisma | Migrations committed |
 | Cache / queues | Redis 7 + BullMQ | Upstash or managed Redis in prod |
 | Auth | Better Auth (phone-number OTP, magic link, Google) | Sessions in Postgres |
-| Object storage | Cloudflare R2 (S3 API); MinIO locally | Private bucket + public CDN bucket for thumbnails |
+| Object storage | Cloudflare R2 (S3 API); MinIO locally | Private bucket + public CDN bucket for thumbnails. "S3" here is only the name of the standard storage protocol R2 speaks; no AWS account is used. The code talks to R2 with the S3-compatible SDK (@aws-sdk/client-s3, endpoint set to R2). |
 | Uploads (browser) | Uppy (`@uppy/aws-s3` multipart) | Resumable, parallel |
 | Image processing | sharp (worker) | AVIF/WebP, sizes 320 and 1080 |
 | Video processing | ffmpeg (worker container) | H.264 720p + poster frame |
