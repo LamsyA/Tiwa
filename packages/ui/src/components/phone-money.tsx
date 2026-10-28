@@ -1,3 +1,5 @@
+'use client';
+
 import { AsYouType } from 'libphonenumber-js';
 import type { CountryCode } from 'libphonenumber-js';
 import * as React from 'react';

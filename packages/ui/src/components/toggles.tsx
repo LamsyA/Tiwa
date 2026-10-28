@@ -1,3 +1,5 @@
+'use client';
+
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
 import * as SwitchPrimitive from '@radix-ui/react-switch';
