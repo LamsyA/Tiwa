@@ -1,0 +1,18 @@
+{
+  "$comment": "P0 gate — automated checks (BUILD_PLAN.md GATE P0). `pnpm gate 0` runs these in order; manual items (clean-machine README walkthrough, PR preview URL, arc.md §2 versions table) are verified at gate time, not here.",
+  "phase": 0,
+  "name": "Foundation and tooling",
+  "checks": [
+    { "id": "install", "run": "pnpm install --frozen-lockfile" },
+    { "id": "db:up", "run": "pnpm db:up" },
+    { "id": "db:migrate", "run": "pnpm db:migrate" },
+    { "id": "lint", "run": "pnpm lint" },
+    { "id": "typecheck", "run": "pnpm typecheck" },
+    { "id": "unit", "run": "pnpm test" },
+    { "id": "money-properties", "run": "pnpm --filter @tiwa/core test" },
+    { "id": "build", "run": "pnpm build" },
+    { "id": "e2e", "run": "pnpm e2e" },
+    { "id": "lighthouse", "run": "pnpm perf" },
+    { "id": "size", "run": "pnpm size" }
+  ]
+}

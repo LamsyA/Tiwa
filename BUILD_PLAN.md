@@ -67,7 +67,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P0-T11 Lighthouse CI (`lighthouserc.json`) and `size-limit` configured (initially only `/`).
 - [x] P0-T12 Sentry for web and worker (with PII scrubbing `beforeSend`); pino logger; `/api/health`.
 - [x] P0-T13 GitHub Actions `ci.yml`: install → lint → typecheck → unit → build → e2e (with docker services) → Lighthouse CI → size-limit. Cache pnpm and Turbo.
-- [ ] P0-T14 `pnpm gate <n>` script that runs the automated checks listed in a phase gate (reads a `gates/<n>.json` list of commands).
+- [x] P0-T14 `pnpm gate <n>` script that runs the automated checks listed in a phase gate (reads a `gates/<n>.json` list of commands).
 - [ ] P0-T15 Deploy previews: Vercel project for `apps/web`; Neon (or chosen DB) with branch-per-PR; record region latency test to Lagos in `decision.md`.
 
 **GATE P0**
