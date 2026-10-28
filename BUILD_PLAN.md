@@ -71,11 +71,11 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P0-T15 Deploy previews: Vercel project for `apps/web`; Neon (or chosen DB) with branch-per-PR; record region latency test to Lagos in `decision.md`.
 
 **GATE P0**
-- [ ] `pnpm install && pnpm db:up && pnpm db:migrate && pnpm dev` works on a clean machine using only the README.
-- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e` pass locally and in CI.
-- [ ] A pull request produces a preview URL; Lighthouse CI and size-limit run on it.
-- [ ] `money.ts` property tests pass (allocate always sums exactly).
-- [ ] Installed versions recorded in `arc.md §2`.
+- [x] `pnpm install && pnpm db:up && pnpm db:migrate && pnpm dev` works on a clean machine using only the README. (Verified 2026-10-28 via fresh `git clone` + README First-run block: install, db:up healthy, migrate, seed, dev 200 + worker listening. Shares the host Docker daemon; empty-volume migrate proven in P0-T07.)
+- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e` pass locally and in CI. (Local: green, incl. `pnpm gate 0` 11/11. CI: `ci.yml` present but never run — needs `git push` + a PR; say the word.)
+- [ ] A pull request produces a preview URL; Lighthouse CI and size-limit run on it. (Blocked: Q-001/Q-002 external accounts. Runbook ready at `docs/runbooks/preview-deployments.md`.)
+- [x] `money.ts` property tests pass (allocate always sums exactly). (1000-run fast-check property in `@tiwa/core`, green in every `pnpm test` / gate run.)
+- [x] Installed versions recorded in `arc.md §2`. (Recorded 2026-10-28; CI pins Node 22.)
 
 ---
 
