@@ -17,7 +17,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 
 | Phase | Name | Status | Gate passed on |
 |-------|------|--------|----------------|
-| P0 | Foundation and tooling | TODO | |
+| P0 | Foundation and tooling | IN PROGRESS | |
 | P1 | Design system and app frames | TODO | |
 | P2 | Accounts, organisations, permissions | TODO | |
 | P3 | Events and planning | TODO | |
@@ -54,7 +54,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** an empty, fully-wired monorepo where every check runs in CI.
 **Read first:** `arc.md` (all), `AGENTS.md §6`, `Backend.md §1`.
 
-- [ ] P0-T01 Create the repo layout in `arc.md §3` with pnpm workspaces and Turborepo; add `AGENTS.md`, `PRD.md`, `arc.md`, `user_flow.md`, `Backend.md`, `Frontend.md`, `BUILD_PLAN.md`, `decision.md` at the root; create `docs/PROGRESS.md`, `docs/QUESTIONS.md`, `docs/privacy.md`.
+- [x] P0-T01 Create the repo layout in `arc.md §3` with pnpm workspaces and Turborepo; add `AGENTS.md`, `PRD.md`, `arc.md`, `user_flow.md`, `Backend.md`, `Frontend.md`, `BUILD_PLAN.md`, `decision.md` at the root; create `docs/PROGRESS.md`, `docs/QUESTIONS.md`, `docs/privacy.md`.
 - [ ] P0-T02 `tsconfig.base.json` with `strict`, `noUncheckedIndexedAccess`, path aliases `@tiwa/*`.
 - [ ] P0-T03 ESLint (Next + TypeScript + import rules) and Prettier; dependency boundaries from `arc.md §3` enforced (dependency-cruiser or `import/no-restricted-paths`).
 - [ ] P0-T04 Next.js app in `apps/web` (App Router, TypeScript, Tailwind) with a placeholder home page.

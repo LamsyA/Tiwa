@@ -1,0 +1,28 @@
+{
+  "name": "tiwa",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20 <24"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "e2e": "echo 'TODO P0-T10: playwright e2e not wired yet' && exit 0",
+    "perf": "echo 'TODO P0-T11: lighthouse CI not wired yet' && exit 0",
+    "size": "echo 'TODO P0-T11: size-limit not wired yet' && exit 0",
+    "db:up": "echo 'TODO P0-T06: docker compose up not wired yet' && exit 0",
+    "db:down": "echo 'TODO P0-T06: docker compose down not wired yet' && exit 0",
+    "db:migrate": "echo 'TODO P0-T07: prisma migrate not wired yet' && exit 0",
+    "db:seed": "echo 'TODO P0-T07: prisma seed not wired yet' && exit 0",
+    "gate": "node scripts/gate.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.6.3"
+  }
+}
