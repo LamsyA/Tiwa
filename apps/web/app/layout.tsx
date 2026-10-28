@@ -2,7 +2,6 @@ import { resolveTheme, themeNoFlashScript, parseThemeChoice } from '@tiwa/ui';
 import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { cookies } from 'next/headers';
-import Script from 'next/script';
 import './globals.css';
 
 const inter = Inter({
@@ -33,9 +32,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0f" />
-        <Script id="tiwa-theme" strategy="beforeInteractive">
-          {themeNoFlashScript}
-        </Script>
+        {/* Blocking inline script: runs during parse, before first paint.
+            next/script defers via its loader queue and can lose the race. */}
+        <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript }} />
       </head>
       <body>{children}</body>
     </html>

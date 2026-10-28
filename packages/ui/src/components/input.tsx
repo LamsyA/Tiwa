@@ -39,8 +39,8 @@ const inputBase =
   'w-full rounded-md border border-border bg-bg text-text placeholder:text-muted focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus disabled:cursor-not-allowed disabled:opacity-50';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
-  size?: 'sm' | 'md';
-  error?: boolean;
+  size?: 'sm' | 'md' | undefined;
+  error?: boolean | undefined;
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
 }
@@ -84,7 +84,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
 });
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: boolean;
+  error?: boolean | undefined;
 }
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
