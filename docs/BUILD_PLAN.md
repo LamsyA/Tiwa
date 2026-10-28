@@ -64,7 +64,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P0-T08 `packages/config/env.ts` (Zod-validated env, see `arc.md §8`), `.env.example` complete, `flags.ts` with all flags OFF in production and ON elsewhere.
 - [x] P0-T09 `packages/core/shared`: `money.ts` (BigInt helpers: add, sub, mulBps, allocate) with property-based tests; `ids.ts` (uuidv7, slug, token); `errors.ts` (DomainError classes); `time.ts`.
 - [x] P0-T10 Vitest set up for all packages; Playwright set up with `mobile` (390×844) and `desktop` (1280×800) projects; one smoke e2e test.
-- [ ] P0-T11 Lighthouse CI (`lighthouserc.json`) and `size-limit` configured (initially only `/`).
+- [x] P0-T11 Lighthouse CI (`lighthouserc.json`) and `size-limit` configured (initially only `/`).
 - [ ] P0-T12 Sentry for web and worker (with PII scrubbing `beforeSend`); pino logger; `/api/health`.
 - [ ] P0-T13 GitHub Actions `ci.yml`: install → lint → typecheck → unit → build → e2e (with docker services) → Lighthouse CI → size-limit. Cache pnpm and Turbo.
 - [ ] P0-T14 `pnpm gate <n>` script that runs the automated checks listed in a phase gate (reads a `gates/<n>.json` list of commands).
