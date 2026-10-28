@@ -51,4 +51,5 @@ export {
   type MoneyTextProps,
   type RelativeTimeProps,
 } from './components/format.js';
+export { AppShell, navigationForRole, type AppRole, type NavItem } from './components/shell.js';
 export { cn } from './lib/cn.js';
