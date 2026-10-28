@@ -55,7 +55,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `arc.md` (all), `AGENTS.md §6`, `Backend.md §1`.
 
 - [x] P0-T01 Create the repo layout in `arc.md §3` with pnpm workspaces and Turborepo; add `AGENTS.md`, `PRD.md`, `arc.md`, `user_flow.md`, `Backend.md`, `Frontend.md`, `BUILD_PLAN.md`, `decision.md` at the root; create `docs/PROGRESS.md`, `docs/QUESTIONS.md`, `docs/privacy.md`.
-- [ ] P0-T02 `tsconfig.base.json` with `strict`, `noUncheckedIndexedAccess`, path aliases `@tiwa/*`.
+- [x] P0-T02 `tsconfig.base.json` with `strict`, `noUncheckedIndexedAccess`, path aliases `@tiwa/*`.
 - [ ] P0-T03 ESLint (Next + TypeScript + import rules) and Prettier; dependency boundaries from `arc.md §3` enforced (dependency-cruiser or `import/no-restricted-paths`).
 - [ ] P0-T04 Next.js app in `apps/web` (App Router, TypeScript, Tailwind) with a placeholder home page.
 - [ ] P0-T05 Worker app in `apps/worker` (Node + BullMQ) with a `ping` job and graceful shutdown; Dockerfile including ffmpeg.
