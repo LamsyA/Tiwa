@@ -12,6 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sentry/node": "^9.12.0",
+    "@tiwa/config": "workspace:*",
+    "@tiwa/core": "workspace:*",
     "bullmq": "^5.15.0",
     "ioredis": "^5.4.2"
   },

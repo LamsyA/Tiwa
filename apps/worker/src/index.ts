@@ -1,19 +1,22 @@
+import * as Sentry from '@sentry/node';
 import { Queue, Worker } from 'bullmq';
+import { env } from '@tiwa/config';
+import { createLogger, scrubSentryEvent } from '@tiwa/core';
 import { Redis } from 'ioredis';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 
 const QUEUE_NAME = 'tiwa';
-const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
-function log(message: string) {
-  // NOTE P0-T12: replaced by the shared pino logger when observability lands.
-  console.log(`[worker] ${new Date().toISOString()} ${message}`);
+if (env.SENTRY_DSN) {
+  Sentry.init({ dsn: env.SENTRY_DSN, beforeSend: (event) => scrubSentryEvent(event) });
 }
 
+const log = createLogger('worker');
+
 async function main() {
-  const connection = new Redis(REDIS_URL, { maxRetriesPerRequest: null });
+  const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
   connection.on('error', (error: unknown) => {
-    log(`redis error: ${error instanceof Error ? error.message : String(error)}`);
+    log.error({ err: error instanceof Error ? error.message : String(error) }, 'redis error');
   });
 
   const queue = new Queue(QUEUE_NAME, { connection });
@@ -27,31 +30,33 @@ async function main() {
   );
 
   worker.on('completed', (job) => {
-    log(`job completed: ${job.name} (${job.id})`);
+    log.info({ job: job.name, id: job.id }, 'job completed');
   });
   worker.on('failed', (job, error) => {
-    log(`job failed: ${job?.name} (${job?.id}): ${error.message}`);
+    log.error({ job: job?.name, id: job?.id, err: error.message }, 'job failed');
+    Sentry.captureException(error);
   });
 
   let shuttingDown = false;
   async function shutdown(signal: string) {
     if (shuttingDown) return;
     shuttingDown = true;
-    log(`received ${signal}, closing…`);
+    log.info({ signal }, 'shutting down');
     await worker.close();
     await queue.close();
     await connection.quit().catch(() => undefined);
-    log('closed cleanly');
+    await Sentry.close(2000).catch(() => undefined);
+    log.info('closed cleanly');
     process.exit(0);
   }
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
   process.on('SIGINT', () => void shutdown('SIGINT'));
   process.on('unhandledRejection', (reason) => {
-    log(`unhandled rejection: ${reason instanceof Error ? reason.message : String(reason)}`);
+    log.error({ err: reason instanceof Error ? reason.message : String(reason) }, 'unhandled rejection');
   });
 
   await queue.add(PING_JOB, {}, { jobId: `boot-${Date.now()}`, removeOnComplete: 100 });
-  log(`listening on queue "${QUEUE_NAME}" (redis ${REDIS_URL})`);
+  log.info({ queue: QUEUE_NAME }, 'listening');
 }
 
 await main();

@@ -7,7 +7,25 @@
     "plugins": [{ "name": "next" }],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@tiwa/ai": ["../../packages/ai/src"],
+      "@tiwa/ai/*": ["../../packages/ai/src/*"],
+      "@tiwa/config": ["../../packages/config/src"],
+      "@tiwa/config/*": ["../../packages/config/src/*"],
+      "@tiwa/core": ["../../packages/core/src"],
+      "@tiwa/core/*": ["../../packages/core/src/*"],
+      "@tiwa/db": ["../../packages/db/src"],
+      "@tiwa/db/*": ["../../packages/db/src/*"],
+      "@tiwa/messaging": ["../../packages/messaging/src"],
+      "@tiwa/messaging/*": ["../../packages/messaging/src/*"],
+      "@tiwa/moderation": ["../../packages/moderation/src"],
+      "@tiwa/moderation/*": ["../../packages/moderation/src/*"],
+      "@tiwa/payments": ["../../packages/payments/src"],
+      "@tiwa/payments/*": ["../../packages/payments/src/*"],
+      "@tiwa/storage": ["../../packages/storage/src"],
+      "@tiwa/storage/*": ["../../packages/storage/src/*"],
+      "@tiwa/ui": ["../../packages/ui/src"],
+      "@tiwa/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
