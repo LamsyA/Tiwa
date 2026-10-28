@@ -62,7 +62,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P0-T06 `infra/docker-compose.yml`: Postgres (with postgis), Redis, MinIO (create both buckets on start), Mailpit. Scripts `pnpm db:up` / `db:down`.
 - [x] P0-T07 `packages/db` with Prisma, initial empty schema with datasource + extensions; `pnpm db:migrate`, `pnpm db:seed` scripts (seed is a stub for now).
 - [x] P0-T08 `packages/config/env.ts` (Zod-validated env, see `arc.md §8`), `.env.example` complete, `flags.ts` with all flags OFF in production and ON elsewhere.
-- [ ] P0-T09 `packages/core/shared`: `money.ts` (BigInt helpers: add, sub, mulBps, allocate) with property-based tests; `ids.ts` (uuidv7, slug, token); `errors.ts` (DomainError classes); `time.ts`.
+- [x] P0-T09 `packages/core/shared`: `money.ts` (BigInt helpers: add, sub, mulBps, allocate) with property-based tests; `ids.ts` (uuidv7, slug, token); `errors.ts` (DomainError classes); `time.ts`.
 - [ ] P0-T10 Vitest set up for all packages; Playwright set up with `mobile` (390×844) and `desktop` (1280×800) projects; one smoke e2e test.
 - [ ] P0-T11 Lighthouse CI (`lighthouserc.json`) and `size-limit` configured (initially only `/`).
 - [ ] P0-T12 Sentry for web and worker (with PII scrubbing `beforeSend`); pino logger; `/api/health`.
