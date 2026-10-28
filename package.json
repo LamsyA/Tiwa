@@ -17,7 +17,8 @@
     "size": "node scripts/check-bundle.mjs",
     "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
     "db:down": "docker compose -f infra/docker-compose.yml down",
-    "db:migrate": "pnpm --filter @tiwa/db migrate",
+    "db:migrate": "pnpm --filter @tiwa/db wait && pnpm --filter @tiwa/db migrate",
+    "db:migrate:deploy": "pnpm --filter @tiwa/db wait && pnpm --filter @tiwa/db migrate:deploy",
     "db:seed": "pnpm --filter @tiwa/db seed",
     "gate": "node scripts/gate.mjs"
   },

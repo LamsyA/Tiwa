@@ -1,13 +1,16 @@
 // P0-T07: empty schema. Models land per phase (accounts in P2-T01,
-// events in P3-T02, …). Datasource extensions required by arc.md §2:
-// pg_trgm (marketplace search), postgis (venue radius), citext (emails).
+// events in P3-T02, …).
+//
+// Extensions (arc.md §2: pg_trgm, postgis, citext) are managed in plain SQL
+// inside migrations — NOT via the `postgresqlExtensions` preview feature.
+// Reason (D-X03): the postgis/postgis image pre-installs postgis +
+// companions into every fresh database, so the preview tracker can never
+// attribute them to a migration and `migrate dev` demands a reset forever.
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [citext, pg_trgm, postgis]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }

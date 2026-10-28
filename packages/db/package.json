@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "generate": "prisma generate",
+    "wait": "dotenv -e ../../.env -- node ../../scripts/wait-for-db.mjs",
     "migrate": "dotenv -e ../../.env -- prisma migrate dev",
     "migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
     "seed": "dotenv -e ../../.env -- prisma db seed",

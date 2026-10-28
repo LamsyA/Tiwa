@@ -44,7 +44,7 @@ jobs:
         run: pnpm db:up && docker ps
 
       - name: Migrate
-        run: pnpm db:migrate
+        run: pnpm db:migrate:deploy
 
       - name: Lint
         run: pnpm lint
