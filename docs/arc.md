@@ -103,16 +103,25 @@ Use the latest **stable** version of each tool at project start and pin exact ve
 
 ### Installed versions (fill in during Phase 0)
 
+Recorded 2026-10-28 at the P0 gate (pinned in `pnpm-lock.yaml`; CI runs Node 22):
+
 | Tool | Version |
 |------|---------|
-| Node.js | |
-| pnpm | |
-| Next.js | |
-| React | |
-| Prisma | |
-| Tailwind CSS | |
-| Better Auth | |
-| BullMQ | |
+| Node.js | 22 (CI) — local dev 23.11.0, engines `>=20 <24` |
+| pnpm | 9.15.9 |
+| Next.js | 15.2.4 |
+| React | 19.0.0 |
+| Prisma | 6.19.3 (+ @prisma/client 6.19.3) |
+| Tailwind CSS | 4.1.3 |
+| Better Auth | — (P2) |
+| BullMQ | 5.15.0 (+ ioredis 5.4.2) |
+| TypeScript | 5.9.3 |
+| ESLint | 9.39.5 |
+| Vitest | 3.2.7 (+ fast-check 3.23.2) |
+| Playwright | 1.64.1 (chromium + webkit) |
+| Zod | 3.23.8 |
+| Pino | 9.6.0 |
+| Sentry SDKs | @sentry/nextjs + @sentry/node 9.12.0 |
 
 ---
 
