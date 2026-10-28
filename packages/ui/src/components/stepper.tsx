@@ -45,7 +45,7 @@ export function Stepper({
                   type="button"
                   disabled={!clickable}
                   onClick={() => onStepClick?.(index)}
-                  aria-label={`${step.label}${state === 'done' ? ' (completed)' : state === 'current' ? ' (current step)' : ''}`}
+                  aria-label={`Step ${index + 1} of ${total}: ${typeof step.label === 'string' ? step.label : 'step'}${state === 'done' ? ' (completed)' : state === 'current' ? ' (current step)' : ''}`}
                   className={cn(
                     'flex size-8 items-center justify-center rounded-full border text-sm font-medium',
                     state === 'done' && 'border-brand-strong bg-brand-strong text-on-brand',

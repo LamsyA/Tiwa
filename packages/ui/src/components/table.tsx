@@ -106,13 +106,24 @@ export function DataTable<T>({
                 </th>
               )}
               {columns.map((column) => (
-                <th key={column.key} className="px-3 py-3 font-medium">
+                <th
+                  key={column.key}
+                  className="px-3 py-3 font-medium"
+                  aria-sort={
+                    column.sortable
+                      ? sort?.key === column.key
+                        ? sort.dir === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                      : undefined
+                  }
+                >
                   {column.sortable ? (
                     <button
                       type="button"
                       onClick={() => toggleSort(column)}
                       aria-label={`Sort by ${typeof column.header === 'string' ? column.header : column.key}`}
-                      aria-sort={sort?.key === column.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
                       className="focus-visible:outline-2 focus-visible:outline-focus inline-flex items-center gap-1 rounded focus-visible:outline-offset-2"
                     >
                       {column.header}

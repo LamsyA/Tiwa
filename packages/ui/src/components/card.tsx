@@ -4,6 +4,8 @@ import { cn } from '../lib/cn.js';
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   interactive?: boolean;
   href?: string;
+  /** Accessible name for the stretched link/button (required when children aren't plain text). */
+  linkLabel?: string;
   onNavigate?: () => void;
 }
 
@@ -11,7 +13,8 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
  * Card. Whole card clickable via stretched link when `href`/`onNavigate`
  * is given (real link or button, never a div handler).
  */
-export function Card({ interactive = false, href, onNavigate, className, children, ...rest }: CardProps) {
+export function Card({ interactive = false, href, linkLabel, onNavigate, className, children, ...rest }: CardProps) {
+  const stretchedLabel = linkLabel ?? (typeof children === 'string' ? children : undefined);
   return (
     <div
       className={cn(
@@ -23,16 +26,12 @@ export function Card({ interactive = false, href, onNavigate, className, childre
     >
       <div className="relative p-4">
         {href ? (
-          <a
-            href={href}
-            aria-label={typeof children === 'string' ? children : undefined}
-            className="after:absolute after:inset-0 after:rounded-lg"
-          />
+          <a href={href} aria-label={stretchedLabel} className="after:absolute after:inset-0 after:rounded-lg" />
         ) : onNavigate ? (
           <button
             type="button"
             onClick={onNavigate}
-            aria-label={typeof children === 'string' ? children : 'Open'}
+            aria-label={stretchedLabel ?? 'Open'}
             className="after:absolute after:inset-0 after:rounded-lg"
           />
         ) : null}

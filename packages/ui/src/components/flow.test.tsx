@@ -12,7 +12,7 @@ describe('Stepper', () => {
     render(<Stepper steps={steps} active={1} ariaLabel="Create event" />);
     expect(screen.getByRole('navigation', { name: 'Create event' })).toBeInTheDocument();
     expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
-    const current = screen.getByRole('button', { name: /Guests \(current step\)/ });
+    const current = screen.getByRole('button', { name: /Step 2 of 3: Guests \(current step\)/ });
     expect(current.closest('li')).toHaveAttribute('aria-current', 'step');
   });
 
@@ -20,7 +20,7 @@ describe('Stepper', () => {
     const user = userEvent.setup();
     const onStepClick = vi.fn();
     render(<Stepper steps={steps} active={2} onStepClick={onStepClick} />);
-    await user.click(screen.getByRole('button', { name: /Details \(completed\)/ }));
+    await user.click(screen.getByRole('button', { name: /Step 1 of 3: Details \(completed\)/ }));
     expect(onStepClick).toHaveBeenCalledWith(0);
   });
 });

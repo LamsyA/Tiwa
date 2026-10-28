@@ -57,7 +57,13 @@ export function Tabs({ items, ariaLabel, className, children, ...rest }: TabsPro
           </TabsPrimitive.Trigger>
         ))}
       </TabsPrimitive.List>
-      {children?.(active)}
+      {items.map((item) => (
+        // forceMount keeps every panel in the DOM so no trigger's
+        // aria-controls dangles; Radix hides inactive panels.
+        <TabsPrimitive.Content key={item.value} value={item.value} forceMount>
+          {active === item.value ? children?.(item.value) : null}
+        </TabsPrimitive.Content>
+      ))}
     </TabsPrimitive.Root>
   );
 }
