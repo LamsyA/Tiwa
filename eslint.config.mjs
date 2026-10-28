@@ -1,8 +1,10 @@
-// ESLint flat config (P0-T03). Next.js rules land with apps/web in P0-T04.
+// ESLint flat config (P0-T03 base; Next.js rules for apps/web added in P0-T04).
 // Dependency boundaries from arc.md §3 are enforced with core
 // `no-restricted-imports` (works on both relative and `@tiwa/*` specifiers,
-// no resolver needed). Import ordering/cycle rules arrive with the web app.
+// no resolver needed).
 import js from '@eslint/js';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
@@ -132,7 +134,27 @@ export default tseslint.config(
       ],
     },
   },
-  // apps/web: may import everything (no boundary rule; Next rules added in P0-T04)
+  // apps/web: may import everything; React + hooks rules (flat-native
+  // equivalents of next/core-web-vitals; full next plugin arrives with
+  // the framework's flat-config support in a later phase if needed)
+  {
+    files: ['apps/web/**/*.{ts,tsx,mjs,cjs,js}'],
+    ...react.configs.flat.recommended,
+    ...react.configs.flat['jsx-runtime'],
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+    },
+    settings: { react: { version: 'detect' } },
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    rules: {
+      ...reactHooks.configs.flat.recommended.rules,
+      'react/prop-types': 'off',
+    },
+  },
   // scripts: tooling, unrestricted
   {
     files: ['scripts/**/*.{ts,mjs,cjs,js}'],
