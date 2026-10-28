@@ -39,4 +39,7 @@ export { Tabs, type TabItem } from './components/tabs.js';
 export { DataTable, type Column } from './components/table.js';
 export { List, ListItem, type ListAction } from './components/list.js';
 export { Banner, EmptyState, Skeleton } from './components/states.js';
+export { Stepper, type Step } from './components/stepper.js';
+export { Timeline, type TimelineItem } from './components/timeline.js';
+export { ProgressBar, ProgressRing, type ProgressProps } from './components/progress.js';
 export { cn } from './lib/cn.js';
