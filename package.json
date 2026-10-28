@@ -12,7 +12,7 @@
     "lint": "eslint . --max-warnings=0 && prettier --check \"**/*.{ts,tsx,mjs,cjs,js,json}\" && turbo run lint",
     "typecheck": "tsc --noEmit -p tsconfig.json && turbo run typecheck",
     "test": "turbo run test",
-    "e2e": "echo 'TODO P0-T10: playwright e2e not wired yet' && exit 0",
+    "e2e": "playwright test",
     "perf": "echo 'TODO P0-T11: lighthouse CI not wired yet' && exit 0",
     "size": "echo 'TODO P0-T11: size-limit not wired yet' && exit 0",
     "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.9.0",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",

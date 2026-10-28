@@ -9,7 +9,7 @@
     "start": "dotenv -e ../../.env -- node dist/index.js",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "echo 'TODO P0-T10: worker tests not wired yet' && exit 0"
+    "test": "vitest run"
   },
   "dependencies": {
     "bullmq": "^5.15.0",
@@ -19,6 +19,7 @@
     "@types/node": "^22.9.0",
     "dotenv-cli": "^11.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
   }
 }

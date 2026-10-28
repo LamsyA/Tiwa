@@ -11,7 +11,7 @@
     "build": "prisma generate",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "echo 'TODO P0-T10: db tests not wired yet' && exit 0"
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1"
@@ -21,7 +21,8 @@
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.4.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts",
