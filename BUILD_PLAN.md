@@ -85,7 +85,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `Frontend.md §1–§5, §7.8, §8`.
 
 - [x] P1-T01 Tokens (`packages/ui/src/tokens.css`) and Tailwind preset; theme cookie + no-flash theme script; fonts via `next/font`.
-- [ ] P1-T02 Primitives: Button, IconButton, Input, Textarea, Label, Checkbox, Radio, Switch, SegmentedControl, Chip/ChipGroup, Badge, StatusPill, Avatar/AvatarGroup.
+- [x] P1-T02 Primitives: Button, IconButton, Input, Textarea, Label, Checkbox, Radio, Switch, SegmentedControl, Chip/ChipGroup, Badge, StatusPill, Avatar/AvatarGroup.
 - [ ] P1-T03 Inputs: PhoneInput (libphonenumber-js), MoneyInput (minor units), DateField, TimeField, Select, Combobox.
 - [ ] P1-T04 Containers: Card, StatCard, Tabs (URL-synced), List/ListItem with swipe actions, EmptyState, Skeleton set, Banner.
 - [ ] P1-T05 Overlays: ResponsiveDialog (sheet < md, dialog ≥ md), DropdownMenu, Popover, Tooltip, Toast, ConfirmDialog.
