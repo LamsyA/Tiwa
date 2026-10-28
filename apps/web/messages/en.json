@@ -1,0 +1,15 @@
+{
+  "app": {
+    "name": "Tiwa",
+    "tagline": "Plan any event, together.",
+    "description": "Hosts, planners, vendors and guests plan any event together."
+  },
+  "home": {
+    "placeholderNote": "P0-T04 placeholder — real home lands in P1/P3."
+  },
+  "errors": {
+    "genericTitle": "Something went wrong",
+    "genericBody": "Please try again. If it keeps happening, contact support.",
+    "retry": "Try again"
+  }
+}

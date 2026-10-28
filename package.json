@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "eslint . --max-warnings=0 && prettier --check \"**/*.{ts,tsx,mjs,cjs,js,json}\" && turbo run lint",
+    "lint": "eslint . --max-warnings=0 && prettier --check \"**/*.{ts,tsx,mjs,cjs,js,json}\" && node scripts/check-strings.mjs && turbo run lint",
     "typecheck": "tsc --noEmit -p tsconfig.json && turbo run typecheck",
     "test": "turbo run test",
     "e2e": "playwright test",
@@ -23,6 +23,7 @@
     "gate": "node scripts/gate.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.64.1",

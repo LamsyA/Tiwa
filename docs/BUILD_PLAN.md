@@ -94,7 +94,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P1-T08 `AppShell`: mobile frame (top bar, scrollable section tabs, sticky action slot, bottom tab bar with safe areas) and desktop frame (collapsible sidebar, top bar with search slot, content max width, optional right panel). Navigation config by role (`Frontend.md §5.4`).
 - [x] P1-T09 `GuestShell` (no chrome, 560 px column, cover header, sticky bottom button).
 - [x] P1-T10 `/dev/ui` gallery page (excluded from production) showing all components and both frames.
-- [ ] P1-T11 next-intl set up; `messages/en.json`; lint rule or test that flags hard-coded user-facing strings in `apps/web/app`.
+- [x] P1-T11 next-intl set up; `messages/en.json`; lint rule or test that flags hard-coded user-facing strings in `apps/web/app`.
 - [ ] P1-T12 PWA basics: manifest, icons, Serwist service worker with static asset caching; installability check.
 
 **GATE P1**

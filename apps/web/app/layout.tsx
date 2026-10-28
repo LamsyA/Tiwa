@@ -2,6 +2,8 @@ import { resolveTheme, themeNoFlashScript, parseThemeChoice } from '@tiwa/ui';
 import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { cookies } from 'next/headers';
+import { NextIntlClientProvider } from 'next-intl';
+import en from '../messages/en.json';
 import './globals.css';
 
 const inter = Inter({
@@ -19,8 +21,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Tiwa — plan any event, together',
-  description: 'Hosts, planners, vendors and guests plan any event together.',
+  title: `${en.app.name} — ${en.app.tagline.toLowerCase()}`,
+  description: en.app.description,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +38,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             next/script defers via its loader queue and can lose the race. */}
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <NextIntlClientProvider locale="en" messages={en}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }

@@ -1,5 +1,8 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -30,7 +33,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(withNextIntl(nextConfig), {
   // No org/auth in P0: sourcemap upload stays off so builds are hermetic.
   // org/project/sentryUrl land with real keys (P17 production config).
   telemetry: false,
