@@ -17,7 +17,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 
 | Phase | Name | Status | Gate passed on |
 |-------|------|--------|----------------|
-| P0 | Foundation and tooling | IN PROGRESS | |
+| P0 | Foundation and tooling | DONE | 2026-10-28 |
 | P1 | Design system and app frames | TODO | |
 | P2 | Accounts, organisations, permissions | TODO | |
 | P3 | Events and planning | TODO | |

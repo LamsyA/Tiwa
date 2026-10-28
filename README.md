@@ -10,7 +10,7 @@ See `AGENTS.md` first, then `decision.md`, then `PRD.md`, `arc.md`, `user_flow.m
 |---------|------|
 | `pnpm install` | Install everything |
 | `pnpm dev` | Run web app (port 3000) and worker together |
-| `pnpm db:up` | Local Postgres + Redis + MinIO |
+| `pnpm db:up` | Local Postgres + Redis + S3 + Mailpit |
 | `pnpm db:migrate` | Apply Prisma migrations |
 | `pnpm db:seed` | Demo data |
 | `pnpm lint` | ESLint + Prettier |
