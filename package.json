@@ -17,8 +17,8 @@
     "size": "echo 'TODO P0-T11: size-limit not wired yet' && exit 0",
     "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
     "db:down": "docker compose -f infra/docker-compose.yml down",
-    "db:migrate": "echo 'TODO P0-T07: prisma migrate not wired yet' && exit 0",
-    "db:seed": "echo 'TODO P0-T07: prisma seed not wired yet' && exit 0",
+    "db:migrate": "pnpm --filter @tiwa/db migrate",
+    "db:seed": "pnpm --filter @tiwa/db seed",
     "gate": "node scripts/gate.mjs"
   },
   "devDependencies": {
