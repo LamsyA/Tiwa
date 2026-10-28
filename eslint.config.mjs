@@ -10,16 +10,7 @@ import globals from 'globals';
 
 // Boundary matrix: which internal packages each area may import.
 // apps/web may import everything. apps/worker may import everything except UI.
-const boundary = (allowed) => [
-  {
-    group: ['@tiwa/*'],
-    message: `Boundary violation: this area may only import ${allowed.join(', ')}.`,
-  },
-  {
-    group: ['../../*', '../../../*'],
-    message: `Boundary violation: do not leave the package with relative imports — use ${allowed.join(', ')}.`,
-  },
-];
+// (Core `no-restricted-imports` uses the `{ patterns: [...] }` shape.)
 
 export default tseslint.config(
   {
@@ -48,7 +39,17 @@ export default tseslint.config(
   // packages/config: leaf, no internal imports
   {
     files: ['packages/config/**/*.{ts,tsx,mjs,cjs,js}'],
-    rules: { 'no-restricted-imports': ['error', ...boundary(['(nothing — leaf package)'])] },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['@tiwa/*'], message: 'packages/config is a leaf and must not import other packages.' },
+            { group: ['../../*'], message: 'packages/config must not leave the package with relative imports.' },
+          ],
+        },
+      ],
+    },
   },
   // packages/db: config only
   {

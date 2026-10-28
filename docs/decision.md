@@ -134,6 +134,6 @@ Template:
 ### 2026-10-28 — Local S3 via S3Mock instead of MinIO image
 - ID: D-X01
 - Status: AGENT
-- Decision: `infra/docker-compose.yml` runs adobe/s3mock (service `s3`, port 9090) plus an aws-cli `s3-init` that creates `tiwa-media` and `tiwa-exports`; production stays on Cloudflare R2 and `packages/storage` targets the generic S3 API.
+- Decision: `infra/docker-compose.yml` runs adobe/s3mock (service `s3`, port 9090) plus an aws-cli `s3-init` that creates the arc.md §8 buckets (`tiwa-media-private`, `tiwa-media-public`); production stays on Cloudflare R2 and `packages/storage` targets the generic S3 API.
 - Why: MinIO's images are gone from Docker Hub and quay.io is unreachable from this environment; S3Mock is S3 API-compatible including multipart uploads.
 - Affects: infra/docker-compose.yml, packages/storage (P5), arc.md §5 (note when recording versions in the P0 gate).

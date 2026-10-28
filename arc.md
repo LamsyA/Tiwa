@@ -297,13 +297,13 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
 # Storage
-S3_ENDPOINT=http://localhost:9000
+S3_ENDPOINT=http://localhost:9090
 S3_REGION=auto
 S3_ACCESS_KEY_ID=
 S3_SECRET_ACCESS_KEY=
 S3_BUCKET_PRIVATE=tiwa-media-private
 S3_BUCKET_PUBLIC=tiwa-media-public
-MEDIA_CDN_URL=http://localhost:9000/tiwa-media-public
+MEDIA_CDN_URL=http://localhost:9090/tiwa-media-public
 MEDIA_URL_SIGNING_KEY=
 
 # Payments
