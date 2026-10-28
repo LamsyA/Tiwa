@@ -1,4 +1,4 @@
-import { withSentryConfig } from '@sentry/nextjs';
+import { withSentryConfig } from '@sentry/nextjs/config';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
   webpack(config) {
     // Packages are authored NodeNext-style (./x.js for ./x.ts). Teach webpack
     // the same mapping TS/tsx already understand.
+    // NOTE: dev/build are pinned to webpack (`--webpack` in package.json)
+    // because Turbopack (Next 16 default) cannot express extensionAlias yet.
+    // Revisit when it can; then delete this hook and the flags.
     config.resolve.extensionAlias = {
       '.js': ['.ts', '.tsx', '.js'],
       '.jsx': ['.tsx', '.jsx'],
@@ -38,4 +41,7 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   // org/project/sentryUrl land with real keys (P17 production config).
   telemetry: false,
   sourcemaps: { disable: true },
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
 });

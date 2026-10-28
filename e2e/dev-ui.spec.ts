@@ -1,6 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+// The gallery is the heaviest page in dev (webpack cold-compile + full
+// component tree); parallel workers contend, so allow headroom here.
+// Production/preview runs are unaffected.
+test.setTimeout(120_000);
+
 for (const theme of ['light', 'dark'] as const) {
   test(`gallery renders ${theme} with no scroll or page errors`, async ({ page }) => {
     const errors: string[] = [];

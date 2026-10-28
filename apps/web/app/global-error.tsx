@@ -2,13 +2,14 @@
 
 // NOTE: no next-intl hook here — global-error replaces the whole tree
 // (including providers), so it reads the catalog directly.
+// Sentry is dynamically imported so the SDK never joins the First Load
+// bundle (the boundary only renders after a crash).
 import en from '@/messages/en.json';
-import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    void import('@sentry/nextjs').then((Sentry) => Sentry.captureException(error));
   }, [error]);
 
   return (

@@ -103,14 +103,14 @@ Use the latest **stable** version of each tool at project start and pin exact ve
 
 ### Installed versions (fill in during Phase 0)
 
-Recorded 2026-10-28 at the P0 gate (pinned in `pnpm-lock.yaml`; CI runs Node 22):
+Recorded 2026-10-28 at the P0 gate; upgraded 2026-10-28 (Next 16.4.3, React 19.3.1, Sentry 11.10.0, next-intl 4.14.9). Webpack pinned for builds (`--webpack`) — Turbopack cannot express the NodeNext `.js`→`.ts` extension mapping yet. (pinned in `pnpm-lock.yaml`; CI runs Node 22):
 
 | Tool | Version |
 |------|---------|
 | Node.js | 22 (CI) — local dev 23.11.0, engines `>=20 <24` |
 | pnpm | 9.15.9 |
-| Next.js | 15.2.4 |
-| React | 19.0.0 |
+| Next.js | 16.4.3 (webpack build; Turbopack can't map NodeNext `.js` imports yet) |
+| React | 19.3.1 |
 | Prisma | 6.19.3 (+ @prisma/client 6.19.3) |
 | Tailwind CSS | 4.1.3 |
 | Better Auth | — (P2) |
@@ -121,7 +121,7 @@ Recorded 2026-10-28 at the P0 gate (pinned in `pnpm-lock.yaml`; CI runs Node 22)
 | Playwright | 1.64.1 (chromium + webkit) |
 | Zod | 3.23.8 |
 | Pino | 9.6.0 |
-| Sentry SDKs | @sentry/nextjs + @sentry/node 9.12.0 |
+| Sentry SDKs | @sentry/nextjs + @sentry/node 11.10.0 (`withSentryConfig` now under `@sentry/nextjs/config`) |
 
 ---
 
