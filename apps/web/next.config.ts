@@ -3,6 +3,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Playwright boots `next dev` locally (CI uses `next start`); keep dev
+  // output out of `.next` so perf/size always see the production build.
+  // Set via the Playwright webServer env below.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   // Workspace packages ship TypeScript source (consumed via @tiwa/* aliases).
   transpilePackages: [
     '@tiwa/ai',

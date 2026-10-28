@@ -5,5 +5,14 @@
     "incremental": false
   },
   "include": ["apps/worker/**/*", "packages/**/*", "scripts/**/*", "e2e/**/*", "playwright.config.ts"],
-  "exclude": ["node_modules", "apps/web", "**/node_modules", "**/.next", "**/dist", "**/build", "**/coverage"]
+  "exclude": [
+    "node_modules",
+    "apps/web",
+    "**/node_modules",
+    "**/.next",
+    "**/.next-dev",
+    "**/dist",
+    "**/build",
+    "**/coverage"
+  ]
 }
