@@ -1,7 +1,7 @@
 import { render, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { AppShell, navigationForRole } from './shell.js';
+import { AppShell, GuestShell, navigationForRole } from './shell.js';
 
 describe('navigationForRole', () => {
   it('gives hosts, planners and vendors different destinations', () => {
@@ -63,5 +63,27 @@ describe('AppShell', () => {
     const mobile = document.querySelector('[data-frame="mobile"]') as HTMLElement;
     expect(within(mobile).getByRole('button', { name: 'Back' })).toBeInTheDocument();
     expect(container.textContent).toContain('Details');
+  });
+});
+
+describe('GuestShell', () => {
+  it('renders cover, sticky action and footer mark without app chrome', () => {
+    render(
+      <GuestShell
+        title="You're invited"
+        coverAlt="Party lights"
+        action={<button type="button">RSVP now</button>}
+        footerNote="Private event"
+      >
+        <p>Saturday, 4pm</p>
+      </GuestShell>,
+    );
+    const frame = document.querySelector('[data-frame="guest"]') as HTMLElement;
+    expect(frame).toHaveClass('max-w-[560px]');
+    expect(within(frame).getByRole('heading', { name: "You're invited" })).toBeInTheDocument();
+    expect(within(frame).getByRole('img', { name: 'Party lights' })).toBeInTheDocument();
+    expect(within(frame).getByRole('button', { name: 'RSVP now' })).toBeInTheDocument();
+    expect(within(frame).getByText('Tiwa')).toBeInTheDocument();
+    expect(within(frame).queryByRole('navigation')).not.toBeInTheDocument();
   });
 });
