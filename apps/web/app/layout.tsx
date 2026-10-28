@@ -29,7 +29,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const theme = resolveTheme(parseThemeChoice(store.get('tiwa-theme')?.value));
 
   return (
-    <html lang="en" data-theme={theme} className={`${inter.variable} ${jakarta.variable}`}>
+    // suppressHydrationWarning: data-theme is managed by the inline script
+    // above (pre-paint, from cookie or OS), not by React — the standard
+    // pattern for no-flash theming (same as next-themes).
+    <html lang="en" data-theme={theme} suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
       <head>
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0f" />
