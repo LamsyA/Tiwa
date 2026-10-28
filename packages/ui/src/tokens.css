@@ -1,0 +1,95 @@
+:root {
+  --bg: #ffffff;
+  --surface: #f7f7f8;
+  --surface-2: #efeff2;
+  --border: #e6e6ea;
+  --text: #111118;
+  --text-muted: #5f6170;
+  --brand: #e5532d; /* decorative, icons, large text */
+  --brand-strong: #b83a17; /* buttons, links */
+  --brand-soft: #fdece6; /* tinted backgrounds */
+  --on-brand: #ffffff;
+  --accent: #f2b705; /* celebration highlights */
+  --success: #15803d;
+  --success-soft: #e8f5ec;
+  --warning: #b45309;
+  --warning-soft: #fdf3e2;
+  --danger: #b91c1c;
+  --danger-soft: #fbe9e9;
+  --focus: #2563eb;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 1px rgb(0 0 0 / 0.04);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.1);
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --dur-slow: 280ms;
+
+  --shell-sidebar: 240px;
+  --shell-sidebar-collapsed: 72px;
+  --shell-topbar: 56px;
+  --shell-tabbar: 64px;
+  --content-max: 1200px;
+  --guest-max: 560px;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0b0b0f;
+  --surface: #15151b;
+  --surface-2: #1d1d25;
+  --border: #2a2a33;
+  --text: #f4f4f6;
+  --text-muted: #a0a2b0;
+  --brand: #ff6a43;
+  --brand-strong: #ff8a69;
+  --brand-soft: #2a1610;
+  --on-brand: #140804;
+  --accent: #f5c842;
+  --success: #4ade80;
+  --success-soft: #0f2416;
+  --warning: #fbbf24;
+  --warning-soft: #2a1f08;
+  --danger: #f87171;
+  --danger-soft: #2b1111;
+  --focus: #60a5fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0b0b0f;
+    --surface: #15151b;
+    --surface-2: #1d1d25;
+    --border: #2a2a33;
+    --text: #f4f4f6;
+    --text-muted: #a0a2b0;
+    --brand: #ff6a43;
+    --brand-strong: #ff8a69;
+    --brand-soft: #2a1610;
+    --on-brand: #140804;
+    --accent: #f5c842;
+    --success: #4ade80;
+    --success-soft: #0f2416;
+    --warning: #fbbf24;
+    --warning-soft: #2a1f08;
+    --danger: #f87171;
+    --danger-soft: #2b1111;
+    --focus: #60a5fa;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
