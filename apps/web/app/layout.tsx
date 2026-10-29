@@ -1,6 +1,7 @@
 import { resolveTheme, themeNoFlashScript, parseThemeChoice } from '@tiwa/ui/theme';
 import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
 import { cookies } from 'next/headers';
 import en from '../messages/en.json';
 import './globals.css';
@@ -41,10 +42,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             next/script defers via its loader queue and can lose the race. */}
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript }} />
       </head>
-      {/* next-intl provider lands with the first client component that needs
-          translations (P3). Server components and global-error read the
-          catalog directly; the plugin + request config stay wired. */}
-      <body>{children}</body>
+      {/* Client components (onboarding, settings) translate via this provider;
+          next-intl v4 passes the request's messages through automatically. */}
+      <body>
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+      </body>
     </html>
   );
 }

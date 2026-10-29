@@ -121,6 +121,37 @@
         "lastOwner": "A business needs at least one owner.",
         "generic": "Something went wrong. Please try again."
       }
+    },
+    "profileHeading": "Profile",
+    "nameLabel": "Your name",
+    "languageLabel": "Language",
+    "languageEn": "English",
+    "languageHint": "More languages are coming.",
+    "save": "Save",
+    "saved": "Saved",
+    "appearanceHeading": "Appearance",
+    "themeLabel": "Theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "notificationsHeading": "Notifications",
+    "notificationsBody": "Choose how we reach you once messaging arrives.",
+    "dataHeading": "Your data",
+    "exportBody": "Get a copy of everything you've added to Tiwa. We'll message you a download link.",
+    "exportAction": "Export my data",
+    "exportQueued": "We're preparing your data. You'll get a link when it's ready.",
+    "exportRepeat": "Your export is already being prepared. You can ask again tomorrow.",
+    "deleteHeading": "Delete account",
+    "deleteBody": "Your name, phone, email and photo are removed and you're signed out everywhere. Payment and booking records are kept as the law requires.",
+    "deleteAction": "Delete my account",
+    "deleteTitle": "Delete your account?",
+    "deleteConfirmBody": "This can't be undone. Type DELETE to confirm.",
+    "deleteWord": "DELETE",
+    "errors": {
+      "nameTooShort": "Tell us your name (at least 2 characters)",
+      "nameTooLong": "That name is too long",
+      "soleOwner": "You're the only owner of a business that still has other members. Remove them from your team first.",
+      "generic": "Something went wrong. Please try again."
     }
   }
 }
