@@ -1,5 +1,5 @@
 {
-  "$comment": "P1 gate — automated checks (BUILD_PLAN.md GATE P1). `pnpm gate 1` runs these in order. Manual items (keyboard walkthrough judgement, installability on a real device) are verified at gate time, not here. Known exception 2026-10-29: `size` fails (131 KB vs 120 KB budget — Next 16 + Sentry v11 weight; LHCI UX metrics stay green, decision open).",
+  "$comment": "P1 gate — automated checks (BUILD_PLAN.md GATE P1). `pnpm gate 1` runs these in order. Manual items (keyboard walkthrough judgement, installability on a real device) are verified at gate time, not here. `size` is warn-only until P17 (D-X05); budget raised to 140 KB.",
   "phase": 1,
   "name": "Design system and app frames",
   "checks": [

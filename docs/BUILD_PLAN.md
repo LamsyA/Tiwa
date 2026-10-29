@@ -478,7 +478,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `PRD.md §5 (NFR)`, `Frontend.md §8–§9`, `Backend.md §12–§15`.
 
 - [ ] P17-T01 Full Lighthouse CI on all key pages against production build with load seed; fix every regression.
-- [ ] P17-T02 Bundle audit per route (`@next/bundle-analyzer`); remove unused dependencies.
+- [ ] P17-T02 Bundle audit per route (`@next/bundle-analyzer`); remove unused dependencies; turn JS-size budgets into hard limits (`SIZE_STRICT=1` in CI and `gates/17.json`, D-X05).
 - [ ] P17-T03 k6 load tests: 500 uploaders, 2,000 invites, 300 check-ins/min, 1,000 concurrent gallery viewers; tune DB indexes and pool sizes.
 - [ ] P17-T04 Security: dependency audit, secret scan, CSP/headers check, OWASP ZAP baseline scan on staging, auth and IDOR tests on every route with ids.
 - [ ] P17-T05 Accessibility: manual VoiceOver/TalkBack pass on UF-03, UF-08, UF-10, UF-17; fix issues.

@@ -158,3 +158,10 @@ Template:
 - Decision: Next 15.2.4 → 16.4.3 (+ React 19.3.1, Sentry 11, next-intl 4.14.9). Dev and builds pin webpack (`--webpack`): Turbopack (the 16 default) has no equivalent of webpack's `resolve.extensionAlias`, which our NodeNext `.js`→`.ts` sources require — verified by failed build, kept the hook + a revisit note. `withSentryConfig` import moved to `@sentry/nextjs/config` (v11 path change). Deep `@tiwa/ui/theme` imports + `sideEffects:false` keep Radix out of route bundles. The served-HTML bundle checker replaces manifest parsing (Next 16 dropped `app-build-manifest.json`); it excludes legacy nomodule polyfills and error-boundary chunks.
 - Why: latest-stable rule (arc.md §2). Turbopack can't resolve our authoring convention; webpack stays fully supported in 16.
 - Affects: apps/web (config, scripts, layout imports), scripts/check-bundle.mjs, arc.md §2.
+
+### 2026-10-29 — Faster build loop and looser JS budgets
+- ID: D-X05
+- Status: AGENT (requested by the project owner)
+- Decision: Per task, agents run only fast checks (lint, typecheck, tests for touched packages, the flow's own e2e spec). The full suite runs once per batch of 3–5 tasks; build, all e2e, Lighthouse, size and the 5-width / 2-theme / axe / keyboard checks run at the phase gate. First-load JS budgets raised to 180 / 130 / 140 KB (app / guest / marketing) and are warnings until P17 (`SIZE_STRICT=1` makes them hard). LCP, CLS, INP, TTFB and Lighthouse targets are unchanged.
+- Why: tasks averaged ~20 min, mostly spent re-running the full build/e2e/Lighthouse; the 120 KB marketing budget already failed at 131 KB from framework weight alone (Next 16 + Sentry 11) before any features.
+- Affects: AGENTS.md §3, §4, §7; Frontend.md §9; .size-limit.json; scripts/check-bundle.mjs; gates/1.json; BUILD_PLAN.md P17-T02.

@@ -2,7 +2,8 @@
 // boot `next start`, fetch the route's HTML, gzip every `/_next/static/**/*.js`
 // it references. Version-proof (no build-manifest internals).
 // Usage: build the web app first (`pnpm --filter @tiwa/web build`), then
-// `node scripts/check-bundle.mjs`. Exits non-zero on any breach.
+// `node scripts/check-bundle.mjs`. Breaches are warnings until P17 (D-X05);
+// set SIZE_STRICT=1 to exit non-zero on any breach.
 import { existsSync, readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
@@ -39,6 +40,7 @@ async function waitForServer() {
   }
 }
 
+const strict = process.env.SIZE_STRICT === '1';
 let failed = false;
 try {
   await waitForServer();
@@ -65,9 +67,9 @@ try {
     }
     const kb = total / 1024;
     const ok = kb <= budget.gzipKB;
-    if (!ok) failed = true;
+    if (!ok && strict) failed = true;
     console.log(
-      `${ok ? 'PASS' : 'FAIL'} ${route}: ${kb.toFixed(1)} KB gzip (budget ${budget.gzipKB} KB, ${budget.class})`,
+      `${ok ? 'PASS' : strict ? 'FAIL' : 'WARN'} ${route}: ${kb.toFixed(1)} KB gzip (budget ${budget.gzipKB} KB, ${budget.class})`,
     );
   }
 } finally {

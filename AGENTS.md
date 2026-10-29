@@ -30,8 +30,11 @@ Tiwa is a web app (mobile-first, installable, works on phones and desktops) wher
 3. Find the first unchecked task "- [ ]" in that phase.
 4. Read every document section the task references (e.g. "Backend.md §4.2", "UF-07", "EVT-03").
 5. Implement the task. Write tests with it, not after it.
-6. Run the checks:  pnpm lint && pnpm typecheck && pnpm test
-   (and pnpm e2e for tasks that touch a user flow)
+6. Run the FAST checks for the packages you touched:
+     pnpm lint && pnpm typecheck && pnpm test --filter <package>
+   plus only the Playwright spec for that flow if the task touches one
+   (pnpm e2e <spec-file>). Do NOT run the full build, the full e2e suite,
+   Lighthouse or size checks per task: those belong to the batch check and the gate.
 7. If checks pass: tick the task "- [x]" in BUILD_PLAN.md, add one line to docs/PROGRESS.md,
    and commit:  git commit -m "P<phase>-T<task>: <short description>"
 8. If checks fail: fix them. Never tick a task with failing checks. Never skip or delete a test to pass.
@@ -40,6 +43,26 @@ Tiwa is a web app (mobile-first, installable, works on phones and desktops) wher
    - Gate fails   -> add the failures as new tasks in the same phase and continue the loop.
 10. Never start a task in phase N+1 while phase N is not DONE.
 ```
+
+### Batching (do this to save time)
+
+- Work through **3–5 tasks per session**, in plan order. Read `decision.md` and the
+  shared doc sections once at the start of the batch; for each later task read only
+  the sections it adds.
+- Still make **one commit per task** with the exact task ID from `BUILD_PLAN.md`
+  (never renumber, merge or reorder tasks; if you build something early, note it
+  under the task it belongs to).
+- At the **end of each batch**, run the full suite once:
+  `pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm e2e`.
+  Fix anything it finds before starting the next batch.
+
+### What runs when
+
+| When | Checks |
+|------|--------|
+| Every task | lint, typecheck, unit/integration tests for touched packages, the flow's own e2e spec |
+| End of each batch (3–5 tasks) | full lint, typecheck, test, build, all e2e |
+| Phase gate | `pnpm gate <n>` (full build, all e2e, Lighthouse, size), plus manual checks: 360/390/768/1280/1440 px, light and dark, axe, keyboard-only |
 
 ### Progress log format (`docs/PROGRESS.md`)
 
@@ -57,7 +80,7 @@ Tiwa is a web app (mobile-first, installable, works on phones and desktops) wher
 
 ## 4. Non-negotiable rules
 
-1. **Fast.** Every page meets the performance budgets in `Frontend.md §9`. A slow page is a bug.
+1. **Fast.** Every page meets the performance budgets in `Frontend.md §9`, checked at each phase gate. JS-size budgets are warnings until P17, then hard limits.
 2. **Responsive.** Every page works from 360 px to 1440 px wide. Build the phone layout first.
 3. **Polished.** Only use components from `packages/ui`. Every page has loading (skeleton), empty and error states.
 4. **Server decides.** Permissions, booking states, payment states, ticket capacity and review eligibility are enforced on the server.
@@ -91,16 +114,22 @@ Tiwa is a web app (mobile-first, installable, works on phones and desktops) wher
 | `pnpm size` | `size-limit` JavaScript budgets |
 | `pnpm gate <phase>` | Runs every automated check of a phase gate (e.g. `pnpm gate 4`) |
 
-## 7. Definition of done (every task)
+## 7. Definition of done
+
+Every task:
 
 - [ ] Matches the PRD requirement IDs and the `user_flow.md` acceptance checks it references.
-- [ ] Works and looks right at 360, 390, 768, 1280 and 1440 px, in light and dark themes.
-- [ ] Has skeleton, empty and error states.
+- [ ] Built phone-first (390 px) using responsive classes; has skeleton, empty and error states.
 - [ ] Permissions enforced on the server and covered by a test.
-- [ ] Lint, typecheck, unit, integration and (if a flow) e2e tests pass.
-- [ ] No serious accessibility issues (axe), works with keyboard only.
+- [ ] Fast checks pass (lint, typecheck, tests for touched packages, the flow's e2e spec).
 - [ ] Strings in `messages/en.json`; nothing event-type- or country-specific hard-coded.
 - [ ] Errors go to Sentry with context and without personal data.
+
+Every phase gate (in addition):
+
+- [ ] Works and looks right at 360, 390, 768, 1280 and 1440 px, in light and dark themes.
+- [ ] No serious accessibility issues (axe), works with keyboard only.
+- [ ] `pnpm gate <n>` passes: full build, all e2e, Lighthouse, size (size = warnings until P17).
 
 ## 8. Glossary
 

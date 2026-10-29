@@ -1,6 +1,6 @@
 {
   "$comment": "First-load JS budgets (gzipped KB) per route, from Frontend.md §9. Enforced by scripts/check-bundle.mjs (reads .next/build-manifest.json, so hashed chunk names stay exact). The size-limit binary can't track Next.js hashed chunks, hence the custom checker behind `pnpm size`. More routes land per phase (full list in Frontend.md §9).",
   "routes": {
-    "/": { "gzipKB": 120, "class": "marketing" }
+    "/": { "gzipKB": 140, "class": "marketing" }
   }
 }

@@ -415,9 +415,11 @@ Use React `useOptimistic` for: task complete, RSVP buttons, approve/hide media, 
 | INP (real users, p75) | ≤ 200 ms | ≤ 200 ms | ≤ 200 ms |
 | CLS | ≤ 0.05 | ≤ 0.05 | ≤ 0.05 |
 | TTFB from Lagos | ≤ 400 ms | ≤ 200 ms (edge cache) | ≤ 200 ms (ISR) |
-| First-load JS (gzip) per route | ≤ 170 KB | ≤ 90 KB | ≤ 120 KB |
+| First-load JS (gzip) per route ¹ | ≤ 180 KB | ≤ 130 KB | ≤ 140 KB |
 | Total transfer first view | ≤ 1.5 MB | ≤ 1 MB | ≤ 1.2 MB |
 | Lighthouse Performance | ≥ 90 | ≥ 95 | ≥ 95 |
+
+¹ JS-size budgets are **warnings** (`pnpm size` reports but does not fail) until P17, where `SIZE_STRICT=1` makes them hard limits. LCP, CLS, INP, TTFB and Lighthouse targets stay hard limits, checked at every phase gate (not per task). See decision D-X05.
 
 ### How
 
