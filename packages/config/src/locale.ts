@@ -22,3 +22,17 @@ export function currencySymbol(currency: string, locale = 'en'): string {
   const parts = new Intl.NumberFormat(locale, { style: 'currency', currency }).formatToParts(0);
   return parts.find((part) => part.type === 'currency')?.value ?? currency;
 }
+
+const COUNTRY_TIMEZONE: Record<string, string> = {
+  NG: 'Africa/Lagos',
+  GH: 'Africa/Accra',
+  KE: 'Africa/Nairobi',
+  ZA: 'Africa/Johannesburg',
+  GB: 'Europe/London',
+  US: 'America/New_York',
+};
+
+/** Default IANA timezone for a country's events (the host can still pick another). */
+export function timezoneForCountry(country: string = process.env.DEFAULT_COUNTRY ?? 'NG'): string {
+  return COUNTRY_TIMEZONE[country.toUpperCase()] ?? 'Africa/Lagos';
+}

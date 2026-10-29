@@ -1,0 +1,393 @@
+import {
+  AFTER,
+  CATERING,
+  CONTRIBUTIONS,
+  DAY_OF,
+  ENTERTAINMENT,
+  GUESTS,
+  MEDIA,
+  PERMITS,
+  PLANNING_BASICS,
+  PROGRAMME,
+  TICKETING,
+} from './blocks.js';
+import type { BudgetSplit, ChecklistItem, EventTypeTemplate } from './types.js';
+
+// Budget splits reused across similar events; each sums to 100.
+const PARTY_BUDGET: BudgetSplit[] = [
+  { key: 'venue', label: 'Venue', percent: 25 },
+  { key: 'catering', label: 'Food and drinks', percent: 35 },
+  { key: 'decor', label: 'Decor', percent: 10 },
+  { key: 'entertainment', label: 'Music and entertainment', percent: 10 },
+  { key: 'media', label: 'Photo and video', percent: 10 },
+  { key: 'misc', label: 'Other', percent: 10 },
+];
+
+const WEDDING_BUDGET: BudgetSplit[] = [
+  { key: 'venue', label: 'Venue', percent: 20 },
+  { key: 'catering', label: 'Food and drinks', percent: 30 },
+  { key: 'decor', label: 'Decor', percent: 12 },
+  { key: 'attire', label: 'Outfits and beauty', percent: 10 },
+  { key: 'media', label: 'Photo and video', percent: 10 },
+  { key: 'entertainment', label: 'Music and MC', percent: 8 },
+  { key: 'stationery', label: 'Invitations and souvenirs', percent: 5 },
+  { key: 'misc', label: 'Other', percent: 5 },
+];
+
+const CORPORATE_BUDGET: BudgetSplit[] = [
+  { key: 'venue', label: 'Venue', percent: 30 },
+  { key: 'catering', label: 'Catering', percent: 30 },
+  { key: 'av', label: 'AV and production', percent: 20 },
+  { key: 'branding', label: 'Branding and print', percent: 10 },
+  { key: 'misc', label: 'Other', percent: 10 },
+];
+
+const TICKETED_BUDGET: BudgetSplit[] = [
+  { key: 'venue', label: 'Venue', percent: 25 },
+  { key: 'production', label: 'Stage and production', percent: 25 },
+  { key: 'talent', label: 'Talent and speakers', percent: 20 },
+  { key: 'marketing', label: 'Marketing', percent: 15 },
+  { key: 'security', label: 'Security and staffing', percent: 10 },
+  { key: 'misc', label: 'Other', percent: 5 },
+];
+
+const COMMUNITY_BUDGET: BudgetSplit[] = [
+  { key: 'venue', label: 'Venue', percent: 25 },
+  { key: 'catering', label: 'Refreshments', percent: 35 },
+  { key: 'programme', label: 'Programme and sound', percent: 20 },
+  { key: 'printing', label: 'Printing', percent: 10 },
+  { key: 'misc', label: 'Other', percent: 10 },
+];
+
+const PARTY_VENDORS = ['venue', 'catering', 'small_chops', 'cake', 'decor', 'dj', 'mc', 'photography'];
+const party = (extra: ChecklistItem[] = []): ChecklistItem[] => [
+  ...PLANNING_BASICS,
+  ...CATERING,
+  ...GUESTS,
+  ...MEDIA,
+  ...ENTERTAINMENT,
+  ...extra,
+  ...DAY_OF,
+  ...AFTER,
+];
+
+const PRIVATE_FEATURES = { invites: true, moments: true, tickets: false };
+
+export const EVENT_TYPES: EventTypeTemplate[] = [
+  // ───────── Private celebrations ─────────
+  {
+    key: 'birthday',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Birthday',
+    blurb: 'Milestone birthdays, surprise parties, kids parties',
+    nameSuggestion: "{name}'s Birthday",
+    defaultDurationHours: 5,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: party([{ key: 'order_cake', title: 'Order the cake', timeframe: '2w' }]),
+    budget: PARTY_BUDGET,
+    vendorCategories: PARTY_VENDORS,
+    programme: [
+      { key: 'arrival', title: 'Guests arrive', offsetMinutes: 0, durationMinutes: 45 },
+      { key: 'toasts', title: 'Toasts and speeches', offsetMinutes: 90, durationMinutes: 30 },
+      { key: 'cake', title: 'Cake cutting', offsetMinutes: 150, durationMinutes: 20 },
+      { key: 'dancing', title: 'Dancing', offsetMinutes: 180 },
+    ],
+  },
+  {
+    key: 'wedding_white',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'White wedding',
+    blurb: 'Ceremony and reception',
+    nameSuggestion: "{name}'s Wedding",
+    defaultDurationHours: 8,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: party([
+      { key: 'book_officiant', title: 'Book the officiant and ceremony venue', timeframe: '12w', priority: 'HIGH' },
+      { key: 'attire', title: 'Order outfits and book makeup', timeframe: '8w' },
+      { key: 'rehearsal', title: 'Hold the rehearsal', timeframe: '1w' },
+    ]),
+    budget: WEDDING_BUDGET,
+    vendorCategories: [...PARTY_VENDORS, 'makeup', 'fashion', 'videography', 'clergy', 'printing', 'souvenirs'],
+    programme: [
+      { key: 'ceremony', title: 'Ceremony', offsetMinutes: 0, durationMinutes: 90 },
+      { key: 'photos', title: 'Photos', offsetMinutes: 90, durationMinutes: 60 },
+      { key: 'reception', title: 'Reception', offsetMinutes: 180, durationMinutes: 240 },
+    ],
+  },
+  {
+    key: 'wedding_traditional',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Traditional wedding',
+    blurb: 'Family introductions, rites and celebration',
+    nameSuggestion: "{name}'s Traditional Wedding",
+    defaultDurationHours: 7,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: party([
+      {
+        key: 'family_list',
+        title: 'Confirm the list of requirements with both families',
+        timeframe: '12w',
+        priority: 'HIGH',
+      },
+      { key: 'attire', title: 'Order outfits for the couple and family', timeframe: '8w' },
+    ]),
+    budget: WEDDING_BUDGET,
+    vendorCategories: [...PARTY_VENDORS, 'makeup', 'fashion', 'videography', 'souvenirs', 'live_band'],
+    programme: [
+      { key: 'family_arrival', title: 'Families arrive', offsetMinutes: 0, durationMinutes: 60 },
+      { key: 'rites', title: 'Traditional rites', offsetMinutes: 60, durationMinutes: 120 },
+      { key: 'celebration', title: 'Celebration', offsetMinutes: 180 },
+    ],
+  },
+  {
+    key: 'naming',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Naming ceremony',
+    blurb: 'Welcome a new baby',
+    nameSuggestion: "{name}'s Naming Ceremony",
+    defaultDurationHours: 4,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: party(),
+    budget: PARTY_BUDGET,
+    vendorCategories: ['venue', 'catering', 'small_chops', 'decor', 'photography', 'clergy'],
+    programme: [
+      { key: 'naming_rites', title: 'Naming', offsetMinutes: 0, durationMinutes: 60 },
+      { key: 'reception', title: 'Reception', offsetMinutes: 60 },
+    ],
+  },
+  {
+    key: 'anniversary',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Anniversary',
+    blurb: 'Celebrate years together',
+    nameSuggestion: "{name}'s Anniversary",
+    defaultDurationHours: 5,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: party(),
+    budget: PARTY_BUDGET,
+    vendorCategories: PARTY_VENDORS,
+    programme: [
+      { key: 'arrival', title: 'Guests arrive', offsetMinutes: 0, durationMinutes: 45 },
+      { key: 'tributes', title: 'Tributes', offsetMinutes: 60, durationMinutes: 45 },
+      { key: 'dinner', title: 'Dinner', offsetMinutes: 120 },
+    ],
+  },
+  {
+    key: 'burial',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Burial',
+    blurb: 'Service of songs, funeral service and reception',
+    nameSuggestion: 'Celebrating the life of {name}',
+    defaultDurationHours: 8,
+    days: 2,
+    features: { invites: true, moments: true, tickets: false },
+    checklist: [
+      ...PLANNING_BASICS,
+      { key: 'funeral_home', title: 'Arrange the funeral home and transport', timeframe: '4w', priority: 'HIGH' },
+      { key: 'obituary', title: 'Publish the obituary and programme', timeframe: '2w' },
+      ...CONTRIBUTIONS,
+      ...CATERING,
+      ...GUESTS,
+      { key: 'book_photographer', title: 'Book a photographer', timeframe: '4w' },
+      ...DAY_OF,
+      ...AFTER,
+    ],
+    budget: [
+      { key: 'funeral', label: 'Funeral services', percent: 30 },
+      { key: 'venue', label: 'Venue and canopies', percent: 15 },
+      { key: 'catering', label: 'Food and drinks', percent: 30 },
+      { key: 'printing', label: 'Programme and souvenirs', percent: 10 },
+      { key: 'media', label: 'Photo and video', percent: 5 },
+      { key: 'misc', label: 'Other', percent: 10 },
+    ],
+    vendorCategories: [
+      'funeral_services',
+      'clergy',
+      'venue',
+      'rentals',
+      'catering',
+      'printing',
+      'souvenirs',
+      'photography',
+      'live_band',
+    ],
+    programme: [
+      { key: 'service_of_songs', title: 'Service of songs', offsetMinutes: 0, durationMinutes: 120 },
+      { key: 'funeral_service', title: 'Funeral service', durationMinutes: 120 },
+      { key: 'interment', title: 'Interment' },
+      { key: 'reception', title: 'Reception' },
+    ],
+  },
+  {
+    key: 'memorial',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Memorial',
+    blurb: 'Remember a loved one',
+    nameSuggestion: 'In memory of {name}',
+    defaultDurationHours: 4,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: [...PLANNING_BASICS, ...CATERING, ...GUESTS, ...DAY_OF, ...AFTER],
+    budget: COMMUNITY_BUDGET,
+    vendorCategories: ['venue', 'catering', 'printing', 'photography', 'clergy'],
+    programme: [
+      { key: 'tributes', title: 'Tributes', offsetMinutes: 0, durationMinutes: 90 },
+      { key: 'reception', title: 'Reception', offsetMinutes: 90 },
+    ],
+  },
+  {
+    key: 'housewarming',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Housewarming',
+    blurb: 'Open your new home',
+    nameSuggestion: "{name}'s Housewarming",
+    defaultDurationHours: 4,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: [
+      ...PLANNING_BASICS.filter((item) => item.key !== 'book_venue'),
+      ...CATERING,
+      ...GUESTS,
+      ...DAY_OF,
+      ...AFTER,
+    ],
+    budget: [
+      { key: 'catering', label: 'Food and drinks', percent: 55 },
+      { key: 'decor', label: 'Decor', percent: 15 },
+      { key: 'entertainment', label: 'Music', percent: 15 },
+      { key: 'misc', label: 'Other', percent: 15 },
+    ],
+    vendorCategories: ['catering', 'small_chops', 'drinks', 'dj', 'rentals'],
+    programme: [{ key: 'open_house', title: 'Open house', offsetMinutes: 0 }],
+  },
+  {
+    key: 'graduation_party',
+    format: 'PRIVATE_CELEBRATION',
+    label: 'Graduation party',
+    blurb: 'Celebrate a graduate',
+    nameSuggestion: "{name}'s Graduation Party",
+    defaultDurationHours: 5,
+    days: 1,
+    features: PRIVATE_FEATURES,
+    checklist: party(),
+    budget: PARTY_BUDGET,
+    vendorCategories: PARTY_VENDORS,
+    programme: [
+      { key: 'arrival', title: 'Guests arrive', offsetMinutes: 0, durationMinutes: 45 },
+      { key: 'speeches', title: 'Speeches', offsetMinutes: 60, durationMinutes: 30 },
+      { key: 'party', title: 'Party', offsetMinutes: 90 },
+    ],
+  },
+
+  // ───────── Corporate ─────────
+  ...(
+    [
+      ['meeting', 'Meeting', 'Board meetings, AGMs and workshops', 4, 1],
+      ['retreat', 'Retreat', 'Team offsites and strategy retreats', 8, 2],
+      ['product_launch', 'Product launch', 'Launch to press, partners and customers', 4, 1],
+      ['end_of_year_party', 'End-of-year party', 'Celebrate the team', 5, 1],
+      ['award_night', 'Award night', 'Recognise people and partners', 5, 1],
+      ['training', 'Training', 'Courses and capacity building', 7, 1],
+    ] as const
+  ).map(([key, label, blurb, hours, days]): EventTypeTemplate => ({
+    key,
+    format: 'CORPORATE',
+    label,
+    blurb,
+    nameSuggestion: `{name} ${label}`,
+    defaultDurationHours: hours,
+    days,
+    features: { invites: true, moments: key !== 'meeting' && key !== 'training', tickets: false },
+    checklist: [
+      ...PLANNING_BASICS,
+      { key: 'approvals', title: 'Get budget approval', timeframe: '12w', priority: 'HIGH' },
+      ...CATERING,
+      ...GUESTS,
+      ...PROGRAMME,
+      { key: 'branding', title: 'Prepare branding and print', timeframe: '4w' },
+      { key: 'av_check', title: 'Run the AV and slides check', timeframe: 'day', priority: 'HIGH' },
+      ...DAY_OF,
+      ...AFTER,
+    ],
+    budget: CORPORATE_BUDGET,
+    vendorCategories: ['venue', 'catering', 'av_production', 'printing', 'photography', 'mc', 'transport'],
+    programme: [
+      { key: 'registration', title: 'Registration', offsetMinutes: 0, durationMinutes: 30 },
+      { key: 'opening', title: 'Opening', offsetMinutes: 30, durationMinutes: 30 },
+      { key: 'main_session', title: 'Main session', offsetMinutes: 60, durationMinutes: 120 },
+      { key: 'closing', title: 'Closing', offsetMinutes: 180 },
+    ],
+  })),
+
+  // ───────── Public & ticketed ─────────
+  ...(
+    [
+      ['conference', 'Conference', 'Talks, panels and networking', 8, 2],
+      ['concert', 'Concert', 'Live music and performances', 5, 1],
+      ['festival', 'Festival', 'Multi-day culture, food or music', 10, 3],
+      ['exhibition', 'Exhibition', 'Trade shows, fairs and expos', 8, 2],
+      ['fashion_show', 'Fashion show', 'Runway shows and showcases', 4, 1],
+      ['sports_event', 'Sports event', 'Matches, races and tournaments', 6, 1],
+    ] as const
+  ).map(([key, label, blurb, hours, days]): EventTypeTemplate => ({
+    key,
+    format: 'PUBLIC_TICKETED',
+    label,
+    blurb,
+    nameSuggestion: `{name} ${label}`,
+    defaultDurationHours: hours,
+    days,
+    features: { invites: false, moments: true, tickets: true },
+    checklist: [...PLANNING_BASICS, ...TICKETING, ...PROGRAMME, ...PERMITS, ...MEDIA, ...DAY_OF, ...AFTER],
+    budget: TICKETED_BUDGET,
+    vendorCategories: [
+      'venue',
+      'av_production',
+      'sound_lighting',
+      'security',
+      'ushers',
+      'catering',
+      'photography',
+      'speakers',
+    ],
+    programme: [
+      { key: 'doors', title: 'Doors open', offsetMinutes: 0, durationMinutes: 60 },
+      { key: 'opening', title: 'Opening', offsetMinutes: 60, durationMinutes: 30 },
+      { key: 'main_programme', title: 'Main programme', offsetMinutes: 90 },
+    ],
+  })),
+
+  // ───────── Community ─────────
+  ...(
+    [
+      ['church_programme', 'Church programme', 'Services, harvests, crusades and thanksgivings', 4, 1],
+      ['mosque_programme', 'Mosque programme', 'Lectures, walimah and community gatherings', 4, 1],
+      ['alumni_reunion', 'Alumni reunion', 'Class and school reunions', 6, 1],
+      ['school_event', 'School event', 'Prize-giving, inter-house sports, end of year', 5, 1],
+      ['fundraiser', 'Fundraiser', 'Launches, galas and appeals', 5, 1],
+      ['association_meeting', 'Association meeting', 'Clubs, cooperatives and societies', 3, 1],
+    ] as const
+  ).map(([key, label, blurb, hours, days]): EventTypeTemplate => ({
+    key,
+    format: 'COMMUNITY',
+    label,
+    blurb,
+    nameSuggestion: `{name} ${label}`,
+    defaultDurationHours: hours,
+    days,
+    features: { invites: true, moments: true, tickets: false },
+    checklist: [...PLANNING_BASICS, ...CONTRIBUTIONS, ...PROGRAMME, ...CATERING, ...GUESTS, ...DAY_OF, ...AFTER],
+    budget: COMMUNITY_BUDGET,
+    vendorCategories: ['venue', 'catering', 'sound_lighting', 'rentals', 'printing', 'photography', 'mc'],
+    programme: [
+      { key: 'opening', title: 'Opening', offsetMinutes: 0, durationMinutes: 30 },
+      { key: 'main_programme', title: 'Main programme', offsetMinutes: 30, durationMinutes: 120 },
+      { key: 'closing', title: 'Closing and refreshments', offsetMinutes: 150 },
+    ],
+  })),
+];

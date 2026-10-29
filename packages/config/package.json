@@ -13,6 +13,10 @@
     "./locale": {
       "types": "./dist/locale.d.ts",
       "default": "./dist/locale.js"
+    },
+    "./event-types": {
+      "types": "./dist/event-types/index.d.ts",
+      "default": "./dist/event-types/index.js"
     }
   },
   "files": [
