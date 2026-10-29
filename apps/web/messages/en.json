@@ -340,6 +340,65 @@
       "categoriesHeading": "Budget by category",
       "empty": "Categories appear when the event is created.",
       "comingSoon": "Expenses, payments and contributions arrive with bookings and payments."
+    },
+    "plan": {
+      "heading": "Plan",
+      "progress": "{done} of {total} done",
+      "filters": "Filter tasks",
+      "filterAll": "All",
+      "filterMine": "Mine",
+      "filterOverdue": "Overdue",
+      "filterBlocked": "Blocked",
+      "timeframes": {
+        "12w": "12+ weeks before",
+        "8w": "8 weeks before",
+        "4w": "4 weeks before",
+        "2w": "2 weeks before",
+        "1w": "1 week before",
+        "day": "Event day",
+        "after": "After the event",
+        "none": "Other tasks"
+      },
+      "addTask": "Add task",
+      "addTaskIn": "Add a task to {group}",
+      "newTaskPlaceholder": "New task",
+      "complete": "Mark “{title}” done",
+      "reopen": "Mark “{title}” not done",
+      "overdueDays": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "dueOn": "Due {date}",
+      "empty": "No tasks match this filter.",
+      "emptyAll": "No tasks yet. Add your first task above.",
+      "detailTitle": "Task",
+      "titleLabel": "Title",
+      "notesLabel": "Notes",
+      "ownerLabel": "Owner",
+      "noOwner": "No one",
+      "dueLabel": "Due date",
+      "priorityLabel": "Priority",
+      "statusLabel": "Status",
+      "status": {
+        "TODO": "To do",
+        "IN_PROGRESS": "In progress",
+        "DONE": "Done",
+        "BLOCKED": "Blocked"
+      },
+      "priority": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High"
+      },
+      "save": "Save",
+      "saved": "Saved",
+      "close": "Close",
+      "readOnly": "You can view the plan. Ask the host for edit access to change tasks.",
+      "errors": {
+        "titleRequired": "Give the task a title",
+        "titleTooLong": "That title is too long",
+        "notesTooLong": "Those notes are too long",
+        "ownerNotMember": "The owner must be on this event",
+        "FORBIDDEN": "You can't change this task.",
+        "generic": "We couldn't save that. Please try again."
+      }
     }
   }
 }
