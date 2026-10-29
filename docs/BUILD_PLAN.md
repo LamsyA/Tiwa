@@ -98,11 +98,11 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P1-T12 PWA basics: manifest, icons, Serwist service worker with static asset caching; installability check.
 
 **GATE P1**
-- [ ] `/dev/ui` renders every component in light and dark at 360, 390, 768, 1280, 1440 px with no horizontal scroll (automated test).
-- [ ] axe: zero serious/critical issues on `/dev/ui`.
-- [ ] Lighthouse mobile on `/dev/ui` ≥ 95; CLS 0.
-- [ ] Keyboard-only: every interactive component reachable and operable (Playwright keyboard test).
-- [ ] App is installable (Lighthouse PWA installability passes).
+- [x] `/dev/ui` renders every component in light and dark at 360, 390, 768, 1280, 1440 px with no horizontal scroll (automated test).
+- [x] axe: zero serious/critical issues on `/dev/ui`.
+- [x] Lighthouse mobile on `/dev/ui` ≥ 95; CLS 0.
+- [x] Keyboard-only: every interactive component reachable and operable (Playwright keyboard test).
+- [x] App is installable (PWA installability passes).
 
 ---
 

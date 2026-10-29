@@ -11,3 +11,6 @@ pnpm-lock.yaml
 apps/web/public/sw.js
 apps/web/public/sw.js.map
 apps/web/public/workbox-*.js
+
+# Next.js generated (rewritten on every build; keep Next's canonical form)
+apps/web/next-env.d.ts

@@ -19,3 +19,6 @@ test-results/
 apps/web/public/sw.js
 apps/web/public/sw.js.map
 apps/web/public/workbox-*.js
+
+# Next.js regenerates this per distDir (.next vs .next-dev); never stable in git
+apps/web/next-env.d.ts
