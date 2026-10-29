@@ -225,7 +225,8 @@
       "plan": "Plan",
       "money": "Money",
       "settings": "Settings",
-      "sections": "Event sections"
+      "sections": "Event sections",
+      "documents": "Documents"
     },
     "roles": {
       "HOST": "Host",
@@ -398,6 +399,27 @@
         "ownerNotMember": "The owner must be on this event",
         "FORBIDDEN": "You can't change this task.",
         "generic": "We couldn't save that. Please try again."
+      }
+    },
+    "documents": {
+      "heading": "Documents",
+      "hint": "PDFs, photos and Office files up to 25 MB. Only people on this event can open them.",
+      "upload": "Upload files",
+      "uploading": "Uploading {name}…",
+      "uploaded": "{count, plural, one {# file uploaded} other {# files uploaded}}",
+      "empty": "No documents yet. Contracts, quotes and floor plans live here.",
+      "download": "Download {name}",
+      "delete": "Delete",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "This removes the file for everyone on the event.",
+      "readOnly": "You can download documents. Ask the host for edit access to add files.",
+      "errors": {
+        "typeNotAllowed": "{name}: this file type isn't supported.",
+        "tooLarge": "{name}: files must be 25 MB or smaller.",
+        "emptyFile": "{name}: the file is empty.",
+        "contentMismatch": "{name}: the file content doesn't match its type.",
+        "uploadFailed": "{name}: the upload didn't finish. Please try again.",
+        "generic": "{name}: something went wrong. Please try again."
       }
     }
   }

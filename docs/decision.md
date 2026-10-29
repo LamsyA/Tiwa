@@ -200,3 +200,10 @@ Template:
 - Decision: `view_only` has no money access (was `money: view`) so a View only co-host cannot open Money (UF-04-1). `contributor` ("tasks, guests") gets `eventEdit` (tasks need `event.edit`, Backend §6), guests edit + contacts and run-of-show edit, no money. `finance` and `full` take the host's approval cap (empty = no limit). Event invites reuse the placeholder-account approach (D-X07) through a shared `findOrCreateContactUser`; onboarding triage treats an event invitation like a team membership, so invitees land on the event (UF-01-5).
 - Why: the P2 presets contradicted UF-04's acceptance checks; one helper keeps team and event invites identical.
 - Affects: packages/core/src/auth/presets.ts, packages/core/src/events/members.ts, apps/web/app/onboarding/page.tsx.
+
+### 2026-10-29 — Documents upload with one signed PUT
+- ID: D-X11
+- Status: AGENT
+- Decision: `packages/storage` (built here; P3-T09 assumed P5's endpoints already existed) exposes `Storage` with an S3 implementation and a Fake. Event documents (≤ 25 MB) upload straight from the browser with a single pre-signed PUT bound to the exact content type and length (D-A05 kept); the server then checks size and magic bytes and deletes mismatches. Storage keys never contain file names. Multipart upload (5 MB parts) arrives with Moments (P5) for large media. Downloads go through `/api/documents/{event}/{doc}`, which checks membership and redirects to a 5-minute signed URL.
+- Why: S3 accepts single PUTs far beyond 25 MB, so multipart adds client complexity for no gain on documents; verifying after upload enforces Backend §12 without proxying bytes.
+- Affects: packages/storage, packages/core/src/events/documents.ts, apps/web documents page + route, ci.yml (S3 mock env), P5.

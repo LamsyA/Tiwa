@@ -23,3 +23,4 @@ export * from './events/commands.js';
 export * from './events/queries.js';
 export * from './events/members.js';
 export * from './events/tasks.js';
+export * from './events/documents.js';
