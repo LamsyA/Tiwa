@@ -113,7 +113,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 
 - [x] P2-T01 Prisma models: User (extended), Organization, Membership, AuditLog, OutboxEvent, IdempotencyKey, FeatureFlagOverride; migration.
 - [x] P2-T02 Better Auth with Prisma adapter: phone OTP (Termii adapter + Fake), email magic link (Resend adapter + Fake/Mailpit), Google; sessions; rate limits (`Backend.md §13`).
-- [ ] P2-T03 `/signup`, `/login`, OTP screen, magic-link landing; `next` redirect.
+- [x] P2-T03 `/signup`, `/login`, OTP screen, magic-link landing; `next` redirect.
 - [ ] P2-T04 Onboarding: role choice, host profile, business setup (creates Organization + OWNER membership).
 - [ ] P2-T05 `packages/core/auth`: Actor type, action list, matrix (`PRD.md §2.1`), presets, `authorize()`; table-driven tests for every role × action.
 - [ ] P2-T06 `apps/web/lib/action.ts` wrapper and `getCtx()`; error mapping to codes.

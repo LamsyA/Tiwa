@@ -9,9 +9,11 @@ process.loadEnvFile(path.join(path.dirname(fileURLToPath(import.meta.url)), '..'
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
+  esbuild: { jsx: 'automatic' },
   test: {
-    environment: 'node',
-    include: ['lib/**/*.test.ts'],
+    environment: 'jsdom',
+    setupFiles: ['./test-setup.ts'],
+    include: ['lib/**/*.test.{ts,tsx}', 'components/**/*.test.{ts,tsx}'],
     testTimeout: 60000,
     passWithNoTests: true,
     pool: 'forks',
