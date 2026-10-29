@@ -145,7 +145,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P3-T07 Members & permissions settings (presets, approval limit), invitation acceptance flow (incl. UF-01-5: co-host invite lands on the event with the CO_HOST role, e2e).
 - [x] P3-T08 Plan page `/events/[id]/plan`: grouped tasks, filters, detail panel/sheet, add/complete, live updates (SSE `event:{id}` channel — build the SSE infrastructure here: Redis pub/sub + `useLive`).
 - [x] P3-T09 Documents upload (reuse storage multipart endpoints, see `Backend.md §11`) and list.
-- [ ] P3-T10 Event settings: details, features toggles, visibility, cancel (blocked when bookings/payments exist), cover image + theme colour.
+- [x] P3-T10 Event settings: details, features toggles, visibility, cancel (blocked when bookings/payments exist), cover image + theme colour.
 - [ ] P3-T11 `events/deadline-alerts` job (in-app notification stub until P13).
 - [ ] P3-T12 Seed: one event of each format; e2e UF-03, UF-04, UF-05.
 

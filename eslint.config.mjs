@@ -73,7 +73,7 @@ export default tseslint.config(
       ],
     },
   },
-  // packages/core: config + db only
+  // packages/core: config + db + storage (D-X11: core commands verify uploads via the Storage interface)
   {
     files: ['packages/core/**/*.{ts,tsx,mjs,cjs,js}'],
     rules: {
@@ -82,8 +82,16 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@tiwa/*', '!@tiwa/config', '!@tiwa/config/*', '!@tiwa/db', '!@tiwa/db/*'],
-              message: 'packages/core may only import @tiwa/config and @tiwa/db.',
+              group: [
+                '@tiwa/*',
+                '!@tiwa/config',
+                '!@tiwa/config/*',
+                '!@tiwa/db',
+                '!@tiwa/db/*',
+                '!@tiwa/storage',
+                '!@tiwa/storage/*',
+              ],
+              message: 'packages/core may only import @tiwa/config, @tiwa/db and @tiwa/storage.',
             },
             { group: ['../../*'], message: 'packages/core must not leave the package with relative imports.' },
           ],
