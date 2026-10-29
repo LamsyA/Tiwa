@@ -1,0 +1,19 @@
+{
+  "$comment": "P3 gate — automated checks (BUILD_PLAN.md GATE P3). e2e covers UF-03/04/05 at 390 + 1280 px (incl. the 60 s birthday timer); the words check excludes dev-only pages (app/dev/** 404s in production). `pnpm perf` asserts home budgets; /events/[id] Lighthouse is measured separately with an authenticated session (see docs/PROGRESS.md P3 GATE). `size` is warn-only until P17 (D-X05).",
+  "phase": 3,
+  "name": "Events and planning",
+  "checks": [
+    { "id": "lint", "run": "pnpm lint" },
+    { "id": "typecheck", "run": "pnpm typecheck" },
+    { "id": "unit", "run": "pnpm test" },
+    { "id": "seed", "run": "pnpm db:seed" },
+    { "id": "build", "run": "pnpm build" },
+    { "id": "e2e", "run": "pnpm e2e" },
+    {
+      "id": "no-hardcoded-words",
+      "run": "rg -n -i \"wedding|bride|groom|burial|aso-ebi|asoebi\" apps/web/app --glob '*.tsx' --glob '!dev/**'"
+    },
+    { "id": "lighthouse-home", "run": "pnpm perf" },
+    { "id": "size", "run": "pnpm size" }
+  ]
+}
