@@ -35,9 +35,8 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: {
-      // Keep dev output out of `.next` (production build lives there).
-      NEXT_DIST_DIR: '.next-dev',
-    },
+    // Local dev output goes to .next-dev so `.next` always holds the
+    // production build perf/size run against. CI tests the prod build.
+    ...(process.env.CI ? {} : { env: { NEXT_DIST_DIR: '.next-dev' } }),
   },
 });
