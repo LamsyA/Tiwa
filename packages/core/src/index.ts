@@ -12,3 +12,5 @@ export { authorize, type Actor, type AuthResource, type EventAccess } from './au
 export { authorizeGuest } from './auth/authorize-guest.js';
 export * from './accounts/onboarding.js';
 export { ORG_ACTIONS, ORG_MATRIX, authorizeOrg, type OrgAction, type OrgAccess } from './auth/org.js';
+export * from './shared/contact.js';
+export * from './orgs/members.js';

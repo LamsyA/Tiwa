@@ -30,6 +30,25 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   fullWidth?: boolean;
 }
 
+/** Button styling for elements that must stay links (e.g. `<Link>`), so they look and press the same. */
+export function buttonClasses({
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
+  className,
+}: { variant?: ButtonVariant; size?: ButtonSize; fullWidth?: boolean; className?: string | undefined } = {}): string {
+  return cn(
+    'inline-flex select-none items-center justify-center gap-2 rounded-md font-medium',
+    'transition-transform duration-fast ease-out active:scale-[0.98]',
+    'disabled:cursor-not-allowed disabled:opacity-50',
+    'focus-visible:outline-2 focus-visible:outline-focus focus-visible:outline-offset-2',
+    variants[variant],
+    sizes[size],
+    fullWidth && 'w-full',
+    className,
+  );
+}
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
     variant = 'primary',
@@ -52,16 +71,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
       type={type}
       disabled={disabled ?? loading}
       aria-busy={loading || undefined}
-      className={cn(
-        'inline-flex select-none items-center justify-center gap-2 rounded-md font-medium',
-        'transition-transform duration-fast ease-out active:scale-[0.98]',
-        'disabled:cursor-not-allowed disabled:opacity-50',
-        'focus-visible:outline-2 focus-visible:outline-focus focus-visible:outline-offset-2',
-        variants[variant],
-        sizes[size],
-        fullWidth && 'w-full',
-        className,
-      )}
+      className={buttonClasses({ variant, size, fullWidth, className })}
       {...rest}
     >
       {loading ? <Loader2 className="size-[1.2em] animate-spin" aria-hidden /> : iconLeft}

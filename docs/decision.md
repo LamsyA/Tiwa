@@ -172,3 +172,10 @@ Template:
 - Decision: `/onboarding/business` asks for business name and city (plus the owner's name for phone sign-ups); categories, business phone and logo (UF-01 step 5) move to the BusinessProfile step in P6, and the host photo (step 4) to P5 storage. Onboarding logic lives in `packages/core/src/accounts`; validation errors are message keys; `next` is sanitised by `safeNextPath` (same-origin only).
 - Why: those fields have no model to land in until P5/P6; asking for them now would silently drop answers. Core placement follows D-A02.
 - Affects: packages/core/src/accounts, apps/web/app/onboarding, UF-01 steps 4–5, P5, P6.
+
+### 2026-10-29 — Team invites create placeholder accounts
+- ID: D-X07
+- Status: AGENT
+- Decision: Inviting an org member by phone/email adds an existing account directly, or creates a placeholder User carrying only that contact (unverified, empty name) plus the Membership. The person signs in to that account with OTP or a magic link (Better Auth finds it by `phoneNumber`/`email`), and onboarding triage sends members straight to their destination (UF-01 step 6). No separate invite table. Roles are ranked OWNER > ADMIN > STAFF: you act on and grant only roles below yours; OWNER is never granted; the last OWNER cannot leave. The team page lives at `/settings/team`; a simple invite SMS/email goes out via the P2 senders until P4 templates.
+- Why: no model is needed for a pending state that the account itself already represents; works for both channels without extra tokens.
+- Affects: packages/core/src/orgs, apps/web/app/settings/team, apps/web/lib/invite-notify.ts, P4 (messaging templates).

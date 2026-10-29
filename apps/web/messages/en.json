@@ -5,6 +5,10 @@
     "description": "Hosts, planners, vendors and guests plan any event together."
   },
   "home": {
+    "title": "Home",
+    "emptyTitle": "Nothing planned yet",
+    "emptyBody": "Create your first event and invite the people helping you.",
+    "createEvent": "Create an event",
     "placeholderNote": "P0-T04 placeholder — real home lands in P1/P3."
   },
   "errors": {
@@ -67,6 +71,56 @@
       "cityTooLong": "That city name is too long",
       "alreadySetUp": "You already have a business of this kind.",
       "generic": "We couldn't save that. Please try again."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabProfile": "Profile",
+    "tabTeam": "Team",
+    "team": {
+      "heading": "{org} team",
+      "noOrgTitle": "No business yet",
+      "noOrgBody": "Set up a planning or service business to add your team.",
+      "noOrgAction": "Set up a business",
+      "inviteHeading": "Invite someone",
+      "inviteBy": "Invite by",
+      "byPhone": "Phone",
+      "byEmail": "Email",
+      "phoneLabel": "Phone number",
+      "emailLabel": "Email address",
+      "roleLabel": "Role",
+      "roleOWNER": "Owner",
+      "roleADMIN": "Admin",
+      "roleSTAFF": "Staff",
+      "roleHelpADMIN": "Manages the business and its team.",
+      "roleHelpSTAFF": "Works on events; can't change the business.",
+      "invite": "Send invite",
+      "invited": "Invite sent",
+      "invitedNotSent": "Added to the team. We couldn't send the message, so share the sign-in link yourself.",
+      "pending": "Not signed in yet",
+      "you": "You",
+      "unnamed": "Invited member",
+      "makeAdmin": "Make admin",
+      "makeStaff": "Make staff",
+      "remove": "Remove",
+      "leave": "Leave team",
+      "removeTitle": "Remove {name}?",
+      "removeBody": "They lose access to this business straight away.",
+      "leaveTitle": "Leave this team?",
+      "leaveBody": "You lose access to this business straight away.",
+      "cancel": "Cancel",
+      "membersHeading": "Members",
+      "orgSwitch": "Business",
+      "errors": {
+        "VALIDATION": "Check the details and try again.",
+        "invalidPhone": "Enter a valid phone number",
+        "invalidEmail": "Enter a valid email address",
+        "phoneOrEmail": "Enter a phone number or an email address",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "CONFLICT": "That person is already on the team.",
+        "lastOwner": "A business needs at least one owner.",
+        "generic": "Something went wrong. Please try again."
+      }
     }
   }
 }

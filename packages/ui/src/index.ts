@@ -3,6 +3,7 @@ export * from './theme.js';
 export {
   Button,
   IconButton,
+  buttonClasses,
   type ButtonProps,
   type ButtonSize,
   type ButtonVariant,

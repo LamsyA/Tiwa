@@ -2,8 +2,9 @@ import * as Sentry from '@sentry/nextjs';
 import { uuidv7 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { cache } from 'react';
-import { makeAction, makeUserAction, type Ctx, type ErrorReporter } from './action.js';
+import { makeAction, makeUserAction, type Ctx, type ErrorReporter, type UserCtx } from './action.js';
 import { auth } from './auth.js';
 
 /**
@@ -44,3 +45,10 @@ const report: ErrorReporter = (error, context) => {
 
 export const action = makeAction({ getCtx, report });
 export const userAction = makeUserAction({ getCtx, report });
+
+/** For pages: the signed-in user's ctx, or a redirect to /login that comes back to `next`. */
+export async function requirePageUser(next: string): Promise<UserCtx> {
+  const ctx = await getCtx();
+  if (!ctx.actor) redirect(`/login?next=${encodeURIComponent(next)}`);
+  return ctx as UserCtx;
+}

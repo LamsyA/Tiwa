@@ -28,8 +28,18 @@ export function requireUser(ctx: Ctx): UserCtx {
 }
 
 /** Domain errors map to their code; anything else is reported and becomes INTERNAL (no details leak). */
-export function mapDomainError(error: unknown, ctx: Ctx, report: ErrorReporter): { ok: false; code: ErrorCode } {
-  if (isDomainError(error)) return { ok: false, code: error.code };
+export function mapDomainError(
+  error: unknown,
+  ctx: Ctx,
+  report: ErrorReporter,
+): Extract<ActionResult<never>, { ok: false }> {
+  if (isDomainError(error)) {
+    const details = error.details as { field?: unknown; key?: unknown } | null;
+    if (error.code === 'VALIDATION' && typeof details?.field === 'string' && typeof details.key === 'string') {
+      return { ok: false, code: 'VALIDATION', fieldErrors: { [details.field]: [details.key] } };
+    }
+    return { ok: false, code: error.code };
+  }
   report(error, { requestId: ctx.requestId, ...(ctx.actor ? { userId: ctx.actor.userId } : {}) });
   return { ok: false, code: 'INTERNAL' };
 }

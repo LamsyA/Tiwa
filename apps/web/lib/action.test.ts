@@ -1,4 +1,4 @@
-import { ConflictError, ForbiddenError, RateLimitedError } from '@tiwa/core';
+import { ConflictError, ForbiddenError, RateLimitedError, ValidationError } from '@tiwa/core';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { makeAction, makeUserAction, type Ctx } from './action.js';
@@ -41,6 +41,14 @@ describe('action wrapper (Backend.md §4.2)', () => {
     })({ name: 'Ada' });
     expect(result).toEqual({ ok: false, code });
     expect(report).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a domain VALIDATION field + message key as fieldErrors', async () => {
+    const { action } = setup(signedIn);
+    const result = await action(schema, async () => {
+      throw new ValidationError('Invalid phone number', { field: 'phone', key: 'invalidPhone' });
+    })({ name: 'Ada' });
+    expect(result).toEqual({ ok: false, code: 'VALIDATION', fieldErrors: { phone: ['invalidPhone'] } });
   });
 
   it('turns unexpected errors into INTERNAL, reports them with request context only', async () => {
