@@ -19,7 +19,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 |-------|------|--------|----------------|
 | P0 | Foundation and tooling | DONE | 2026-10-28 |
 | P1 | Design system and app frames | DONE | 2026-10-29 |
-| P2 | Accounts, organisations, permissions | TODO | |
+| P2 | Accounts, organisations, permissions | IN PROGRESS | |
 | P3 | Events and planning | TODO | |
 | P4 | Guests and one-click invitations | TODO | |
 | P5 | Moments | TODO | |
