@@ -4,6 +4,9 @@
     "jsx": "preserve",
     "noEmit": true,
     "incremental": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
     "plugins": [
       {

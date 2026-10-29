@@ -22,23 +22,29 @@ datasource db {
 // ───────────── Accounts & organisations (Backend.md §3) ─────────────
 
 model User {
-  id            String       @id @default(uuid(7))
-  name          String
-  email         String?      @unique @db.Citext
-  emailVerified Boolean      @default(false)
-  phone         String?      @unique // E.164
-  phoneVerified Boolean      @default(false)
-  image         String?
-  locale        String       @default("en")
-  countryCode   String       @default("NG")
-  isAdmin       Boolean      @default(false)
-  adminRole     AdminRole?
-  suspendedAt   DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  deletedAt     DateTime?
-  memberships   Membership[]
+  id                  String       @id @default(uuid(7))
+  name                String
+  email               String?      @unique @db.Citext
+  emailVerified       Boolean      @default(false)
+  phone               String?      @unique // E.164 — canonical contact number (Tiwa flows)
+  phoneVerified       Boolean      @default(false)
+  // Better Auth phone-number plugin columns (plugin-managed; mirrored to
+  // phone/phoneVerified by our verify wrappers — see apps/web/lib/auth.ts).
+  phoneNumber         String?      @unique
+  phoneNumberVerified Boolean      @default(false)
+  image               String?
+  locale              String       @default("en")
+  countryCode         String       @default("NG")
+  isAdmin             Boolean      @default(false)
+  adminRole           AdminRole?
+  suspendedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  deletedAt           DateTime?
+  memberships         Membership[]
   // participants EventParticipant[] — arrives with P3-T02 (Event model)
+  sessions            Session[]
+  accounts            Account[]
 }
 
 enum AdminRole {
@@ -128,4 +134,59 @@ model IdempotencyKey {
   scope     String
   response  Json?
   createdAt DateTime @default(now())
+}
+
+// Kill-switches and risky-feature gates. Resolution order (P2-T10):
+// explicit FLAG_* env override → DB row here → default (ON everywhere
+// except production). See packages/config/src/flags.ts.
+model FeatureFlagOverride {
+  key         String // e.g. "payments.held"
+  enabled     Boolean
+  countryCode String // empty string = global; otherwise scoped to one country
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+
+  @@id([key, countryCode])
+}
+
+// ───────────── Better Auth tables (P2-T02; adapter-managed) ─────────────
+// Names and fields follow the Better Auth Prisma adapter exactly. Do not
+// rename: the adapter maps its fixed schema here.
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
 }
