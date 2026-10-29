@@ -111,7 +111,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** people can sign up, choose roles, create organisations; one permission gate protects everything.
 **Read first:** `PRD.md §2, ACC-*`, `UF-01`, `UF-02`, `Backend.md §3 (accounts), §4`, `Frontend.md §6.1 (login)`.
 
-- [ ] P2-T01 Prisma models: User (extended), Organization, Membership, AuditLog, OutboxEvent, IdempotencyKey, FeatureFlagOverride; migration.
+- [x] P2-T01 Prisma models: User (extended), Organization, Membership, AuditLog, OutboxEvent, IdempotencyKey, FeatureFlagOverride; migration.
 - [ ] P2-T02 Better Auth with Prisma adapter: phone OTP (Termii adapter + Fake), email magic link (Resend adapter + Fake/Mailpit), Google; sessions; rate limits (`Backend.md §13`).
 - [ ] P2-T03 `/signup`, `/login`, OTP screen, magic-link landing; `next` redirect.
 - [ ] P2-T04 Onboarding: role choice, host profile, business setup (creates Organization + OWNER membership).
