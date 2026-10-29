@@ -25,6 +25,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tiwa/config": "workspace:*",
+    "@tiwa/db": "workspace:*",
     "pino": "^9.6.0"
   },
   "devDependencies": {

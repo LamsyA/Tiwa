@@ -170,6 +170,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@tiwa/config':
+        specifier: workspace:*
+        version: link:../config
+      '@tiwa/db':
+        specifier: workspace:*
+        version: link:../db
       pino:
         specifier: ^9.6.0
         version: 9.14.0
@@ -250,6 +256,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.4.1
         version: 1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@tiwa/config':
+        specifier: workspace:*
+        version: link:../config
       clsx:
         specifier: ^2.1.1
         version: 2.1.1

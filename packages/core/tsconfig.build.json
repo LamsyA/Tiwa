@@ -7,7 +7,15 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      // Build typechecks against dist declarations (built first via
+      // turbo ^build); dev/test use source via the base aliases.
+      // NOTE: paths resolve from baseUrl (repo root), not this file.
+      "@tiwa/config/*": ["./packages/config/dist/*"],
+      "@tiwa/db": ["./packages/db/dist/index.d.ts"],
+      "@tiwa/db/*": ["./packages/db/dist/*"]
+    }
   },
   "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
 }

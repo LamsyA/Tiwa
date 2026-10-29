@@ -3,13 +3,25 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "prisma"
+  ],
   "scripts": {
     "generate": "prisma generate",
     "wait": "dotenv -e ../../.env -- node ../../scripts/wait-for-db.mjs",
     "migrate": "dotenv -e ../../.env -- prisma migrate dev",
     "migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
     "seed": "dotenv -e ../../.env -- prisma db seed",
-    "build": "prisma generate",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
