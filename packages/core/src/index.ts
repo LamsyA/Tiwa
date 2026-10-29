@@ -16,3 +16,4 @@ export * from './shared/contact.js';
 export * from './orgs/members.js';
 export * from './accounts/settings.js';
 export * from './shared/outbox.js';
+export * from './flags/flags.js';

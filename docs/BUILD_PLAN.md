@@ -120,7 +120,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P2-T07 Org members: invite by phone/email, roles OWNER/ADMIN/STAFF, remove.
 - [x] P2-T08 Settings: profile, theme, language placeholder, export my data (job stub), delete account (anonymise).
 - [x] P2-T09 Outbox publisher job (`events/publish-outbox`) and audit helper.
-- [ ] P2-T10 Feature flag resolver (config + DB overrides) for server and client.
+- [x] P2-T10 Feature flag resolver (config + DB overrides) for server and client.
 - [ ] P2-T11 e2e: UF-01, UF-02.
 
 **GATE P2**
