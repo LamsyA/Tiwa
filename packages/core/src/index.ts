@@ -17,3 +17,7 @@ export * from './orgs/members.js';
 export * from './accounts/settings.js';
 export * from './shared/outbox.js';
 export * from './flags/flags.js';
+export * from './shared/zoned.js';
+export * from './events/access.js';
+export * from './events/commands.js';
+export * from './events/queries.js';
