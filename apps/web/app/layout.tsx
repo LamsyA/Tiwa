@@ -36,6 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0f" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         {/* Blocking inline script: runs during parse, before first paint.
             next/script defers via its loader queue and can lose the race. */}
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript }} />

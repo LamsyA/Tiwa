@@ -18,7 +18,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | Phase | Name | Status | Gate passed on |
 |-------|------|--------|----------------|
 | P0 | Foundation and tooling | DONE | 2026-10-28 |
-| P1 | Design system and app frames | IN PROGRESS | |
+| P1 | Design system and app frames | DONE | 2026-10-29 |
 | P2 | Accounts, organisations, permissions | TODO | |
 | P3 | Events and planning | TODO | |
 | P4 | Guests and one-click invitations | TODO | |
@@ -95,7 +95,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P1-T09 `GuestShell` (no chrome, 560 px column, cover header, sticky bottom button).
 - [x] P1-T10 `/dev/ui` gallery page (excluded from production) showing all components and both frames.
 - [x] P1-T11 next-intl set up; `messages/en.json`; lint rule or test that flags hard-coded user-facing strings in `apps/web/app`.
-- [ ] P1-T12 PWA basics: manifest, icons, Serwist service worker with static asset caching; installability check.
+- [x] P1-T12 PWA basics: manifest, icons, Serwist service worker with static asset caching; installability check.
 
 **GATE P1**
 - [ ] `/dev/ui` renders every component in light and dark at 360, 390, 768, 1280, 1440 px with no horizontal scroll (automated test).

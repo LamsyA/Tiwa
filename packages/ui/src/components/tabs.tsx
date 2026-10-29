@@ -59,8 +59,17 @@ export function Tabs({ items, ariaLabel, className, children, ...rest }: TabsPro
       </TabsPrimitive.List>
       {items.map((item) => (
         // forceMount keeps every panel in the DOM so no trigger's
-        // aria-controls dangles; Radix hides inactive panels.
-        <TabsPrimitive.Content key={item.value} value={item.value} forceMount>
+        // aria-controls dangles; `hidden` keeps inactive panels out of
+        // the tab order and the accessibility tree. Panels with no
+        // content to show are never tab stops (default Radix tabindex
+        // would park keyboard users on empty regions).
+        <TabsPrimitive.Content
+          key={item.value}
+          value={item.value}
+          forceMount
+          hidden={active !== item.value}
+          tabIndex={children ? undefined : -1}
+        >
           {active === item.value ? children?.(item.value) : null}
         </TabsPrimitive.Content>
       ))}

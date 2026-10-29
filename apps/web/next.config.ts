@@ -1,10 +1,12 @@
 import { withSentryConfig } from '@sentry/nextjs/config';
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import withSerwistInit from '@serwist/next';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === '1' });
+const withSerwist = withSerwistInit({ swSrc: 'app/sw.ts', swDest: 'public/sw.js' });
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -38,7 +40,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(withAnalyzer(withNextIntl(nextConfig)), {
+export default withSentryConfig(withAnalyzer(withNextIntl(withSerwist(nextConfig))), {
   // No org/auth in P0: sourcemap upload stays off so builds are hermetic.
   // org/project/sentryUrl land with real keys (P17 production config).
   telemetry: false,

@@ -122,6 +122,7 @@ Recorded 2026-10-28 at the P0 gate; upgraded 2026-10-28 (Next 16.4.3, React 19.3
 | Zod | 3.23.8 |
 | Pino | 9.6.0 |
 | Sentry SDKs | @sentry/nextjs + @sentry/node 11.10.0 (`withSentryConfig` now under `@sentry/nextjs/config`) |
+| Serwist | 9.5.13 (injectManifest, precache + runtime cache static assets) |
 
 ---
 
