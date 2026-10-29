@@ -116,7 +116,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P2-T03 `/signup`, `/login`, OTP screen, magic-link landing; `next` redirect.
 - [x] P2-T04 Onboarding: role choice, host profile, business setup (creates Organization + OWNER membership).
 - [x] P2-T05 `packages/core/auth`: Actor type, action list, matrix (`PRD.md §2.1`), presets, `authorize()`; table-driven tests for every role × action.
-- [ ] P2-T06 `apps/web/lib/action.ts` wrapper and `getCtx()`; error mapping to codes.
+- [x] P2-T06 `apps/web/lib/action.ts` wrapper and `getCtx()`; error mapping to codes.
 - [ ] P2-T07 Org members: invite by phone/email, roles OWNER/ADMIN/STAFF, remove.
 - [ ] P2-T08 Settings: profile, theme, language placeholder, export my data (job stub), delete account (anonymise).
 - [ ] P2-T09 Outbox publisher job (`events/publish-outbox`) and audit helper.

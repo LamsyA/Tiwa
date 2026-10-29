@@ -4,12 +4,13 @@ import { Button, FieldShell, GuestShell, Input } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { saveBusinessProfile, saveHostProfile, type OnboardingResult } from './actions.js';
+import type { ActionResult } from '@/lib/action.js';
+import { saveBusinessProfile, saveHostProfile } from './actions.js';
 
 type Errors = Record<string, string | undefined>;
 
 /** Shared submit: maps message keys to `onboarding.errors.*`, navigates on success. */
-function useSubmit(save: () => Promise<OnboardingResult>, to: string) {
+function useSubmit(save: () => Promise<ActionResult<unknown>>, to: string) {
   const router = useRouter();
   const t = useTranslations('onboarding.errors');
   const [errors, setErrors] = React.useState<Errors>({});
@@ -24,10 +25,14 @@ function useSubmit(save: () => Promise<OnboardingResult>, to: string) {
         router.push(to);
         return;
       }
+      if (result.code === 'UNAUTHENTICATED') {
+        router.push(`/login?next=${encodeURIComponent('/onboarding')}`);
+        return;
+      }
       if (result.fieldErrors) {
         setErrors(
           Object.fromEntries(
-            Object.entries(result.fieldErrors).map(([field, keys]) => [field, t(keys[0] ?? 'generic')]),
+            Object.entries(result.fieldErrors).map(([field, keys]) => [field, t(keys?.[0] ?? 'generic')]),
           ),
         );
       } else {
