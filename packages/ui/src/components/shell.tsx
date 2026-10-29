@@ -48,14 +48,14 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
     case 'planner':
       return {
         tabs: [
-          item('home', 'Home', '/', ICON.home),
+          item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
           item('clients', 'Clients', '/clients', ICON.clients),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('more', 'More', '/more', ICON.more),
         ],
         sidebar: [
-          item('home', 'Home', '/', ICON.home),
+          item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
           item('clients', 'Clients', '/clients', ICON.clients),
           item('pipeline', 'Pipeline', '/pipeline', ICON.pipeline),
@@ -69,14 +69,14 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
     case 'vendor':
       return {
         tabs: [
-          item('home', 'Home', '/', ICON.home),
+          item('home', 'Home', '/home', ICON.home),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('bookings', 'Bookings', '/bookings', ICON.bookings),
           item('calendar', 'Calendar', '/calendar', ICON.events),
           item('more', 'More', '/more', ICON.more),
         ],
         sidebar: [
-          item('home', 'Home', '/', ICON.home),
+          item('home', 'Home', '/home', ICON.home),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('quotes', 'Quotes', '/quotes', ICON.money),
           item('bookings', 'Bookings', '/bookings', ICON.bookings),
@@ -90,14 +90,14 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
     default:
       return {
         tabs: [
-          item('home', 'Home', '/', ICON.home),
+          item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('money', 'Money', '/money', ICON.money),
           item('more', 'More', '/more', ICON.more),
         ],
         sidebar: [
-          item('home', 'Home', '/', ICON.home),
+          item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('money', 'Money', '/money', ICON.money),

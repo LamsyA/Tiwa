@@ -273,6 +273,22 @@
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
-    "backToEvent": "Back to the event"
+    "backToEvent": "Back to the event",
+    "list": {
+      "title": "Events",
+      "newEvent": "New event",
+      "tabUpcoming": "Upcoming",
+      "tabPast": "Past",
+      "tabDrafts": "Drafts",
+      "emptyUpcomingTitle": "No upcoming events",
+      "emptyUpcomingBody": "Create an event to get a checklist, budget and team space.",
+      "emptyPastTitle": "No past events yet",
+      "emptyPastBody": "Events you've finished or cancelled will show here.",
+      "emptyDraftsTitle": "No drafts",
+      "emptyDraftsBody": "Events you start but don't finish setting up wait here.",
+      "continueSetup": "Continue setup",
+      "noDate": "Date not set",
+      "progress": "{done} of {total} tasks done"
+    }
   }
 }
