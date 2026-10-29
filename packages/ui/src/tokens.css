@@ -16,6 +16,7 @@
   --warning-soft: #fdf3e2;
   --danger: #b91c1c;
   --danger-soft: #fbe9e9;
+  --on-danger: #ffffff;
   --focus: #2563eb;
 
   --radius-sm: 8px;
@@ -59,6 +60,7 @@
   --warning-soft: #2a1f08;
   --danger: #f87171;
   --danger-soft: #2b1111;
+  --on-danger: #140804;
   --focus: #60a5fa;
 }
 
@@ -81,6 +83,7 @@
     --warning-soft: #2a1f08;
     --danger: #f87171;
     --danger-soft: #2b1111;
+    --on-danger: #140804;
     --focus: #60a5fa;
   }
 }

@@ -40,7 +40,7 @@ export function ListItem({ leading, title, meta, trailing, actions = [], onOpen,
   return (
     <div className={cn('border-border relative overflow-hidden border-b', className)}>
       <div
-        className="bg-danger text-white absolute inset-y-0 right-0 flex"
+        className="bg-danger text-on-danger absolute inset-y-0 right-0 flex"
         aria-hidden={!revealed}
         style={{ width: actionWidth }}
       >

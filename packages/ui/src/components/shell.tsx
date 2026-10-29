@@ -257,7 +257,7 @@ export function AppShell({
                   {tab.icon}
                   <span className="max-w-full truncate px-1">{tab.label}</span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className="bg-danger absolute right-1/2 top-1 translate-x-4 rounded-full px-1 text-[10px] font-medium text-white">
+                    <span className="bg-danger absolute right-1/2 top-1 translate-x-4 rounded-full px-1 text-[10px] font-medium text-on-danger">
                       {tab.badge > 9 ? '9+' : tab.badge}
                     </span>
                   )}

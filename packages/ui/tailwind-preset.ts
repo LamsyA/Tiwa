@@ -18,12 +18,17 @@ export default {
           DEFAULT: 'var(--brand)',
           strong: 'var(--brand-strong)',
           soft: 'var(--brand-soft)',
-          on: 'var(--on-brand)',
         },
         accent: 'var(--accent)',
         success: { DEFAULT: 'var(--success)', soft: 'var(--success-soft)' },
         warning: { DEFAULT: 'var(--warning)', soft: 'var(--warning-soft)' },
         danger: { DEFAULT: 'var(--danger)', soft: 'var(--danger-soft)' },
+        // NOTE: kept flat (not nested under `brand`/`danger`) because Tailwind v4's
+        // @config compat layer silently drops a nested key literally named
+        // `on`. Verified 2026-10-29: `text-brand-on` generated zero rules.
+        'on-brand': 'var(--on-brand)',
+        'on-danger': 'var(--on-danger)',
+        focus: 'var(--focus)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',

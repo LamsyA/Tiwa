@@ -2,6 +2,10 @@
 @config '../../../packages/ui/tailwind-preset';
 @import '../../../packages/ui/src/tokens.css';
 
+/* Monorepo sources are outside the app dir, so register them explicitly —
+   automatic content detection only covers files under apps/web. */
+@source '../../../packages/ui/src';
+
 body {
   background-color: var(--bg);
   color: var(--text);
