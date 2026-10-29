@@ -4,6 +4,7 @@ import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg, type OrgAction } from '../auth/org.js';
 import { normaliseEmail, toE164 } from '../shared/contact.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
+import { audit } from '../shared/outbox.js';
 
 // Organisation members (ACC-03, P2-T07). Invites go by phone or email: an
 // existing account is added directly; otherwise a placeholder account is
@@ -36,12 +37,6 @@ async function loadAccess(actor: UserActor, orgId: string, action: OrgAction) {
   const membership = await prisma.membership.findUnique({ where: { orgId_userId: { orgId, userId: actor.userId } } });
   authorizeOrg(actor, action, orgId, membership ? { orgId, role: membership.role } : null);
   return membership as NonNullable<typeof membership>;
-}
-
-function audit(actorId: string, action: string, orgId: string, data: Record<string, string>) {
-  return prisma.auditLog.create({
-    data: { actorId, actorType: 'user', action, targetType: 'Organization', targetId: orgId, data },
-  });
 }
 
 export interface InviteResult {
@@ -80,15 +75,12 @@ export async function inviteMember(actor: UserActor, input: z.infer<typeof invit
     const existing = await tx.membership.findUnique({ where: { orgId_userId: { orgId: org.id, userId: user.id } } });
     if (existing) throw new ConflictError('Already a member', { reason: 'already-member' });
     await tx.membership.create({ data: { orgId: org.id, userId: user.id, role: input.role } });
-    await tx.auditLog.create({
-      data: {
-        actorId: actor.userId,
-        actorType: 'user',
-        action: 'org.member.invite',
-        targetType: 'Organization',
-        targetId: org.id,
-        data: { userId: user.id, role: input.role, created },
-      },
+    await audit(tx, {
+      actor,
+      action: 'org.member.invite',
+      targetType: 'Organization',
+      targetId: org.id,
+      data: { userId: user.id, role: input.role, created },
     });
     return {
       userId: user.id,
@@ -109,11 +101,15 @@ export async function updateMemberRole(actor: UserActor, input: z.infer<typeof u
   if (RANK[target.role] >= RANK[mine.role] || RANK[input.role] >= RANK[mine.role]) {
     throw new ForbiddenError('Cannot change this member', { reason: 'role-too-high' });
   }
-  await prisma.membership.update({ where: { id: target.id }, data: { role: input.role } });
-  await audit(actor.userId, 'org.member.role', input.orgId, {
-    userId: input.userId,
-    from: target.role,
-    to: input.role,
+  await prisma.$transaction(async (tx) => {
+    await tx.membership.update({ where: { id: target.id }, data: { role: input.role } });
+    await audit(tx, {
+      actor,
+      action: 'org.member.role',
+      targetType: 'Organization',
+      targetId: input.orgId,
+      data: { userId: input.userId, from: target.role, to: input.role },
+    });
   });
 }
 
@@ -132,8 +128,16 @@ export async function removeMember(actor: UserActor, input: z.infer<typeof remov
     const owners = await prisma.membership.count({ where: { orgId: input.orgId, role: 'OWNER' } });
     if (owners <= 1) throw new ConflictError('Last owner', { reason: 'last-owner' });
   }
-  await prisma.membership.delete({ where: { id: target.id } });
-  await audit(actor.userId, leaving ? 'org.member.leave' : 'org.member.remove', input.orgId, { userId: input.userId });
+  await prisma.$transaction(async (tx) => {
+    await tx.membership.delete({ where: { id: target.id } });
+    await audit(tx, {
+      actor,
+      action: leaving ? 'org.member.leave' : 'org.member.remove',
+      targetType: 'Organization',
+      targetId: input.orgId,
+      data: { userId: input.userId },
+    });
+  });
 }
 
 export interface MemberRow {

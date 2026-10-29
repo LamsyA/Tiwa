@@ -150,6 +150,9 @@ importers:
       '@tiwa/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@tiwa/db':
+        specifier: workspace:^
+        version: link:../../packages/db
       bullmq:
         specifier: ^5.15.0
         version: 5.81.5

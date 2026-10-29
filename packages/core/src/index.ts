@@ -15,3 +15,4 @@ export { ORG_ACTIONS, ORG_MATRIX, authorizeOrg, type OrgAction, type OrgAccess }
 export * from './shared/contact.js';
 export * from './orgs/members.js';
 export * from './accounts/settings.js';
+export * from './shared/outbox.js';

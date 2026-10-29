@@ -15,6 +15,7 @@
     "@sentry/node": "^11.10.0",
     "@tiwa/config": "workspace:*",
     "@tiwa/core": "workspace:*",
+    "@tiwa/db": "workspace:^",
     "bullmq": "^5.15.0",
     "ioredis": "^5.4.2"
   },

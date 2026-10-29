@@ -4,6 +4,8 @@ import { env } from '@tiwa/config';
 import { createLogger, scrubSentryEvent } from '@tiwa/core';
 import { Redis } from 'ioredis';
 import { PING_JOB, handlePing } from './jobs/ping.js';
+import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
+import { TOPIC_HANDLERS } from './jobs/topics.js';
 
 const QUEUE_NAME = 'tiwa';
 
@@ -24,12 +26,16 @@ async function main() {
     QUEUE_NAME,
     async (job) => {
       if (job.name === PING_JOB) return handlePing();
+      if (job.name === PUBLISH_OUTBOX_JOB) return handlePublishOutbox(queue);
+      const handler = TOPIC_HANDLERS[job.name];
+      if (handler) return handler(job.data, log);
       throw new Error(`unknown job: ${job.name}`);
     },
     { connection },
   );
 
   worker.on('completed', (job) => {
+    if (job.name === PUBLISH_OUTBOX_JOB) return; // every 2 s; too noisy to log
     log.info({ job: job.name, id: job.id }, 'job completed');
   });
   worker.on('failed', (job, error) => {
@@ -56,6 +62,12 @@ async function main() {
   });
 
   await queue.add(PING_JOB, {}, { jobId: `boot-${Date.now()}`, removeOnComplete: 100 });
+  // Single scheduler entry (upsert is idempotent across restarts and replicas).
+  await queue.upsertJobScheduler(
+    PUBLISH_OUTBOX_JOB,
+    { every: PUBLISH_OUTBOX_EVERY_MS },
+    { name: PUBLISH_OUTBOX_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
+  );
   log.info({ queue: QUEUE_NAME }, 'listening');
 }
 

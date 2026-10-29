@@ -1,6 +1,9 @@
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { ConflictError } from '../shared/errors.js';
+import { audit, enqueue } from '../shared/outbox.js';
+
+const self = (userId: string) => ({ kind: 'user' as const, userId, isAdmin: false });
 
 // Accounts module: settings (ACC-04, ACC-05, Backend.md §12 data rights).
 
@@ -37,10 +40,8 @@ export async function requestDataExport(
       orderBy: { createdAt: 'desc' },
     });
     if (recent) return { requestedAt: recent.createdAt, repeat: true };
-    const event = await tx.outboxEvent.create({ data: { topic: EXPORT_TOPIC, payload: { userId } } });
-    await tx.auditLog.create({
-      data: { actorId: userId, actorType: 'user', action: 'account.export', targetType: 'User', targetId: userId },
-    });
+    const event = await enqueue(tx, EXPORT_TOPIC, { userId });
+    await audit(tx, { actor: self(userId), action: 'account.export', targetType: 'User', targetId: userId });
     return { requestedAt: event.createdAt, repeat: false };
   });
 }
@@ -89,16 +90,13 @@ export async function deleteMyAccount(userId: string): Promise<void> {
         deletedAt: new Date(),
       },
     });
-    await tx.auditLog.create({
-      data: {
-        actorId: userId,
-        actorType: 'user',
-        action: 'account.delete',
-        targetType: 'User',
-        targetId: userId,
-        data: { closedOrgs: closing },
-      },
+    await audit(tx, {
+      actor: self(userId),
+      action: 'account.delete',
+      targetType: 'User',
+      targetId: userId,
+      data: { closedOrgs: closing },
     });
-    await tx.outboxEvent.create({ data: { topic: 'account.deleted', payload: { userId } } });
+    await enqueue(tx, 'account.deleted', { userId });
   });
 }
