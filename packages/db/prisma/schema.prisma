@@ -22,27 +22,28 @@ datasource db {
 // ───────────── Accounts & organisations (Backend.md §3) ─────────────
 
 model User {
-  id                  String       @id @default(uuid(7))
+  id                  String             @id @default(uuid(7))
   name                String
-  email               String?      @unique @db.Citext
-  emailVerified       Boolean      @default(false)
-  phone               String?      @unique // E.164 — canonical contact number (Tiwa flows)
-  phoneVerified       Boolean      @default(false)
+  email               String?            @unique @db.Citext
+  emailVerified       Boolean            @default(false)
+  phone               String?            @unique // E.164 — canonical contact number (Tiwa flows)
+  phoneVerified       Boolean            @default(false)
   // Better Auth phone-number plugin columns (plugin-managed; mirrored to
   // phone/phoneVerified by our verify wrappers — see apps/web/lib/auth.ts).
-  phoneNumber         String?      @unique
-  phoneNumberVerified Boolean      @default(false)
+  phoneNumber         String?            @unique
+  phoneNumberVerified Boolean            @default(false)
   image               String?
-  locale              String       @default("en")
-  countryCode         String       @default("NG")
-  isAdmin             Boolean      @default(false)
+  locale              String             @default("en")
+  countryCode         String             @default("NG")
+  isAdmin             Boolean            @default(false)
   adminRole           AdminRole?
   suspendedAt         DateTime?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
   deletedAt           DateTime?
   memberships         Membership[]
-  // participants EventParticipant[] — arrives with P3-T02 (Event model)
+  participants        EventParticipant[]
+  ownedTasks          Task[]             @relation("TaskOwner")
   sessions            Session[]
   accounts            Account[]
 }
@@ -100,6 +101,212 @@ enum OrgRole {
   OWNER
   ADMIN
   STAFF
+}
+
+// ───────────── Events (Backend.md §3, P3-T02) ─────────────
+// guests, bookings and gallery relations arrive with P4, P7 and P5.
+
+model Event {
+  id                     String             @id @default(uuid(7))
+  slug                   String             @unique
+  type                   String // template key from packages/config
+  format                 EventFormat
+  status                 EventStatus        @default(DRAFT)
+  name                   String
+  description            String?
+  coverKey               String?
+  themeColor             String?
+  visibility             Visibility         @default(PRIVATE)
+  countryCode            String
+  currency               String
+  timezone               String
+  startsAt               DateTime?
+  endsAt                 DateTime?
+  expectedGuests         Int?
+  plannedBudgetMinor     BigInt             @default(0) // total budget; "unallocated" = this − sum(BudgetCategory.plannedMinor)
+  invitesEnabled         Boolean            @default(false)
+  ticketsEnabled         Boolean            @default(false)
+  momentsEnabled         Boolean            @default(true)
+  sharedLinkEnabled      Boolean            @default(false)
+  allowForwarding        Boolean            @default(true)
+  hostCanSeeVendorPrices Boolean            @default(true)
+  wizardStep             String?
+  createdById            String
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  cancelledAt            DateTime?
+  closedAt               DateTime?
+  deletedAt              DateTime?
+  participants           EventParticipant[]
+  days                   EventDay[]
+  programme              ProgrammeItem[]
+  tasks                  Task[]
+  documents              Document[]
+  budgetCategories       BudgetCategory[]
+
+  @@index([status, startsAt])
+  @@index([createdById])
+}
+
+enum EventFormat {
+  PRIVATE_CELEBRATION
+  CORPORATE
+  PUBLIC_TICKETED
+  COMMUNITY
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  CANCELLED
+  COMPLETED
+}
+
+enum Visibility {
+  PRIVATE
+  LINK_ONLY
+  PUBLIC
+}
+
+model EventParticipant {
+  id           String    @id @default(uuid(7))
+  eventId      String
+  userId       String?
+  orgId        String? // planner or vendor org
+  role         EventRole
+  permissions  Json      @default("{}") // Backend.md §4.3; approveUpToMinor stored as a string
+  invitedEmail String?
+  invitedPhone String?
+  acceptedAt   DateTime?
+  removedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  event        Event     @relation(fields: [eventId], references: [id])
+  user         User?     @relation(fields: [userId], references: [id])
+
+  @@index([eventId, role])
+  @@index([userId])
+}
+
+enum EventRole {
+  HOST
+  CO_HOST
+  PLANNER
+  PLANNER_STAFF
+  VENDOR
+  PHOTOGRAPHER
+}
+
+model EventDay {
+  id        String          @id @default(uuid(7))
+  eventId   String
+  date      DateTime        @db.Date
+  title     String?
+  venueName String?
+  address   String?
+  lat       Float?
+  lng       Float?
+  sortOrder Int             @default(0)
+  event     Event           @relation(fields: [eventId], references: [id])
+  programme ProgrammeItem[]
+
+  @@index([eventId, date])
+}
+
+// One model for the event's programme: ceremony segments, conference sessions, performances.
+// Created from the event-type template. `isPublic` items appear on guest/public pages (the agenda).
+model ProgrammeItem {
+  id        String    @id @default(uuid(7))
+  eventId   String
+  dayId     String?
+  key       String? // template key, e.g. "reception", "keynote"
+  title     String
+  startsAt  DateTime?
+  endsAt    DateTime?
+  room      String?
+  speakers  String[]
+  isPublic  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  event     Event     @relation(fields: [eventId], references: [id])
+  day       EventDay? @relation(fields: [dayId], references: [id])
+
+  @@index([eventId, startsAt])
+}
+
+model Task {
+  id          String           @id @default(uuid(7))
+  eventId     String
+  key         String? // template checklist key (for "add the new template's tasks" without duplicates)
+  title       String
+  notes       String?
+  timeframe   String? // template bucket e.g. "12w", "1w", "day", "after"
+  dueAt       DateTime?
+  ownerUserId String?
+  ownerOrgId  String?
+  priority    Priority         @default(NORMAL)
+  status      TaskStatus       @default(TODO)
+  completedAt DateTime?
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  event       Event            @relation(fields: [eventId], references: [id])
+  owner       User?            @relation("TaskOwner", fields: [ownerUserId], references: [id])
+  dependsOn   TaskDependency[] @relation("TaskDependsOn")
+  dependants  TaskDependency[] @relation("TaskDependant")
+
+  @@index([eventId, status, dueAt])
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+model TaskDependency {
+  taskId      String
+  dependsOnId String
+  task        Task   @relation("TaskDependsOn", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn   Task   @relation("TaskDependant", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, dependsOnId])
+}
+
+model Document {
+  id           String    @id @default(uuid(7))
+  eventId      String?
+  bookingId    String? // relation arrives with Booking (P7)
+  uploadedById String
+  name         String
+  storageKey   String    @unique
+  mime         String
+  sizeBytes    Int
+  uploadedAt   DateTime? // null until the browser confirms the upload finished
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+  event        Event?    @relation(fields: [eventId], references: [id])
+
+  @@index([eventId, createdAt])
+}
+
+// ───────────── Budget (categories now; expenses, contributions in P9) ─────────────
+
+model BudgetCategory {
+  id           String @id @default(uuid(7))
+  eventId      String
+  key          String
+  label        String
+  plannedMinor BigInt @default(0)
+  sortOrder    Int    @default(0)
+  event        Event  @relation(fields: [eventId], references: [id])
+
+  @@unique([eventId, key])
 }
 
 // ───────────── Audit & outbox (Backend.md §3) ─────────────

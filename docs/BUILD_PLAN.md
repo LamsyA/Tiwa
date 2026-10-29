@@ -137,7 +137,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `PRD.md §3, EVT-*`, `UF-03`, `UF-04`, `UF-05`, `Backend.md §3 (events), §5.10`, `Frontend.md §6.3 (events)`.
 
 - [x] P3-T01 `packages/config/event-types/`: at least 20 templates covering all four formats (label, format, checklist, budget categories with %, vendor categories, programme items, default features). `vendor-categories.ts`. Unit test: every template is valid.
-- [ ] P3-T02 Prisma: Event, EventParticipant, EventDay, ProgrammeItem, Task, TaskDependency, Document; migration.
+- [x] P3-T02 Prisma: Event, EventParticipant, EventDay, ProgrammeItem, Task, TaskDependency, Document; migration.
 - [ ] P3-T03 Core `events` commands/queries with tests (draft, steps, finalize applies template, duplicate, cancel rules).
 - [ ] P3-T04 Wizard `/events/new` (type grid grouped by format with search, basics, venue & days, guests & budget & visibility, features) with autosave and resume.
 - [ ] P3-T05 Event overview `/events/[id]` with cards (progress, deadlines, team; money/guests/moments cards render placeholders until their phases).
