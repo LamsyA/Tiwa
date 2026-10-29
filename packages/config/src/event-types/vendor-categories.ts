@@ -1,0 +1,31 @@
+// Marketplace vendor categories (MKT-03). Templates reference these keys.
+export const VENDOR_CATEGORIES = {
+  venue: 'Venue',
+  catering: 'Catering',
+  small_chops: 'Small chops',
+  drinks: 'Drinks and bar',
+  cake: 'Cake and desserts',
+  decor: 'Decor and styling',
+  photography: 'Photography',
+  videography: 'Videography',
+  dj: 'DJ',
+  live_band: 'Live band',
+  mc: 'MC or host',
+  sound_lighting: 'Sound and lighting',
+  rentals: 'Chairs, tables and tents',
+  makeup: 'Makeup and hair',
+  fashion: 'Outfits and tailoring',
+  printing: 'Printing and stationery',
+  souvenirs: 'Souvenirs and gifts',
+  security: 'Security',
+  ushers: 'Ushers and hostesses',
+  transport: 'Transport',
+  av_production: 'AV and stage production',
+  speakers: 'Speakers and talent',
+  funeral_services: 'Funeral services',
+  clergy: 'Officiant or clergy',
+  entertainment: 'Kids entertainment',
+  cleaning: 'Cleaning',
+} as const;
+
+export type VendorCategory = keyof typeof VENDOR_CATEGORIES;

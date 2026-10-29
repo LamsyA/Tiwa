@@ -75,6 +75,19 @@ describe('DateField / TimeField', () => {
   });
 });
 
+describe('Select labelling', () => {
+  it('renders a visible label tied to the trigger', () => {
+    render(<Select label="Language" options={[{ value: 'en', label: 'English' }]} value="en" />);
+    expect(screen.getByText('Language')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Language' })).toHaveTextContent('English');
+  });
+
+  it('forwards aria-label when there is no visible label', () => {
+    render(<Select aria-label="Permissions" options={[{ value: 'full', label: 'Full' }]} value="full" />);
+    expect(screen.getByRole('button', { name: 'Permissions' })).toBeInTheDocument();
+  });
+});
+
 describe('Select', () => {
   const options = [
     { value: 'birthday', label: 'Birthday' },
@@ -86,7 +99,7 @@ describe('Select', () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
     render(<Select options={options} onValueChange={onValueChange} placeholder="Pick one" aria-label="Type" />);
-    await user.click(screen.getByRole('button', { name: 'Pick one' }));
+    await user.click(screen.getByRole('button', { name: 'Type' }));
     expect(screen.getByRole('listbox')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Wedding' }));
     expect(onValueChange).toHaveBeenCalledWith('wedding');
@@ -96,7 +109,7 @@ describe('Select', () => {
     const user = userEvent.setup();
     const many = Array.from({ length: 10 }, (_, i) => ({ value: `o${i}`, label: `Option ${i}` }));
     render(<Select options={many} onValueChange={() => {}} placeholder="Pick" aria-label="Many" />);
-    await user.click(screen.getByRole('button', { name: 'Pick' }));
+    await user.click(screen.getByRole('button', { name: 'Many' }));
     await user.type(screen.getByLabelText('Search options'), 'Option 9');
     expect(screen.getByRole('option', { name: 'Option 9' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
@@ -112,7 +125,7 @@ describe('Select', () => {
         aria-label="Vendors"
       />,
     );
-    await user.click(screen.getByRole('button', { name: 'Search vendors' }));
+    await user.click(screen.getByRole('button', { name: 'Vendors' }));
     await user.type(screen.getByLabelText('Search options'), 'deejay');
     expect(await screen.findByRole('option', { name: 'Found deejay' })).toBeInTheDocument();
   });
@@ -130,7 +143,7 @@ describe('Combobox', () => {
         aria-label="Choice"
       />,
     );
-    await user.click(screen.getByRole('button', { name: 'Pick or type' }));
+    await user.click(screen.getByRole('button', { name: 'Choice' }));
     await user.type(screen.getByLabelText('Search options'), 'Zulu');
     await user.click(await screen.findByRole('button', { name: 'Use "Zulu"' }));
     expect(onValueChange).toHaveBeenCalledWith('Zulu');

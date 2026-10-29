@@ -23,6 +23,8 @@ interface PickerProps {
   className?: string;
   id?: string;
   emptyText?: string;
+  /** Accessible name when there is no visible `label`. */
+  'aria-label'?: string;
 }
 
 function useOptions(
@@ -168,6 +170,7 @@ function Picker({
   id,
   allowCustom = false,
   emptyText = 'No matches found',
+  'aria-label': ariaLabel,
 }: PickerProps & { allowCustom?: boolean }) {
   const [internal, setInternal] = React.useState(defaultValue ?? '');
   const value = controlled ?? internal;
@@ -196,6 +199,7 @@ function Picker({
         <button
           type="button"
           id={id}
+          aria-label={ariaLabel}
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(
@@ -249,9 +253,36 @@ export interface SelectProps extends PickerProps {
   label?: React.ReactNode;
 }
 
+/** Visible label above the trigger, tied to it with htmlFor (a button is labelable). */
+function Labelled({
+  label,
+  id,
+  children,
+}: {
+  label: React.ReactNode | undefined;
+  id: string;
+  children: React.ReactNode;
+}) {
+  if (label === undefined) return <>{children}</>;
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-text">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 /** Dropdown select: search appears for long static lists or async sources. */
-export function Select(props: SelectProps) {
-  return <Picker {...props} />;
+export function Select({ label, id, ...props }: SelectProps) {
+  const autoId = React.useId();
+  const triggerId = id ?? autoId;
+  return (
+    <Labelled label={label} id={triggerId}>
+      <Picker {...props} id={triggerId} />
+    </Labelled>
+  );
 }
 
 export interface ComboboxProps extends PickerProps {
@@ -262,6 +293,12 @@ export interface ComboboxProps extends PickerProps {
  * Combobox: filterable picker that also accepts a custom value
  * (Enter on `Use "…"`) when nothing matches.
  */
-export function Combobox({ searchable = true, ...props }: ComboboxProps) {
-  return <Picker {...props} searchable={searchable} allowCustom />;
+export function Combobox({ searchable = true, label, id, ...props }: ComboboxProps) {
+  const autoId = React.useId();
+  const triggerId = id ?? autoId;
+  return (
+    <Labelled label={label} id={triggerId}>
+      <Picker {...props} id={triggerId} searchable={searchable} allowCustom />
+    </Labelled>
+  );
 }

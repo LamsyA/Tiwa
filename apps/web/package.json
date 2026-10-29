@@ -16,6 +16,7 @@
     "@tiwa/config": "workspace:*",
     "@tiwa/core": "workspace:*",
     "@tiwa/db": "workspace:*",
+    "@tiwa/storage": "workspace:^",
     "better-auth": "^1.7.14",
     "ioredis": "^5.4.2",
     "lucide-react": "^1.63.0",

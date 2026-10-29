@@ -2,8 +2,8 @@ import { prisma, type OrgRole } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg, type OrgAction } from '../auth/org.js';
-import { normaliseEmail, toE164 } from '../shared/contact.js';
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
+import { findOrCreateContactUser, normaliseEmail, toE164 } from '../shared/contact.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
 
 // Organisation members (ACC-03, P2-T07). Invites go by phone or email: an
@@ -58,20 +58,8 @@ export async function inviteMember(actor: UserActor, input: z.infer<typeof invit
   const email = input.email ? normaliseEmail(input.email) : undefined;
 
   return prisma.$transaction(async (tx) => {
-    let user: { id: string; deletedAt: Date | null } | null = await tx.user.findFirst({
-      where: phone ? { phone } : { email: email as string },
-      select: { id: true, deletedAt: true },
-    });
-    if (user?.deletedAt) throw new ValidationError('Account closed', { reason: 'account-deleted' });
-    const created = !user;
-    if (!user) {
-      user = await tx.user.create({
-        data: phone
-          ? { name: '', phone, phoneNumber: phone, countryCode: org.countryCode }
-          : { name: '', email: email as string, countryCode: org.countryCode },
-        select: { id: true, deletedAt: true },
-      });
-    }
+    const { userId, created } = await findOrCreateContactUser(tx, { phone, email }, org.countryCode);
+    const user = { id: userId };
     const existing = await tx.membership.findUnique({ where: { orgId_userId: { orgId: org.id, userId: user.id } } });
     if (existing) throw new ConflictError('Already a member', { reason: 'already-member' });
     await tx.membership.create({ data: { orgId: org.id, userId: user.id, role: input.role } });

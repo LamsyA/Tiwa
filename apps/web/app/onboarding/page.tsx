@@ -11,10 +11,15 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   if (!session?.user) redirect(`/login?next=${encodeURIComponent('/onboarding')}`);
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id as string },
-    select: { name: true, phone: true, _count: { select: { memberships: true } } },
+    select: {
+      name: true,
+      phone: true,
+      // Invited team members and event co-hosts skip the role step (UF-01 step 6).
+      _count: { select: { memberships: true, participants: { where: { removedAt: null } } } },
+    },
   });
   const decision = triageOnboarding(
-    { name: user.name, phone: user.phone, membershipCount: user._count.memberships },
+    { name: user.name, phone: user.phone, membershipCount: user._count.memberships + user._count.participants },
     next,
   );
   if (decision.done) redirect(decision.to);

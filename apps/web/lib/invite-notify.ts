@@ -1,5 +1,5 @@
 import { env } from '@tiwa/config';
-import type { InviteResult } from '@tiwa/core';
+import type { EventInviteResult, InviteResult } from '@tiwa/core';
 import { emailSender, smsSender } from './auth.js';
 
 /**
@@ -27,4 +27,26 @@ export async function notifyTeamInvite(invite: InviteResult): Promise<{ sent: bo
 
 function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
+}
+
+/** EVT-06: tell an invited co-host or planner where to sign in; the link lands on the event (UF-04 step 2). */
+export async function notifyEventInvite(invite: EventInviteResult): Promise<{ sent: boolean }> {
+  const link = `${env.APP_URL}/login?next=${encodeURIComponent(`/events/${invite.eventId}`)}`;
+  try {
+    if (invite.channel === 'sms') {
+      await smsSender.send({
+        to: invite.to,
+        body: `You've been added to "${invite.eventName}" on Tiwa. Open: ${link}`,
+      });
+    } else {
+      await emailSender.send({
+        to: invite.to,
+        subject: `You've been added to ${invite.eventName} on Tiwa`,
+        html: `<p>You've been added to <strong>${escapeHtml(invite.eventName)}</strong> on Tiwa.</p><p><a href="${link}">Open the event</a></p>`,
+      });
+    }
+    return { sent: true };
+  } catch {
+    return { sent: false };
+  }
 }

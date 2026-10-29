@@ -20,7 +20,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | P0 | Foundation and tooling | DONE | 2026-10-28 |
 | P1 | Design system and app frames | DONE | 2026-10-29 |
 | P2 | Accounts, organisations, permissions | DONE | 2026-10-29 |
-| P3 | Events and planning | TODO | |
+| P3 | Events and planning | IN PROGRESS | |
 | P4 | Guests and one-click invitations | TODO | |
 | P5 | Moments | TODO | |
 | P6 | Marketplace and chat | TODO | |
@@ -136,15 +136,15 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** create any type of event, manage members, tasks and documents.
 **Read first:** `PRD.md §3, EVT-*`, `UF-03`, `UF-04`, `UF-05`, `Backend.md §3 (events), §5.10`, `Frontend.md §6.3 (events)`.
 
-- [ ] P3-T01 `packages/config/event-types/`: at least 20 templates covering all four formats (label, format, checklist, budget categories with %, vendor categories, programme items, default features). `vendor-categories.ts`. Unit test: every template is valid.
-- [ ] P3-T02 Prisma: Event, EventParticipant, EventDay, ProgrammeItem, Task, TaskDependency, Document; migration.
-- [ ] P3-T03 Core `events` commands/queries with tests (draft, steps, finalize applies template, duplicate, cancel rules).
-- [ ] P3-T04 Wizard `/events/new` (type grid grouped by format with search, basics, venue & days, guests & budget & visibility, features) with autosave and resume.
-- [ ] P3-T05 Event overview `/events/[id]` with cards (progress, deadlines, team; money/guests/moments cards render placeholders until their phases).
-- [ ] P3-T06 `/events` list (Upcoming/Past/Drafts).
-- [ ] P3-T07 Members & permissions settings (presets, approval limit), invitation acceptance flow (incl. UF-01-5: co-host invite lands on the event with the CO_HOST role, e2e).
-- [ ] P3-T08 Plan page `/events/[id]/plan`: grouped tasks, filters, detail panel/sheet, add/complete, live updates (SSE `event:{id}` channel — build the SSE infrastructure here: Redis pub/sub + `useLive`).
-- [ ] P3-T09 Documents upload (reuse storage multipart endpoints, see `Backend.md §11`) and list.
+- [x] P3-T01 `packages/config/event-types/`: at least 20 templates covering all four formats (label, format, checklist, budget categories with %, vendor categories, programme items, default features). `vendor-categories.ts`. Unit test: every template is valid.
+- [x] P3-T02 Prisma: Event, EventParticipant, EventDay, ProgrammeItem, Task, TaskDependency, Document; migration.
+- [x] P3-T03 Core `events` commands/queries with tests (draft, steps, finalize applies template, duplicate, cancel rules).
+- [x] P3-T04 Wizard `/events/new` (type grid grouped by format with search, basics, venue & days, guests & budget & visibility, features) with autosave and resume.
+- [x] P3-T05 Event overview `/events/[id]` with cards (progress, deadlines, team; money/guests/moments cards render placeholders until their phases).
+- [x] P3-T06 `/events` list (Upcoming/Past/Drafts).
+- [x] P3-T07 Members & permissions settings (presets, approval limit), invitation acceptance flow (incl. UF-01-5: co-host invite lands on the event with the CO_HOST role, e2e).
+- [x] P3-T08 Plan page `/events/[id]/plan`: grouped tasks, filters, detail panel/sheet, add/complete, live updates (SSE `event:{id}` channel — build the SSE infrastructure here: Redis pub/sub + `useLive`).
+- [x] P3-T09 Documents upload (reuse storage multipart endpoints, see `Backend.md §11`) and list.
 - [ ] P3-T10 Event settings: details, features toggles, visibility, cancel (blocked when bookings/payments exist), cover image + theme colour.
 - [ ] P3-T11 `events/deadline-alerts` job (in-app notification stub until P13).
 - [ ] P3-T12 Seed: one event of each format; e2e UF-03, UF-04, UF-05.
