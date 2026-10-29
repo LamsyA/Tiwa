@@ -120,6 +120,40 @@ export interface TaskRow {
   ownerName: string | null;
 }
 
+export type DeadlineKind = 'dueSoon' | 'overdue';
+
+export interface DeadlineAlert {
+  taskId: string;
+  eventId: string;
+  kind: DeadlineKind;
+  dueAt: Date;
+}
+
+/**
+ * Tasks needing a nudge (P3-T11, Backend.md §10 `events/deadline-alerts`):
+ * not DONE, dated, due within `soonHours` (overdue included). Closed events
+ * (CANCELLED/COMPLETED) never alert. Ids only — the P13 `messaging/notify`
+ * consumer renders the titles.
+ */
+export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Promise<DeadlineAlert[]> {
+  const soon = new Date(now.getTime() + soonHours * 60 * 60 * 1000);
+  const rows = await prisma.task.findMany({
+    where: {
+      status: { not: 'DONE' },
+      dueAt: { not: null, lte: soon },
+      event: { status: { in: ['DRAFT', 'ACTIVE'] } },
+    },
+    select: { id: true, eventId: true, dueAt: true },
+    orderBy: { dueAt: 'asc' },
+    take: 500,
+  });
+  return rows.flatMap((row) =>
+    row.dueAt
+      ? [{ taskId: row.id, eventId: row.eventId, kind: row.dueAt < now ? 'overdue' : 'dueSoon', dueAt: row.dueAt }]
+      : [],
+  );
+}
+
 export async function listTasks(actor: UserActor, eventId: string): Promise<TaskRow[]> {
   await requireEventAccess(actor, eventId, 'event.view');
   const rows = await prisma.task.findMany({

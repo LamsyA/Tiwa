@@ -3,6 +3,7 @@ import { Queue, Worker } from 'bullmq';
 import { env } from '@tiwa/config';
 import { createLogger, scrubSentryEvent } from '@tiwa/core';
 import { Redis } from 'ioredis';
+import { DEADLINE_ALERTS_EVERY_MS, DEADLINE_ALERTS_JOB, handleDeadlineAlerts } from './jobs/deadline-alerts.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
 import { TOPIC_HANDLERS } from './jobs/topics.js';
@@ -27,6 +28,7 @@ async function main() {
     async (job) => {
       if (job.name === PING_JOB) return handlePing();
       if (job.name === PUBLISH_OUTBOX_JOB) return handlePublishOutbox(queue);
+      if (job.name === DEADLINE_ALERTS_JOB) return handleDeadlineAlerts(log);
       const handler = TOPIC_HANDLERS[job.name];
       if (handler) return handler(job.data, log);
       throw new Error(`unknown job: ${job.name}`);
@@ -67,6 +69,11 @@ async function main() {
     PUBLISH_OUTBOX_JOB,
     { every: PUBLISH_OUTBOX_EVERY_MS },
     { name: PUBLISH_OUTBOX_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
+  );
+  await queue.upsertJobScheduler(
+    DEADLINE_ALERTS_JOB,
+    { every: DEADLINE_ALERTS_EVERY_MS },
+    { name: DEADLINE_ALERTS_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
   );
   log.info({ queue: QUEUE_NAME }, 'listening');
 }
