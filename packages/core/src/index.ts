@@ -21,3 +21,4 @@ export * from './shared/zoned.js';
 export * from './events/access.js';
 export * from './events/commands.js';
 export * from './events/queries.js';
+export * from './events/members.js';

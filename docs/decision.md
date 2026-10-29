@@ -193,3 +193,10 @@ Template:
 - Decision: Playwright serves the production build locally as well as in CI. `scripts/e2e-server.mjs` rebuilds `apps/web` only when sources are newer than `.next/BUILD_ID`, then runs `next start`; Playwright never reuses a server it didn't start.
 - Why: under `next dev`, routes compile mid-test and Fast Refresh remounts forms or interrupts navigations — the P2 flow specs failed there and passed 48/48 against a production build. Matching CI also makes local results trustworthy.
 - Affects: playwright.config.ts, scripts/e2e-server.mjs, AGENTS.md §3 step 6 (flow specs).
+
+### 2026-10-29 — Member presets match UF-04 wording
+- ID: D-X10
+- Status: AGENT
+- Decision: `view_only` has no money access (was `money: view`) so a View only co-host cannot open Money (UF-04-1). `contributor` ("tasks, guests") gets `eventEdit` (tasks need `event.edit`, Backend §6), guests edit + contacts and run-of-show edit, no money. `finance` and `full` take the host's approval cap (empty = no limit). Event invites reuse the placeholder-account approach (D-X07) through a shared `findOrCreateContactUser`; onboarding triage treats an event invitation like a team membership, so invitees land on the event (UF-01-5).
+- Why: the P2 presets contradicted UF-04's acceptance checks; one helper keeps team and event invites identical.
+- Affects: packages/core/src/auth/presets.ts, packages/core/src/events/members.ts, apps/web/app/onboarding/page.tsx.

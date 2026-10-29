@@ -289,6 +289,57 @@
       "continueSetup": "Continue setup",
       "noDate": "Date not set",
       "progress": "{done} of {total} tasks done"
+    },
+    "members": {
+      "title": "Members and permissions",
+      "back": "Event settings",
+      "addHeading": "Add someone",
+      "byPhone": "Phone",
+      "byEmail": "Email",
+      "inviteBy": "Invite by",
+      "phoneLabel": "Phone number",
+      "emailLabel": "Email address",
+      "roleLabel": "Role",
+      "presetLabel": "Permissions",
+      "presets": {
+        "view_only": "View only",
+        "contributor": "Contributor — tasks and guests",
+        "finance": "Finance — budget and payments",
+        "full": "Full — everything except closing the event",
+        "host": "Everything"
+      },
+      "approveLabel": "Can approve payments up to",
+      "approveHint": "Leave empty for no limit.",
+      "add": "Send invite",
+      "added": "Invite sent",
+      "addedNotSent": "Added. We couldn't send the message, so share the event link yourself.",
+      "membersHeading": "People on this event",
+      "pending": "Invited",
+      "unnamed": "Invited person",
+      "you": "You",
+      "save": "Save",
+      "remove": "Remove",
+      "removeTitle": "Remove {name}?",
+      "removeBody": "They lose access to this event on their next click.",
+      "cancel": "Cancel",
+      "upTo": "Approves up to",
+      "noLimit": "No approval limit",
+      "errors": {
+        "phoneOrEmail": "Enter a phone number or an email address",
+        "invalidPhone": "Enter a valid phone number",
+        "invalidEmail": "Enter a valid email address",
+        "invalidAmount": "Enter an amount",
+        "CONFLICT": "That person is already on this event.",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "money": {
+      "heading": "Budget",
+      "planned": "Planned budget",
+      "categoriesHeading": "Budget by category",
+      "empty": "Categories appear when the event is created.",
+      "comingSoon": "Expenses, payments and contributions arrive with bookings and payments."
     }
   }
 }

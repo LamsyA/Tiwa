@@ -32,7 +32,7 @@ export const PRESETS: Record<PresetName, ParticipantPermissions> = {
     preset: 'view_only',
     eventEdit: false,
     membersManage: false,
-    money: 'view',
+    money: 'none', // UF-04-1: view-only members can't open Money
     approveUpToMinor: 0n,
     guests: 'view',
     guestContacts: false,
@@ -44,16 +44,16 @@ export const PRESETS: Record<PresetName, ParticipantPermissions> = {
   },
   contributor: {
     preset: 'contributor',
-    eventEdit: false,
+    eventEdit: true, // tasks and plan (Backend.md §6: tasks need event.edit)
     membersManage: false,
-    money: 'view',
+    money: 'none',
     approveUpToMinor: 0n,
-    guests: 'view',
-    guestContacts: false,
+    guests: 'edit',
+    guestContacts: true,
     tickets: 'none',
     moments: 'upload',
     momentsOfficial: false,
-    runOfShow: 'none',
+    runOfShow: 'edit',
     chat: true,
   },
   finance: {

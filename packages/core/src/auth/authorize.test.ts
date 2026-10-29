@@ -55,8 +55,12 @@ describe('matrix: grants and tiers', () => {
 
   it('money tiers gate view vs edit', () => {
     const view = access('CO_HOST', { ...PRESETS.view_only });
-    expect(allows(user(), 'money.view', view)).toBe(true);
+    expect(allows(user(), 'money.view', view)).toBe(false); // UF-04-1
     expect(allows(user(), 'money.edit', view)).toBe(false);
+    const contributor = access('CO_HOST', { ...PRESETS.contributor });
+    expect(allows(user(), 'money.view', contributor)).toBe(false);
+    expect(allows(user(), 'event.edit', contributor)).toBe(true);
+    expect(allows(user(), 'guests.manage', contributor)).toBe(true);
     const edit = access('CO_HOST', { ...PRESETS.finance });
     expect(allows(user(), 'money.edit', edit)).toBe(true);
   });
