@@ -140,7 +140,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P3-T02 Prisma: Event, EventParticipant, EventDay, ProgrammeItem, Task, TaskDependency, Document; migration.
 - [x] P3-T03 Core `events` commands/queries with tests (draft, steps, finalize applies template, duplicate, cancel rules).
 - [x] P3-T04 Wizard `/events/new` (type grid grouped by format with search, basics, venue & days, guests & budget & visibility, features) with autosave and resume.
-- [ ] P3-T05 Event overview `/events/[id]` with cards (progress, deadlines, team; money/guests/moments cards render placeholders until their phases).
+- [x] P3-T05 Event overview `/events/[id]` with cards (progress, deadlines, team; money/guests/moments cards render placeholders until their phases).
 - [ ] P3-T06 `/events` list (Upcoming/Past/Drafts).
 - [ ] P3-T07 Members & permissions settings (presets, approval limit), invitation acceptance flow (incl. UF-01-5: co-host invite lands on the event with the CO_HOST role, e2e).
 - [ ] P3-T08 Plan page `/events/[id]/plan`: grouped tasks, filters, detail panel/sheet, add/complete, live updates (SSE `event:{id}` channel — build the SSE infrastructure here: Redis pub/sub + `useLive`).

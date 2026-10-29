@@ -219,6 +219,60 @@
       "dateRequired": "Pick a date before creating the event",
       "unknownType": "Choose an event type",
       "generic": "We couldn't save that. Please try again."
-    }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "plan": "Plan",
+      "money": "Money",
+      "settings": "Settings",
+      "sections": "Event sections"
+    },
+    "roles": {
+      "HOST": "Host",
+      "CO_HOST": "Co-host",
+      "PLANNER": "Planner",
+      "PLANNER_STAFF": "Planner staff",
+      "VENDOR": "Vendor",
+      "PHOTOGRAPHER": "Photographer"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "CANCELLED": "Cancelled",
+      "COMPLETED": "Completed"
+    },
+    "overview": {
+      "welcomeTitle": "Your event is ready",
+      "welcomeBody": "We added a checklist and budget from the template. Start with the next deadline below.",
+      "noDate": "Date not set",
+      "progressHeading": "Progress",
+      "progressLabel": "Tasks done",
+      "progressCounts": "{done} of {total} done",
+      "outstanding": "Outstanding",
+      "overdue": "Overdue",
+      "blocked": "Blocked",
+      "deadlinesHeading": "Next deadlines",
+      "deadlinesEmpty": "No upcoming deadlines.",
+      "openPlan": "Open the plan",
+      "moneyHeading": "Money",
+      "moneyBudget": "Planned budget",
+      "moneyComingSoon": "Payments and spending show here once vendors are booked.",
+      "vendorsHeading": "Vendors",
+      "vendorsComingSoon": "Find and book vendors for this event soon.",
+      "guestsHeading": "Guests",
+      "guestsExpected": "{count, plural, one {# guest expected} other {# guests expected}}",
+      "guestsComingSoon": "Guest list and RSVPs arrive with invitations.",
+      "momentsHeading": "Moments",
+      "momentsComingSoon": "Photos from your guests will appear here.",
+      "teamHeading": "Team",
+      "teamPending": "Invited",
+      "manageTeam": "Manage team",
+      "draftBanner": "This event is still a draft.",
+      "continueSetup": "Continue setup",
+      "cancelledBanner": "This event was cancelled."
+    },
+    "forbiddenTitle": "You don't have access to this",
+    "forbiddenBody": "Ask the host to change your permissions.",
+    "backToEvent": "Back to the event"
   }
 }
