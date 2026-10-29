@@ -1,4 +1,4 @@
-import { render, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { AppShell, GuestShell, navigationForRole } from './shell.js';
@@ -22,7 +22,27 @@ describe('AppShell', () => {
     const mobile = document.querySelector('[data-frame="mobile"]') as HTMLElement;
     const inbox = within(mobile).getByRole('link', { name: 'Inbox' });
     expect(inbox).toHaveAttribute('aria-current', 'page');
-    expect(within(mobile).getByText('Body')).toBeInTheDocument();
+    expect(screen.getByText('Body')).toBeInTheDocument();
+  });
+
+  it('renders page content, section tabs and actions exactly once (no duplicate forms or ids)', () => {
+    render(
+      <AppShell
+        role="host"
+        active="home"
+        title="Home"
+        actions={<button type="button">Search</button>}
+        sectionTabs={<a href="#a">Tab A</a>}
+      >
+        <form>
+          <input id="only-once" aria-label="Field" />
+        </form>
+      </AppShell>,
+    );
+    expect(document.querySelectorAll('#only-once')).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: 'Tab A' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Search' })).toHaveLength(1);
+    expect(screen.getAllByRole('heading', { level: 1, name: 'Home' })).toHaveLength(1);
   });
 
   it('renders the sticky action and section tabs slots', () => {
@@ -37,9 +57,8 @@ describe('AppShell', () => {
         <p>Body</p>
       </AppShell>,
     );
-    const mobile = document.querySelector('[data-frame="mobile"]') as HTMLElement;
-    expect(within(mobile).getByRole('button', { name: 'Overview' })).toBeInTheDocument();
-    expect(within(mobile).getByRole('button', { name: 'New booking' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New booking' })).toBeInTheDocument();
   });
 
   it('collapses and expands the desktop sidebar', async () => {
@@ -60,8 +79,7 @@ describe('AppShell', () => {
         <p>Body</p>
       </AppShell>,
     );
-    const mobile = document.querySelector('[data-frame="mobile"]') as HTMLElement;
-    expect(within(mobile).getByRole('button', { name: 'Back' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
     expect(container.textContent).toContain('Details');
   });
 });

@@ -179,3 +179,10 @@ Template:
 - Decision: Inviting an org member by phone/email adds an existing account directly, or creates a placeholder User carrying only that contact (unverified, empty name) plus the Membership. The person signs in to that account with OTP or a magic link (Better Auth finds it by `phoneNumber`/`email`), and onboarding triage sends members straight to their destination (UF-01 step 6). No separate invite table. Roles are ranked OWNER > ADMIN > STAFF: you act on and grant only roles below yours; OWNER is never granted; the last OWNER cannot leave. The team page lives at `/settings/team`; a simple invite SMS/email goes out via the P2 senders until P4 templates.
 - Why: no model is needed for a pending state that the account itself already represents; works for both channels without extra tokens.
 - Affects: packages/core/src/orgs, apps/web/app/settings/team, apps/web/lib/invite-notify.ts, P4 (messaging templates).
+
+### 2026-10-29 — E2E outbox hook, one-tree AppShell, 30-day sessions
+- ID: D-X08
+- Status: AGENT
+- Decision: (1) E2E tests read OTP codes and magic links from `/api/test/outbox`, which exists only when `E2E_TEST_HOOKS=1`, `APP_ENV` is not production and both SMS and email providers are Fake (else 404); Playwright's webServer sets the flag. (2) `AppShell` renders page content, section tabs and actions once; only the chrome switches by breakpoint (it used to render `children` twice, duplicating forms and ids). (3) Sessions are 30-day sliding (Backend §12), not 7 days. (4) `buttonClasses()` lives in a server-safe module so server pages can style links as buttons.
+- Why: (1) deterministic flow tests without reading the database or exposing codes; (2) duplicate forms broke label lookups, ids and screen readers; (3) spec alignment; (4) client-module functions cannot be called from server components.
+- Affects: apps/web/lib/test-hooks.ts, apps/web/app/api/test/outbox, playwright.config.ts, packages/ui (shell, button), apps/web/lib/auth.ts.

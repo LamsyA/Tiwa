@@ -26,6 +26,8 @@ export async function requestOtp(rawPhone: string, ip: string): Promise<{ ok: tr
 export interface VerifyResult {
   userId: string;
   newUser: boolean;
+  /** Better Auth's `Set-Cookie` values for the new session; the route must forward them. */
+  setCookies: string[];
 }
 
 /** Step 2: verify the code. 5 wrong tries lock the number for 15 min (UF-01-4). */
@@ -40,10 +42,15 @@ export async function verifyOtp(rawPhone: string, code: string, ip: string): Pro
     });
   }
   let result: { user?: { id?: string } | null; newUser?: boolean } | null;
+  let setCookies: string[];
   try {
-    result = (await auth.api.verifyPhoneNumber({
+    // returnHeaders: the session cookie only reaches the browser if we pass it on.
+    const { headers, response } = await auth.api.verifyPhoneNumber({
       body: { phoneNumber: phone, code: code.trim() },
-    })) as typeof result;
+      returnHeaders: true,
+    });
+    result = response as typeof result;
+    setCookies = headers.getSetCookie();
   } catch {
     throw new ValidationError('That code is wrong or expired', { field: 'code' });
   }
@@ -55,7 +62,7 @@ export async function verifyOtp(rawPhone: string, code: string, ip: string): Pro
     data: { phone, phoneVerified: true },
   });
   await clearRateLimit(`otp:verify:${phone}`);
-  return { userId, newUser: result?.newUser ?? false };
+  return { userId, newUser: result?.newUser ?? false, setCookies };
 }
 
 /** Magic-link send (rate-limited like a login attempt). */

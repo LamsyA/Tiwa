@@ -193,20 +193,75 @@ export function AppShell({
   const [collapsed, setCollapsed] = React.useState(false);
 
   return (
-    <>
-      {/* Mobile frame */}
-      <div data-frame="mobile" className="flex min-h-dvh flex-col lg:hidden">
+    // One tree for every width: page content, section tabs and actions render
+    // exactly once (no duplicate forms or ids); only the chrome switches —
+    // mobile top bar + bottom tabs below `lg`, sidebar at `lg+`.
+    <div data-frame="app" className="flex min-h-dvh">
+      <aside
+        data-frame="desktop"
+        aria-label="Sidebar"
+        className={cn(
+          'border-border bg-surface sticky top-0 hidden h-dvh shrink-0 flex-col border-r transition-[width] duration-fast ease-out lg:flex',
+          collapsed ? 'w-[72px]' : 'w-60',
+        )}
+      >
+        <div className="flex h-14 items-center gap-2 px-3">
+          {!collapsed && <span className="font-display flex-1 text-lg font-bold">Tiwa</span>}
+          {roleSwitcher}
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
+            className="text-muted hover:text-text ml-auto flex size-9 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-focus"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className={cn('size-5 transition-transform', collapsed && 'rotate-180')}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.75}
+              aria-hidden
+            >
+              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <ul className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+          {sidebar.map((link) => (
+            <li key={link.key}>
+              <a
+                href={link.href}
+                aria-current={active === link.key ? 'page' : undefined}
+                title={collapsed ? link.label : undefined}
+                className={cn(
+                  'flex items-center gap-3 rounded-md px-3 py-2.5 text-base',
+                  active === link.key
+                    ? 'bg-brand-soft text-text font-medium'
+                    : 'text-muted hover:text-text hover:bg-surface-2',
+                  collapsed && 'justify-center px-0',
+                )}
+              >
+                {link.icon}
+                {!collapsed && <span className="truncate">{link.label}</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
         <header
           className="bg-bg/95 sticky top-0 z-40 border-b border-border backdrop-blur"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div className="flex h-14 items-center gap-1 px-2">
+          <div className="flex h-14 items-center gap-1 px-2 lg:gap-3 lg:px-6">
             {onBack && (
               <button
                 type="button"
                 onClick={onBack}
                 aria-label="Back"
-                className="text-text flex size-11 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-focus"
+                className="text-text flex size-11 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-focus lg:hidden"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -220,27 +275,47 @@ export function AppShell({
                 </svg>
               </button>
             )}
-            <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{title}</h1>
-            <div className="flex items-center gap-1">{actions}</div>
+            {/* Mobile title lives in the bar; desktop shows it above the content. */}
+            <p aria-hidden className="min-w-0 flex-1 truncate text-lg font-semibold lg:hidden">
+              {title}
+            </p>
+            {search && <div className="hidden max-w-md flex-1 lg:block">{search}</div>}
+            <div className="ml-auto flex items-center gap-1 lg:gap-2">{actions}</div>
           </div>
           {sectionTabs && (
-            <nav aria-label="Sections" className="scrollbar-none -mx-0 overflow-x-auto px-4 pb-2">
+            <nav aria-label="Sections" className="scrollbar-none flex gap-1 overflow-x-auto px-4 pb-2 lg:px-6">
               {sectionTabs}
             </nav>
           )}
         </header>
-        <main className="flex-1 px-4 pb-4">{children}</main>
+
+        <div className="flex min-w-0 flex-1">
+          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-4 pb-4 lg:px-8 lg:py-6">
+            <div className="mb-4 flex items-start justify-between gap-4 pt-4 lg:pt-0">
+              <h1 className="font-display sr-only text-2xl font-bold lg:not-sr-only">{title}</h1>
+              {headerAction && <div className="hidden shrink-0 lg:block">{headerAction}</div>}
+            </div>
+            {children}
+          </main>
+          {sidePanel && (
+            <aside aria-label="Details" className="border-border hidden w-[360px] shrink-0 border-l p-6 xl:block">
+              {sidePanel}
+            </aside>
+          )}
+        </div>
+
         {stickyAction && (
           <div
-            className="bg-bg/95 sticky bottom-[64px] z-30 border-t border-border px-4 py-3"
+            className="bg-bg/95 sticky bottom-[64px] z-30 border-t border-border px-4 py-3 lg:hidden"
             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom) / 3)' }}
           >
             {stickyAction}
           </div>
         )}
         <nav
+          data-frame="mobile"
           aria-label="Primary"
-          className="bg-bg sticky bottom-0 z-40 border-t border-border"
+          className="bg-bg sticky bottom-0 z-40 border-t border-border lg:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <ul className="flex h-16">
@@ -267,88 +342,6 @@ export function AppShell({
           </ul>
         </nav>
       </div>
-
-      {/* Desktop frame */}
-      <div data-frame="desktop" className="hidden min-h-dvh lg:flex">
-        <aside
-          aria-label="Sidebar"
-          className={cn(
-            'border-border bg-surface sticky top-0 flex h-dvh shrink-0 flex-col border-r transition-[width] duration-fast ease-out',
-            collapsed ? 'w-[72px]' : 'w-60',
-          )}
-        >
-          <div className="flex h-14 items-center gap-2 px-3">
-            {!collapsed && <span className="font-display flex-1 text-lg font-bold">Tiwa</span>}
-            {roleSwitcher}
-            <button
-              type="button"
-              onClick={() => setCollapsed((c) => !c)}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-expanded={!collapsed}
-              className="text-muted hover:text-text ml-auto flex size-9 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-focus"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className={cn('size-5 transition-transform', collapsed && 'rotate-180')}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                aria-hidden
-              >
-                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-          <ul className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
-            {sidebar.map((link) => (
-              <li key={link.key}>
-                <a
-                  href={link.href}
-                  aria-current={active === link.key ? 'page' : undefined}
-                  title={collapsed ? link.label : undefined}
-                  className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-base',
-                    active === link.key
-                      ? 'bg-brand-soft text-text font-medium'
-                      : 'text-muted hover:text-text hover:bg-surface-2',
-                    collapsed && 'justify-center px-0',
-                  )}
-                >
-                  {link.icon}
-                  {!collapsed && <span className="truncate">{link.label}</span>}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </aside>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="bg-bg/95 sticky top-0 z-40 border-b border-border backdrop-blur">
-            <div className="flex h-14 items-center gap-3 px-6">
-              {search && <div className="max-w-md flex-1">{search}</div>}
-              <div className="ml-auto flex items-center gap-2">{actions}</div>
-            </div>
-            {sectionTabs && (
-              <nav aria-label="Sections" className="flex gap-1 overflow-x-auto px-6 pb-2">
-                {sectionTabs}
-              </nav>
-            )}
-          </header>
-          <div className="flex min-w-0 flex-1">
-            <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-6 py-6 lg:px-8">
-              <div className="mb-4 flex items-start justify-between gap-4">
-                <h1 className="font-display text-2xl font-bold">{title}</h1>
-                {headerAction && <div className="shrink-0">{headerAction}</div>}
-              </div>
-              {children}
-            </main>
-            {sidePanel && (
-              <aside aria-label="Details" className="border-border hidden w-[360px] shrink-0 border-l p-6 xl:block">
-                {sidePanel}
-              </aside>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

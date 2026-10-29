@@ -3,12 +3,12 @@ export * from './theme.js';
 export {
   Button,
   IconButton,
-  buttonClasses,
   type ButtonProps,
   type ButtonSize,
   type ButtonVariant,
   type IconButtonProps,
 } from './components/button.js';
+export { buttonClasses } from './lib/button-classes.js';
 export { Label } from './components/label.js';
 export { FieldShell, Input, Textarea, type InputProps, type TextareaProps } from './components/input.js';
 export {

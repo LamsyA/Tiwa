@@ -37,6 +37,7 @@ export default defineConfig({
     timeout: 120_000,
     // Local dev output goes to .next-dev so `.next` always holds the
     // production build perf/size run against. CI tests the prod build.
-    ...(process.env.CI ? {} : { env: { NEXT_DIST_DIR: '.next-dev' } }),
+    // E2E_TEST_HOOKS exposes the Fake senders' outbox (codes, links) to tests; see lib/test-hooks.ts.
+    env: { E2E_TEST_HOOKS: '1', ...(process.env.CI ? {} : { NEXT_DIST_DIR: '.next-dev' }) },
   },
 });

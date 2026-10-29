@@ -60,11 +60,15 @@ const options = {
       expiresIn: 900,
     }),
   ],
+  // Backend.md §12: 30-day sliding sessions (refreshed at most daily). Cookies are
+  // httpOnly + SameSite=Lax always, and Secure whenever APP_URL is https.
   session: {
-    expiresIn: 60 * 60 * 24 * 7,
+    expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,
   },
 } satisfies BetterAuthOptions;
+
+export const authOptions = options;
 
 export const auth: Auth<typeof options> = betterAuth(options);
 

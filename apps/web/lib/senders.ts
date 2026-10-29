@@ -24,12 +24,36 @@ export interface EmailSender {
   send(message: EmailMessage): Promise<{ providerRef: string | undefined }>;
 }
 
+/**
+ * Messages captured by the Fake senders, shared across module instances (Next
+ * can load a module once per route bundle). Read by the e2e test hook only.
+ */
+export interface CapturedMessage {
+  channel: 'sms' | 'email';
+  to: string;
+  body: string;
+  at: number;
+}
+
+const globalOutbox = globalThis as unknown as { __tiwaFakeOutbox?: CapturedMessage[] };
+
+export function fakeOutbox(): CapturedMessage[] {
+  return (globalOutbox.__tiwaFakeOutbox ??= []);
+}
+
+function capture(message: CapturedMessage) {
+  const outbox = fakeOutbox();
+  outbox.push(message);
+  if (outbox.length > 200) outbox.splice(0, outbox.length - 200);
+}
+
 export class FakeSmsSender implements SmsSender {
   readonly kind = 'fake';
   readonly sent: SmsMessage[] = [];
 
   async send(message: SmsMessage): Promise<{ providerRef: string | undefined }> {
     this.sent.push(message);
+    capture({ channel: 'sms', to: message.to, body: message.body, at: Date.now() });
     if (process.env.NODE_ENV !== 'test') {
       console.log(`[sms:fake] to=${message.to} body=${message.body}`);
     }
@@ -68,6 +92,7 @@ export class FakeEmailSender implements EmailSender {
 
   async send(message: EmailMessage): Promise<{ providerRef: string | undefined }> {
     this.sent.push(message);
+    capture({ channel: 'email', to: message.to, body: message.html, at: Date.now() });
     if (process.env.NODE_ENV !== 'test') {
       console.log(`[email:fake] to=${message.to} subject=${message.subject}`);
     }

@@ -1,4 +1,4 @@
-import { isDomainError } from '@tiwa/core';
+import { isDomainError, safeNextPath } from '@tiwa/core';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { sendMagicLink } from '@/lib/otp.js';
@@ -8,12 +8,18 @@ function clientIp(request: NextRequest): string {
 }
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as { email?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { email?: unknown; next?: unknown };
   if (typeof body.email !== 'string') {
     return NextResponse.json({ ok: false, error: 'Enter a valid email address' }, { status: 400 });
   }
   try {
-    await sendMagicLink(body.email, clientIp(request));
+    // The link lands on onboarding triage, which forwards finished profiles to `next` (UF-02-2).
+    const next = safeNextPath(typeof body.next === 'string' ? body.next : null, '');
+    await sendMagicLink(
+      body.email,
+      clientIp(request),
+      next ? `/onboarding?next=${encodeURIComponent(next)}` : '/onboarding',
+    );
     // Same response whether or not the address exists (no account enumeration).
     return NextResponse.json({ ok: true });
   } catch (error) {

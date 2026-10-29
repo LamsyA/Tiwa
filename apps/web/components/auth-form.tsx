@@ -98,7 +98,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     setFormError(undefined);
     setSending(true);
     try {
-      const result = await postJson('/api/auth/magic-link/send', { email });
+      const result = await postJson('/api/auth/magic-link/send', { email, ...(next ? { next } : {}) });
       if (!result.ok) {
         setFormError(result.error);
         return;
@@ -234,11 +234,6 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
           >
             {cooldown > 0 ? t('resendIn', { seconds: cooldown }) : t('resendCode')}
           </Button>
-          {formError && !locked && (
-            <p role="alert" className="text-danger text-sm">
-              {formError}
-            </p>
-          )}
         </div>
       )}
 

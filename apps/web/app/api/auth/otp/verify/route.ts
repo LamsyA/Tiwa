@@ -13,8 +13,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Enter the 6-digit code' }, { status: 400 });
   }
   try {
-    const result = await verifyOtp(body.phone, body.code, clientIp(request));
-    return NextResponse.json({ ok: true, ...result });
+    const { setCookies, ...result } = await verifyOtp(body.phone, body.code, clientIp(request));
+    const response = NextResponse.json({ ok: true, ...result });
+    for (const cookie of setCookies) response.headers.append('set-cookie', cookie);
+    return response;
   } catch (error) {
     if (!isDomainError(error)) throw error;
     const status = error.code === 'RATE_LIMITED' ? 429 : 400;

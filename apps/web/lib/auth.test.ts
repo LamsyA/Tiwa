@@ -36,6 +36,10 @@ describe('phone OTP flow', () => {
 
     const result = await verifyOtp(phone, code as string, ip('1'));
     expect(typeof result.userId).toBe('string');
+    // The browser only gets a session if the cookie comes back (regression: it was dropped).
+    const sessionCookie = result.setCookies.find((cookie) => cookie.includes('session_token='));
+    expect(sessionCookie).toMatch(/HttpOnly/i);
+    expect(sessionCookie).toMatch(/SameSite=Lax/i);
 
     const user = await prisma.user.findUnique({ where: { id: result.userId } });
     expect(user?.phoneVerified).toBe(true);
@@ -77,6 +81,18 @@ describe('magic link', () => {
     const last = email.sent[email.sent.length - 1];
     expect(last?.to).toBe(address);
     expect(last?.html).toContain('/api/auth/magic-link/verify');
+  });
+});
+
+describe('login rate limit (Backend.md §13: 10 per IP per 10 min)', () => {
+  it('the 11th sign-in attempt from one IP is refused', async () => {
+    const shared = ip('login');
+    for (let i = 0; i < 10; i += 1) {
+      await sendMagicLink(`limit${RUN}-${i}@example.com`, shared);
+    }
+    await expect(sendMagicLink(`limit${RUN}-x@example.com`, shared)).rejects.toThrow(RateLimitedError);
+    // Another IP is unaffected.
+    await expect(sendMagicLink(`limit${RUN}-y@example.com`, ip('login-2'))).resolves.toEqual({ ok: true });
   });
 });
 
