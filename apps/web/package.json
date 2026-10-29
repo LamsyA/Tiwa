@@ -23,7 +23,8 @@
     "next-intl": "^4.14.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "serwist": "^9.5.13"
+    "serwist": "^9.5.13",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.4.3",

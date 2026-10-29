@@ -41,5 +41,32 @@
     "invalidPhone": "Enter a valid phone number",
     "invalidEmail": "Enter a valid email address",
     "invalidCode": "Enter the 6-digit code"
+  },
+  "onboarding": {
+    "roleTitle": "What brings you to Tiwa?",
+    "roleHostTitle": "I'm hosting an event",
+    "roleHostBody": "Plan a celebration, gathering or programme of any size.",
+    "rolePlannerTitle": "I plan events for clients",
+    "rolePlannerBody": "Run your planning business on Tiwa.",
+    "roleVendorTitle": "I provide event services",
+    "roleVendorBody": "Get booked for food, venues, music, decor and more.",
+    "hostTitle": "Tell us your name",
+    "plannerTitle": "Set up your planning business",
+    "vendorTitle": "Set up your business",
+    "nameLabel": "Your name",
+    "businessName": "Business name",
+    "cityLabel": "City",
+    "cityHint": "Where are you based?",
+    "continue": "Continue",
+    "errors": {
+      "nameTooShort": "Tell us your name (at least 2 characters)",
+      "nameTooLong": "That name is too long",
+      "businessNameTooShort": "Give your business a name",
+      "businessNameTooLong": "That business name is too long",
+      "cityTooShort": "Which city are you based in?",
+      "cityTooLong": "That city name is too long",
+      "alreadySetUp": "You already have a business of this kind.",
+      "generic": "We couldn't save that. Please try again."
+    }
   }
 }

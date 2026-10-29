@@ -165,3 +165,10 @@ Template:
 - Decision: Per task, agents run only fast checks (lint, typecheck, tests for touched packages, the flow's own e2e spec). The full suite runs once per batch of 3–5 tasks; build, all e2e, Lighthouse, size and the 5-width / 2-theme / axe / keyboard checks run at the phase gate. First-load JS budgets raised to 180 / 130 / 140 KB (app / guest / marketing) and are warnings until P17 (`SIZE_STRICT=1` makes them hard). LCP, CLS, INP, TTFB and Lighthouse targets are unchanged.
 - Why: tasks averaged ~20 min, mostly spent re-running the full build/e2e/Lighthouse; the 120 KB marketing budget already failed at 131 KB from framework weight alone (Next 16 + Sentry 11) before any features.
 - Affects: AGENTS.md §3, §4, §7; Frontend.md §9; .size-limit.json; scripts/check-bundle.mjs; gates/1.json; BUILD_PLAN.md P17-T02.
+
+### 2026-10-29 — Onboarding collects only what it persists
+- ID: D-X06
+- Status: AGENT
+- Decision: `/onboarding/business` asks for business name and city (plus the owner's name for phone sign-ups); categories, business phone and logo (UF-01 step 5) move to the BusinessProfile step in P6, and the host photo (step 4) to P5 storage. Onboarding logic lives in `packages/core/src/accounts`; validation errors are message keys; `next` is sanitised by `safeNextPath` (same-origin only).
+- Why: those fields have no model to land in until P5/P6; asking for them now would silently drop answers. Core placement follows D-A02.
+- Affects: packages/core/src/accounts, apps/web/app/onboarding, UF-01 steps 4–5, P5, P6.
