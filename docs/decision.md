@@ -207,3 +207,10 @@ Template:
 - Decision: `packages/storage` (built here; P3-T09 assumed P5's endpoints already existed) exposes `Storage` with an S3 implementation and a Fake. Event documents (≤ 25 MB) upload straight from the browser with a single pre-signed PUT bound to the exact content type and length (D-A05 kept); the server then checks size and magic bytes and deletes mismatches. Storage keys never contain file names. Multipart upload (5 MB parts) arrives with Moments (P5) for large media. Downloads go through `/api/documents/{event}/{doc}`, which checks membership and redirects to a 5-minute signed URL.
 - Why: S3 accepts single PUTs far beyond 25 MB, so multipart adds client complexity for no gain on documents; verifying after upload enforces Backend §12 without proxying bytes.
 - Affects: packages/storage, packages/core/src/events/documents.ts, apps/web documents page + route, ci.yml (S3 mock env), P5.
+
+### 2026-10-29 — Display font ships 700-only, optional, unpreloaded (LCP)
+- ID: D-X12
+- Status: AGENT
+- Decision: Plus Jakarta Sans (the `font-display` face) ships weight 700 only (every display use is `font-bold`), with `display: optional` and `preload: false`. Body (Inter 400/500/600) keeps `swap`.
+- Why: P3-T13: the event title is the mobile LCP node; a late webfont swap repainting it measured 3.2 s simulated. Optional never swaps late (slow loads keep the fallback, cached/fast loads still get Jakarta), and dropping the dead 600 weight plus its preload takes bytes off the critical path. Tried and reverted: `experimental.optimizePackageImports: ['lucide-react']` (shared chunks byte-identical — the 95 KB "unused" JS is framework, not icons).
+- Affects: apps/web/app/layout.tsx, P3-T13 (open: sim still 3.2 s — localhost artifacts, see PROGRESS).

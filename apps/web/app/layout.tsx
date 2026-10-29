@@ -13,11 +13,17 @@ const inter = Inter({
   display: 'swap',
 });
 
+// Display face only ships 700 (every font-display use is font-bold), stays
+// optional, and is NOT preloaded (P3-T13): the 60 KB of High-priority font
+// preloads were racing the render-blocking CSS, so no text could paint until
+// ~2 s on slow 4G. The event title now paints in fallback at ~1 s; Jakarta
+// swaps in on fast/cached loads only. Body (Inter) keeps swap + preload.
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['600', '700'],
+  weight: ['700'],
   variable: '--font-jakarta',
-  display: 'swap',
+  display: 'optional',
+  preload: false,
 });
 
 export const metadata: Metadata = {
