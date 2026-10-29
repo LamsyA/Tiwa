@@ -1,0 +1,15 @@
+{
+  "$comment": "P2 gate — automated checks (BUILD_PLAN.md GATE P2). `pnpm gate 2` runs these in order. The e2e step covers UF-01/UF-02 at 390 + 1280 px (incl. session cookie httpOnly + Lax); unit tests cover the full role × action matrix, OTP + login rate limits and Secure-on-https cookies. `size` is warn-only until P17 (D-X05).",
+  "phase": 2,
+  "name": "Accounts, organisations, permissions",
+  "checks": [
+    { "id": "lint", "run": "pnpm lint" },
+    { "id": "typecheck", "run": "pnpm typecheck" },
+    { "id": "unit", "run": "pnpm test" },
+    { "id": "permission-matrix", "run": "pnpm --filter @tiwa/core exec vitest run src/auth" },
+    { "id": "build", "run": "pnpm build" },
+    { "id": "e2e", "run": "pnpm e2e" },
+    { "id": "lighthouse-home", "run": "pnpm perf" },
+    { "id": "size", "run": "pnpm size" }
+  ]
+}

@@ -31,13 +31,15 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.CI ? 'pnpm --filter @tiwa/web start' : 'pnpm --filter @tiwa/web dev',
+    // Both CI and local runs serve the production build (D-X09): `next dev`
+    // recompiles mid-test and Fast Refresh remounts forms, breaking flows.
+    // Locally, scripts/e2e-server.mjs rebuilds only when sources changed.
+    command: process.env.CI ? 'pnpm --filter @tiwa/web start' : 'node scripts/e2e-server.mjs',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    // Local dev output goes to .next-dev so `.next` always holds the
-    // production build perf/size run against. CI tests the prod build.
+    // Never reuse a server we didn't start: it may lack the test hooks or be a dev server.
+    reuseExistingServer: false,
+    timeout: 300_000,
     // E2E_TEST_HOOKS exposes the Fake senders' outbox (codes, links) to tests; see lib/test-hooks.ts.
-    env: { E2E_TEST_HOOKS: '1', ...(process.env.CI ? {} : { NEXT_DIST_DIR: '.next-dev' }) },
+    env: { E2E_TEST_HOOKS: '1' },
   },
 });

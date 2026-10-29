@@ -186,3 +186,10 @@ Template:
 - Decision: (1) E2E tests read OTP codes and magic links from `/api/test/outbox`, which exists only when `E2E_TEST_HOOKS=1`, `APP_ENV` is not production and both SMS and email providers are Fake (else 404); Playwright's webServer sets the flag. (2) `AppShell` renders page content, section tabs and actions once; only the chrome switches by breakpoint (it used to render `children` twice, duplicating forms and ids). (3) Sessions are 30-day sliding (Backend §12), not 7 days. (4) `buttonClasses()` lives in a server-safe module so server pages can style links as buttons.
 - Why: (1) deterministic flow tests without reading the database or exposing codes; (2) duplicate forms broke label lookups, ids and screen readers; (3) spec alignment; (4) client-module functions cannot be called from server components.
 - Affects: apps/web/lib/test-hooks.ts, apps/web/app/api/test/outbox, playwright.config.ts, packages/ui (shell, button), apps/web/lib/auth.ts.
+
+### 2026-10-29 — Local e2e runs against the production build
+- ID: D-X09
+- Status: AGENT
+- Decision: Playwright serves the production build locally as well as in CI. `scripts/e2e-server.mjs` rebuilds `apps/web` only when sources are newer than `.next/BUILD_ID`, then runs `next start`; Playwright never reuses a server it didn't start.
+- Why: under `next dev`, routes compile mid-test and Fast Refresh remounts forms or interrupts navigations — the P2 flow specs failed there and passed 48/48 against a production build. Matching CI also makes local results trustworthy.
+- Affects: playwright.config.ts, scripts/e2e-server.mjs, AGENTS.md §3 step 6 (flow specs).
