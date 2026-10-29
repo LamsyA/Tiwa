@@ -11,3 +11,4 @@ export * from './auth/matrix.js';
 export { authorize, type Actor, type AuthResource, type EventAccess } from './auth/authorize.js';
 export { authorizeGuest } from './auth/authorize-guest.js';
 export * from './accounts/onboarding.js';
+export { ORG_ACTIONS, ORG_MATRIX, authorizeOrg, type OrgAction, type OrgAccess } from './auth/org.js';

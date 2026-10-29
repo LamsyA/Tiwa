@@ -2,65 +2,68 @@
 // modules table (§2) and §4. Guest-only temporal actions (RSVP, gallery
 // scope) arrive with their data in P3–P5; the guest allowlist in
 // authorize-guest.ts covers what guests can do today.
-export type Action =
-  | 'event.view'
-  | 'event.edit'
-  | 'event.members.manage'
-  | 'event.close'
-  | 'money.view'
-  | 'money.edit'
-  | 'quote.accept'
-  | 'payment.make'
-  | 'guests.manage'
-  | 'guests.contacts.view'
-  | 'tickets.manage'
-  | 'checkin.scan'
-  | 'runofshow.edit'
-  | 'runofshow.updateOwn'
-  | 'moments.moderate'
-  | 'moments.upload.guest'
-  | 'moments.upload.official'
-  | 'review.create'
-  | 'review.reply'
-  | 'review.report'
-  | 'dispute.open'
-  | 'dispute.addEvidence'
-  | 'dispute.decide'
-  | 'chat.startThread'
-  | 'chat.sendMessage'
-  | 'chat.editMessage'
-  | 'chat.deleteMessage'
-  | 'chat.markRead'
-  | 'chat.markDelivered'
-  | 'chat.setTyping'
-  | 'chat.muteThread'
-  | 'chat.archiveThread'
-  | 'chat.blockParty'
-  | 'chat.unblockParty'
-  | 'chat.reportMessage'
-  | 'chat.markDecision'
-  | 'chat.listInbox'
-  | 'chat.getThread'
-  | 'chat.listMessages'
-  | 'chat.searchInbox'
-  | 'chat.canMessage'
-  | 'messaging.notify'
-  | 'messaging.setPreferences'
-  | 'messaging.listNotifications'
-  | 'ai.draftPlan'
-  | 'ai.compareQuotes'
-  | 'ai.draftMessage'
-  | 'ai.captionMedia'
-  | 'admin.decideVerification'
-  | 'admin.moderate'
-  | 'admin.suspendUser'
-  | 'admin.reinstateUser'
-  | 'admin.resolvePaymentException'
-  | 'admin.setFlagOverride'
-  | 'admin.queues'
-  | 'admin.auditLog'
-  | 'subscriptions.startSubscription'
-  | 'subscriptions.cancelSubscription'
-  | 'subscriptions.buyMomentsPlus'
-  | 'subscriptions.entitlements'
-  | 'org.manage';
+export const ACTIONS = [
+  'event.view',
+  'event.edit',
+  'event.members.manage',
+  'event.close',
+  'money.view',
+  'money.edit',
+  'quote.accept',
+  'payment.make',
+  'guests.manage',
+  'guests.contacts.view',
+  'tickets.manage',
+  'checkin.scan',
+  'runofshow.edit',
+  'runofshow.updateOwn',
+  'moments.moderate',
+  'moments.upload.guest',
+  'moments.upload.official',
+  'review.create',
+  'review.reply',
+  'review.report',
+  'dispute.open',
+  'dispute.addEvidence',
+  'dispute.decide',
+  'chat.startThread',
+  'chat.sendMessage',
+  'chat.editMessage',
+  'chat.deleteMessage',
+  'chat.markRead',
+  'chat.markDelivered',
+  'chat.setTyping',
+  'chat.muteThread',
+  'chat.archiveThread',
+  'chat.blockParty',
+  'chat.unblockParty',
+  'chat.reportMessage',
+  'chat.markDecision',
+  'chat.listInbox',
+  'chat.getThread',
+  'chat.listMessages',
+  'chat.searchInbox',
+  'chat.canMessage',
+  'messaging.notify',
+  'messaging.setPreferences',
+  'messaging.listNotifications',
+  'ai.draftPlan',
+  'ai.compareQuotes',
+  'ai.draftMessage',
+  'ai.captionMedia',
+  'admin.decideVerification',
+  'admin.moderate',
+  'admin.suspendUser',
+  'admin.reinstateUser',
+  'admin.resolvePaymentException',
+  'admin.setFlagOverride',
+  'admin.queues',
+  'admin.auditLog',
+  'subscriptions.startSubscription',
+  'subscriptions.cancelSubscription',
+  'subscriptions.buyMomentsPlus',
+  'subscriptions.entitlements',
+  'org.manage',
+] as const;
+
+export type Action = (typeof ACTIONS)[number];
