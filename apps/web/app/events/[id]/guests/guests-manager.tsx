@@ -275,6 +275,7 @@ export function GuestsManager(props: GuestsManagerProps) {
                   <StatusPill tone={row.rsvp === 'YES' ? 'success' : row.rsvp === 'NO' ? 'danger' : 'neutral'}>
                     {t(`rsvpLabels.${row.rsvp}` as 'rsvpLabels.YES')}
                   </StatusPill>
+                  {canManage && <EditGuestDialog eventId={eventId} guest={row} appUrl={appUrl} />}
                 </Card>
               )}
             />

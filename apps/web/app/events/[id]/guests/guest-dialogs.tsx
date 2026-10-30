@@ -595,16 +595,24 @@ export function MergeDialog({
   const [merged, setMerged] = React.useState<string[]>([]);
 
   // Pair each existing duplicate with the added guest sharing its contact.
+  // Phones compare digit-insensitively: the form holds national format
+  // (0803…) while stored numbers are E.164 (+234803…) — strict equality
+  // silently matched nothing and the dialog never opened (P4-T12).
+  const digits = (value: string): string => {
+    const only = value.replace(/\D/g, '');
+    return only.length > 10 ? only.slice(-10) : only;
+  };
   const pairs = duplicates.flatMap((dup) => {
     const match = added.find(
       (row) =>
-        (row.phone && dup.phone && row.phone === dup.phone) ||
+        (row.phone && dup.phone && digits(row.phone) === digits(dup.phone)) ||
         (row.email && dup.email && row.email.toLowerCase() === dup.email.toLowerCase()),
     );
     return match ? [{ dup, match }] : [];
   });
 
   if (pairs.length === 0) return null;
+  const remaining = pairs.filter(({ dup }) => !merged.includes(dup.id));
   return (
     <ResponsiveDialog
       open
@@ -615,8 +623,12 @@ export function MergeDialog({
     >
       <div className="flex flex-col gap-3">
         {error && <Banner tone="danger">{error}</Banner>}
-        {pairs
-          .filter(({ dup }) => !merged.includes(dup.id))
+        {remaining.length === 0 && (
+          <p role="status" className="text-sm font-medium">
+            {t('mergeDialog.merged')}
+          </p>
+        )}
+        {remaining
           .map(({ dup, match }) => (
             <div key={dup.id} className="border-border flex items-center gap-2 rounded-md border p-2">
               <p className="min-w-0 flex-1 truncate text-sm font-medium">{dup.name}</p>

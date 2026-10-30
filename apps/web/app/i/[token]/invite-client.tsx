@@ -153,9 +153,14 @@ export function InviteClient({ data }: { data: InviteClientData }) {
       )}
 
       {rsvp === 'NO' && (
-        <Card className="p-4">
+        <Card className="flex flex-col gap-2 p-4">
           <p className="font-medium">{t('declined')}</p>
           <p className="text-muted text-sm">{t('declinedHint')}</p>
+          <div>
+            <Button iconLeft={<Check aria-hidden className="size-5" />} loading={busy} onClick={() => void post('YES')}>
+              {t('coming')}
+            </Button>
+          </div>
         </Card>
       )}
 
