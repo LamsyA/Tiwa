@@ -9,13 +9,19 @@ import type * as React from 'react';
 import { requirePageUser } from '@/lib/ctx.js';
 import { AppFrame } from './app-frame.js';
 
-export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'settings';
+export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'settings';
 
-const SECTIONS: { key: EventSection; path: string; needs: Action }[] = [
+const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?: boolean }[] = [
   { key: 'overview', path: '', needs: 'event.view' },
   { key: 'plan', path: '/plan', needs: 'event.view' },
   { key: 'money', path: '/money', needs: 'money.view' },
   { key: 'documents', path: '/documents', needs: 'event.view' },
+  // All members see the list (contacts redacted without guests.contacts.view);
+  // edits still require guests.manage, enforced in every action (P4-T03).
+  { key: 'guests', path: '/guests', needs: 'event.view' },
+  // Invitations are optional and off by default (GST-04, UF-07-6): the tab
+  // only shows while the host has them on.
+  { key: 'invites', path: '/invites', needs: 'event.view', needsInvites: true },
   { key: 'settings', path: '/settings', needs: 'event.view' },
 ];
 
@@ -38,7 +44,8 @@ export async function loadEventPage(eventId: string, path: string, needs: Action
   const access = await loadEventAccess(ctx.actor.userId, eventId);
   if (!access) notFound();
   if (access.role !== 'HOST') await markAccepted(eventId, ctx.actor.userId);
-  return { ctx, access, allowed: can(access, ctx.actor.userId, needs) };
+  const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId }, select: { invitesEnabled: true } });
+  return { ctx, access, allowed: can(access, ctx.actor.userId, needs), invitesOn: event.invitesEnabled };
 }
 
 /** First visit by an invited member accepts the invitation (UF-04 step 2). */
@@ -55,6 +62,7 @@ export async function EventFrame({
   access,
   active,
   title,
+  invitesOn = false,
   children,
 }: {
   eventId: string;
@@ -62,10 +70,11 @@ export async function EventFrame({
   access: EventAccess;
   active: EventSection;
   title: string;
+  invitesOn?: boolean;
   children: React.ReactNode;
 }) {
   const t = await getTranslations('events.tabs');
-  const tabs = SECTIONS.filter((section) => can(access, userId, section.needs));
+  const tabs = SECTIONS.filter((section) => can(access, userId, section.needs) && (!section.needsInvites || invitesOn));
   return (
     <AppFrame
       userId={userId}

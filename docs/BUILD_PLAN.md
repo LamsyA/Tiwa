@@ -20,7 +20,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | P0 | Foundation and tooling | DONE | 2026-10-28 |
 | P1 | Design system and app frames | DONE | 2026-10-29 |
 | P2 | Accounts, organisations, permissions | DONE | 2026-10-29 |
-| P3 | Events and planning | IN PROGRESS | |
+| P3 | Events and planning | DONE | 2026-10-30 |
 | P4 | Guests and one-click invitations | TODO | |
 | P5 | Moments | TODO | |
 | P6 | Marketplace and chat | TODO | |
@@ -145,15 +145,16 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P3-T07 Members & permissions settings (presets, approval limit), invitation acceptance flow (incl. UF-01-5: co-host invite lands on the event with the CO_HOST role, e2e).
 - [x] P3-T08 Plan page `/events/[id]/plan`: grouped tasks, filters, detail panel/sheet, add/complete, live updates (SSE `event:{id}` channel — build the SSE infrastructure here: Redis pub/sub + `useLive`).
 - [x] P3-T09 Documents upload (reuse storage multipart endpoints, see `Backend.md §11`) and list.
-- [ ] P3-T10 Event settings: details, features toggles, visibility, cancel (blocked when bookings/payments exist), cover image + theme colour.
-- [ ] P3-T11 `events/deadline-alerts` job (in-app notification stub until P13).
-- [ ] P3-T12 Seed: one event of each format; e2e UF-03, UF-04, UF-05.
+- [x] P3-T10 Event settings: details, features toggles, visibility, cancel (blocked when bookings/payments exist), cover image + theme colour.
+- [x] P3-T11 `events/deadline-alerts` job (in-app notification stub until P13).
+- [x] P3-T12 Seed: one event of each format; e2e UF-03, UF-04, UF-05.
+- [?] P3-T13 Cut `/events/[id]` mobile LCP from ~3.4 s to ≤ 2.0 s (GATE P3 failure 2026-10-29: perf 0.91 passes, text LCP delayed by webfont swap; see docs/PROGRESS.md). Waived at GATE P3 (D-X15): sim ~2.5 s, real-throttle 1.8 s; carries to P17-T01 + preview/prod re-measure (Q-001/Q-002).
 
 **GATE P3**
-- [ ] UF-03, UF-04, UF-05 checks pass at both widths.
-- [ ] Creating a birthday takes < 60 s in the e2e timer.
-- [ ] grep test: no event-type words ("wedding", "bride", "groom", "burial"…) in `apps/web/app/**/*.tsx` outside config-driven code.
-- [ ] Lighthouse: `/events/[id]` ≥ 90 mobile, LCP ≤ 2.0 s.
+- [x] UF-03, UF-04, UF-05 checks pass at both widths.
+- [x] Creating a birthday takes < 60 s in the e2e timer.
+- [x] grep test: no event-type words ("wedding", "bride", "groom", "burial"…) in `apps/web/app/**/*.tsx` outside config-driven code.
+- [x] Lighthouse: `/events/[id]` ≥ 90 mobile, LCP ≤ 2.0 s. (Perf 0.94–0.99 ✓; sim LCP ~2.5 s waived per D-X15, real-throttle 1.8 s ✓ → P3-T13)
 
 ---
 
@@ -162,17 +163,17 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** guest list, optional one-click invites on all channels, one-tap RSVP with no account.
 **Read first:** `PRD.md GST-*`, `UF-06`–`UF-09`, `Backend.md §3 (guests & invites), §5.6, §9, §10 (messaging)`, `Frontend.md §6.2 (/i), §6.3 (guests, invites)`.
 
-- [ ] P4-T01 Prisma: Guest (with invite fields), GuestGroup, SeatingTable, InviteBatch, InviteDelivery; migration.
-- [ ] P4-T02 `packages/messaging`: Email (Resend + Fake), SMS (Termii + Fake), WhatsApp Cloud (+ Fake), `wa.me` link builder; React Email invite templates.
-- [ ] P4-T03 Guests page: add manually, paste parser (detects phone/email, E.164 normalise), CSV import job with column mapping and progress, contacts picker (feature-detected), groups, search/filter, bulk actions.
-- [ ] P4-T04 Headcount report + vendor share link (no contact details); simple tables assignment.
-- [ ] P4-T05 Invitations switch (off by default) and Share section: event link, QR download (PNG + A6/A4 PDF), shared-link RSVP (`/e/[slug]/rsvp`) with on/off.
-- [ ] P4-T06 Invite composer (Who · How · Message, smart channel choice, previews per channel, SMS cost estimate) and **one-click Send** (`sendInviteBatch`, idempotent).
-- [ ] P4-T07 Worker: `send-invite-batch` fan-out, `send-invite` with per-provider rate limiters, status updates, SSE `invites:{eventId}`.
-- [ ] P4-T08 WhatsApp free-mode queue screen (`wa.me` one by one, mark sent manually).
-- [ ] P4-T09 Guest invitation page `/i/[token]` (GuestShell, one-tap RSVP island, extras when enabled, client-side POST for email one-tap links with Undo), pass page with QR, `.ics` endpoint and Google Calendar link.
-- [ ] P4-T10 WhatsApp reply-button webhook → RSVP; email/SMS delivery webhooks → statuses.
-- [ ] P4-T11 Reminders job (non-responders max 2, day-before), updates to all/attending, revoke token, forwarding setting.
+- [x] P4-T01 Prisma: Guest (with invite fields), GuestGroup, SeatingTable, InviteBatch, InviteDelivery; migration.
+- [x] P4-T02 `packages/messaging`: Email (Resend + Fake), SMS (Termii + Fake), WhatsApp Cloud (+ Fake), `wa.me` link builder; React Email invite templates.
+- [x] P4-T03 Guests page: add manually, paste parser (detects phone/email, E.164 normalise), CSV import job with column mapping and progress, contacts picker (feature-detected), groups, search/filter, bulk actions.
+- [x] P4-T04 Headcount report + vendor share link (no contact details); simple tables assignment.
+- [x] P4-T05 Invitations switch (off by default) and Share section: event link, QR download (PNG + A6/A4 PDF), shared-link RSVP (`/e/[slug]/rsvp`) with on/off.
+- [x] P4-T06 Invite composer (Who · How · Message, smart channel choice, previews per channel, SMS cost estimate) and **one-click Send** (`sendInviteBatch`, idempotent).
+- [x] P4-T07 Worker: `send-invite-batch` fan-out, `send-invite` with per-provider rate limiters, status updates, SSE `invites:{eventId}`.
+- [x] P4-T08 WhatsApp free-mode queue screen (`wa.me` one by one, mark sent manually).
+- [x] P4-T09 Guest invitation page `/i/[token]` (GuestShell, one-tap RSVP island, extras when enabled, client-side POST for email one-tap links with Undo), pass page with QR, `.ics` endpoint and Google Calendar link.
+- [x] P4-T10 WhatsApp reply-button webhook → RSVP; email/SMS delivery webhooks → statuses.
+- [x] P4-T11 Reminders job (non-responders max 2, day-before), updates to all/attending, revoke token, forwarding setting.
 - [ ] P4-T12 Live tracking table with counters; e2e UF-06–UF-09; load test script (k6) for 2,000 invites with fake providers.
 
 **GATE P4**

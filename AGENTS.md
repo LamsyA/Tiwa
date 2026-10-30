@@ -1,6 +1,6 @@
 # AGENTS.md — Start here
 
-This file is the entry point for any AI coding agent (or human developer) building **Tiwa**. It works with any agent: Claude Code, Codex, Cursor, Copilot, Gemini, Aider, Devin or others. Nothing here depends on one vendor's tools.
+This file is the entry point for any AI coding agent (or human developer) building **Tiwa**. It works with any agent: Muse, Claude Code, Codex, Cursor, Copilot, Gemini, Aider, Devin or others. Nothing here depends on one vendor's tools.
 
 ## 1. What you are building
 

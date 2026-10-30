@@ -63,6 +63,7 @@ export const RATE_LIMITS = {
   otpSendPerIp: { limit: 20, windowSec: 3600 },
   loginPerIp: { limit: 10, windowSec: 600 },
   otpVerifyPerPhone: { limit: 5, windowSec: 900 },
+  sharedRsvpPerIp: { limit: 20, windowSec: 3600 },
 } as const satisfies Record<string, RateLimit>;
 
 /** Wrong-OTP lockout: 5 failures within 15 min locks the phone for up to 15 min (UF-01-4). Enforced as a sliding window: the 6th attempt inside the window is denied until the oldest failure ages out. */

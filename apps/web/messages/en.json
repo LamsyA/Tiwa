@@ -226,7 +226,9 @@
       "money": "Money",
       "settings": "Settings",
       "sections": "Event sections",
-      "documents": "Documents"
+      "documents": "Documents",
+      "guests": "Guests",
+      "invites": "Invites"
     },
     "roles": {
       "HOST": "Host",
@@ -290,6 +292,63 @@
       "continueSetup": "Continue setup",
       "noDate": "Date not set",
       "progress": "{done} of {total} tasks done"
+    },
+    "settingsPage": {
+      "title": "Event settings",
+      "detailsHeading": "Details",
+      "nameLabel": "Event name",
+      "descriptionLabel": "Description (optional)",
+      "dateLabel": "Date",
+      "startLabel": "Starts",
+      "endLabel": "Ends (optional)",
+      "guestsLabel": "Expected guests (optional)",
+      "save": "Save",
+      "saved": "Saved",
+      "readOnly": "You can see these settings. Ask the host for edit access to change them.",
+      "closedBanner": "This event is {status}. Its settings can no longer be changed.",
+      "featuresHeading": "Features and visibility",
+      "visibilityLabel": "Who can see this event?",
+      "ticketsNeedPublic": "Tickets need a public event. Make the event public to turn tickets on.",
+      "appearanceHeading": "Cover image and theme",
+      "coverLabel": "Cover image",
+      "coverHint": "JPEG, PNG or WebP, up to 5 MB. It appears on invitations, tickets and the photo gallery.",
+      "coverUpload": "Upload a cover",
+      "coverReplace": "Replace cover",
+      "coverRemove": "Remove",
+      "coverAlt": "Event cover",
+      "themeLabel": "Theme colour",
+      "themeHint": "Used on guest pages. Leave on Automatic for the standard colour.",
+      "themeAuto": "Automatic",
+      "themeCustomLabel": "Custom colour (#rrggbb)",
+      "themePlaceholder": "#b83a17",
+      "membersHeading": "Members and permissions",
+      "membersBody": "Co-hosts, planners and what each person is allowed to do.",
+      "membersAction": "Manage members",
+      "dangerHeading": "Danger zone",
+      "cancelTitle": "Cancel this event",
+      "cancelBody": "Cancelling tells your team the event is off. This cannot be undone. Once bookings or payments exist, an event can no longer be cancelled here.",
+      "cancelConfirm": "Cancel event",
+      "errors": {
+        "nameTooShort": "Give your event a name (at least 2 characters)",
+        "nameTooLong": "That name is too long",
+        "descriptionTooLong": "That description is too long",
+        "invalidDate": "Pick a date",
+        "invalidTime": "Pick a time",
+        "wholeNumber": "Use a whole number",
+        "guestsMin": "Expect at least 1 guest",
+        "guestsMax": "That's more guests than we support",
+        "visibilityNotAllowed": "That visibility isn't available for this kind of event",
+        "ticketsNeedPublic": "Tickets need a public event",
+        "invalidColour": "Use a colour like #b83a17",
+        "coverType": "Use a JPEG, PNG or WebP image.",
+        "emptyFile": "That file is empty.",
+        "coverTooLarge": "Covers must be 5 MB or smaller.",
+        "coverMismatch": "That file doesn't match its type, so it wasn't saved.",
+        "coverFailed": "The upload didn't finish. Please try again.",
+        "INVALID_TRANSITION": "This event can no longer be changed, or bookings and payments block cancelling.",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "generic": "We couldn't save that. Please try again."
+      }
     },
     "members": {
       "title": "Members and permissions",
@@ -421,6 +480,412 @@
         "uploadFailed": "{name}: the upload didn't finish. Please try again.",
         "generic": "{name}: something went wrong. Please try again."
       }
+    },
+    "guests": {
+      "title": "Guests",
+      "tabs": {
+        "list": "Guests",
+        "groups": "Groups",
+        "tables": "Tables",
+        "headcount": "Headcount"
+      },
+      "counters": {
+        "invited": "Invited",
+        "yes": "Yes",
+        "no": "No",
+        "noReply": "No reply",
+        "checkedIn": "Checked in"
+      },
+      "searchPlaceholder": "Search name, phone or email",
+      "filters": {
+        "allGroups": "All groups",
+        "allRsvp": "Any RSVP",
+        "anyCheckin": "Anyone",
+        "checkedInOnly": "Checked in",
+        "notCheckedIn": "Not checked in",
+        "clear": "Clear"
+      },
+      "empty": {
+        "title": "Add your guests",
+        "body": "Type names one by one, paste a list, import a CSV file, or pick from your contacts.",
+        "add": "Type names",
+        "paste": "Paste a list",
+        "csv": "Import CSV",
+        "contacts": "From contacts",
+        "contactsUnsupported": "Your browser doesn't support picking contacts — paste the list instead."
+      },
+      "addAction": "Add guests",
+      "bulk": {
+        "selected": "{count} selected",
+        "group": "Add to group",
+        "delete": "Delete",
+        "clear": "Clear",
+        "deleted": "Guests deleted",
+        "grouped": "Guests updated"
+      },
+      "table": {
+        "name": "Name",
+        "contact": "Contact",
+        "groups": "Groups",
+        "rsvp": "RSVP",
+        "noContact": "No contact yet",
+        "redacted": "Hidden",
+        "edit": "Edit",
+        "merge": "Merge"
+      },
+      "addDialog": {
+        "title": "Add a guest",
+        "name": "Name",
+        "phone": "Phone (optional)",
+        "email": "Email (optional)",
+        "groups": "Groups",
+        "save": "Add guest",
+        "fromContacts": "Pick from contacts",
+        "added": "Guest added"
+      },
+      "pasteDialog": {
+        "title": "Paste a guest list",
+        "hint": "One guest per line: name, phone and email in any order.",
+        "placeholder": "Adaeze Okafor, 08031234567, ada@example.com",
+        "preview": "Preview",
+        "parse": "Check list",
+        "confirm": "Add {count} guests",
+        "badPhone": "Phone not recognised — imports without it",
+        "badEmail": "Email not recognised — imports without it",
+        "noName": "No name — uses the contact instead",
+        "empty": "Paste at least one line first",
+        "back": "Back to text"
+      },
+      "csvDialog": {
+        "title": "Import a CSV file",
+        "pick": "Choose a CSV file",
+        "headers": "Match your columns",
+        "column": "Column",
+        "ignore": "Ignore this column",
+        "uploading": "Uploading…",
+        "importing": "Importing {done} of {total}…",
+        "done": "Imported {count} guests",
+        "tooMany": "At most 5,000 rows per file",
+        "badFile": "That file isn't a CSV",
+        "fields": {
+          "name": "Name",
+          "phone": "Phone",
+          "email": "Email",
+          "group": "Group",
+          "plusOnes": "Plus-ones",
+          "meal": "Meal",
+          "dietary": "Dietary needs"
+        }
+      },
+      "editDialog": {
+        "title": "Edit guest",
+        "save": "Save",
+        "saved": "Saved",
+        "plusOnes": "Plus-ones allowed",
+        "meal": "Meal choice",
+        "dietary": "Dietary needs"
+      },
+      "mergeDialog": {
+        "title": "Possible duplicates",
+        "body": "These guests are already on the list with the same phone or email. Merge them into one?",
+        "keep": "Keep",
+        "mergeInto": "Merge into {name}",
+        "merged": "Guests merged",
+        "skip": "Keep separate"
+      },
+      "groups": {
+        "title": "Groups",
+        "add": "New group",
+        "name": "Group name",
+        "members": "{count} guests",
+        "save": "Save group",
+        "delete": "Delete group",
+        "deleteConfirm": "Delete this group? Guests stay on the list.",
+        "empty": "No groups yet. Groups help you invite and seat people together."
+      },
+      "readOnly": "You can see the guest list. Ask the host for edit access to change it.",
+      "errors": {
+        "generic": "We couldn't save that. Please try again.",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "invalidPhone": "That phone number doesn't look right",
+        "invalidEmail": "That email doesn't look right",
+        "unknownGroup": "That group doesn't exist on this event",
+        "guestNotFound": "That guest is no longer on the list",
+        "groupNotFound": "That group doesn't exist",
+        "mergeSelf": "Pick different guests to merge",
+        "invalidFileKey": "That upload isn't valid — please try again",
+        "tableNotFound": "That table doesn't exist"
+      },
+      "rsvpLabels": {
+        "YES": "Yes",
+        "NO": "No",
+        "MAYBE": "Maybe",
+        "NONE": "No reply"
+      },
+      "contactsPicked": "{count} contacts picked",
+      "tables": {
+        "title": "Tables",
+        "add": "New table",
+        "name": "Table name",
+        "capacity": "Seats",
+        "save": "Save table",
+        "delete": "Delete table",
+        "deleteConfirm": "Delete this table? Seated guests become unassigned.",
+        "assigned": "{count} of {capacity} seated",
+        "overCapacity": "{count} over capacity",
+        "assign": "Seat guests",
+        "unseat": "Unseat",
+        "unassigned": "Not seated yet",
+        "empty": "No tables yet. Create tables, then seat guests from the list.",
+        "pickGuests": "Tick the guests to seat at {name}",
+        "confirm": "Seat {count} guests",
+        "seated": "Guests seated"
+      },
+      "headcount": {
+        "title": "Headcount",
+        "expected": "Expected attendance",
+        "expectedHint": "Guests who said yes, plus their plus-ones — the number to cater for.",
+        "byRsvp": "By reply",
+        "byMeal": "By meal choice",
+        "byDietary": "Dietary needs",
+        "byGroup": "By group",
+        "byTable": "By table",
+        "unseated": "Not seated yet",
+        "none": "None recorded",
+        "share": "Share with vendor",
+        "shareHint": "A read-only link with counts only — no names, phones or emails. Valid for 90 days.",
+        "linkReady": "Vendor link ready",
+        "copy": "Copy link",
+        "copied": "Copied",
+        "expires": "Valid until {date}"
+      }
+    },
+    "invites": {
+      "title": "Invitations",
+      "off": {
+        "title": "Invitations are off",
+        "body": "Turn them on to send personal invites by WhatsApp, email or SMS — and track every reply live. Your guest list works fine without them.",
+        "enable": "Turn on invitations"
+      },
+      "on": {
+        "disable": "Turn off invitations",
+        "disableConfirm": "Turn invitations off? Already-sent links keep working, but you can't send new ones."
+      },
+      "share": {
+        "title": "Share one link",
+        "body": "For smaller gatherings: anyone with this link can RSVP with just a name. No personal invites needed.",
+        "linkLabel": "Event link",
+        "copy": "Copy link",
+        "copied": "Copied",
+        "qrLabel": "Event QR code",
+        "downloadPng": "Download PNG",
+        "downloadA6": "A6 poster (PDF)",
+        "downloadA4": "A4 poster (PDF)",
+        "webShare": "Share…",
+        "toggleOn": "Turn shared link on",
+        "toggleOff": "Turn shared link off",
+        "offNote": "The shared link is off — old links show “RSVP closed”.",
+        "posterTitle": "Scan to RSVP"
+      },
+      "errors": {
+        "generic": "We couldn't save that. Please try again.",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "rsvpClosed": "RSVP is closed for this event",
+        "invalidPhone": "That phone number doesn't look right"
+      },
+      "composer": {
+        "new": "New invite",
+        "title": "Send invitations",
+        "steps": {
+          "who": "Who",
+          "how": "How",
+          "message": "Message",
+          "review": "Review"
+        },
+        "kind": {
+          "label": "What is this?",
+          "invite": "Invitation",
+          "update": "Update"
+        },
+        "who": {
+          "all": "All guests not yet invited",
+          "attending": "Attending guests",
+          "group": "One group",
+          "groupLabel": "Group",
+          "ids": "Hand-picked guests",
+          "pickPlaceholder": "Search guests",
+          "picked": "{count} picked"
+        },
+        "how": {
+          "channels": "Channels",
+          "whatsapp": "WhatsApp",
+          "email": "Email",
+          "sms": "SMS",
+          "link": "Link only",
+          "smart": "Smart channel choice",
+          "smartHint": "Tiwa picks the best channel per guest: WhatsApp when they have a phone number, else email, else SMS.",
+          "manualHint": "Every guest gets your first channel that fits their contact details."
+        },
+        "message": {
+          "label": "Message",
+          "hint": "Use '{name}' for the guest's name and '{link}' for their personal link.",
+          "defaultInvite": "You're invited to {event}! Tap your personal link to reply: '{link}'",
+          "defaultUpdate": "An update about {event}: '{link}'",
+          "previewWhatsapp": "WhatsApp preview",
+          "previewEmail": "Email preview",
+          "previewSms": "SMS preview",
+          "segments": "{count} SMS {count, plural, one {segment} other {segments}}",
+          "emailNote": "Email arrives with Yes/No buttons in the designed template."
+        },
+        "review": {
+          "title": "Ready to send?",
+          "perChannel": "Messages per channel",
+          "cost": "SMS estimate",
+          "free": "Free",
+          "needsLink": "Need a link instead",
+          "needsLinkHint": "No matching contact for your channels — copy their personal links by hand.",
+          "copy": "Copy",
+          "copied": "Copied",
+          "send": "Send to {count} {count, plural, one {guest} other {guests}}",
+          "sending": "Sending…",
+          "sent": "Invitations are on their way.",
+          "empty": "Nobody matches — pick more guests or add the Link channel."
+        },
+        "back": "Back",
+        "next": "Next",
+        "errors": {
+          "pickChannel": "Pick at least one channel",
+          "pickGuests": "Pick at least one guest",
+          "pickGroup": "Pick a group",
+          "emptyMessage": "Write a message first"
+        }
+      },
+      "tracking": {
+        "title": "Sent invitations",
+        "empty": "No invitations sent yet — compose your first batch above.",
+        "batch": "Batch",
+        "sent": "sent",
+        "failed": "failed",
+        "pending": "pending",
+        "guest": "Guest",
+        "channel": "Channel",
+        "status": "Status",
+        "rsvp": "RSVP",
+        "channels": {
+          "WHATSAPP": "WhatsApp",
+          "WHATSAPP_FREE": "WhatsApp (manual)",
+          "WHATSAPP_API": "WhatsApp",
+          "EMAIL": "Email",
+          "SMS": "SMS",
+          "LINK": "Link",
+          "QR": "QR"
+        },
+        "statuses": {
+          "QUEUED": "Queued",
+          "SENT": "Sent",
+          "DELIVERED": "Delivered",
+          "OPENED": "Opened",
+          "FAILED": "Failed",
+          "SENT_MANUALLY": "Sent by you"
+        },
+        "kinds": {
+          "INVITE": "Invitation",
+          "UPDATE": "Update",
+          "REMINDER": "Reminder"
+        },
+        "batchStatuses": {
+          "DRAFT": "Draft",
+          "QUEUED": "Queued",
+          "SENDING": "Sending…",
+          "DONE": "Done",
+          "CANCELLED": "Cancelled"
+        }
+      },
+      "queue": {
+        "title": "Send on WhatsApp",
+        "left": "{count} left",
+        "sendTo": "Send to {name}",
+        "position": "{position} of {total}",
+        "open": "Open WhatsApp",
+        "sent": "Mark sent",
+        "skip": "Skip",
+        "done": "All caught up — every WhatsApp message is sent.",
+        "hint": "Each tap opens your WhatsApp with the message ready. Press send there, come back, and mark it sent."
+      },
+      "policies": {
+        "title": "Automatic reminders & forwarding",
+        "reminders": "Reminder messages",
+        "remindersHint": "Two nudges for guests who haven't replied: around 3 days out, then day-before.",
+        "forwarding": "Allow forwarding",
+        "forwardingHint": "Guests may share their personal link with plus-ones. Revoking a link stops the old one working.",
+        "linkLabel": "Personal link",
+        "copy": "Copy",
+        "copied": "Copied",
+        "revoke": "Revoke & issue new link",
+        "revoked": "New link issued — the old one no longer works."
+      }
+    }
+  },
+  "shared": {
+    "headcount": {
+      "title": "Headcount",
+      "forEvent": "For {event}",
+      "updated": "Updated {date}",
+      "expected": "Expected attendance",
+      "byRsvp": "Replies",
+      "byMeal": "Meals",
+      "byDietary": "Dietary needs",
+      "byGroup": "Groups",
+      "byTable": "Tables",
+      "unseated": "Not seated",
+      "invalid": "This link is invalid or has expired. Ask the host for a fresh one.",
+      "rsvpYes": "Yes",
+      "rsvpNo": "No",
+      "rsvpMaybe": "Maybe",
+      "rsvpNone": "No reply"
+    },
+    "rsvp": {
+      "title": "RSVP",
+      "heading": "You're invited",
+      "name": "Your name",
+      "phone": "Phone (optional)",
+      "submit": "I'm coming",
+      "done": "You're on the list — see you there!",
+      "closed": "RSVP is closed",
+      "closedBody": "This link no longer accepts replies. Please contact the host.",
+      "notFound": "Event not found",
+      "notFoundBody": "This link doesn't match any event.",
+      "errors": {
+        "invalidPhone": "That phone number doesn't look right — or leave it blank",
+        "rsvpClosed": "This link no longer accepts replies. Please contact the host.",
+        "rateLimited": "Too many replies from here — try again later",
+        "generic": "We couldn't save that. Please try again."
+      }
+    }
+  },
+  "invite": {
+    "coming": "I'm coming",
+    "cantCome": "Can't come",
+    "hostedBy": "Hosted by {host}",
+    "declined": "You marked Can't come",
+    "declinedHint": "Change your mind any time from this same link.",
+    "extrasHeading": "Extras",
+    "plusOnes": "Plus-ones",
+    "meal": "Meal choice",
+    "mealPlaceholder": "e.g. Vegetarian, no nuts",
+    "undo": "Undo",
+    "passQr": "Your pass QR",
+    "passHint": "Show this at the entrance.",
+    "googleCal": "Add to Google Calendar",
+    "icsDownload": "Download .ics",
+    "viewPass": "View your pass",
+    "directions": "Get directions",
+    "moments": "Add photos to Moments",
+    "passFor": "Pass for {name}",
+    "forwardText": "{event} — you can RSVP here: {link}",
+    "forwardHint": "Allowed to forward? Share your link with plus-ones.",
+    "errors": {
+      "sendFailed": "We couldn't save that — please try again."
     }
   }
 }

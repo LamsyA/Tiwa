@@ -12,7 +12,8 @@ describe('PhoneInput', () => {
     render(<PhoneInput value="" onValueChange={onValueChange} aria-label="Phone" />);
     const input = screen.getByLabelText('Phone');
     await user.type(input, '08031234567');
-    expect(input).toHaveValue('0803 123 4567');
+    // Formatter loads on demand (dynamic import); it normalises on arrival.
+    await vi.waitFor(() => expect(input).toHaveValue('0803 123 4567'));
     expect(onValueChange).toHaveBeenLastCalledWith('+2348031234567', true);
   });
 
@@ -21,12 +22,12 @@ describe('PhoneInput', () => {
     const onValueChange = vi.fn();
     render(<PhoneInput value="" onValueChange={onValueChange} aria-label="Phone" />);
     await user.type(screen.getByLabelText('Phone'), '+14155552671');
-    expect(onValueChange).toHaveBeenLastCalledWith('+14155552671', true);
+    await vi.waitFor(() => expect(onValueChange).toHaveBeenLastCalledWith('+14155552671', true));
   });
 
-  it('shows a controlled E.164 value formatted', () => {
+  it('shows a controlled E.164 value formatted', async () => {
     render(<PhoneInput value="+2348031234567" onValueChange={() => {}} aria-label="Phone" />);
-    expect(screen.getByLabelText('Phone')).toHaveValue('+234 803 123 4567');
+    await vi.waitFor(() => expect(screen.getByLabelText('Phone')).toHaveValue('+234 803 123 4567'));
   });
 });
 

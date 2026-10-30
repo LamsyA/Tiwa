@@ -27,9 +27,9 @@ export default async function EventOverviewPage({
 }) {
   const { id } = await params;
   const { welcome } = await searchParams;
-  const { ctx, access } = await loadEventPage(id, '');
+  const { ctx, access, invitesOn } = await loadEventPage(id, '');
   const t = await getTranslations('events');
-  const overview = await getEventOverview(ctx.actor, id);
+  const overview = await getEventOverview(ctx.actor, id, new Date(), access);
   const { event, progress, deadlines, team } = overview;
   const template = getEventType(event.type);
   const firstDay = event.days[0];
@@ -44,7 +44,14 @@ export default async function EventOverviewPage({
   const now = new Date();
 
   return (
-    <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="overview" title={event.name}>
+    <EventFrame
+      eventId={id}
+      userId={ctx.actor.userId}
+      access={access}
+      invitesOn={invitesOn}
+      active="overview"
+      title={event.name}
+    >
       <div className="flex flex-col gap-4 py-2">
         {welcome && event.status === 'ACTIVE' && (
           <Banner tone="info" title={t('overview.welcomeTitle')}>

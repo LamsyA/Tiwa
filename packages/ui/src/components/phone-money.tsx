@@ -1,10 +1,27 @@
 'use client';
 
-import { AsYouType } from 'libphonenumber-js';
 import type { CountryCode } from 'libphonenumber-js';
 import * as React from 'react';
 import { currencyForCountry, currencySymbol } from '@tiwa/config/locale.js';
 import { Input } from './input.js';
+
+type AsYouTypeCtor = typeof import('libphonenumber-js').AsYouType;
+
+let cachedCtor: AsYouTypeCtor | undefined;
+let ctorPromise: Promise<AsYouTypeCtor> | undefined;
+
+/**
+ * libphonenumber-js carries metadata for every country (~80 KB gzip). It is
+ * only needed while someone edits a phone field, so it loads on demand
+ * instead of shipping in the shared bundle every page downloads (P3-T13).
+ */
+function loadAsYouType(): Promise<AsYouTypeCtor> {
+  ctorPromise ??= import('libphonenumber-js').then((module) => {
+    cachedCtor = module.AsYouType;
+    return cachedCtor;
+  });
+  return ctorPromise;
+}
 
 export interface PhoneInputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -21,29 +38,70 @@ export interface PhoneInputProps extends Omit<
 /**
  * Phone input: formats as you type (`AsYouType`), stores E.164.
  * Country starts at `defaultCountry` and follows a typed `+` prefix.
+ * Until the formatter chunk arrives the raw value shows; it is reformatted
+ * (and re-emitted) as soon as the library lands.
  */
 export function PhoneInput({ value, onValueChange, defaultCountry = 'NG', ...rest }: PhoneInputProps) {
   const [country, setCountry] = React.useState<CountryCode>(defaultCountry);
-  const [text, setText] = React.useState(() => (value ? new AsYouType(country).input(value) : ''));
+  const [Ctor, setCtor] = React.useState<AsYouTypeCtor | undefined>(() => cachedCtor);
+  const [text, setText] = React.useState(() => (value ? formatRaw(Ctor, value, defaultCountry).text : ''));
+
+  React.useEffect(() => {
+    if (Ctor) return;
+    let alive = true;
+    void loadAsYouType().then((loaded) => {
+      if (alive) setCtor(() => loaded);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [Ctor]);
 
   const lastValue = React.useRef(value);
   if (value !== lastValue.current) {
     lastValue.current = value;
-    setText(value ? new AsYouType(country).input(value) : '');
+    setText(value ? formatRaw(Ctor, value, country).text : '');
   }
+
+  // Formatter arrived after mount: normalise whatever is currently shown.
+  const normalisedFor = React.useRef<AsYouTypeCtor | undefined>(undefined);
+  React.useEffect(() => {
+    if (!Ctor || normalisedFor.current === Ctor) return;
+    normalisedFor.current = Ctor;
+    if (!text) return;
+    const result = formatRaw(Ctor, text, country);
+    setText(result.text);
+    if (result.country && result.country !== country) setCountry(result.country);
+    onValueChange(result.e164, result.valid);
+    // Only on formatter arrival; text/country changes go through handleChange.
+  }, [Ctor]);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const raw = event.target.value;
-    const typer = new AsYouType(country);
-    const formatted = typer.input(raw);
-    const detected = typer.getCountry();
-    if (detected && detected !== country) setCountry(detected);
-    const number = typer.getNumber();
-    setText(formatted);
-    onValueChange(number ? number.number : '', number ? number.isValid() : false);
+    const result = formatRaw(Ctor, raw, country);
+    if (result.country && result.country !== country) setCountry(result.country);
+    setText(result.text);
+    onValueChange(result.e164, result.valid);
   }
 
   return <Input {...rest} value={text} onChange={handleChange} inputMode="tel" autoComplete="tel" type="tel" />;
+}
+
+function formatRaw(
+  Ctor: AsYouTypeCtor | undefined,
+  raw: string,
+  country: CountryCode,
+): { text: string; e164: string; valid: boolean; country: CountryCode | undefined } {
+  if (!Ctor) return { text: raw, e164: '', valid: false, country: undefined };
+  const typer = new Ctor(country);
+  const text = typer.input(raw);
+  const number = typer.getNumber();
+  return {
+    text,
+    e164: number ? number.number : '',
+    valid: number ? number.isValid() : false,
+    country: typer.getCountry(),
+  };
 }
 
 export interface MoneyInputProps extends Omit<

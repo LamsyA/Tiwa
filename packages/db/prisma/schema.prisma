@@ -41,9 +41,10 @@ model User {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   deletedAt           DateTime?
-  memberships         Membership[]
-  participants        EventParticipant[]
-  ownedTasks          Task[]             @relation("TaskOwner")
+  memberships        Membership[]
+  participants       EventParticipant[]
+  createdEvents      Event[]
+  ownedTasks         Task[]             @relation("TaskOwner")
   sessions            Session[]
   accounts            Account[]
 }
@@ -129,9 +130,11 @@ model Event {
   momentsEnabled         Boolean            @default(true)
   sharedLinkEnabled      Boolean            @default(false)
   allowForwarding        Boolean            @default(true)
+  remindersEnabled       Boolean            @default(true)
   hostCanSeeVendorPrices Boolean            @default(true)
   wizardStep             String?
   createdById            String
+  createdBy              User               @relation(fields: [createdById], references: [id])
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   cancelledAt            DateTime?
@@ -143,6 +146,7 @@ model Event {
   tasks                  Task[]
   documents              Document[]
   budgetCategories       BudgetCategory[]
+  guests                 Guest[]
 
   @@index([status, startsAt])
   @@index([createdById])
@@ -396,4 +400,134 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
+}
+
+// ───────────── Guests & invites (Backend.md §3, P4-T01) ─────────────
+
+model Guest {
+  id              String           @id @default(uuid(7))
+  eventId         String
+  name            String
+  phone           String?
+  email           String?          @db.Citext
+  groupIds        String[]
+  plusOnesAllowed Int              @default(0)
+  plusOnes        Int              @default(0)
+  meal            String?
+  dietary         String?
+  answers         Json             @default("{}")
+  tableId         String?
+  source          GuestSource      @default(MANUAL)
+  rsvp            RsvpStatus       @default(NONE)
+  respondedAt     DateTime?
+  checkedInAt     DateTime?
+  inviteToken     String?          @unique
+  inviteRevokedAt DateTime?
+  inviteOpenedAt  DateTime?
+  remindersSent   Int              @default(0)
+  createdAt       DateTime         @default(now())
+  deletedAt       DateTime?
+  event           Event            @relation(fields: [eventId], references: [id])
+  deliveries      InviteDelivery[]
+
+  @@index([eventId, rsvp])
+  @@index([eventId, phone])
+}
+
+enum GuestSource {
+  MANUAL
+  PASTE
+  CSV
+  CONTACTS
+  SHARED_LINK
+  TICKET
+}
+
+enum RsvpStatus {
+  NONE
+  YES
+  NO
+  MAYBE
+}
+
+model GuestGroup {
+  id      String  @id @default(uuid(7))
+  eventId String
+  name    String
+  color   String?
+
+  @@index([eventId])
+}
+
+model SeatingTable {
+  id       String @id @default(uuid(7))
+  eventId  String
+  name     String
+  capacity Int
+
+  @@index([eventId])
+}
+
+model InviteBatch {
+  id          String          @id @default(uuid(7))
+  eventId     String
+  createdById String
+  channels    InviteChannel[]
+  smart       Boolean         @default(true)
+  message     String
+  kind        BatchKind       @default(INVITE)
+  audience    Json
+  status      BatchStatus     @default(DRAFT)
+  createdAt   DateTime        @default(now())
+  sentAt      DateTime?
+
+  @@index([eventId, status])
+}
+
+enum BatchKind {
+  INVITE
+  UPDATE
+  REMINDER
+}
+
+enum BatchStatus {
+  DRAFT
+  QUEUED
+  SENDING
+  DONE
+  CANCELLED
+}
+
+model InviteDelivery {
+  id          String         @id @default(uuid(7))
+  guestId     String
+  batchId     String
+  channel     InviteChannel
+  status      DeliveryStatus @default(QUEUED)
+  providerRef String?
+  error       String?
+  updatedAt   DateTime       @updatedAt
+  guest       Guest          @relation(fields: [guestId], references: [id])
+
+  @@index([batchId, status])
+  @@index([guestId])
+}
+
+enum InviteChannel {
+  LINK
+  QR
+  WHATSAPP // unresolved at compose time; fan-out routes to FREE or API per the whatsapp.bulk flag
+  WHATSAPP_FREE
+  WHATSAPP_API
+  EMAIL
+  SMS
+}
+
+enum DeliveryStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  OPENED
+  FAILED
+  SENT_MANUALLY
 }

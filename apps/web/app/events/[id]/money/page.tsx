@@ -10,7 +10,7 @@ import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.j
  */
 export default async function EventMoneyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ctx, access, allowed } = await loadEventPage(id, '/money', 'money.view');
+  const { ctx, access, allowed, invitesOn } = await loadEventPage(id, '/money', 'money.view');
   const t = await getTranslations('events.money');
   const event = await prisma.event.findUniqueOrThrow({
     where: { id },
@@ -21,7 +21,14 @@ export default async function EventMoneyPage({ params }: { params: Promise<{ id:
     : [];
 
   return (
-    <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="money" title={event.name}>
+    <EventFrame
+      eventId={id}
+      userId={ctx.actor.userId}
+      access={access}
+      invitesOn={invitesOn}
+      active="money"
+      title={event.name}
+    >
       {!allowed ? (
         <Forbidden eventId={id} />
       ) : (

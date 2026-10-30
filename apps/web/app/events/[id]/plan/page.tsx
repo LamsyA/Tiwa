@@ -7,12 +7,12 @@ import { PlanBoard } from './plan-board.js';
 /** UF-05: tasks grouped by timeframe, filters, detail sheet, inline add, live updates. */
 export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ctx, access } = await loadEventPage(id, '/plan');
+  const { ctx, access, invitesOn } = await loadEventPage(id, '/plan');
   const t = await getTranslations('events.plan');
   const [event, tasks, members] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true, timezone: true } }),
-    listTasks(ctx.actor, id),
-    listParticipants(ctx.actor, id),
+    listTasks(ctx.actor, id, access),
+    listParticipants(ctx.actor, id, access),
   ]);
   let canEdit = true;
   try {
@@ -22,7 +22,14 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="plan" title={event.name}>
+    <EventFrame
+      eventId={id}
+      userId={ctx.actor.userId}
+      access={access}
+      invitesOn={invitesOn}
+      active="plan"
+      title={event.name}
+    >
       <h2 className="sr-only">{t('heading')}</h2>
       <PlanBoard
         eventId={id}

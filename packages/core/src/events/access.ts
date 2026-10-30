@@ -66,6 +66,23 @@ export async function requireEventAccess(
   return access;
 }
 
+/**
+ * Authorize against access the caller already loaded this request (pages load
+ * it once in `loadEventPage`, then thread it through read models — without
+ * this, every list/overview re-queried the same participant row). Without a
+ * preloaded row this is exactly `requireEventAccess`.
+ */
+export async function resolveEventAccess(
+  actor: UserActor,
+  eventId: string,
+  action: Action,
+  preloaded?: EventAccess,
+): Promise<EventAccess> {
+  if (!preloaded) return requireEventAccess(actor, eventId, action);
+  authorize(actor, action, { eventId, access: preloaded });
+  return preloaded;
+}
+
 /** Host-only commands (finalize, cancel, close) — the matrix has no grant for these. */
 export function requireHost(access: EventAccess): void {
   if (access.role !== 'HOST') throw new ForbiddenError('Host only', { reason: 'host-only' });

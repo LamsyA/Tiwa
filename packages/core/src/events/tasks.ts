@@ -1,10 +1,10 @@
 import { TIMEFRAMES } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
-import { authorize, type Actor } from '../auth/authorize.js';
+import { authorize, type Actor, type EventAccess } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
-import { loadEventAccess, requireEventAccess } from './access.js';
+import { loadEventAccess, requireEventAccess, resolveEventAccess } from './access.js';
 
 // Tasks (EVT-03, UF-05). Members with `event.edit` manage every task; a task's
 // owner may update their own task's status, notes and due date (Backend.md §6).
@@ -120,8 +120,42 @@ export interface TaskRow {
   ownerName: string | null;
 }
 
-export async function listTasks(actor: UserActor, eventId: string): Promise<TaskRow[]> {
-  await requireEventAccess(actor, eventId, 'event.view');
+export type DeadlineKind = 'dueSoon' | 'overdue';
+
+export interface DeadlineAlert {
+  taskId: string;
+  eventId: string;
+  kind: DeadlineKind;
+  dueAt: Date;
+}
+
+/**
+ * Tasks needing a nudge (P3-T11, Backend.md §10 `events/deadline-alerts`):
+ * not DONE, dated, due within `soonHours` (overdue included). Closed events
+ * (CANCELLED/COMPLETED) never alert. Ids only — the P13 `messaging/notify`
+ * consumer renders the titles.
+ */
+export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Promise<DeadlineAlert[]> {
+  const soon = new Date(now.getTime() + soonHours * 60 * 60 * 1000);
+  const rows = await prisma.task.findMany({
+    where: {
+      status: { not: 'DONE' },
+      dueAt: { not: null, lte: soon },
+      event: { status: { in: ['DRAFT', 'ACTIVE'] } },
+    },
+    select: { id: true, eventId: true, dueAt: true },
+    orderBy: { dueAt: 'asc' },
+    take: 500,
+  });
+  return rows.flatMap((row) =>
+    row.dueAt
+      ? [{ taskId: row.id, eventId: row.eventId, kind: row.dueAt < now ? 'overdue' : 'dueSoon', dueAt: row.dueAt }]
+      : [],
+  );
+}
+
+export async function listTasks(actor: UserActor, eventId: string, preloaded?: EventAccess): Promise<TaskRow[]> {
+  await resolveEventAccess(actor, eventId, 'event.view', preloaded);
   const rows = await prisma.task.findMany({
     where: { eventId },
     orderBy: [{ dueAt: { sort: 'asc', nulls: 'last' } }, { sortOrder: 'asc' }],

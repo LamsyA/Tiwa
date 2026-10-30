@@ -27,7 +27,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@prisma/client": "^6.4.1"
+    "@prisma/client": "^6.4.1",
+    "@tiwa/config": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
