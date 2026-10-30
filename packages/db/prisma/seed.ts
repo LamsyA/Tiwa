@@ -1,5 +1,11 @@
+import { randomBytes } from 'node:crypto';
 import { EVENT_TYPES, TIMEFRAME_DAYS_BEFORE, getEventType } from '@tiwa/config';
 import { prisma } from '../src/index.js';
+
+/** 32 random bytes, base64url, no padding — mirrors core generateToken(32). */
+function guestToken(): string {
+  return randomBytes(32).toString('base64url').replace(/=+$/, '');
+}
 
 // P3-T12: one ACTIVE event per format for manual QA and the GATE P3 tour.
 // Full demo universe (vendors, venues, gallery, load data) lands with Backend.md §14.
@@ -75,6 +81,11 @@ async function wipeDemoEvents(userId: string) {
   await prisma.programmeItem.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.eventDay.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.budgetCategory.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.inviteDelivery.deleteMany({ where: { guest: { eventId: { in: ids } } } });
+  await prisma.inviteBatch.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.guest.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.guestGroup.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.seatingTable.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.document.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.outboxEvent.deleteMany({
@@ -183,6 +194,79 @@ async function seedEvent(userId: string, spec: SeedEvent, now: Date) {
   return event.id;
 }
 
+/**
+ * P4-T12: demo guest list on the birthday event — two groups, guests across
+ * RSVP states (one with meal + plus-ones), a DONE invite batch with mixed
+ * delivery statuses for the tracking table, and a checked-in guest.
+ */
+async function seedGuests(userId: string, eventId: string, now: Date) {
+  const family = await prisma.guestGroup.create({ data: { eventId, name: 'Family', color: '#b83a17' } });
+  const friends = await prisma.guestGroup.create({ data: { eventId, name: 'Friends', color: '#2563eb' } });
+  const t1 = await prisma.seatingTable.create({ data: { eventId, name: 'Head Table', capacity: 8 } });
+
+  const rows = [
+    { name: 'Adaeze Okafor', phone: '+2348031234567', email: 'ada@example.com', groupIds: [family.id], rsvp: 'YES', respondedAt: now, plusOnes: 1, meal: 'Jollof', dietary: 'No nuts', tableId: t1.id },
+    { name: 'Emeka Obi', phone: '+2348039876543', email: null, groupIds: [family.id], rsvp: 'YES', respondedAt: now, plusOnes: 0, meal: null, dietary: null, tableId: t1.id },
+    { name: 'Funmi Ade', phone: null, email: 'funmi@example.com', groupIds: [friends.id], rsvp: 'MAYBE', respondedAt: now, plusOnes: 0, meal: null, dietary: null, tableId: null },
+    { name: 'Tunde Bakare', phone: '+2348055551111', email: null, groupIds: [], rsvp: 'NO', respondedAt: now, plusOnes: 0, meal: null, dietary: null, tableId: null },
+    { name: 'Walk-in Wale', phone: '+2348077772222', email: null, groupIds: [], rsvp: 'NONE', respondedAt: null, plusOnes: 0, meal: null, dietary: null, tableId: null },
+    { name: 'Checked-in Chi', phone: null, email: 'chi@example.com', groupIds: [friends.id], rsvp: 'YES', respondedAt: now, plusOnes: 0, meal: null, dietary: null, tableId: null, checkedInAt: now },
+  ] as const;
+  const guests = await Promise.all(
+    rows.map((row) =>
+      prisma.guest.create({
+        data: {
+          eventId,
+          name: row.name,
+          phone: row.phone,
+          email: row.email,
+          groupIds: [...row.groupIds],
+          rsvp: row.rsvp as 'YES' | 'NO' | 'MAYBE' | 'NONE',
+          respondedAt: row.respondedAt,
+          plusOnes: row.plusOnes,
+          meal: row.meal,
+          dietary: row.dietary,
+          tableId: row.tableId,
+          source: 'MANUAL',
+          inviteToken: guestToken(),
+          checkedInAt: 'checkedInAt' in row ? (row.checkedInAt as Date) : null,
+        },
+        select: { id: true, name: true, phone: true, email: true },
+      }),
+    ),
+  );
+
+  const batch = await prisma.inviteBatch.create({
+    data: {
+      eventId,
+      createdById: userId,
+      channels: ['WHATSAPP', 'EMAIL', 'SMS'],
+      smart: true,
+      message: 'You are invited! Tap your link to reply: {link}',
+      kind: 'INVITE',
+      audience: { type: 'all' },
+      status: 'DONE',
+      sentAt: now,
+    },
+    select: { id: true },
+  });
+  const byName = new Map(guests.map((guest) => [guest.name, guest]));
+  const statuses = [
+    { name: 'Adaeze Okafor', channel: 'WHATSAPP' as const, status: 'DELIVERED' as const },
+    { name: 'Emeka Obi', channel: 'WHATSAPP' as const, status: 'SENT' as const },
+    { name: 'Funmi Ade', channel: 'EMAIL' as const, status: 'OPENED' as const },
+    { name: 'Tunde Bakare', channel: 'SMS' as const, status: 'SENT' as const },
+  ];
+  await prisma.inviteDelivery.createMany({
+    data: statuses.map((row) => ({
+      guestId: byName.get(row.name)?.id as string,
+      batchId: batch.id,
+      channel: row.channel,
+      status: row.status,
+    })),
+  });
+}
+
 async function main() {
   const now = new Date();
   const user = await prisma.user.upsert({
@@ -195,6 +279,8 @@ async function main() {
   await wipeDemoEvents(user.id);
   const ids: string[] = [];
   for (const spec of EVENTS) ids.push(await seedEvent(user.id, spec, now));
+  // P4-T12: guests + a sent batch on the birthday event for the e2e/GATE tour.
+  await seedGuests(user.id, ids[0] as string, now);
   console.log(`[seed] demo host ${DEMO_EMAIL} + ${ids.length} events (birthday, end-of-year, concert, church).`);
 }
 
