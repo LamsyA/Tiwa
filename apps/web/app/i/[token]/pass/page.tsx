@@ -1,5 +1,5 @@
 import { env } from '@tiwa/config';
-import { checkinQrValue, invitePage } from '@tiwa/core';
+import { checkinQrValue, galleryCodeForEvent, invitePage } from '@tiwa/core';
 import { GuestShell, QRCode } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -27,6 +27,9 @@ export default async function InvitePassPage({ params }: { params: Promise<{ tok
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(page.event.venueName)}`
     : null;
   const momentsActive = page.event.momentsOn && (!page.event.startsAt || page.event.startsAt <= new Date());
+  // Gallery handoff (P5-T07): the code URL plus the invite token mints a
+  // named guest session on arrival — no access code, no name form.
+  const galleryCode = momentsActive ? await galleryCodeForEvent(page.event.id) : null;
 
   return (
     <GuestShell title={page.event.name}>
@@ -47,8 +50,8 @@ export default async function InvitePassPage({ params }: { params: Promise<{ tok
               {t('directions')}
             </a>
           )}
-          {momentsActive && page.event.id && (
-            <a href={`${base}/m/${page.event.id}`} className="text-sm underline">
+          {momentsActive && galleryCode && (
+            <a href={`${base}/m/${galleryCode}?guest=${page.token}`} className="text-sm underline">
               {t('moments')}
             </a>
           )}

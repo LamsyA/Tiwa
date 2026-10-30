@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { useLive } from '@/hooks/use-live.js';
 
 /**
@@ -9,6 +10,7 @@ import { useLive } from '@/hooks/use-live.js';
  * through the `gallery:refresh` window event (no layout jump).
  */
 export function GalleryLivePill({ galleryId, access }: { galleryId: string; access: string }) {
+  const t = useTranslations('gallery');
   const [pending, setPending] = React.useState(0);
   const url = `/api/sse/gallery/${galleryId}${access ? `?access=${encodeURIComponent(access)}` : ''}`;
   useLive(
@@ -25,7 +27,7 @@ export function GalleryLivePill({ galleryId, access }: { galleryId: string; acce
       }}
       className="bg-text text-bg fixed left-1/2 top-16 z-40 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium shadow-2"
     >
-      {pending === 1 ? '1 new photo — show' : `${pending} new photos — show`}
+      {pending === 1 ? t('newPhotosOne') : t('newPhotos', { count: pending })}
     </button>
   );
 }

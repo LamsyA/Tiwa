@@ -1,7 +1,11 @@
 import AwsS3 from '@uppy/aws-s3';
 import Uppy, { type UppyFile } from '@uppy/core';
 import GoldenRetriever from '@uppy/golden-retriever';
-import { IMAGE_MAX_BYTES, VIDEO_MAX_BYTES } from '@tiwa/core';
+// Client-safe copy of packages/core moments/uploads limits.
+// Do not import from '@tiwa/core' here: the barrel pulls node:crypto +
+// prisma and breaks the client webpack build (node: scheme).
+const IMAGE_MAX_BYTES = 25 * 1024 * 1024;
+const VIDEO_MAX_BYTES = 200 * 1024 * 1024;
 import { resizeImageForUpload, resizedFileName } from './resize-image.js';
 
 // Uppy wiring for Moments uploads (Frontend §7.4): multipart with 5 MB
@@ -21,6 +25,7 @@ export type UploadMeta = Record<string, unknown> & {
   name?: string | undefined;
   mediaId?: string | undefined;
   key?: string | undefined;
+  completed?: boolean | undefined;
   eventId: string;
   galleryId: string;
   album: 'OFFICIAL' | 'GUEST';
@@ -33,7 +38,8 @@ export interface GalleryUploaderOptions {
   eventId: string;
   galleryId: string;
   album: 'OFFICIAL' | 'GUEST';
-  kind: 'PHOTO' | 'VIDEO';
+  /** PHOTO or VIDEO restricts to that kind; MIXED (guest sheet) accepts both and derives kind per file. */
+  kind: 'PHOTO' | 'VIDEO' | 'MIXED';
   fetchImpl?: typeof fetch;
   resize?: typeof resizeImageForUpload;
 }
@@ -101,13 +107,14 @@ export function toSignRequestBody(input: SignRequestShape): {
 export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<UploadMeta> {
   const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
   const resize = options.resize ?? resizeImageForUpload;
+  const mixed = options.kind === 'MIXED';
   const isPhoto = options.kind === 'PHOTO';
 
   const uppy = new Uppy<UploadMeta>({
     autoProceed: false,
     restrictions: {
       maxFileSize: isPhoto ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES,
-      allowedFileTypes: isPhoto ? IMAGE_MIMES : VIDEO_MIMES,
+      allowedFileTypes: mixed ? [...IMAGE_MIMES, ...VIDEO_MIMES] : isPhoto ? IMAGE_MIMES : VIDEO_MIMES,
     },
     meta: {
       eventId: options.eventId,
@@ -167,14 +174,18 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
     if (!current) return false;
     if (typeof (current.meta as Record<string, unknown> | undefined)?.mediaId === 'string') return true;
     try {
+      // MIXED (guest sheet) derives kind per file; fixed uploaders keep theirs.
+      const rawKind = mixed ? (current.type?.startsWith('video/') ? 'VIDEO' : 'PHOTO') : options.kind;
+      const fileKind: 'PHOTO' | 'VIDEO' = rawKind === 'MIXED' ? 'PHOTO' : rawKind;
       const source = (current.data as Blob | undefined) ?? new Blob();
-      const resized = isPhoto ? await resize(source, current.type || 'image/jpeg') : { blob: source, resized: false };
+      const resized =
+        fileKind === 'PHOTO' ? await resize(source, current.type || 'image/jpeg') : { blob: source, resized: false };
       if (!alive(file.id)) return false;
       const name = resized.resized ? resizedFileName(current.name ?? 'photo') : (current.name ?? 'photo');
       const record = await createMediaRecord(fetchImpl, {
         eventId: options.eventId,
         album: options.album,
-        kind: options.kind,
+        kind: fileKind,
         fileName: name,
         mime: resized.resized ? 'image/webp' : current.type || 'application/octet-stream',
         sizeBytes: Math.max(1, resized.blob.size),
@@ -190,7 +201,7 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
           eventId: options.eventId,
           galleryId: options.galleryId,
           album: options.album,
-          kind: options.kind,
+          kind: fileKind,
           mediaId: record.mediaId,
           key: record.key,
         } satisfies UploadMeta,
@@ -211,6 +222,50 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
   }
   uppy.on('file-added', (file) => {
     void prepareFile(file);
+  });
+
+  async function postMedia(path: 'complete' | 'abort', mediaId: string): Promise<boolean> {
+    try {
+      const response = await fetchImpl(`/api/uploads/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaId }),
+      });
+      const body = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+      return response.ok && body?.ok === true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Server handoff (P5-T07): the S3 multipart finishing only lands the
+  // bytes. `complete` verifies the object, moves the row to PROCESSING and
+  // enqueues the worker; `abort` drops rows whose files never finished.
+  uppy.on('upload-success', (file) => {
+    const meta = file?.meta as UploadMeta | undefined;
+    if (!file || !meta || typeof meta.mediaId !== 'string' || meta.completed) return;
+    const mediaId = meta.mediaId;
+    const withName: UploadMeta & { name: string } = { ...meta, name: meta.name ?? file.name ?? 'file' };
+    void (async () => {
+      const done = await postMedia('complete', mediaId);
+      if (!alive(file.id)) return;
+      try {
+        uppy.setFileState(
+          file.id,
+          (done
+            ? { meta: { ...withName, completed: true } }
+            : { error: 'Processing failed — tap retry' }) as Partial<UploadFile>,
+        );
+      } catch {
+        // Uppy went away mid-handoff; nothing left to clean up.
+      }
+    })();
+  });
+  uppy.on('file-removed', (file) => {
+    const meta = file?.meta as UploadMeta | undefined;
+    const mediaId = meta?.mediaId;
+    if (!file || typeof mediaId !== 'string' || meta?.completed) return;
+    void postMedia('abort', mediaId);
   });
 
   uppy.use(AwsS3, {

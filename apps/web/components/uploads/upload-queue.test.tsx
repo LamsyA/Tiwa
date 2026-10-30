@@ -65,7 +65,8 @@ describe('useUploadQueue', () => {
       result.current.removeFile(first?.id ?? '');
     });
     expect(result.current.files).toHaveLength(1);
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(fetchImpl).toHaveBeenLastCalledWith('/api/uploads/abort', expect.objectContaining({ method: 'POST' }));
     unmount();
   });
 

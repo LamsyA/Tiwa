@@ -201,7 +201,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P5-T04 Worker: `process-image` (sharp: orientation, strip GPS, 320/1080 AVIF+WebP, blur, sha256 dedupe), `process-video` (ffmpeg 720p + poster), `moderate` → state + SSE.
 - [x] P5-T05 Client upload stack: Web Worker resize, Uppy multipart with retries, `UploadQueueProvider`, IndexedDB resume.
 - [x] P5-T06 Gallery page `/m/[code]`: Official/Guest tabs, virtualised grid, lightbox, "My uploads", live new-items pill, privacy modes (guests-only via invite/ticket cookie or access code).
-- [ ] P5-T07 Guest upload sheet with first-name + consent line; delete own uploads; request removal.
+- [x] P5-T07 Guest upload sheet with first-name + consent line; delete own uploads; request removal.
 - [ ] P5-T08 Host Moments page: settings, QR downloads (table card, poster, badge), moderation queue (swipe/keys/bulk), feature/hide/delete/block uploader.
 - [ ] P5-T09 Slideshow page (delay, crossfade, wake lock, corner QR).
 - [ ] P5-T10 Official album: photographer upload (desktop drag-and-drop, folders), publish, watermark job (`media/watermark`).

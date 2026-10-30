@@ -2,7 +2,13 @@ import { prisma } from '@tiwa/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createGuestSession } from './uploads.js';
 import { ensureGallery } from './galleries.js';
-import { getGalleryPage, listGalleryMedia } from './gallery-view.js';
+import {
+  claimGallerySessionFromInvite,
+  deleteOwnMedia,
+  getGalleryPage,
+  listGalleryMedia,
+  requestMediaRemoval,
+} from './gallery-view.js';
 import { createEventDraft } from '../events/commands.js';
 
 const users: string[] = [];
@@ -50,9 +56,15 @@ afterAll(async () => {
   const galleryIds = (await prisma.gallery.findMany({ where: { eventId: { in: events } }, select: { id: true } })).map(
     (row) => row.id,
   );
+  const mediaIds = (
+    await prisma.mediaItem.findMany({ where: { galleryId: { in: galleryIds } }, select: { id: true } })
+  ).map((row) => row.id);
+  await prisma.report.deleteMany({ where: { targetId: { in: mediaIds } } });
   await prisma.mediaItem.deleteMany({ where: { galleryId: { in: galleryIds } } });
   await prisma.guestbookMessage.deleteMany({ where: { galleryId: { in: galleryIds } } });
   await prisma.guestSession.deleteMany({ where: { galleryId: { in: galleryIds } } });
+  await prisma.guest.deleteMany({ where: { eventId: { in: events } } });
+  await prisma.report.deleteMany({ where: { targetType: 'media' } });
   await prisma.gallery.deleteMany({ where: { eventId: { in: events } } });
   await prisma.task.deleteMany({ where: { eventId: { in: events } } });
   await prisma.programmeItem.deleteMany({ where: { eventId: { in: events } } });
@@ -125,5 +137,73 @@ describe('listGalleryMedia', () => {
     const official = await listGalleryMedia(gallery.id, { kind: 'anonymous' }, { album: 'OFFICIAL' });
     expect(official.items).toHaveLength(1);
     expect(official.nextCursor).toBeNull();
+  });
+});
+
+describe('claimGallerySessionFromInvite', () => {
+  it('mints a named session from a valid invite token', async () => {
+    const { gallery, eventId } = await eventWithGallery('GUESTS_ONLY');
+    const guest = await prisma.guest.create({
+      data: {
+        eventId,
+        name: 'Adaeze',
+        phone: '+2348012345678',
+        inviteToken: `t-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
+      },
+      select: { inviteToken: true },
+    });
+    const claimed = await claimGallerySessionFromInvite(guest.inviteToken!);
+    expect(claimed.galleryId).toBe(gallery.id);
+    const session = await prisma.guestSession.findUniqueOrThrow({ where: { id: claimed.sessionId } });
+    expect(session.name).toBe('Adaeze');
+    await expect(claimGallerySessionFromInvite('no-such-token')).rejects.toThrow(/not valid/i);
+  });
+});
+
+describe('deleteOwnMedia + requestMediaRemoval', () => {
+  it('lets owners delete their rows and anyone report, but not delete others', async () => {
+    const { gallery } = await eventWithGallery('PUBLIC');
+    const { sessionId } = await prisma.$transaction((tx) => createGuestSession(tx, gallery.id, 'Ada'));
+    const { sessionId: other } = await prisma.$transaction((tx) => createGuestSession(tx, gallery.id, 'Bola'));
+    const mine = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'GUEST',
+        kind: 'PHOTO',
+        state: 'PUBLISHED',
+        originalKey: `g/${gallery.id}/mine.jpg`,
+        sizeBytes: 10,
+        uploaderSessionId: sessionId,
+      },
+    });
+    await expect(deleteOwnMedia({ kind: 'gallery-session', sessionId: other }, { mediaId: mine.id })).rejects.toThrow(
+      /own uploads/i,
+    );
+    await expect(deleteOwnMedia({ kind: 'gallery-session', sessionId }, { mediaId: mine.id })).resolves.toEqual({
+      deleted: true,
+    });
+    expect((await prisma.mediaItem.findUniqueOrThrow({ where: { id: mine.id } })).deletedAt).not.toBeNull();
+    const reported = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'GUEST',
+        kind: 'PHOTO',
+        state: 'PUBLISHED',
+        originalKey: `g/${gallery.id}/theirs.jpg`,
+        sizeBytes: 10,
+        uploaderSessionId: other,
+      },
+    });
+    const { reportId } = await requestMediaRemoval(
+      { kind: 'gallery-session', sessionId },
+      { mediaId: reported.id, reason: 'That is me, please take it down' },
+    );
+    const report = await prisma.report.findUniqueOrThrow({ where: { id: reportId } });
+    expect(report).toMatchObject({ targetType: 'media', targetId: reported.id, reporterSessionId: sessionId });
+    // Anonymous viewers without a session can still report.
+    const anon = await requestMediaRemoval({ kind: 'anonymous' }, { mediaId: reported.id });
+    const anonReport = await prisma.report.findUniqueOrThrow({ where: { id: anon.reportId } });
+    expect(anonReport.reporterSessionId).toBeNull();
+    expect(anonReport.reporterUserId).toBeNull();
   });
 });

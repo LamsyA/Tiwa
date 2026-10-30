@@ -132,4 +132,67 @@ describe('createGalleryUploader', () => {
     });
     local.destroy();
   });
+
+  it('MIXED derives kind per file (photos resize, videos pass through)', async () => {
+    const seen: { url: string; init: RequestInit }[] = [];
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      seen.push({ url, init: init ?? {} });
+      return {
+        ok: true,
+        json: async () => ({ ok: true, data: { mediaId: `mid-${seen.length}`, key: `g/g/o/${seen.length}` } }),
+      } as unknown as Response;
+    }) as unknown as typeof fetch;
+    const local = createGalleryUploader({
+      eventId: 'e1',
+      galleryId: 'g1',
+      album: 'GUEST',
+      kind: 'MIXED',
+      fetchImpl,
+      // Skip workers in jsdom: return the input untouched.
+      resize: async (blob: Blob) => ({ blob, resized: false }),
+    });
+    local.addFiles([
+      { source: 'test', name: 'a.mp4', type: 'video/mp4', data: new Blob(['x'.repeat(10)], { type: 'video/mp4' }) },
+    ]);
+    await vi.waitFor(() => {
+      expect(seen.some((call) => call.url === '/api/uploads/create')).toBe(true);
+    });
+    const create = seen.find((call) => call.url === '/api/uploads/create');
+    expect(JSON.parse((create?.init.body ?? '{}') as string)).toMatchObject({ kind: 'VIDEO', mime: 'video/mp4' });
+    await vi.waitFor(() => {
+      expect(local.getFiles()[0]?.meta).toMatchObject({ kind: 'VIDEO' });
+    });
+    local.destroy();
+  });
+
+  it('completes the server row on upload-success and aborts on remove', async () => {
+    const seen: { url: string; init: RequestInit }[] = [];
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      seen.push({ url, init: init ?? {} });
+      if (url === '/api/uploads/create') {
+        return {
+          ok: true,
+          json: async () => ({ ok: true, data: { mediaId: 'mid-7', key: 'galleries/g1/originals/mid-7/a.jpg' } }),
+        } as unknown as Response;
+      }
+      return { ok: true, json: async () => ({ ok: true, data: {} }) } as unknown as Response;
+    }) as unknown as typeof fetch;
+    const local = createGalleryUploader({ eventId: 'e1', galleryId: 'g1', album: 'GUEST', kind: 'PHOTO', fetchImpl });
+    local.addFiles([
+      { source: 'test', name: 'a.jpg', type: 'image/jpeg', data: new Blob(['x'.repeat(10)], { type: 'image/jpeg' }) },
+    ]);
+    await vi.waitFor(() => {
+      expect(local.getFiles()[0]?.meta).toMatchObject({ mediaId: 'mid-7' });
+    });
+    const [file] = local.getFiles();
+    (local.emit as (...args: unknown[]) => void)('upload-success', file, { uploadURL: 'https://s3.example/x' });
+    await vi.waitFor(() => {
+      expect(seen.some((call) => call.url === '/api/uploads/complete')).toBe(true);
+    });
+    const complete = seen.find((call) => call.url === '/api/uploads/complete');
+    expect(JSON.parse((complete?.init.body ?? '{}') as string)).toEqual({ mediaId: 'mid-7' });
+    local.destroy();
+  });
 });

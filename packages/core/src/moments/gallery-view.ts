@@ -1,5 +1,7 @@
+import { z } from 'zod';
 import { prisma } from '@tiwa/db';
-import { ForbiddenError, NotFoundError } from '../shared/errors.js';
+import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
+import { audit } from '../shared/outbox.js';
 
 // Public gallery reads (P5-T06, UF-10). Guests see PUBLISHED items only;
 // BLOCKED / HIDDEN / FAILED rows never leave the server on this path.
@@ -218,4 +220,132 @@ export async function listGalleryMedia(
     })),
     nextCursor: hasMore && last ? `${last.createdAt.toISOString()}_${last.id}` : null,
   };
+}
+
+// ───────────── Upload sheet (P5-T07) ─────────────
+
+export async function galleryCodeForEvent(eventId: string): Promise<string | null> {
+  const gallery = await prisma.gallery.findUnique({ where: { eventId }, select: { code: true } });
+  return gallery?.code ?? null;
+}
+
+export interface ClaimedSession {
+  galleryId: string;
+  galleryCode: string;
+  sessionId: string;
+  guestName: string;
+}
+
+/**
+ * Invite-link handoff (UF-08 → UF-10): the pass page links
+ * `/m/{code}?guest={inviteToken}`. A valid, unrevoked invite mints a gallery
+ * session named after the guest, so invite holders skip the access code and
+ * the name form. The session cookie set from this is what later uploads and
+ * "My uploads" are keyed on.
+ */
+export async function claimGallerySessionFromInvite(inviteToken: string): Promise<ClaimedSession> {
+  const guest = await prisma.guest.findUnique({
+    where: { inviteToken },
+    select: { id: true, name: true, eventId: true, inviteRevokedAt: true },
+  });
+  if (!guest || guest.inviteRevokedAt) throw new NotFoundError('Invitation is not valid', {});
+  const gallery = await prisma.gallery.findUnique({ where: { eventId: guest.eventId } });
+  if (!gallery) throw new NotFoundError('Gallery not found', {});
+  const session = await prisma.guestSession.create({
+    data: { galleryId: gallery.id, name: guest.name.slice(0, 80) },
+    select: { id: true },
+  });
+  return { galleryId: gallery.id, galleryCode: gallery.code, sessionId: session.id, guestName: guest.name };
+}
+
+function guestActor(sessionId: string, eventId: string) {
+  return { kind: 'guest' as const, guestId: sessionId, eventId };
+}
+
+async function loadDeletableItem(viewer: GalleryViewer, sessionIds: string[], mediaId: string) {
+  const item = await prisma.mediaItem.findUnique({
+    where: { id: mediaId },
+    include: { gallery: { select: { id: true, eventId: true } } },
+  });
+  if (!item || item.deletedAt) throw new NotFoundError('Photo not found', {});
+  const owned =
+    (viewer.kind === 'user' && item.uploaderUserId === viewer.userId) ||
+    (viewer.kind === 'gallery-session' && item.uploaderSessionId === viewer.sessionId) ||
+    (item.uploaderSessionId !== null && sessionIds.includes(item.uploaderSessionId));
+  if (!owned) throw new ForbiddenError('You can only delete your own uploads', { key: 'notOwner' });
+  return item;
+}
+
+/**
+ * Guests delete their own uploads (UF-10, MOM-17). Soft delete only; the
+ * worker purges originals later (P5-T12). Host moderation of other people's
+ * items lives in T08.
+ */
+export async function deleteOwnMedia(
+  viewer: GalleryViewer,
+  input: { mediaId: string; sessionIds?: string[] },
+): Promise<{ deleted: true }> {
+  const item = await loadDeletableItem(viewer, input.sessionIds ?? [], input.mediaId);
+  await prisma.$transaction(async (tx) => {
+    await tx.mediaItem.update({ where: { id: item.id }, data: { deletedAt: new Date() } });
+    await audit(tx, {
+      actor:
+        viewer.kind === 'user'
+          ? viewer
+          : guestActor(
+              viewer.kind === 'gallery-session' ? viewer.sessionId : (input.sessionIds?.[0] ?? 'unknown'),
+              item.gallery.eventId,
+            ),
+      action: 'moments.deleteOwnMedia',
+      targetType: 'MediaItem',
+      targetId: item.id,
+      data: {},
+    });
+  });
+  return { deleted: true };
+}
+
+export const requestRemovalSchema = z.object({
+  mediaId: z.string().uuid(),
+  reason: z.string().trim().min(1).max(500).optional(),
+});
+
+/**
+ * Anyone can request removal of a photo of themselves (MOM-17). Creates a
+ * Report for the host moderation queue (T08); the item stays visible until
+ * a host acts.
+ */
+export async function requestMediaRemoval(
+  viewer: GalleryViewer,
+  input: z.infer<typeof requestRemovalSchema> & { sessionIds?: string[] },
+): Promise<{ reportId: string }> {
+  const item = await prisma.mediaItem.findUnique({
+    where: { id: input.mediaId },
+    include: { gallery: { select: { id: true, eventId: true } } },
+  });
+  if (!item || item.deletedAt) throw new NotFoundError('Photo not found', {});
+  if (item.state === 'BLOCKED') throw new ValidationError('Photo is already hidden', { key: 'alreadyHidden' });
+  const reporterUserId = viewer.kind === 'user' ? viewer.userId : null;
+  const reporterSessionId = viewer.kind === 'gallery-session' ? viewer.sessionId : (input.sessionIds?.[0] ?? null);
+  const report = await prisma.$transaction(async (tx) => {
+    const created = await tx.report.create({
+      data: {
+        targetType: 'media',
+        targetId: item.id,
+        reason: input.reason?.trim() || 'Removal requested by a person in the photo',
+        ...(reporterUserId ? { reporterUserId } : {}),
+        ...(reporterSessionId ? { reporterSessionId } : {}),
+      },
+      select: { id: true },
+    });
+    await audit(tx, {
+      actor: viewer.kind === 'user' ? viewer : guestActor(reporterSessionId ?? 'unknown', item.gallery.eventId),
+      action: 'moments.requestRemoval',
+      targetType: 'MediaItem',
+      targetId: item.id,
+      data: { reportId: created.id },
+    });
+    return created;
+  });
+  return { reportId: report.id };
 }

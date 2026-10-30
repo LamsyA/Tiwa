@@ -8,6 +8,7 @@ import { galleryViewer } from '@/lib/gallery-viewer.js';
 import { withSignedUrls } from '@/lib/gallery-urls.js';
 import { privateStorage } from '@/lib/storage.js';
 import { getGalleryPage, listGalleryMedia, type GalleryViewer } from '@tiwa/core';
+import { ClaimInvite } from '@/components/moments/claim-invite.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,21 +19,22 @@ function formatDay(iso: string | null, timezone: string, locale = 'en-NG'): stri
 
 /**
  * UF-10: public Moments gallery — Official/Guest tabs with counts, virtualised
- * grid, lightbox, "My uploads", live new-items pill (SSE `gallery:{id}`),
- * and guests-only privacy (invite session or printed access code).
- * Server-rendered shell + signed URLs; upload client lazy-loads in T07.
+ * grid, lightbox, "My uploads", delete-own + request-removal, live new-items
+ * pill (SSE `gallery:{id}`), and guests-only privacy (invite session via
+ * `?guest=`, or printed access code). Server-rendered shell + signed URLs.
  */
 export default async function GalleryPage({
   params,
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ album?: string; access?: string }>;
+  searchParams: Promise<{ album?: string; access?: string; guest?: string }>;
 }) {
   const { code } = await params;
   const query = await searchParams;
   const album = query.album === 'OFFICIAL' ? ('OFFICIAL' as const) : ('GUEST' as const);
   const access = (query.access ?? '').trim();
+  const guestToken = (query.guest ?? '').trim() || undefined;
   const t = await getTranslations('gallery');
 
   const { viewer, sessionIds } = await galleryViewer();
@@ -47,6 +49,7 @@ export default async function GalleryPage({
     if ((error as { code?: string }).code === 'FORBIDDEN') {
       return (
         <GuestShell title={t('guestsOnlyHeading')}>
+          {guestToken && <ClaimInvite code={code} token={guestToken} album={album} />}
           <p className="text-muted text-sm">{t('guestsOnlyHint')}</p>
           <form method="get" className="mt-4 flex gap-2">
             <label htmlFor="gallery-access" className="sr-only">
@@ -99,6 +102,9 @@ export default async function GalleryPage({
       footerNote={page.gallery.showFooter ? <span>{t('plannedWith')}</span> : undefined}
     >
       <GalleryLivePill galleryId={page.gallery.id} access={access} />
+      {guestToken && !page.sessionId && !page.isMember && (
+        <ClaimInvite code={page.gallery.code} token={guestToken} album={album} />
+      )}
       {day && <p className="text-muted text-sm">{day}</p>}
       <nav aria-label={t('albums')} className="mt-3 flex gap-2">
         {(['OFFICIAL', 'GUEST'] as const).map((tab) => {
