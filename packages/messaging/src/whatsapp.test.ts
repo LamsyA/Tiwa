@@ -48,11 +48,14 @@ describe('CloudWhatsApp', () => {
   });
 
   it('throws on provider errors', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 401 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('nope', { status: 401 })),
+    );
     const wa = new CloudWhatsApp({ token: 'bad', phoneNumberId: '123' });
-    await expect(
-      wa.sendTemplate({ to: '+2348012345678', template: 't', lang: 'en', params: [] }),
-    ).rejects.toThrow('HTTP 401');
+    await expect(wa.sendTemplate({ to: '+2348012345678', template: 't', lang: 'en', params: [] })).rejects.toThrow(
+      'HTTP 401',
+    );
   });
 });
 
@@ -115,9 +118,9 @@ describe('parseWhatsAppWebhook', () => {
 
   it('skips unknown shapes instead of throwing', () => {
     expect(parseWhatsAppWebhook({})).toEqual([]);
-    expect(parseWhatsAppWebhook({ entry: [{ changes: [{ value: { messages: [{ text: { body: 'hi' } }] } }] }] })).toEqual(
-      [],
-    );
+    expect(
+      parseWhatsAppWebhook({ entry: [{ changes: [{ value: { messages: [{ text: { body: 'hi' } }] } }] }] }),
+    ).toEqual([]);
     expect(
       parseWhatsAppWebhook({ entry: [{ changes: [{ value: { statuses: [{ id: 'x', status: 'weird' }] } }] }] }),
     ).toEqual([]);

@@ -75,7 +75,7 @@ export class FakeSms implements SmsProvider {
 
 // The GSM-7 alphabet incl. extension-table characters (€ [ ] { } \ | ^ ~).
 const GSM7_BASIC =
-  "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
+  '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
 const GSM7_EXTENDED = '€[\\]^{|}~^';
 
 function isGsm7(text: string): boolean {

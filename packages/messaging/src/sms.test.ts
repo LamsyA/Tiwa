@@ -56,7 +56,10 @@ describe('TermiiSms', () => {
   });
 
   it('throws on provider errors', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 500 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('nope', { status: 500 })),
+    );
     const sms = new TermiiSms({ apiKey: 'key', senderId: 'Tiwa' });
     await expect(sms.send({ to: '+2348012345678', text: 'hello' })).rejects.toThrow('HTTP 500');
   });

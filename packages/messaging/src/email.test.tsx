@@ -23,7 +23,7 @@ describe('FakeEmail', () => {
     const result = await email.send({ to: 'ada@example.com', subject: "You're invited", react: invite });
     expect(result.id).toBe('fake-email-1');
     expect(email.sent).toHaveLength(1);
-    expect(email.sent[0]?.html).toContain("Ada&#x27;s 40th");
+    expect(email.sent[0]?.html).toContain('Ada&#x27;s 40th');
     expect(email.sent[0]?.html).toContain('https://tiwa.app/i/tok?r=yes&amp;sig=s');
     expect(email.sent[0]?.text).toContain("ADA'S 40TH");
     email.clear();
@@ -50,7 +50,10 @@ describe('ResendEmail', () => {
   });
 
   it('throws on provider errors', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 422 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('nope', { status: 422 })),
+    );
     const email = new ResendEmail({ apiKey: 'bad', from: 'Tiwa <hello@tiwa.app>' });
     await expect(email.send({ to: 'a@b.c', subject: 'x', react: invite })).rejects.toThrow('HTTP 422');
   });

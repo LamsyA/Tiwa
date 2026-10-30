@@ -47,19 +47,16 @@ export class CloudWhatsApp implements WhatsAppProvider {
         void button;
       }
     }
-    const response = await fetch(
-      `https://graph.facebook.com/${version}/${this.config.phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: message.to.replace(/^\+/, ''),
-          type: 'template',
-          template: { name: message.template, language: { code: message.lang }, components },
-        }),
-      },
-    );
+    const response = await fetch(`https://graph.facebook.com/${version}/${this.config.phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.config.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: message.to.replace(/^\+/, ''),
+        type: 'template',
+        template: { name: message.template, language: { code: message.lang }, components },
+      }),
+    });
     if (!response.ok) throw new Error(`WhatsApp send failed: HTTP ${response.status}`);
     const data = (await response.json()) as { messages?: { id?: string }[] };
     const id = data.messages?.[0]?.id;
