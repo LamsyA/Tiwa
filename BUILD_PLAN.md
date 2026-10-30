@@ -15,26 +15,26 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 
 ## Status
 
-| Phase | Name                                     | Status | Gate passed on |
-| ----- | ---------------------------------------- | ------ | -------------- |
-| P0    | Foundation and tooling                   | DONE   | 2026-10-28     |
-| P1    | Design system and app frames             | DONE   | 2026-10-29     |
-| P2    | Accounts, organisations, permissions     | DONE   | 2026-10-29     |
-| P3    | Events and planning                      | DONE   | 2026-10-30     |
-| P4    | Guests and one-click invitations         | TODO   |                |
-| P5    | Moments                                  | TODO   |                |
-| P6    | Marketplace and chat                     | TODO   |                |
-| P7    | Quotes and bookings                      | TODO   |                |
-| P8    | Payments, ledger, held payments, payouts | TODO   |                |
-| P9    | Budget and finance                       | TODO   |                |
-| P10   | Planner workspace and vendor dashboard   | TODO   |                |
-| P11   | Tickets and check-in                     | TODO   |                |
-| P12   | Event day                                | TODO   |                |
-| P13   | Notifications and event-team chat        | TODO   |                |
-| P14   | Reviews and event close                  | TODO   |                |
-| P15   | AI assistant                             | TODO   |                |
-| P16   | Admin console                            | TODO   |                |
-| P17   | Hardening and launch readiness           | TODO   |                |
+| Phase | Name                                     | Status      | Gate passed on |
+| ----- | ---------------------------------------- | ----------- | -------------- |
+| P0    | Foundation and tooling                   | DONE        | 2026-10-28     |
+| P1    | Design system and app frames             | DONE        | 2026-10-29     |
+| P2    | Accounts, organisations, permissions     | DONE        | 2026-10-29     |
+| P3    | Events and planning                      | DONE        | 2026-10-30     |
+| P4    | Guests and one-click invitations         | GATE FAILED |                |
+| P5    | Moments                                  | TODO        |                |
+| P6    | Marketplace and chat                     | TODO        |                |
+| P7    | Quotes and bookings                      | TODO        |                |
+| P8    | Payments, ledger, held payments, payouts | TODO        |                |
+| P9    | Budget and finance                       | TODO        |                |
+| P10   | Planner workspace and vendor dashboard   | TODO        |                |
+| P11   | Tickets and check-in                     | TODO        |                |
+| P12   | Event day                                | TODO        |                |
+| P13   | Notifications and event-team chat        | TODO        |                |
+| P14   | Reviews and event close                  | TODO        |                |
+| P15   | AI assistant                             | TODO        |                |
+| P16   | Admin console                            | TODO        |                |
+| P17   | Hardening and launch readiness           | TODO        |                |
 
 Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 
@@ -182,11 +182,11 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 
 **GATE P4**
 
-- [ ] UF-06, UF-07, UF-08, UF-09 checks pass at both widths.
-- [ ] 2,000 invites sent in < 5 min with fakes; no guest gets > 2 reminders (tested with time travel).
+- [x] UF-06, UF-07, UF-08, UF-09 checks pass at both widths.
+- [x] 2,000 invites sent in < 5 min with fakes; no guest gets > 2 reminders (tested with time travel).
 - [ ] `/i/[token]`: LCP ≤ 1.5 s, JS ≤ 90 KB, Lighthouse ≥ 95 mobile.
-- [ ] A plain GET of an email RSVP link records nothing (UF-08-3).
-- [ ] With invitations OFF, invites UI is hidden and all P3 tests still pass.
+- [x] A plain GET of an email RSVP link records nothing (UF-08-3).
+- [x] With invitations OFF, invites UI is hidden and all P3 tests still pass.
 
 ---
 
