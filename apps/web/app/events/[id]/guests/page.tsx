@@ -16,7 +16,7 @@ export default async function GuestsPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const { ctx, access, allowed, invitesOn } = await loadEventPage(id, '/guests', 'event.view');
+  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(id, '/guests', 'event.view');
   const t = await getTranslations('events.guests');
   if (!allowed) {
     const tf = await getTranslations('events');
@@ -26,6 +26,7 @@ export default async function GuestsPage({
         userId={ctx.actor.userId}
         access={access}
         invitesOn={invitesOn}
+        momentsOn={momentsOn}
         active="guests"
         title={t('title')}
       >
@@ -72,6 +73,7 @@ export default async function GuestsPage({
       userId={ctx.actor.userId}
       access={access}
       invitesOn={invitesOn}
+      momentsOn={momentsOn}
       active="guests"
       title={event.name}
     >

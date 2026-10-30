@@ -24,6 +24,9 @@ function publisher(): Redis {
 
 export const eventChannel = (eventId: string) => `event:${eventId}`;
 
+/** Live gallery channel (UF-10-5, UF-11-1): worker + host actions publish here. */
+export const galleryChannel = (galleryId: string) => `gallery:${galleryId}`;
+
 /** Fire-and-forget: clients fall back to polling if a message is lost. */
 export async function publishLive(channel: string, kind: LiveMessage['kind']): Promise<void> {
   const message: LiveMessage = { kind, at: Date.now() };

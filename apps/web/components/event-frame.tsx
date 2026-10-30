@@ -9,9 +9,9 @@ import type * as React from 'react';
 import { requirePageUser } from '@/lib/ctx.js';
 import { AppFrame } from './app-frame.js';
 
-export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'settings';
+export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'settings';
 
-const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?: boolean }[] = [
+const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?: boolean; needsMoments?: boolean }[] = [
   { key: 'overview', path: '', needs: 'event.view' },
   { key: 'plan', path: '/plan', needs: 'event.view' },
   { key: 'money', path: '/money', needs: 'money.view' },
@@ -20,8 +20,9 @@ const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?:
   // edits still require guests.manage, enforced in every action (P4-T03).
   { key: 'guests', path: '/guests', needs: 'event.view' },
   // Invitations are optional and off by default (GST-04, UF-07-6): the tab
-  // only shows while the host has them on.
+  // only shows while the host has them on. Same for Moments (P5-T08).
   { key: 'invites', path: '/invites', needs: 'event.view', needsInvites: true },
+  { key: 'moments', path: '/moments', needs: 'event.view', needsMoments: true },
   { key: 'settings', path: '/settings', needs: 'event.view' },
 ];
 
@@ -43,9 +44,23 @@ export async function loadEventPage(eventId: string, path: string, needs: Action
   const ctx = await requirePageUser(`/events/${eventId}${path}`);
   const access = await loadEventAccess(ctx.actor.userId, eventId);
   if (!access) notFound();
-  if (access.role !== 'HOST') await markAccepted(eventId, ctx.actor.userId);
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId }, select: { invitesEnabled: true } });
-  return { ctx, access, allowed: can(access, ctx.actor.userId, needs), invitesOn: event.invitesEnabled };
+  // Acceptance marking is a no-op UPDATE for already-accepted members, but it
+  // must not block the page: run it alongside the event fetch instead of
+  // serially before it.
+  const [event] = await Promise.all([
+    prisma.event.findUniqueOrThrow({
+      where: { id: eventId },
+      select: { invitesEnabled: true, momentsEnabled: true },
+    }),
+    access.role !== 'HOST' ? markAccepted(eventId, ctx.actor.userId) : Promise.resolve(),
+  ]);
+  return {
+    ctx,
+    access,
+    allowed: can(access, ctx.actor.userId, needs),
+    invitesOn: event.invitesEnabled,
+    momentsOn: event.momentsEnabled,
+  };
 }
 
 /** First visit by an invited member accepts the invitation (UF-04 step 2). */
@@ -63,6 +78,7 @@ export async function EventFrame({
   active,
   title,
   invitesOn = false,
+  momentsOn = false,
   children,
 }: {
   eventId: string;
@@ -71,10 +87,16 @@ export async function EventFrame({
   active: EventSection;
   title: string;
   invitesOn?: boolean;
+  momentsOn?: boolean;
   children: React.ReactNode;
 }) {
   const t = await getTranslations('events.tabs');
-  const tabs = SECTIONS.filter((section) => can(access, userId, section.needs) && (!section.needsInvites || invitesOn));
+  const tabs = SECTIONS.filter(
+    (section) =>
+      can(access, userId, section.needs) &&
+      (!section.needsInvites || invitesOn) &&
+      (!section.needsMoments || momentsOn),
+  );
   return (
     <AppFrame
       userId={userId}

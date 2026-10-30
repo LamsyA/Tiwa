@@ -1,5 +1,5 @@
 import { getEventType } from '@tiwa/config';
-import { authorize, getEventOverview, utcToZoned } from '@tiwa/core';
+import { authorize, galleryCodeForEvent, getEventOverview, utcToZoned } from '@tiwa/core';
 import {
   Avatar,
   Badge,
@@ -27,7 +27,7 @@ export default async function EventOverviewPage({
 }) {
   const { id } = await params;
   const { welcome } = await searchParams;
-  const { ctx, access, invitesOn } = await loadEventPage(id, '');
+  const { ctx, access, invitesOn, momentsOn } = await loadEventPage(id, '');
   const t = await getTranslations('events');
   const overview = await getEventOverview(ctx.actor, id, new Date(), access);
   const { event, progress, deadlines, team } = overview;
@@ -41,6 +41,15 @@ export default async function EventOverviewPage({
       return false;
     }
   })();
+  const canModerateMoments = (() => {
+    try {
+      authorize(ctx.actor, 'moments.moderate', { eventId: id, access });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  const galleryCode = event.momentsEnabled ? await galleryCodeForEvent(id) : null;
   const now = new Date();
 
   return (
@@ -49,6 +58,7 @@ export default async function EventOverviewPage({
       userId={ctx.actor.userId}
       access={access}
       invitesOn={invitesOn}
+      momentsOn={momentsOn}
       active="overview"
       title={event.name}
     >
@@ -189,7 +199,17 @@ export default async function EventOverviewPage({
           {event.momentsEnabled && (
             <Card className="flex flex-col gap-2 p-4 lg:col-span-4">
               <h2 className="font-medium">{t('overview.momentsHeading')}</h2>
-              <p className="text-muted text-sm">{t('overview.momentsComingSoon')}</p>
+              {canModerateMoments ? (
+                <Link href={`/events/${id}/moments`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
+                  {t('overview.momentsManage')}
+                </Link>
+              ) : galleryCode ? (
+                <Link href={`/m/${galleryCode}`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
+                  {t('overview.momentsView')}
+                </Link>
+              ) : (
+                <p className="text-muted text-sm">{t('overview.momentsComingSoon')}</p>
+              )}
             </Card>
           )}
 
