@@ -32,6 +32,7 @@ export * from './guests/tables.js';
 export * from './guests/headcount.js';
 export * from './guests/invites.js';
 export * from './moments/galleries.js';
+export * from './moments/uploads.js';
 export * from './guests/rsvp.js';
 export * from './guests/reminders.js';
 export * from './guests/batches.js';

@@ -1,9 +1,13 @@
 import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -27,6 +31,17 @@ export interface Storage {
   readStart(key: string, bytes: number): Promise<Uint8Array>;
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   delete(key: string): Promise<void>;
+  /** Multipart upload for large media (arc §5: 5 MB parts, browser → storage direct). */
+  createMultipart(key: string, contentType: string): Promise<{ uploadId: string }>;
+  /** Pre-signed URL for one part upload (part numbers start at 1). */
+  signPart(key: string, uploadId: string, partNumber: number, ttlSec?: number): Promise<string>;
+  completeMultipart(key: string, uploadId: string, parts: MultipartPart[]): Promise<void>;
+  abortMultipart(key: string, uploadId: string): Promise<void>;
+}
+
+export interface MultipartPart {
+  eTag: string;
+  partNumber: number;
 }
 
 export interface S3StorageConfig {
@@ -100,11 +115,45 @@ export class S3Storage implements Storage {
   async delete(key: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
   }
+
+  async createMultipart(key: string, contentType: string): Promise<{ uploadId: string }> {
+    const result = await this.client.send(
+      new CreateMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, ContentType: contentType }),
+    );
+    if (!result.UploadId) throw new Error('multipart init failed: no upload id');
+    return { uploadId: result.UploadId };
+  }
+
+  async signPart(key: string, uploadId: string, partNumber: number, ttlSec = 900): Promise<string> {
+    return getSignedUrl(
+      this.client,
+      new UploadPartCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId, PartNumber: partNumber }),
+      { expiresIn: ttlSec },
+    );
+  }
+
+  async completeMultipart(key: string, uploadId: string, parts: MultipartPart[]): Promise<void> {
+    await this.client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: this.config.bucket,
+        Key: key,
+        UploadId: uploadId,
+        MultipartUpload: { Parts: parts.map((part) => ({ ETag: part.eTag, PartNumber: part.partNumber })) },
+      }),
+    );
+  }
+
+  async abortMultipart(key: string, uploadId: string): Promise<void> {
+    await this.client.send(
+      new AbortMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
+    );
+  }
 }
 
 /** In-memory storage for tests: "signed" URLs are inert strings; `put` simulates the browser upload. */
 export class FakeStorage implements Storage {
   readonly objects = new Map<string, { body: Uint8Array; contentType: string }>();
+  readonly multiparts = new Map<string, { contentType: string; parts: Map<number, Uint8Array> }>();
 
   async signPut(key: string, contentType: string, sizeBytes: number): Promise<string> {
     return `fake://put/${encodeURIComponent(key)}?type=${encodeURIComponent(contentType)}&size=${sizeBytes}`;
@@ -129,6 +178,47 @@ export class FakeStorage implements Storage {
 
   async delete(key: string): Promise<void> {
     this.objects.delete(key);
+  }
+
+  async createMultipart(key: string, contentType: string): Promise<{ uploadId: string }> {
+    const uploadId = `fake-mpu-${Math.random().toString(36).slice(2)}`;
+    this.multiparts.set(`${key}::${uploadId}`, { contentType, parts: new Map() });
+    return { uploadId };
+  }
+
+  async signPart(key: string, uploadId: string): Promise<string> {
+    return `fake://part/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}`;
+  }
+
+  async completeMultipart(key: string, uploadId: string, parts: MultipartPart[]): Promise<void> {
+    const upload = this.multiparts.get(`${key}::${uploadId}`);
+    if (!upload) throw new Error('unknown multipart upload');
+    const ordered = [...parts].sort((a, b) => a.partNumber - b.partNumber);
+    const bodies = ordered.map((part) => {
+      const body = upload.parts.get(part.partNumber);
+      if (!body) throw new Error(`missing part ${part.partNumber}`);
+      return body;
+    });
+    const total = bodies.reduce((sum, body) => sum + body.byteLength, 0);
+    const merged = new Uint8Array(total);
+    let offset = 0;
+    for (const body of bodies) {
+      merged.set(body, offset);
+      offset += body.byteLength;
+    }
+    this.objects.set(key, { body: merged, contentType: upload.contentType });
+    this.multiparts.delete(`${key}::${uploadId}`);
+  }
+
+  async abortMultipart(key: string, uploadId: string): Promise<void> {
+    this.multiparts.delete(`${key}::${uploadId}`);
+  }
+
+  /** Test seam: simulate the browser PUT of one part. */
+  seedPart(key: string, uploadId: string, partNumber: number, body: Uint8Array): void {
+    const upload = this.multiparts.get(`${key}::${uploadId}`);
+    if (!upload) throw new Error('unknown multipart upload');
+    upload.parts.set(partNumber, body);
   }
 }
 
