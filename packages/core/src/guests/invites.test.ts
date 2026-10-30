@@ -137,3 +137,41 @@ describe('batch lists', () => {
     expect(detail.deliveries[0]?.contact).toBe('+2348031234567');
   });
 });
+
+describe('free-mode queue', () => {
+  it('lists queued free-mode messages with rendered text and marks them sent', async () => {
+    const { freeModeQueue, markSentManually } = await import('./invites.js');
+    const { createInviteBatch } = await import('./batches.js');
+    const { addGuests } = await import('./guests.js');
+    const host = await makeHost();
+    const { eventId } = await createEventDraft(host, { type: 'birthday' });
+    events.push(eventId);
+    const { enableInvites } = await import('./invites.js');
+    await enableInvites(host, { eventId, enabled: true });
+    await addGuests(host, { eventId, guests: [{ name: 'Ada', phone: '08031234567', groupIds: [] }] });
+    const preview = await createInviteBatch(host, {
+      eventId,
+      audience: { type: 'all' },
+      channels: ['WHATSAPP'],
+      smart: true,
+      message: 'Hi {name}! {link}',
+      kind: 'INVITE',
+    });
+    // Fan-out routing (normally the worker's job): WHATSAPP → WHATSAPP_FREE.
+    await prisma.inviteDelivery.updateMany({ where: { batchId: preview.batchId }, data: { channel: 'WHATSAPP_FREE' } });
+
+    const queue = await freeModeQueue(host, { eventId, appUrl: 'https://tiwa.app' });
+    expect(queue.items).toHaveLength(1);
+    expect(queue.items[0]?.guestName).toBe('Ada');
+    expect(queue.items[0]?.phone).toBe('+2348031234567');
+    expect(queue.items[0]?.text).toContain('Hi Ada!');
+    expect(queue.items[0]?.text).toContain('https://tiwa.app/i/');
+
+    const marked = await markSentManually(host, { deliveryId: queue.items[0]?.deliveryId as string });
+    expect(marked.batchDone).toBe(true);
+    const batch = await prisma.inviteBatch.findUniqueOrThrow({ where: { id: preview.batchId } });
+    expect(batch.status).toBe('DONE');
+    expect((await freeModeQueue(host, { eventId, appUrl: 'https://tiwa.app' })).items).toEqual([]);
+    await expect(markSentManually(host, { deliveryId: queue.items[0]?.deliveryId as string })).rejects.toThrow();
+  });
+});

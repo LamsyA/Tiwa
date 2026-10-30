@@ -5,6 +5,8 @@ import {
   createInviteBatchSchema,
   enableInvites,
   enableInvitesSchema,
+  markSentManually,
+  markSentManuallySchema,
   sendInviteBatch,
   sendInviteBatchSchema,
   toggleSharedLink,
@@ -12,6 +14,7 @@ import {
 } from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
 import { userAction } from '@/lib/ctx.js';
+import { publishLive } from '@/lib/live.js';
 
 function revalidate(eventId: string) {
   revalidatePath(`/events/${eventId}`, 'layout');
@@ -37,5 +40,12 @@ export const createBatchAction = userAction(createInviteBatchSchema, async (inpu
 
 export const sendBatchAction = userAction(sendInviteBatchSchema, async (input, ctx) => {
   const result = await sendInviteBatch(ctx.actor, input);
+  return result;
+});
+
+export const markSentManuallyAction = userAction(markSentManuallySchema, async (input, ctx) => {
+  const result = await markSentManually(ctx.actor, input);
+  await publishLive(`invites:${result.eventId}`, 'invites');
+  revalidate(result.eventId);
   return result;
 });

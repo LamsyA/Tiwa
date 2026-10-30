@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./wame": {
+      "types": "./dist/wame.d.ts",
+      "default": "./dist/wame.js"
     }
   },
   "files": [

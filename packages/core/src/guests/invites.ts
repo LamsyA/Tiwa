@@ -4,7 +4,13 @@ import { z } from 'zod';
 import { authorize, type Actor, type EventAccess } from '../auth/authorize.js';
 import { resolveEventAccess } from '../events/access.js';
 import { toE164 } from '../shared/contact.js';
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
+import {
+  ConflictError,
+  ForbiddenError,
+  InvalidTransitionError,
+  NotFoundError,
+  ValidationError,
+} from '../shared/errors.js';
 import { generateToken } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
 
@@ -232,4 +238,103 @@ export function verifyRsvp(token: string, response: string, sig: string, secret:
 
 export function rsvpLink(appUrl: string, token: string, response: RsvpResponse, secret: string): string {
   return `${appUrl.replace(/\/$/, '')}/i/${token}?r=${response}&sig=${signRsvp(token, response, secret)}`;
+}
+
+export const freeModeQueueSchema = z.object({ eventId: z.string().uuid(), appUrl: z.string().url() });
+
+export interface FreeModeItem {
+  deliveryId: string;
+  guestId: string;
+  guestName: string;
+  phone: string;
+  text: string;
+  position: number;
+  total: number;
+}
+
+/**
+ * WhatsApp free-mode queue (UF-07 step 7): WHATSAPP_FREE deliveries still
+ * QUEUED, oldest batch first, with the message pre-rendered ({name}/{link}).
+ */
+export async function freeModeQueue(
+  actor: UserActor,
+  input: z.infer<typeof freeModeQueueSchema>,
+  preloaded?: EventAccess,
+): Promise<{ items: FreeModeItem[] }> {
+  await resolveEventAccess(actor, input.eventId, 'guests.manage', preloaded);
+  const rows = await prisma.inviteDelivery.findMany({
+    where: { channel: 'WHATSAPP_FREE', status: 'QUEUED', guest: { eventId: input.eventId, deletedAt: null } },
+    select: {
+      id: true,
+      guestId: true,
+      batchId: true,
+      guest: { select: { name: true, phone: true, inviteToken: true } },
+    },
+    orderBy: [{ batchId: 'asc' }, { guestId: 'asc' }],
+    take: 2000,
+  });
+  if (rows.length === 0) return { items: [] };
+  const batches = await prisma.inviteBatch.findMany({
+    where: { id: { in: [...new Set(rows.map((row) => row.batchId))] } },
+    select: { id: true, message: true },
+  });
+  const messages = new Map(batches.map((batch) => [batch.id, batch.message] as const));
+  const base = input.appUrl.replace(/\/$/, '');
+  const items: FreeModeItem[] = [];
+  for (const [index, row] of rows.entries()) {
+    if (!row.guest.phone || !row.guest.inviteToken) continue;
+    const link = `${base}/i/${row.guest.inviteToken}`;
+    const template = messages.get(row.batchId) ?? '';
+    const rendered = template.replaceAll('{name}', row.guest.name).replaceAll('{link}', link).replaceAll('{event}', '');
+    items.push({
+      deliveryId: row.id,
+      guestId: row.guestId,
+      guestName: row.guest.name,
+      phone: row.guest.phone,
+      text: rendered.includes(link) ? rendered : `${rendered}\n${link}`,
+      position: index + 1,
+      total: rows.length,
+    });
+  }
+  return { items };
+}
+
+export const markSentManuallySchema = z.object({ deliveryId: z.string().uuid() });
+
+/** Free mode: the host sent from their own WhatsApp (QUEUED → SENT_MANUALLY). */
+export async function markSentManually(
+  actor: UserActor,
+  input: z.infer<typeof markSentManuallySchema>,
+): Promise<{ batchId: string; eventId: string; batchDone: boolean }> {
+  const delivery = await prisma.inviteDelivery.findUniqueOrThrow({
+    where: { id: input.deliveryId },
+    include: { guest: { select: { eventId: true } } },
+  });
+  await resolveEventAccess(actor, delivery.guest.eventId, 'guests.manage');
+  if (delivery.channel !== 'WHATSAPP_FREE' || delivery.status !== 'QUEUED') {
+    throw new InvalidTransitionError('Only queued free-mode messages can be marked sent', { key: 'notManual' });
+  }
+  const batch = await prisma.inviteBatch.findUniqueOrThrow({
+    where: { id: delivery.batchId },
+    select: { eventId: true },
+  });
+  await prisma.$transaction(async (tx) => {
+    await tx.inviteDelivery.update({ where: { id: input.deliveryId }, data: { status: 'SENT_MANUALLY' } });
+    const waiting = await tx.inviteDelivery.count({ where: { batchId: delivery.batchId, status: 'QUEUED' } });
+    if (waiting === 0) {
+      await tx.inviteBatch.updateMany({
+        where: { id: delivery.batchId, status: { in: ['DRAFT', 'SENDING', 'QUEUED'] } },
+        data: { status: 'DONE' },
+      });
+    }
+    await audit(tx, {
+      actor,
+      action: 'invites.markSentManually',
+      targetType: 'InviteDelivery',
+      targetId: input.deliveryId,
+      data: {},
+    });
+  });
+  const remaining = await prisma.inviteDelivery.count({ where: { batchId: delivery.batchId, status: 'QUEUED' } });
+  return { batchId: delivery.batchId, eventId: batch.eventId, batchDone: remaining === 0 };
 }

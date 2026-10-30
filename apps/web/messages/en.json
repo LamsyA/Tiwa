@@ -728,9 +728,9 @@
         },
         "message": {
           "label": "Message",
-          "hint": "Use {name} for the guest's name and {link} for their personal link.",
-          "defaultInvite": "You're invited to {event}! Tap your personal link to reply: {link}",
-          "defaultUpdate": "An update about {event}: {link}",
+          "hint": "Use '{name}' for the guest's name and '{link}' for their personal link.",
+          "defaultInvite": "You're invited to {event}! Tap your personal link to reply: '{link}'",
+          "defaultUpdate": "An update about {event}: '{link}'",
           "previewWhatsapp": "WhatsApp preview",
           "previewEmail": "Email preview",
           "previewSms": "SMS preview",
@@ -800,6 +800,17 @@
           "DONE": "Done",
           "CANCELLED": "Cancelled"
         }
+      },
+      "queue": {
+        "title": "Send on WhatsApp",
+        "left": "{count} left",
+        "sendTo": "Send to {name}",
+        "position": "{position} of {total}",
+        "open": "Open WhatsApp",
+        "sent": "Mark sent",
+        "skip": "Skip",
+        "done": "All caught up — every WhatsApp message is sent.",
+        "hint": "Each tap opens your WhatsApp with the message ready. Press send there, come back, and mark it sent."
       }
     }
   },

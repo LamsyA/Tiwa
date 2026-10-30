@@ -1,10 +1,11 @@
 import { env } from '@tiwa/config';
-import { authorize, batchDeliveries, listBatches, listGroups, listGuests } from '@tiwa/core';
+import { authorize, batchDeliveries, freeModeQueue, listBatches, listGroups, listGuests } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
 import { Composer } from './composer.js';
+import { FreeQueue } from './free-queue.js';
 import { InvitesSwitch } from './invites-switch.js';
 import { ShareSection } from './share-section.js';
 import { TrackingSection } from './tracking-table.js';
@@ -49,14 +50,15 @@ export default async function InvitesPage({
     select: { name: true, slug: true, currency: true, sharedLinkEnabled: true },
   });
   const shareUrl = `${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}/rsvp`;
-  const [listed, groups, batches] =
+  const [listed, groups, batches, queue] =
     invitesOn && canManage
       ? await Promise.all([
           listGuests(ctx.actor, { eventId: id, take: 500 }, access),
           listGroups(ctx.actor, id, access),
           listBatches(ctx.actor, { eventId: id }, access),
+          freeModeQueue(ctx.actor, { eventId: id, appUrl: env.APP_URL }, access),
         ])
-      : [{ guests: [], total: 0, redacted: false, nextCursor: null }, [], []];
+      : [{ guests: [], total: 0, redacted: false, nextCursor: null }, [], [], { items: [] }];
   const selectedBatch = query.batch ?? batches[0]?.id ?? null;
   const detail =
     invitesOn && canManage && selectedBatch ? await batchDeliveries(ctx.actor, { batchId: selectedBatch }) : null;
@@ -93,6 +95,7 @@ export default async function InvitesPage({
             <InvitesSwitch eventId={id} enabled />
           </Card>
         )}
+        {invitesOn && canManage && queue.items.length > 0 && <FreeQueue items={queue.items} />}
         {invitesOn && canManage && (
           <TrackingSection
             eventId={id}
