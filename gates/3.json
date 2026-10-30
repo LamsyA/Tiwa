@@ -11,7 +11,7 @@
     { "id": "e2e", "run": "pnpm e2e" },
     {
       "id": "no-hardcoded-words",
-      "run": "rg -n -i \"wedding|bride|groom|burial|aso-ebi|asoebi\" apps/web/app --glob '*.tsx' --glob '!dev/**'"
+      "run": "! rg -n -i \"wedding|bride|groom|burial|aso-ebi|asoebi\" apps/web/app --glob '*.tsx' --glob '!**/dev/**'"
     },
     { "id": "lighthouse-home", "run": "pnpm perf" },
     { "id": "size", "run": "pnpm size" }

@@ -243,3 +243,10 @@ Template:
 - Decision: `PhoneInput` dynamic-imports `libphonenumber-js` on mount (reformatting + re-emitting on arrival) instead of statically bundling every country's metadata into the shared chunk. `packages/ui` devDeps now pin react/react-dom 19.3.1, matching `apps/web`, so the workspace resolves a single React DOM.
 - Why: libphonenumber was ~80 KB gzip of the 258 KB first-load JS on `/events/[id]` although most pages never edit a phone (P3-T13; first-load JS 258→221 KB). Two React DOM copies (19.0.0 via ui, 19.3.1 via web) were one bad import away from dual-React hydration bugs.
 - Affects: packages/ui (phone-money, inputs tests, package.json), pnpm-lock.yaml.
+
+### 2026-10-30 — GATE P3 closed with an LCP-simulation waiver
+- ID: D-X15
+- Status: LOCKED (human directed in session)
+- Decision: Phase 3 closes although Lighthouse *simulated* LCP on `/events/[id]` measures ~2.5 s against the ≤ 2.0 s bar. Perf score (0.94–0.99), CLS (0) and every other gate check pass; devtools-throttled LCP is 1.8 s and observed LCP 0.39 s. P3-T13 stays open as `- [?]` and carries to the P17 production Lighthouse pass (P17-T01) and the preview/prod re-measure blocked on Q-001/Q-002.
+- Why: after the D-X12/D-X13/D-X14 fixes (JS 258→221 KB, SW navigation wedge fixed, access-load dedupe), the residual simulated gap is simulated TLS/RTT plus React/Next framework CPU on a loaded dev host — not app code. Blocking the phase on the local simulator would stall P4+ for an environment artifact.
+- Affects: BUILD_PLAN.md GATE P3, P3-T13, P17-T01.

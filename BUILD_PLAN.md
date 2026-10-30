@@ -15,26 +15,26 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 
 ## Status
 
-| Phase | Name                                     | Status      | Gate passed on |
-| ----- | ---------------------------------------- | ----------- | -------------- |
-| P0    | Foundation and tooling                   | DONE        | 2026-10-28     |
-| P1    | Design system and app frames             | DONE        | 2026-10-29     |
-| P2    | Accounts, organisations, permissions     | DONE        | 2026-10-29     |
-| P3    | Events and planning                      | GATE FAILED |                |
-| P4    | Guests and one-click invitations         | TODO        |                |
-| P5    | Moments                                  | TODO        |                |
-| P6    | Marketplace and chat                     | TODO        |                |
-| P7    | Quotes and bookings                      | TODO        |                |
-| P8    | Payments, ledger, held payments, payouts | TODO        |                |
-| P9    | Budget and finance                       | TODO        |                |
-| P10   | Planner workspace and vendor dashboard   | TODO        |                |
-| P11   | Tickets and check-in                     | TODO        |                |
-| P12   | Event day                                | TODO        |                |
-| P13   | Notifications and event-team chat        | TODO        |                |
-| P14   | Reviews and event close                  | TODO        |                |
-| P15   | AI assistant                             | TODO        |                |
-| P16   | Admin console                            | TODO        |                |
-| P17   | Hardening and launch readiness           | TODO        |                |
+| Phase | Name                                     | Status | Gate passed on |
+| ----- | ---------------------------------------- | ------ | -------------- |
+| P0    | Foundation and tooling                   | DONE   | 2026-10-28     |
+| P1    | Design system and app frames             | DONE   | 2026-10-29     |
+| P2    | Accounts, organisations, permissions     | DONE   | 2026-10-29     |
+| P3    | Events and planning                      | DONE   | 2026-10-30     |
+| P4    | Guests and one-click invitations         | TODO   |                |
+| P5    | Moments                                  | TODO   |                |
+| P6    | Marketplace and chat                     | TODO   |                |
+| P7    | Quotes and bookings                      | TODO   |                |
+| P8    | Payments, ledger, held payments, payouts | TODO   |                |
+| P9    | Budget and finance                       | TODO   |                |
+| P10   | Planner workspace and vendor dashboard   | TODO   |                |
+| P11   | Tickets and check-in                     | TODO   |                |
+| P12   | Event day                                | TODO   |                |
+| P13   | Notifications and event-team chat        | TODO   |                |
+| P14   | Reviews and event close                  | TODO   |                |
+| P15   | AI assistant                             | TODO   |                |
+| P16   | Admin console                            | TODO   |                |
+| P17   | Hardening and launch readiness           | TODO   |                |
 
 Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 
@@ -151,14 +151,14 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P3-T10 Event settings: details, features toggles, visibility, cancel (blocked when bookings/payments exist), cover image + theme colour.
 - [x] P3-T11 `events/deadline-alerts` job (in-app notification stub until P13).
 - [x] P3-T12 Seed: one event of each format; e2e UF-03, UF-04, UF-05.
-- [ ] P3-T13 Cut `/events/[id]` mobile LCP from ~3.4 s to ≤ 2.0 s (GATE P3 failure 2026-10-29: perf 0.91 passes, text LCP delayed by webfont swap; see docs/PROGRESS.md).
+- [?] P3-T13 Cut `/events/[id]` mobile LCP from ~3.4 s to ≤ 2.0 s (GATE P3 failure 2026-10-29: perf 0.91 passes, text LCP delayed by webfont swap; see docs/PROGRESS.md). Waived at GATE P3 (D-X15): sim ~2.5 s, real-throttle 1.8 s; carries to P17-T01 + preview/prod re-measure (Q-001/Q-002).
 
 **GATE P3**
 
-- [ ] UF-03, UF-04, UF-05 checks pass at both widths.
-- [ ] Creating a birthday takes < 60 s in the e2e timer.
-- [ ] grep test: no event-type words ("wedding", "bride", "groom", "burial"…) in `apps/web/app/**/*.tsx` outside config-driven code.
-- [ ] Lighthouse: `/events/[id]` ≥ 90 mobile, LCP ≤ 2.0 s. (FAILED 2026-10-29: 0.91 / 3.4 s → P3-T13)
+- [x] UF-03, UF-04, UF-05 checks pass at both widths.
+- [x] Creating a birthday takes < 60 s in the e2e timer.
+- [x] grep test: no event-type words ("wedding", "bride", "groom", "burial"…) in `apps/web/app/**/*.tsx` outside config-driven code.
+- [x] Lighthouse: `/events/[id]` ≥ 90 mobile, LCP ≤ 2.0 s. (Perf 0.94–0.99 ✓; sim LCP ~2.5 s waived per D-X15, real-throttle 1.8 s ✓ → P3-T13)
 
 ---
 
