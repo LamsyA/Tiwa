@@ -250,3 +250,11 @@ Template:
 - Decision: Phase 3 closes although Lighthouse *simulated* LCP on `/events/[id]` measures ~2.5 s against the ≤ 2.0 s bar. Perf score (0.94–0.99), CLS (0) and every other gate check pass; devtools-throttled LCP is 1.8 s and observed LCP 0.39 s. P3-T13 stays open as `- [?]` and carries to the P17 production Lighthouse pass (P17-T01) and the preview/prod re-measure blocked on Q-001/Q-002.
 - Why: after the D-X12/D-X13/D-X14 fixes (JS 258→221 KB, SW navigation wedge fixed, access-load dedupe), the residual simulated gap is simulated TLS/RTT plus React/Next framework CPU on a loaded dev host — not app code. Blocking the phase on the local simulator would stall P4+ for an environment artifact.
 - Affects: BUILD_PLAN.md GATE P3, P3-T13, P17-T01.
+
+### 2026-10-30 — P5 starts with P4 GATE FAILED (T12 open)
+
+- ID: D-X16
+- Status: AGENT
+- Decision: Begin Phase 5 on explicit human direction while Phase 4 remains GATE FAILED with P4-T12 open (carrying the `/i` localhost-sim LCP/JS budget item). No P4 code is being changed; P4-T12 work (load run, e2e, perf evidence) is already committed and pushed.
+- Why: human explicitly directed the next P5 batch; the carried item needs preview/prod to resolve and must not stall Moments.
+- Affects: BUILD_PLAN.md Phase 4/5.
