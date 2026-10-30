@@ -1,11 +1,11 @@
 import { prisma, type EventRole } from '@tiwa/db';
 import { z } from 'zod';
-import { authorize, type Actor } from '../auth/authorize.js';
+import { authorize, type Actor, type EventAccess } from '../auth/authorize.js';
 import { PRESETS, type PresetName } from '../auth/presets.js';
 import { findOrCreateContactUser, normaliseEmail, toE164 } from '../shared/contact.js';
 import { ConflictError, ForbiddenError, NotFoundError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
-import { fromStoredPermissions, requireEventAccess, toStoredPermissions } from './access.js';
+import { fromStoredPermissions, requireEventAccess, resolveEventAccess, toStoredPermissions } from './access.js';
 
 // Event members (EVT-06, EVT-07, UF-04): co-hosts, planners and planner staff
 // with a permission preset. Vendors and photographers join through bookings (P7).
@@ -163,8 +163,8 @@ export interface ParticipantRow {
   joined: boolean;
 }
 
-export async function listParticipants(actor: UserActor, eventId: string) {
-  const access = await requireEventAccess(actor, eventId, 'event.view');
+export async function listParticipants(actor: UserActor, eventId: string, preloaded?: EventAccess) {
+  const access = await resolveEventAccess(actor, eventId, 'event.view', preloaded);
   const rows = await prisma.eventParticipant.findMany({
     where: { eventId, removedAt: null, role: { in: ['HOST', ...INVITABLE_ROLES] } },
     orderBy: { createdAt: 'asc' },

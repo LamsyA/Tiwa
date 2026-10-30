@@ -1,10 +1,10 @@
 import { TIMEFRAMES } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
-import { authorize, type Actor } from '../auth/authorize.js';
+import { authorize, type Actor, type EventAccess } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
-import { loadEventAccess, requireEventAccess } from './access.js';
+import { loadEventAccess, requireEventAccess, resolveEventAccess } from './access.js';
 
 // Tasks (EVT-03, UF-05). Members with `event.edit` manage every task; a task's
 // owner may update their own task's status, notes and due date (Backend.md §6).
@@ -154,8 +154,8 @@ export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Prom
   );
 }
 
-export async function listTasks(actor: UserActor, eventId: string): Promise<TaskRow[]> {
-  await requireEventAccess(actor, eventId, 'event.view');
+export async function listTasks(actor: UserActor, eventId: string, preloaded?: EventAccess): Promise<TaskRow[]> {
+  await resolveEventAccess(actor, eventId, 'event.view', preloaded);
   const rows = await prisma.task.findMany({
     where: { eventId },
     orderBy: [{ dueAt: { sort: 'asc', nulls: 'last' } }, { sortOrder: 'asc' }],

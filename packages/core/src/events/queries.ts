@@ -1,6 +1,6 @@
 import { prisma, type EventRole, type Prisma } from '@tiwa/db';
-import type { Actor } from '../auth/authorize.js';
-import { requireEventAccess } from './access.js';
+import type { Actor, EventAccess } from '../auth/authorize.js';
+import { resolveEventAccess } from './access.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
@@ -83,9 +83,9 @@ export interface EventProgress {
   blocked: number;
 }
 
-/** EVT-05: the overview's progress, next 5 deadlines and team. */
-export async function getEventOverview(actor: UserActor, eventId: string, now = new Date()) {
-  const access = await requireEventAccess(actor, eventId, 'event.view');
+/** EVT-05: the overview's progress, next 5 deadlines and team. Pass `preloaded` access to skip re-loading it. */
+export async function getEventOverview(actor: UserActor, eventId: string, now = new Date(), preloaded?: EventAccess) {
+  const access = await resolveEventAccess(actor, eventId, 'event.view', preloaded);
   const [event, statusCounts, overdue, deadlines, team] = await Promise.all([
     prisma.event.findUniqueOrThrow({
       where: { id: eventId },

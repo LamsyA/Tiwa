@@ -11,7 +11,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ id: 
   const t = await getTranslations('events.documents');
   const [event, documents] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } }),
-    listDocuments(ctx.actor, id),
+    listDocuments(ctx.actor, id, access),
   ]);
   let canEdit = true;
   try {

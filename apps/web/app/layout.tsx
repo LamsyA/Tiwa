@@ -6,11 +6,14 @@ import { cookies } from 'next/headers';
 import en from '../messages/en.json';
 import './globals.css';
 
+// Not preloaded (P3-T13): the ~48 KB Inter file raced the render-blocking
+// CSS on slow 4G and delayed first paint; body text swaps in when it lands.
 const inter = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-inter',
   display: 'swap',
+  preload: false,
 });
 
 // Display face only ships 700 (every font-display use is font-bold), stays

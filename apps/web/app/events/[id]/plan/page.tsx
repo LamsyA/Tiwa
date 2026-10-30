@@ -11,8 +11,8 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
   const t = await getTranslations('events.plan');
   const [event, tasks, members] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true, timezone: true } }),
-    listTasks(ctx.actor, id),
-    listParticipants(ctx.actor, id),
+    listTasks(ctx.actor, id, access),
+    listParticipants(ctx.actor, id, access),
   ]);
   let canEdit = true;
   try {

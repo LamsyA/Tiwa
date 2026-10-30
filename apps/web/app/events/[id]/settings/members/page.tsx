@@ -12,7 +12,7 @@ export default async function EventMembersPage({ params }: { params: Promise<{ i
   const t = await getTranslations('events.members');
   const [event, list] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true, currency: true } }),
-    listParticipants(ctx.actor, id),
+    listParticipants(ctx.actor, id, access),
   ]);
   return (
     <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="settings" title={event.name}>

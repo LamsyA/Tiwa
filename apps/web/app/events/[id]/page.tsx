@@ -29,7 +29,7 @@ export default async function EventOverviewPage({
   const { welcome } = await searchParams;
   const { ctx, access } = await loadEventPage(id, '');
   const t = await getTranslations('events');
-  const overview = await getEventOverview(ctx.actor, id);
+  const overview = await getEventOverview(ctx.actor, id, new Date(), access);
   const { event, progress, deadlines, team } = overview;
   const template = getEventType(event.type);
   const firstDay = event.days[0];

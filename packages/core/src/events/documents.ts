@@ -1,11 +1,11 @@
 import { prisma } from '@tiwa/db';
 import { sniffMime, type Storage } from '@tiwa/storage';
 import { z } from 'zod';
-import type { Actor } from '../auth/authorize.js';
+import type { Actor, EventAccess } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
-import { requireEventAccess } from './access.js';
+import { requireEventAccess, resolveEventAccess } from './access.js';
 
 // Event documents (EVT-08): PDFs, images and office files up to 25 MB.
 // Flow: start (signed PUT) → browser uploads straight to storage (D-A05) →
@@ -97,8 +97,8 @@ export async function completeDocumentUpload(
   return { documentId: document.id };
 }
 
-export async function listDocuments(actor: UserActor, eventId: string) {
-  await requireEventAccess(actor, eventId, 'event.view');
+export async function listDocuments(actor: UserActor, eventId: string, preloaded?: EventAccess) {
+  await resolveEventAccess(actor, eventId, 'event.view', preloaded);
   return prisma.document.findMany({
     where: { eventId, uploadedAt: { not: null }, deletedAt: null },
     orderBy: { createdAt: 'desc' },
