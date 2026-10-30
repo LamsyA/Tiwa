@@ -692,6 +692,73 @@
         "FORBIDDEN": "You don't have permission to do that.",
         "rsvpClosed": "RSVP is closed for this event",
         "invalidPhone": "That phone number doesn't look right"
+      },
+      "composer": {
+        "new": "New invite",
+        "title": "Send invitations",
+        "steps": {
+          "who": "Who",
+          "how": "How",
+          "message": "Message",
+          "review": "Review"
+        },
+        "kind": {
+          "label": "What is this?",
+          "invite": "Invitation",
+          "update": "Update"
+        },
+        "who": {
+          "all": "All guests not yet invited",
+          "attending": "Attending guests",
+          "group": "One group",
+          "groupLabel": "Group",
+          "ids": "Hand-picked guests",
+          "pickPlaceholder": "Search guests",
+          "picked": "{count} picked"
+        },
+        "how": {
+          "channels": "Channels",
+          "whatsapp": "WhatsApp",
+          "email": "Email",
+          "sms": "SMS",
+          "link": "Link only",
+          "smart": "Smart channel choice",
+          "smartHint": "Tiwa picks the best channel per guest: WhatsApp when they have a phone number, else email, else SMS.",
+          "manualHint": "Every guest gets your first channel that fits their contact details."
+        },
+        "message": {
+          "label": "Message",
+          "hint": "Use {name} for the guest's name and {link} for their personal link.",
+          "defaultInvite": "You're invited to {event}! Tap your personal link to reply: {link}",
+          "defaultUpdate": "An update about {event}: {link}",
+          "previewWhatsapp": "WhatsApp preview",
+          "previewEmail": "Email preview",
+          "previewSms": "SMS preview",
+          "segments": "{count} SMS {count, plural, one {segment} other {segments}}",
+          "emailNote": "Email arrives with Yes/No buttons in the designed template."
+        },
+        "review": {
+          "title": "Ready to send?",
+          "perChannel": "Messages per channel",
+          "cost": "SMS estimate",
+          "free": "Free",
+          "needsLink": "Need a link instead",
+          "needsLinkHint": "No matching contact for your channels — copy their personal links by hand.",
+          "copy": "Copy",
+          "copied": "Copied",
+          "send": "Send to {count} {count, plural, one {guest} other {guests}}",
+          "sending": "Sending…",
+          "sent": "Invitations are on their way.",
+          "empty": "Nobody matches — pick more guests or add the Link channel."
+        },
+        "back": "Back",
+        "next": "Next",
+        "errors": {
+          "pickChannel": "Pick at least one channel",
+          "pickGuests": "Pick at least one guest",
+          "pickGroup": "Pick a group",
+          "emptyMessage": "Write a message first"
+        }
       }
     }
   },

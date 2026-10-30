@@ -513,6 +513,7 @@ model InviteDelivery {
 enum InviteChannel {
   LINK
   QR
+  WHATSAPP // unresolved at compose time; fan-out routes to FREE or API per the whatsapp.bulk flag
   WHATSAPP_FREE
   WHATSAPP_API
   EMAIL

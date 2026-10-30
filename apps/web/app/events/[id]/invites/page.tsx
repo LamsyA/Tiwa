@@ -1,9 +1,10 @@
 import { env } from '@tiwa/config';
-import { authorize } from '@tiwa/core';
+import { authorize, listGroups, listGuests } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
+import { Composer } from './composer.js';
 import { InvitesSwitch } from './invites-switch.js';
 import { ShareSection } from './share-section.js';
 
@@ -37,9 +38,16 @@ export default async function InvitesPage({ params }: { params: Promise<{ id: st
   })();
   const event = await prisma.event.findUniqueOrThrow({
     where: { id },
-    select: { name: true, slug: true, sharedLinkEnabled: true },
+    select: { name: true, slug: true, currency: true, sharedLinkEnabled: true },
   });
   const shareUrl = `${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}/rsvp`;
+  const [listed, groups] =
+    invitesOn && canManage
+      ? await Promise.all([
+          listGuests(ctx.actor, { eventId: id, take: 500 }, access),
+          listGroups(ctx.actor, id, access),
+        ])
+      : [{ guests: [], total: 0, redacted: false, nextCursor: null }, []];
 
   return (
     <EventFrame
@@ -62,6 +70,14 @@ export default async function InvitesPage({ params }: { params: Promise<{ id: st
         {invitesOn && canManage && (
           <Card className="flex flex-wrap items-center gap-3 p-4">
             <p className="text-muted min-w-0 flex-1 text-sm">{t('off.body')}</p>
+            <Composer
+              eventId={id}
+              eventName={event.name}
+              currency={event.currency}
+              appUrl={env.APP_URL.replace(/\/$/, '')}
+              guests={listed.guests.map((guest) => ({ id: guest.id, name: guest.name }))}
+              groups={groups}
+            />
             <InvitesSwitch eventId={id} enabled />
           </Card>
         )}

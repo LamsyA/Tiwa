@@ -172,7 +172,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P4-T03 Guests page: add manually, paste parser (detects phone/email, E.164 normalise), CSV import job with column mapping and progress, contacts picker (feature-detected), groups, search/filter, bulk actions.
 - [x] P4-T04 Headcount report + vendor share link (no contact details); simple tables assignment.
 - [x] P4-T05 Invitations switch (off by default) and Share section: event link, QR download (PNG + A6/A4 PDF), shared-link RSVP (`/e/[slug]/rsvp`) with on/off.
-- [ ] P4-T06 Invite composer (Who · How · Message, smart channel choice, previews per channel, SMS cost estimate) and **one-click Send** (`sendInviteBatch`, idempotent).
+- [x] P4-T06 Invite composer (Who · How · Message, smart channel choice, previews per channel, SMS cost estimate) and **one-click Send** (`sendInviteBatch`, idempotent).
 - [ ] P4-T07 Worker: `send-invite-batch` fan-out, `send-invite` with per-provider rate limiters, status updates, SSE `invites:{eventId}`.
 - [ ] P4-T08 WhatsApp free-mode queue screen (`wa.me` one by one, mark sent manually).
 - [ ] P4-T09 Guest invitation page `/i/[token]` (GuestShell, one-tap RSVP island, extras when enabled, client-side POST for email one-tap links with Undo), pass page with QR, `.ics` endpoint and Google Calendar link.
