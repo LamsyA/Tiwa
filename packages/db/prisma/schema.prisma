@@ -145,8 +145,9 @@ model Event {
   programme              ProgrammeItem[]
   tasks                  Task[]
   documents              Document[]
-  budgetCategories       BudgetCategory[]
+  budgetCategories         BudgetCategory[]
   guests                 Guest[]
+  gallery                Gallery?
 
   @@index([status, startsAt])
   @@index([createdById])
@@ -297,6 +298,128 @@ model Document {
   event        Event?    @relation(fields: [eventId], references: [id])
 
   @@index([eventId, createdAt])
+}
+
+// ───────────── Moments (Backend.md §3; galleries auto-created on finalize) ─────────────
+
+model Gallery {
+  id                  String         @id @default(uuid(7))
+  eventId             String         @unique
+  code                String         @unique // short public code for /m/{code}
+  accessCode          String?                   // printed on cards for guests-only galleries
+  privacy             GalleryPrivacy @default(LINK)
+  moderation          ModerationMode @default(INSTANT)
+  slideshowDelaySec   Int            @default(30)
+  guestDownloads      Boolean        @default(true)
+  showFooter          Boolean        @default(true)
+  plan                GalleryPlan    @default(FREE)
+  itemLimit           Int            @default(500)
+  expiresAt           DateTime?
+  event               Event          @relation(fields: [eventId], references: [id])
+  items               MediaItem[]
+}
+
+enum GalleryPrivacy {
+  GUESTS_ONLY
+  LINK
+  PUBLIC
+}
+
+enum ModerationMode {
+  INSTANT
+  APPROVE_FIRST
+}
+
+enum GalleryPlan {
+  FREE
+  PLUS
+}
+
+model GuestSession {
+  id        String    @id @default(uuid(7))
+  galleryId String
+  name      String?
+  blockedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([galleryId])
+}
+
+model MediaItem {
+  id                String     @id @default(uuid(7))
+  galleryId         String
+  album             Album
+  uploaderUserId    String?
+  uploaderSessionId String?
+  kind              MediaKind
+  state             MediaState @default(UPLOADING)
+  originalKey       String
+  thumbKey          String?
+  largeKey          String?
+  posterKey         String? // video
+  blurDataUrl       String?
+  width             Int?
+  height            Int?
+  durationSec       Int?
+  sizeBytes         Int
+  sha256            String?
+  takenAt           DateTime?
+  caption           String?
+  altText           String?
+  featured          Boolean    @default(false)
+  watermarked       Boolean    @default(false)
+  moderationLabels  Json?
+  createdAt         DateTime   @default(now())
+  deletedAt         DateTime?
+  gallery           Gallery    @relation(fields: [galleryId], references: [id])
+
+  @@index([galleryId, state, album, createdAt])
+  @@index([galleryId, sha256])
+}
+
+enum Album {
+  OFFICIAL
+  GUEST
+}
+
+enum MediaKind {
+  PHOTO
+  VIDEO
+}
+
+enum MediaState {
+  UPLOADING
+  PROCESSING
+  PENDING_REVIEW
+  PUBLISHED
+  HIDDEN
+  BLOCKED
+  FAILED
+}
+
+model GuestbookMessage {
+  id        String   @id @default(uuid(7))
+  galleryId String
+  name      String?
+  body      String
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([galleryId, createdAt])
+}
+
+model Report {
+  id                String   @id @default(uuid(7))
+  targetType        String // media | review | profile | message
+  targetId          String
+  reason            String
+  reporterUserId    String?
+  reporterSessionId String?
+  status            String   @default("OPEN")
+  createdAt         DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([status])
 }
 
 // ───────────── Budget (categories now; expenses, contributions in P9) ─────────────

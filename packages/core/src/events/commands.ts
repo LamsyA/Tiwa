@@ -14,6 +14,7 @@ import { uniqueSlug } from '../shared/ids.js';
 import { allocate } from '../shared/money.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { addDays } from '../shared/time.js';
+import { ensureGallery } from '../moments/galleries.js';
 import { zonedTimeToUtc } from '../shared/zoned.js';
 import { permissionsFor, requireEventAccess, requireHost, toStoredPermissions } from './access.js';
 
@@ -294,6 +295,7 @@ export async function finalizeEvent(actor: UserActor, input: z.infer<typeof even
     });
 
     await tx.event.update({ where: { id: event.id }, data: { status: 'ACTIVE', wizardStep: null } });
+    await ensureGallery(tx, event.id);
     await audit(tx, { actor, action: 'event.finalize', targetType: 'Event', targetId: event.id });
     await enqueue(tx, 'event.finalized', { eventId: event.id });
     return { eventId: event.id };

@@ -56,6 +56,17 @@ export function generateToken(bytes = 32): string {
   return toBase64Url(randomBytes(bytes));
 }
 
+const SHORT_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no confusables (0/O, 1/I/L)
+
+/** Short human-typable code (gallery links, printed access codes). */
+export function shortCode(length: number): string {
+  if (!Number.isInteger(length) || length < 4) throw new RangeError(`shortCode needs length ≥ 4, got ${length}`);
+  const bytes = randomBytes(length);
+  let out = '';
+  for (let i = 0; i < length; i += 1) out += SHORT_ALPHABET[(bytes[i] ?? 0) % SHORT_ALPHABET.length];
+  return out;
+}
+
 /** Lowercase, hyphen-separated, safe for URLs. Diacritics are stripped (e.g. "Ada's 40th" → "adas-40th"). */
 export function slugify(text: string, maxLength = 60): string {
   return text
