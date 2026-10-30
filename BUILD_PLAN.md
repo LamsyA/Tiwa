@@ -197,7 +197,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 
 - [x] P5-T01 Prisma: Gallery, GuestSession, MediaItem, GuestbookMessage, Report; migration. Gallery auto-created when Moments is on.
 - [x] P5-T02 `packages/storage` (S3/R2/MinIO) and upload endpoints (`create`, `sign-part`, `complete`, `abort`) with limits and rate limits.
-- [ ] P5-T03 `packages/moderation` (adapter + Fake) and CSAM-scanning setup notes in `decision.md`.
+- [x] P5-T03 `packages/moderation` (adapter + Fake) and CSAM-scanning setup notes in `decision.md`.
 - [ ] P5-T04 Worker: `process-image` (sharp: orientation, strip GPS, 320/1080 AVIF+WebP, blur, sha256 dedupe), `process-video` (ffmpeg 720p + poster), `moderate` → state + SSE.
 - [ ] P5-T05 Client upload stack: Web Worker resize, Uppy multipart with retries, `UploadQueueProvider`, IndexedDB resume.
 - [ ] P5-T06 Gallery page `/m/[code]`: Official/Guest tabs, virtualised grid, lightbox, "My uploads", live new-items pill, privacy modes (guests-only via invite/ticket cookie or access code).
