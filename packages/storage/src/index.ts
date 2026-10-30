@@ -29,6 +29,8 @@ export interface Storage {
   head(key: string): Promise<StoredObjectInfo | null>;
   /** First `bytes` of an object (magic-byte checks). */
   readStart(key: string, bytes: number): Promise<Uint8Array>;
+  /** Whole object (worker-side processing). Null when missing. */
+  get(key: string): Promise<{ body: Uint8Array; contentType: string | undefined } | null>;
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   delete(key: string): Promise<void>;
   /** Multipart upload for large media (arc §5: 5 MB parts, browser → storage direct). */
@@ -106,6 +108,18 @@ export class S3Storage implements Storage {
     return result.Body ? await result.Body.transformToByteArray() : new Uint8Array();
   }
 
+  async get(key: string): Promise<{ body: Uint8Array; contentType: string | undefined } | null> {
+    try {
+      const result = await this.client.send(new GetObjectCommand({ Bucket: this.config.bucket, Key: key }));
+      if (!result.Body) return null;
+      return { body: await result.Body.transformToByteArray(), contentType: result.ContentType };
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+      if (status === 404 || (error as { name?: string }).name === 'NoSuchKey') return null;
+      throw error;
+    }
+  }
+
   async put(key: string, body: Uint8Array, contentType: string): Promise<void> {
     await this.client.send(
       new PutObjectCommand({ Bucket: this.config.bucket, Key: key, Body: body, ContentType: contentType }),
@@ -172,6 +186,11 @@ export class FakeStorage implements Storage {
     return this.objects.get(key)?.body.slice(0, bytes) ?? new Uint8Array();
   }
 
+  async get(key: string): Promise<{ body: Uint8Array; contentType: string | undefined } | null> {
+    const object = this.objects.get(key);
+    return object ? { body: object.body, contentType: object.contentType } : null;
+  }
+
   async put(key: string, body: Uint8Array, contentType: string): Promise<void> {
     this.objects.set(key, { body, contentType });
   }
@@ -186,7 +205,9 @@ export class FakeStorage implements Storage {
     return { uploadId };
   }
 
-  async signPart(key: string, uploadId: string): Promise<string> {
+  async signPart(key: string, uploadId: string, _partNumber?: number, _ttlSec?: number): Promise<string> {
+    void _partNumber;
+    void _ttlSec;
     return `fake://part/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}`;
   }
 

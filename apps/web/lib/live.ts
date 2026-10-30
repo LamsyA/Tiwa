@@ -6,7 +6,7 @@ import { Redis } from 'ioredis';
 // clients refetch through normal, permission-checked reads.
 
 export interface LiveMessage {
-  kind: 'tasks' | 'event' | 'members' | 'documents' | 'guests' | 'invites';
+  kind: 'tasks' | 'event' | 'members' | 'documents' | 'guests' | 'invites' | 'gallery';
   at: number;
 }
 

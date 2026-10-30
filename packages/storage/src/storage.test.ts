@@ -43,9 +43,9 @@ describe('FakeStorage', () => {
 
     const again = await storage.createMultipart('g/o2.bin', 'application/octet-stream');
     await storage.abortMultipart('g/o2.bin', again.uploadId);
-    await expect(
-      storage.completeMultipart('g/o2.bin', again.uploadId, [{ eTag: 'a', partNumber: 1 }]),
-    ).rejects.toThrow(/unknown multipart/);
+    await expect(storage.completeMultipart('g/o2.bin', again.uploadId, [{ eTag: 'a', partNumber: 1 }])).rejects.toThrow(
+      /unknown multipart/,
+    );
   });
 });
 

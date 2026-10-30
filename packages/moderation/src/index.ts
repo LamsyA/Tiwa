@@ -34,7 +34,10 @@ export interface ModerationProvider {
  * Provider selection. Only `fake` exists: any other name throws instead of
  * silently degrading to approve-everything in production (see D-X17).
  */
-export function createModerationProvider(kind: string, decide?: (input: ModerationInput) => ModerationVerdict): ModerationProvider {
+export function createModerationProvider(
+  kind: string,
+  decide?: (input: ModerationInput) => ModerationVerdict,
+): ModerationProvider {
   if (kind === 'fake') return new FakeModeration(decide);
   throw new Error(`unsupported moderation provider: ${kind}`);
 }

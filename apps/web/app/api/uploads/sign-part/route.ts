@@ -21,7 +21,10 @@ export async function POST(request: Request) {
     RATE_LIMITS.uploadPartPerIp.windowSec,
   );
   if (!ipCheck.allowed) {
-    return NextResponse.json({ ok: false, error: { code: 'RATE_LIMITED', retryAfterSec: ipCheck.retryAfterSec } }, { status: 429 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'RATE_LIMITED', retryAfterSec: ipCheck.retryAfterSec } },
+      { status: 429 },
+    );
   }
   const actor = await actorFromRequest(request, { mediaId: input.data.mediaId });
   if (!actor) return NextResponse.json({ ok: false, error: { code: 'UNAUTHENTICATED' } }, { status: 401 });

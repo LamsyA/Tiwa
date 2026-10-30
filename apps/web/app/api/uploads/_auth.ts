@@ -24,17 +24,14 @@ export async function actorFromRequest(
   const ctx = await getCtx();
   if (ctx.actor && ctx.actor.kind === 'user') return ctx.actor as UserActor;
 
-  let galleryId: string | null = null;
-  if ('mediaId' in opts) {
-    const item = await prisma.mediaItem.findUnique({
-      where: { id: opts.mediaId },
-      select: { galleryId: true },
-    });
-    galleryId = item?.galleryId ?? null;
-  } else {
+  const galleryId = await (async (): Promise<string | null> => {
+    if ('mediaId' in opts) {
+      const item = await prisma.mediaItem.findUnique({ where: { id: opts.mediaId }, select: { galleryId: true } });
+      return item?.galleryId ?? null;
+    }
     const gallery = await prisma.gallery.findUnique({ where: { eventId: opts.eventId }, select: { id: true } });
-    galleryId = gallery?.id ?? null;
-  }
+    return gallery?.id ?? null;
+  })();
   if (!galleryId) return null;
   const secret = env.AUTH_SECRET;
   if (!secret) return null;

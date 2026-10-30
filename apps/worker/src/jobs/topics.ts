@@ -1,5 +1,11 @@
 import type { createLogger } from '@tiwa/core';
 import { GUESTS_IMPORT_TOPIC, handleGuestCsvImport } from './csv-import.js';
+import {
+  MEDIA_PROCESS_IMAGE_TOPIC,
+  MEDIA_PROCESS_VIDEO_TOPIC,
+  handleProcessImage,
+  handleProcessVideo,
+} from './media.js';
 import { INVITE_BATCH_QUEUED_TOPIC, handleInviteBatchQueued, type FanOutSink } from './send-invite.js';
 
 type Log = ReturnType<typeof createLogger>;
@@ -12,6 +18,8 @@ type Log = ReturnType<typeof createLogger>;
 export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanOutSink) => Promise<unknown>> = {
   [GUESTS_IMPORT_TOPIC]: async (data, log) => handleGuestCsvImport(data, log),
   [INVITE_BATCH_QUEUED_TOPIC]: async (data, log, sink) => handleInviteBatchQueued(data, log, sink),
+  [MEDIA_PROCESS_IMAGE_TOPIC]: async (data, log, sink) => handleProcessImage(data, log, sink),
+  [MEDIA_PROCESS_VIDEO_TOPIC]: async (data, log, sink) => handleProcessVideo(data, log, sink),
   // Stub until chat sync (P13) consumes it; without this every finalized event burns 5 failing retries.
   'event.finalized': async (data, log) => {
     log.info({ topic: 'event.finalized', eventId: (data as { eventId?: string }).eventId }, 'event finalized (stub)');

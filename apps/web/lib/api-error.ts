@@ -37,4 +37,3 @@ function err(status: number, error: { code: string; details?: unknown }): NextRe
   if (typeof raw.retryAfterSec === 'number') details.retryAfterSec = raw.retryAfterSec;
   return NextResponse.json({ ok: false, error: { code: error.code, ...details } }, { status });
 }
-

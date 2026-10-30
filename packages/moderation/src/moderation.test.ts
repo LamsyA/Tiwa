@@ -23,6 +23,8 @@ describe('FakeModeration', () => {
     expect((await mod.scan({ key: 'x/block-me.jpg', mime: 'image/jpeg', sizeBytes: 10, kind: 'PHOTO' })).verdict).toBe(
       'BLOCK',
     );
-    expect((await mod.scan({ key: 'x/ok.jpg', mime: 'image/jpeg', sizeBytes: 10, kind: 'PHOTO' })).verdict).toBe('REVIEW');
+    expect((await mod.scan({ key: 'x/ok.jpg', mime: 'image/jpeg', sizeBytes: 10, kind: 'PHOTO' })).verdict).toBe(
+      'REVIEW',
+    );
   });
 });

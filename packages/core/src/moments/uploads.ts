@@ -169,7 +169,10 @@ export const completeUploadSchema = z.object({
     .array(z.object({ eTag: z.string().min(1), partNumber: z.number().int().min(1).max(MAX_PART_NUMBER) }))
     .min(1)
     .max(MAX_PART_NUMBER),
-  sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  sha256: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
   width: z.number().int().min(1).max(20000).optional(),
   height: z.number().int().min(1).max(20000).optional(),
 });
@@ -200,8 +203,7 @@ export async function completeUpload(
       mediaItemId: item.id,
     });
     await audit(tx, {
-      actor:
-        actor.kind === 'user' ? actor : { kind: 'guest', guestId: actor.sessionId, eventId: item.gallery.eventId },
+      actor: actor.kind === 'user' ? actor : { kind: 'guest', guestId: actor.sessionId, eventId: item.gallery.eventId },
       action: 'moments.completeUpload',
       targetType: 'MediaItem',
       targetId: item.id,

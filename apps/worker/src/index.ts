@@ -7,6 +7,7 @@ import { DEADLINE_ALERTS_EVERY_MS, DEADLINE_ALERTS_JOB, handleDeadlineAlerts } f
 import { REMINDERS_EVERY_MS, REMINDERS_JOB, handleReminders } from './jobs/reminders.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
+import { MEDIA_MODERATE_JOB, handleModerate } from './jobs/media.js';
 import { SEND_INVITE_JOB, handleSendInvite } from './jobs/send-invite.js';
 import { TOPIC_HANDLERS } from './jobs/topics.js';
 
@@ -38,6 +39,7 @@ async function main() {
       if (job.name === DEADLINE_ALERTS_JOB) return handleDeadlineAlerts(log);
       if (job.name === REMINDERS_JOB) return handleReminders(log);
       if (job.name === SEND_INVITE_JOB) return handleSendInvite(job.data, log);
+      if (job.name === MEDIA_MODERATE_JOB) return handleModerate(job.data, log);
       const handler = TOPIC_HANDLERS[job.name];
       if (handler) return handler(job.data, log, queue);
       throw new Error(`unknown job: ${job.name}`);

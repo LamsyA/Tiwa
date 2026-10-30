@@ -43,6 +43,7 @@ afterAll(async () => {
   const events = await prisma.event.findMany({ where: { createdById: { in: users } }, select: { id: true } });
   const ids = events.map((event) => event.id);
   await prisma.programmeItem.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.gallery.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.task.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.budgetCategory.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.eventDay.deleteMany({ where: { eventId: { in: ids } } });
