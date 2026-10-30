@@ -236,3 +236,10 @@ Template:
 - Decision: The Serwist worker runs NetworkOnly for RSC payloads, page navigations and `/api/*`; only static hashed assets (JS/CSS/fonts/images) use the default cache strategies. Offline event pages get targeted caching when they land (P12), not via catch-all page caching.
 - Why: Serwist's defaultCache applies header-less NetworkFirst to RSC/navigation/API requests. Replaying streamed RSC from cache intermittently wedged client-side navigations (URL changed, content never arrived — reproduced 1-in-~12 tab clicks, 0/30 after the fix) and stored per-user pages on-device for 24 h (Backend §12). Navigation speed also suffered through the SW.
 - Affects: apps/web/app/sw.ts, e2e/sw-navigation.spec.ts.
+
+### 2026-10-30 — Phone formatter loads on demand; one React version workspace-wide
+- ID: D-X14
+- Status: AGENT
+- Decision: `PhoneInput` dynamic-imports `libphonenumber-js` on mount (reformatting + re-emitting on arrival) instead of statically bundling every country's metadata into the shared chunk. `packages/ui` devDeps now pin react/react-dom 19.3.1, matching `apps/web`, so the workspace resolves a single React DOM.
+- Why: libphonenumber was ~80 KB gzip of the 258 KB first-load JS on `/events/[id]` although most pages never edit a phone (P3-T13; first-load JS 258→221 KB). Two React DOM copies (19.0.0 via ui, 19.3.1 via web) were one bad import away from dual-React hydration bugs.
+- Affects: packages/ui (phone-money, inputs tests, package.json), pnpm-lock.yaml.
