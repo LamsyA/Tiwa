@@ -889,5 +889,20 @@
       "closed": "RSVP is closed for this event."
     },
     "extrasSave": "Save details"
+  },
+  "gallery": {
+    "official": "Official",
+    "guests": "Guests",
+    "addPhotos": "Add photos",
+    "guestsOnlyHeading": "This gallery is for guests only",
+    "guestsOnlyHint": "Enter the access code from your invite card, or open the gallery from your invite link.",
+    "accessCode": "Access code",
+    "accessCodePlaceholder": "e.g. KX4Q2M",
+    "unlock": "Unlock gallery",
+    "emptyOfficial": "The official album is not published yet.",
+    "emptyGuest": "No guest photos yet — be the first to share one.",
+    "showMore": "Show more",
+    "plannedWith": "Planned with Tiwa",
+    "albums": "Albums"
   }
 }

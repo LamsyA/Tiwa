@@ -13,6 +13,7 @@
   "dependencies": {
     "@sentry/nextjs": "^11.10.0",
     "@serwist/next": "^9.5.13",
+    "@tanstack/react-virtual": "^3.14.24",
     "@tiwa/config": "workspace:*",
     "@tiwa/core": "workspace:*",
     "@tiwa/db": "workspace:*",
