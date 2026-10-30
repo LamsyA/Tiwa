@@ -168,7 +168,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `PRD.md GST-*`, `UF-06`–`UF-09`, `Backend.md §3 (guests & invites), §5.6, §9, §10 (messaging)`, `Frontend.md §6.2 (/i), §6.3 (guests, invites)`.
 
 - [x] P4-T01 Prisma: Guest (with invite fields), GuestGroup, SeatingTable, InviteBatch, InviteDelivery; migration.
-- [ ] P4-T02 `packages/messaging`: Email (Resend + Fake), SMS (Termii + Fake), WhatsApp Cloud (+ Fake), `wa.me` link builder; React Email invite templates.
+- [x] P4-T02 `packages/messaging`: Email (Resend + Fake), SMS (Termii + Fake), WhatsApp Cloud (+ Fake), `wa.me` link builder; React Email invite templates.
 - [ ] P4-T03 Guests page: add manually, paste parser (detects phone/email, E.164 normalise), CSV import job with column mapping and progress, contacts picker (feature-detected), groups, search/filter, bulk actions.
 - [ ] P4-T04 Headcount report + vendor share link (no contact details); simple tables assignment.
 - [ ] P4-T05 Invitations switch (off by default) and Share section: event link, QR download (PNG + A6/A4 PDF), shared-link RSVP (`/e/[slug]/rsvp`) with on/off.
