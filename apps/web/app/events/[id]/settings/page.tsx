@@ -11,7 +11,7 @@ import { SettingsForms } from './settings-forms.js';
 /** P3-T10 / Frontend.md §6.3: details, members, features, visibility, appearance, danger zone. */
 export default async function EventSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ctx, access, allowed } = await loadEventPage(id, '/settings', 'event.view');
+  const { ctx, access, allowed, invitesOn } = await loadEventPage(id, '/settings', 'event.view');
   const t = await getTranslations('events');
   const ts = await getTranslations('events.settingsPage');
   const event = await prisma.event.findUniqueOrThrow({
@@ -50,7 +50,14 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
   const coverUrl = event.coverKey ? await privateStorage().getSignedUrl(event.coverKey, 3600) : null;
 
   return (
-    <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="settings" title={event.name}>
+    <EventFrame
+      eventId={id}
+      userId={ctx.actor.userId}
+      access={access}
+      invitesOn={invitesOn}
+      active="settings"
+      title={event.name}
+    >
       <div className="flex flex-col gap-4 py-2">
         <h2 className="font-display text-xl font-bold">{ts('title')}</h2>
         {!allowed ? (

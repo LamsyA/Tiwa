@@ -43,6 +43,7 @@ export { Banner, EmptyState, Skeleton } from './components/states.js';
 export { Stepper, type Step } from './components/stepper.js';
 export { Timeline, type TimelineItem } from './components/timeline.js';
 export { ProgressBar, ProgressRing, type ProgressProps } from './components/progress.js';
+export { QRCode, qrSvg, type QRCodeProps } from './components/qr-code.js';
 export {
   DateText,
   MoneyText,

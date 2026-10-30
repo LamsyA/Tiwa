@@ -227,7 +227,8 @@
       "settings": "Settings",
       "sections": "Event sections",
       "documents": "Documents",
-      "guests": "Guests"
+      "guests": "Guests",
+      "invites": "Invites"
     },
     "roles": {
       "HOST": "Host",
@@ -658,6 +659,40 @@
         "copied": "Copied",
         "expires": "Valid until {date}"
       }
+    },
+    "invites": {
+      "title": "Invitations",
+      "off": {
+        "title": "Invitations are off",
+        "body": "Turn them on to send personal invites by WhatsApp, email or SMS — and track every reply live. Your guest list works fine without them.",
+        "enable": "Turn on invitations"
+      },
+      "on": {
+        "disable": "Turn off invitations",
+        "disableConfirm": "Turn invitations off? Already-sent links keep working, but you can't send new ones."
+      },
+      "share": {
+        "title": "Share one link",
+        "body": "For smaller gatherings: anyone with this link can RSVP with just a name. No personal invites needed.",
+        "linkLabel": "Event link",
+        "copy": "Copy link",
+        "copied": "Copied",
+        "qrLabel": "Event QR code",
+        "downloadPng": "Download PNG",
+        "downloadA6": "A6 poster (PDF)",
+        "downloadA4": "A4 poster (PDF)",
+        "webShare": "Share…",
+        "toggleOn": "Turn shared link on",
+        "toggleOff": "Turn shared link off",
+        "offNote": "The shared link is off — old links show “RSVP closed”.",
+        "posterTitle": "Scan to RSVP"
+      },
+      "errors": {
+        "generic": "We couldn't save that. Please try again.",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "rsvpClosed": "RSVP is closed for this event",
+        "invalidPhone": "That phone number doesn't look right"
+      }
     }
   },
   "shared": {
@@ -677,6 +712,24 @@
       "rsvpNo": "No",
       "rsvpMaybe": "Maybe",
       "rsvpNone": "No reply"
+    },
+    "rsvp": {
+      "title": "RSVP",
+      "heading": "You're invited",
+      "name": "Your name",
+      "phone": "Phone (optional)",
+      "submit": "I'm coming",
+      "done": "You're on the list — see you there!",
+      "closed": "RSVP is closed",
+      "closedBody": "This link no longer accepts replies. Please contact the host.",
+      "notFound": "Event not found",
+      "notFoundBody": "This link doesn't match any event.",
+      "errors": {
+        "invalidPhone": "That phone number doesn't look right — or leave it blank",
+        "rsvpClosed": "This link no longer accepts replies. Please contact the host.",
+        "rateLimited": "Too many replies from here — try again later",
+        "generic": "We couldn't save that. Please try again."
+      }
     }
   }
 }

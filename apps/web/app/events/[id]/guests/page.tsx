@@ -15,12 +15,19 @@ export default async function GuestsPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const { ctx, access, allowed } = await loadEventPage(id, '/guests', 'event.view');
+  const { ctx, access, allowed, invitesOn } = await loadEventPage(id, '/guests', 'event.view');
   const t = await getTranslations('events.guests');
   if (!allowed) {
     const tf = await getTranslations('events');
     return (
-      <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="guests" title={t('title')}>
+      <EventFrame
+        eventId={id}
+        userId={ctx.actor.userId}
+        access={access}
+        invitesOn={invitesOn}
+        active="guests"
+        title={t('title')}
+      >
         <Banner tone="warning">{tf('forbiddenBody')}</Banner>
       </EventFrame>
     );
@@ -59,7 +66,14 @@ export default async function GuestsPage({
   ]);
 
   return (
-    <EventFrame eventId={id} userId={ctx.actor.userId} access={access} active="guests" title={event.name}>
+    <EventFrame
+      eventId={id}
+      userId={ctx.actor.userId}
+      access={access}
+      invitesOn={invitesOn}
+      active="guests"
+      title={event.name}
+    >
       <GuestsManager
         eventId={id}
         canManage={canManage}
