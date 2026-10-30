@@ -4,14 +4,19 @@
 // (handleSendInvite) with per-provider Redis rate limiting, exactly as
 // production runs it. GATE P4: 2,000 invites in < 5 min.
 //
-// Usage: pnpm load:invites [--guests 2000]
+// Usage: pnpm load:invites [--guests=2000] [--export-tokens=/tmp/load-tokens.json] [--no-cleanup]
 // Requires: Postgres + Redis running (pnpm db:up) and a normal `pnpm build`.
-// Run with: ./node_modules/.bin/tsx scripts/load-invites.mjs
-import { setTimeout as sleep } from 'node:timers/promises';
+import { writeFileSync } from 'node:fs';
 
 process.loadEnvFile(new URL('../.env', import.meta.url));
 
-const GUESTS = Number(process.argv.find((arg) => arg.startsWith('--guests='))?.split('=')[1] ?? 2000);
+const flag = (name, fallback) => {
+  const hit = process.argv.find((arg) => arg.startsWith(`--${name}=`));
+  return hit ? hit.split('=').slice(1).join('=') : fallback;
+};
+const GUESTS = Number(flag('guests', '2000'));
+const EXPORT_TOKENS = flag('export-tokens', '');
+const NO_CLEANUP = process.argv.includes('--no-cleanup');
 const BUDGET_MIN = 5 * 60 * 1000;
 const started = Date.now();
 const elapsed = () => `${((Date.now() - started) / 1000).toFixed(1)}s`;
@@ -46,7 +51,9 @@ const event = await prisma.event.create({
   },
   select: { id: true },
 });
-await prisma.eventParticipant.create({ data: { eventId: event.id, userId: host.id, role: 'HOST', acceptedAt: new Date() } });
+await prisma.eventParticipant.create({
+  data: { eventId: event.id, userId: host.id, role: 'HOST', acceptedAt: new Date() },
+});
 
 // Guest creation, chunked like the UI limit (500/call).
 let created = 0;
@@ -65,7 +72,7 @@ let created = 0;
 }
 
 // One SMS batch for everybody (slowest provider limiter: 20/s — the worst case).
-let batchId = '';
+let batchId;
 {
   const t0 = Date.now();
   const preview = await core.createInviteBatch(hostActor, {
@@ -77,7 +84,10 @@ let batchId = '';
     kind: 'INVITE',
   });
   console.log(`[load] batch composed: ${preview.total} deliveries in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-  const sent = await core.sendInviteBatch(hostActor, { batchId: preview.batchId, idempotencyKey: `load-${Date.now()}` });
+  const sent = await core.sendInviteBatch(hostActor, {
+    batchId: preview.batchId,
+    idempotencyKey: `load-${Date.now()}`,
+  });
   batchId = sent.batchId;
   console.log(`[load] batch queued: ${sent.queued} (${elapsed()} total)`);
 }
@@ -92,7 +102,9 @@ const sink = {
 {
   const t0 = Date.now();
   const result = await handleInviteBatchQueued({ batchId }, log, sink);
-  console.log(`[load] fan-out: ${result.enqueued} send jobs, ${jobs.length} unique (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+  console.log(
+    `[load] fan-out: ${result.enqueued} send jobs, ${jobs.length} unique (${((Date.now() - t0) / 1000).toFixed(1)}s)`,
+  );
 }
 
 // Sends with worker-like concurrency (20, matching the worker).
@@ -113,7 +125,8 @@ const sink = {
       } catch {
         failed += 1;
       }
-      if ((done + failed) % 500 === 0) console.log(`[load] …${done + failed}/${jobs.length} sends (${elapsed()} total)`);
+      if ((done + failed) % 500 === 0)
+        console.log(`[load] …${done + failed}/${jobs.length} sends (${elapsed()} total)`);
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
@@ -131,18 +144,34 @@ console.log(`[load] DONE: ${delivered}/${GUESTS} SENT, batch=${batch.status}, to
 if (delivered !== GUESTS) throw new Error(`expected ${GUESTS} SENT, got ${delivered}`);
 if (batch.status !== 'DONE') throw new Error(`expected batch DONE, got ${batch.status}`);
 
-// Cleanup so reruns stay idempotent-ish (fresh slug each run anyway).
-const guestIds = (await prisma.guest.findMany({ where: { eventId: event.id }, select: { id: true } })).map((row) => row.id);
-await prisma.inviteDelivery.deleteMany({ where: { batchId } });
-await prisma.inviteBatch.deleteMany({ where: { id: batchId } });
-await prisma.guest.deleteMany({ where: { id: { in: guestIds } } });
-await prisma.eventParticipant.deleteMany({ where: { eventId: event.id } });
-await prisma.auditLog.deleteMany({ where: { targetId: event.id } });
-await prisma.outboxEvent.deleteMany({ where: { payload: { path: ['eventId'], equals: event.id } } });
-await prisma.idempotencyKey.deleteMany({ where: { key: { startsWith: 'invite-batch:load-' } } });
-await prisma.event.delete({ where: { id: event.id } });
-await prisma.user.delete({ where: { id: host.id } });
-console.log('[load] cleaned up');
+if (EXPORT_TOKENS) {
+  const tokens = (
+    await prisma.guest.findMany({
+      where: { eventId: event.id, inviteToken: { not: null } },
+      select: { inviteToken: true },
+    })
+  ).map((row) => row.inviteToken);
+  writeFileSync(EXPORT_TOKENS, `${JSON.stringify(tokens)}\n`);
+  console.log(`[load] exported ${tokens.length} tokens to ${EXPORT_TOKENS}`);
+}
+if (!NO_CLEANUP) {
+  // Cleanup so reruns stay idempotent-ish (fresh slug each run anyway).
+  const guestIds = (await prisma.guest.findMany({ where: { eventId: event.id }, select: { id: true } })).map(
+    (row) => row.id,
+  );
+  await prisma.inviteDelivery.deleteMany({ where: { batchId } });
+  await prisma.inviteBatch.deleteMany({ where: { id: batchId } });
+  await prisma.guest.deleteMany({ where: { id: { in: guestIds } } });
+  await prisma.eventParticipant.deleteMany({ where: { eventId: event.id } });
+  await prisma.auditLog.deleteMany({ where: { targetId: event.id } });
+  await prisma.outboxEvent.deleteMany({ where: { payload: { path: ['eventId'], equals: event.id } } });
+  await prisma.idempotencyKey.deleteMany({ where: { key: { startsWith: 'invite-batch:load-' } } });
+  await prisma.event.delete({ where: { id: event.id } });
+  await prisma.user.delete({ where: { id: host.id } });
+  console.log('[load] cleaned up');
+} else {
+  console.log(`[load] kept event ${event.id} (--no-cleanup)`);
+}
 if (totalMs > BUDGET_MIN) throw new Error(`over budget: ${(totalMs / 1000).toFixed(1)}s > 300s`);
 console.log(`[load] PASS: ${GUESTS} invites in ${(totalMs / 1000).toFixed(1)}s (budget 300s)`);
 await prisma.$disconnect();

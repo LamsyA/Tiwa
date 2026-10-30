@@ -1,7 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { AppShell, GuestShell, navigationForRole } from './shell.js';
+import { GuestShell } from './guest-shell.js';
+import { AppShell, navigationForRole } from './shell.js';
 
 describe('navigationForRole', () => {
   it('gives hosts, planners and vendors different destinations', () => {

@@ -1,5 +1,5 @@
 import { test, type Browser, type Page } from '@playwright/test';
-import { expect, freshPhone, isolateIp, pasteCode, requestPhoneCode, signInWithPhone } from './support/auth.js';
+import { expect, freshPhone, isolateIp, signInWithPhone } from './support/auth.js';
 
 // P4-T12: UF-07 send invites + tracking, UF-08 personal link RSVP, UF-09 shared link.
 // Worker fan-out/sends are covered by worker integration tests; e2e asserts

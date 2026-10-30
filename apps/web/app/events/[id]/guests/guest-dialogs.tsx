@@ -628,26 +628,25 @@ export function MergeDialog({
             {t('mergeDialog.merged')}
           </p>
         )}
-        {remaining
-          .map(({ dup, match }) => (
-            <div key={dup.id} className="border-border flex items-center gap-2 rounded-md border p-2">
-              <p className="min-w-0 flex-1 truncate text-sm font-medium">{dup.name}</p>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  void mergeGuestsAction({ eventId, keepId: dup.id, dropIds: [match.id] }).then((result) => {
-                    if (!result.ok) setError(toText(result));
-                    else {
-                      setMerged((current) => [...current, dup.id]);
-                      router.refresh();
-                    }
-                  })
-                }
-              >
-                {t('mergeDialog.mergeInto', { name: dup.name })}
-              </Button>
-            </div>
-          ))}
+        {remaining.map(({ dup, match }) => (
+          <div key={dup.id} className="border-border flex items-center gap-2 rounded-md border p-2">
+            <p className="min-w-0 flex-1 truncate text-sm font-medium">{dup.name}</p>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                void mergeGuestsAction({ eventId, keepId: dup.id, dropIds: [match.id] }).then((result) => {
+                  if (!result.ok) setError(toText(result));
+                  else {
+                    setMerged((current) => [...current, dup.id]);
+                    router.refresh();
+                  }
+                })
+              }
+            >
+              {t('mergeDialog.mergeInto', { name: dup.name })}
+            </Button>
+          </div>
+        ))}
         <div>
           <Button variant="ghost" onClick={onClose}>
             {t('mergeDialog.skip')}
