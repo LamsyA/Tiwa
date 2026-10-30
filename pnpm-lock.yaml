@@ -65,6 +65,9 @@ importers:
       '@tiwa/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@tiwa/messaging':
+        specifier: workspace:*
+        version: link:../../packages/messaging
       '@tiwa/storage':
         specifier: workspace:^
         version: link:../../packages/storage
