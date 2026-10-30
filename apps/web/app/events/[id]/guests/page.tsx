@@ -1,4 +1,4 @@
-import { authorize, countGuests, listGroups, listGuests } from '@tiwa/core';
+import { authorize, countGuests, headcount, listGroups, listGuests, listTables } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -39,7 +39,7 @@ export default async function GuestsPage({
     query.rsvp === 'YES' || query.rsvp === 'NO' || query.rsvp === 'MAYBE' || query.rsvp === 'NONE'
       ? query.rsvp
       : undefined;
-  const [counts, listed, groups, event] = await Promise.all([
+  const [counts, listed, groups, tables, report, event] = await Promise.all([
     countGuests(ctx.actor, id, access),
     listGuests(
       ctx.actor,
@@ -53,6 +53,8 @@ export default async function GuestsPage({
       access,
     ),
     listGroups(ctx.actor, id, access),
+    listTables(ctx.actor, id, access),
+    canManage ? headcount(ctx.actor, id, access) : Promise.resolve(null),
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } }),
   ]);
 
@@ -72,7 +74,9 @@ export default async function GuestsPage({
           rsvp: query.rsvp ?? '',
           checkedIn: query.checkedIn ?? '',
         }}
-        tab={query.tab === 'groups' ? 'groups' : 'list'}
+        tab={query.tab === 'groups' || query.tab === 'tables' || query.tab === 'headcount' ? query.tab : 'list'}
+        tables={tables}
+        report={report}
       />
     </EventFrame>
   );

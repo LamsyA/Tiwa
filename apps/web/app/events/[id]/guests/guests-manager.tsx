@@ -1,6 +1,6 @@
 'use client';
 
-import type { GuestRow } from '@tiwa/core';
+import type { GuestRow, HeadcountReport } from '@tiwa/core';
 import {
   Avatar,
   Banner,
@@ -33,6 +33,8 @@ import {
   type AddedGuestContact,
 } from './guest-dialogs.js';
 import { GroupsManager } from './groups-manager.js';
+import { HeadcountPanel } from './headcount-report.js';
+import { TablesManager, type TableItem } from './tables-manager.js';
 
 export interface GuestGroupItem {
   id: string;
@@ -50,7 +52,9 @@ export interface GuestsManagerProps {
   redacted: boolean;
   groups: GuestGroupItem[];
   filters: { q: string; group: string; rsvp: string; checkedIn: string };
-  tab: 'list' | 'groups';
+  tab: 'list' | 'groups' | 'tables' | 'headcount';
+  tables: TableItem[];
+  report: HeadcountReport | null;
 }
 
 export function errorText(t: (key: string) => string, result: Extract<ActionResult<unknown>, { ok: false }>): string {
@@ -70,7 +74,7 @@ export function errorText(t: (key: string) => string, result: Extract<ActionResu
 }
 
 export function GuestsManager(props: GuestsManagerProps) {
-  const { eventId, canManage, counts, guests, redacted, groups, filters, tab } = props;
+  const { eventId, canManage, counts, guests, redacted, groups, filters, tab, tables, report } = props;
   const t = useTranslations('events.guests');
   const router = useRouter();
   const [selected, setSelected] = React.useState<string[]>([]);
@@ -86,7 +90,7 @@ export function GuestsManager(props: GuestsManagerProps) {
     if (next.rsvp) params.set('rsvp', next.rsvp);
     if (next.checkedIn) params.set('checkedIn', next.checkedIn);
     const tabValue = patch.tab ?? tab;
-    if (tabValue === 'groups') params.set('tab', 'groups');
+    if (tabValue !== 'list') params.set('tab', tabValue);
     const suffix = params.toString();
     router.replace(`/events/${eventId}/guests${suffix ? `?${suffix}` : ''}`);
   }
@@ -138,11 +142,17 @@ export function GuestsManager(props: GuestsManagerProps) {
         items={[
           { value: 'list', label: t('tabs.list') },
           { value: 'groups', label: t('tabs.groups') },
+          { value: 'tables', label: t('tabs.tables') },
+          ...(canManage && report ? [{ value: 'headcount', label: t('tabs.headcount') }] : []),
         ]}
       />
 
       {tab === 'groups' ? (
         <GroupsManager eventId={eventId} groups={groups} canManage={canManage} />
+      ) : tab === 'tables' ? (
+        <TablesManager eventId={eventId} tables={tables} guests={guests} canManage={canManage} />
+      ) : tab === 'headcount' && canManage && report ? (
+        <HeadcountPanel eventId={eventId} report={report} />
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">

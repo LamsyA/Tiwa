@@ -28,3 +28,5 @@ export * from './events/settings.js';
 export * from './guests/parse.js';
 export * from './guests/csv.js';
 export * from './guests/guests.js';
+export * from './guests/tables.js';
+export * from './guests/headcount.js';

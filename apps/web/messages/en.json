@@ -484,7 +484,9 @@
       "title": "Guests",
       "tabs": {
         "list": "Guests",
-        "groups": "Groups"
+        "groups": "Groups",
+        "tables": "Tables",
+        "headcount": "Headcount"
       },
       "counters": {
         "invited": "Invited",
@@ -610,7 +612,8 @@
         "guestNotFound": "That guest is no longer on the list",
         "groupNotFound": "That group doesn't exist",
         "mergeSelf": "Pick different guests to merge",
-        "invalidFileKey": "That upload isn't valid — please try again"
+        "invalidFileKey": "That upload isn't valid — please try again",
+        "tableNotFound": "That table doesn't exist"
       },
       "rsvpLabels": {
         "YES": "Yes",
@@ -618,7 +621,62 @@
         "MAYBE": "Maybe",
         "NONE": "No reply"
       },
-      "contactsPicked": "{count} contacts picked"
+      "contactsPicked": "{count} contacts picked",
+      "tables": {
+        "title": "Tables",
+        "add": "New table",
+        "name": "Table name",
+        "capacity": "Seats",
+        "save": "Save table",
+        "delete": "Delete table",
+        "deleteConfirm": "Delete this table? Seated guests become unassigned.",
+        "assigned": "{count} of {capacity} seated",
+        "overCapacity": "{count} over capacity",
+        "assign": "Seat guests",
+        "unseat": "Unseat",
+        "unassigned": "Not seated yet",
+        "empty": "No tables yet. Create tables, then seat guests from the list.",
+        "pickGuests": "Tick the guests to seat at {name}",
+        "confirm": "Seat {count} guests",
+        "seated": "Guests seated"
+      },
+      "headcount": {
+        "title": "Headcount",
+        "expected": "Expected attendance",
+        "expectedHint": "Guests who said yes, plus their plus-ones — the number to cater for.",
+        "byRsvp": "By reply",
+        "byMeal": "By meal choice",
+        "byDietary": "Dietary needs",
+        "byGroup": "By group",
+        "byTable": "By table",
+        "unseated": "Not seated yet",
+        "none": "None recorded",
+        "share": "Share with vendor",
+        "shareHint": "A read-only link with counts only — no names, phones or emails. Valid for 90 days.",
+        "linkReady": "Vendor link ready",
+        "copy": "Copy link",
+        "copied": "Copied",
+        "expires": "Valid until {date}"
+      }
+    }
+  },
+  "shared": {
+    "headcount": {
+      "title": "Headcount",
+      "forEvent": "For {event}",
+      "updated": "Updated {date}",
+      "expected": "Expected attendance",
+      "byRsvp": "Replies",
+      "byMeal": "Meals",
+      "byDietary": "Dietary needs",
+      "byGroup": "Groups",
+      "byTable": "Tables",
+      "unseated": "Not seated",
+      "invalid": "This link is invalid or has expired. Ask the host for a fresh one.",
+      "rsvpYes": "Yes",
+      "rsvpNo": "No",
+      "rsvpMaybe": "Maybe",
+      "rsvpNone": "No reply"
     }
   }
 }
