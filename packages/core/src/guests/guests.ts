@@ -273,6 +273,8 @@ export interface GuestRow {
   rsvp: string;
   checkedIn: boolean;
   source: string;
+  /** Personal link token: only when the caller may manage guests. */
+  inviteToken?: string | undefined;
 }
 
 /**
@@ -292,6 +294,13 @@ export async function listGuests(
   } catch (error) {
     if (!(error instanceof ForbiddenError)) throw error;
     redacted = true;
+  }
+  let mayManage = false;
+  try {
+    authorize(actor, 'guests.manage', { eventId: input.eventId, access });
+    mayManage = true;
+  } catch (error) {
+    if (!(error instanceof ForbiddenError)) throw error;
   }
   const where = {
     eventId: input.eventId,
@@ -331,6 +340,7 @@ export async function listGuests(
         rsvp: true,
         checkedInAt: true,
         source: true,
+        inviteToken: true,
       },
     }),
     prisma.guest.count({ where }),
@@ -346,6 +356,7 @@ export async function listGuests(
       rsvp: row.rsvp,
       checkedIn: row.checkedInAt !== null,
       source: row.source,
+      ...(mayManage && row.inviteToken ? { inviteToken: row.inviteToken } : {}),
     })),
     total,
     redacted,
