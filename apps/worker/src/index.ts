@@ -6,6 +6,7 @@ import { Redis } from 'ioredis';
 import { DEADLINE_ALERTS_EVERY_MS, DEADLINE_ALERTS_JOB, handleDeadlineAlerts } from './jobs/deadline-alerts.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
+import { SEND_INVITE_JOB, handleSendInvite } from './jobs/send-invite.js';
 import { TOPIC_HANDLERS } from './jobs/topics.js';
 
 const QUEUE_NAME = 'tiwa';
@@ -22,18 +23,26 @@ async function main() {
     log.error({ err: error instanceof Error ? error.message : String(error) }, 'redis error');
   });
 
-  const queue = new Queue(QUEUE_NAME, { connection });
+  // Backend.md §10 default: 5 attempts, exponential backoff from 10 s —
+  // applies to every outbox-derived job (fan-outs are idempotent).
+  const queue = new Queue(QUEUE_NAME, {
+    connection,
+    defaultJobOptions: { attempts: 5, backoff: { type: 'exponential', delay: 10_000 } },
+  });
   const worker = new Worker(
     QUEUE_NAME,
     async (job) => {
       if (job.name === PING_JOB) return handlePing();
       if (job.name === PUBLISH_OUTBOX_JOB) return handlePublishOutbox(queue);
       if (job.name === DEADLINE_ALERTS_JOB) return handleDeadlineAlerts(log);
+      if (job.name === SEND_INVITE_JOB) return handleSendInvite(job.data, log);
       const handler = TOPIC_HANDLERS[job.name];
-      if (handler) return handler(job.data, log);
+      if (handler) return handler(job.data, log, queue);
       throw new Error(`unknown job: ${job.name}`);
     },
-    { connection },
+    // Invite fan-outs enqueue thousands of sends; they overlap freely
+    // (per-provider Redis limiters bound the actual send rate).
+    { connection, concurrency: 20 },
   );
 
   worker.on('completed', (job) => {

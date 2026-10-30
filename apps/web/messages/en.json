@@ -759,6 +759,47 @@
           "pickGroup": "Pick a group",
           "emptyMessage": "Write a message first"
         }
+      },
+      "tracking": {
+        "title": "Sent invitations",
+        "empty": "No invitations sent yet — compose your first batch above.",
+        "batch": "Batch",
+        "sent": "sent",
+        "failed": "failed",
+        "pending": "pending",
+        "guest": "Guest",
+        "channel": "Channel",
+        "status": "Status",
+        "rsvp": "RSVP",
+        "channels": {
+          "WHATSAPP": "WhatsApp",
+          "WHATSAPP_FREE": "WhatsApp (manual)",
+          "WHATSAPP_API": "WhatsApp",
+          "EMAIL": "Email",
+          "SMS": "SMS",
+          "LINK": "Link",
+          "QR": "QR"
+        },
+        "statuses": {
+          "QUEUED": "Queued",
+          "SENT": "Sent",
+          "DELIVERED": "Delivered",
+          "OPENED": "Opened",
+          "FAILED": "Failed",
+          "SENT_MANUALLY": "Sent by you"
+        },
+        "kinds": {
+          "INVITE": "Invitation",
+          "UPDATE": "Update",
+          "REMINDER": "Reminder"
+        },
+        "batchStatuses": {
+          "DRAFT": "Draft",
+          "QUEUED": "Queued",
+          "SENDING": "Sending…",
+          "DONE": "Done",
+          "CANCELLED": "Cancelled"
+        }
       }
     }
   },

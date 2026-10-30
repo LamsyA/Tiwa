@@ -1,5 +1,6 @@
 import type { createLogger } from '@tiwa/core';
 import { GUESTS_IMPORT_TOPIC, handleGuestCsvImport } from './csv-import.js';
+import { INVITE_BATCH_QUEUED_TOPIC, handleInviteBatchQueued, type FanOutSink } from './send-invite.js';
 
 type Log = ReturnType<typeof createLogger>;
 
@@ -8,8 +9,14 @@ type Log = ReturnType<typeof createLogger>;
  * are acknowledged and logged (ids only, never contact details) so they don't
  * retry forever; the outbox row keeps the record.
  */
-export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log) => Promise<unknown>> = {
+export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanOutSink) => Promise<unknown>> = {
   [GUESTS_IMPORT_TOPIC]: async (data, log) => handleGuestCsvImport(data, log),
+  [INVITE_BATCH_QUEUED_TOPIC]: async (data, log, sink) => handleInviteBatchQueued(data, log, sink),
+  // Stub until chat sync (P13) consumes it; without this every finalized event burns 5 failing retries.
+  'event.finalized': async (data, log) => {
+    log.info({ topic: 'event.finalized', eventId: (data as { eventId?: string }).eventId }, 'event finalized (stub)');
+    return { stub: true };
+  },
   // Stub until the export builder (ZIP of JSON + media links, Backend.md §12).
   'account.export.requested': async (data, log) => {
     log.info(

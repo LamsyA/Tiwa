@@ -13,6 +13,8 @@ async function makeHost() {
 }
 
 afterAll(async () => {
+  await prisma.inviteDelivery.deleteMany({ where: { guest: { eventId: { in: events } } } });
+  await prisma.inviteBatch.deleteMany({ where: { eventId: { in: events } } });
   await prisma.guest.deleteMany({ where: { eventId: { in: events } } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: events } } });
   await prisma.auditLog.deleteMany({ where: { targetId: { in: events } } });
@@ -80,5 +82,58 @@ describe('sharedLinkRsvp', () => {
     // …and turning it back off closes RSVP again.
     await toggleSharedLink(host, { eventId, enabled: false });
     await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x' })).rejects.toThrow(/closed/);
+  });
+});
+
+describe('rsvp link signing', () => {
+  const secret = 'test-secret-0123456789abcdef';
+
+  it('signs and verifies yes/no links; rejects tampering', async () => {
+    const { rsvpLink, signRsvp, verifyRsvp } = await import('./invites.js');
+    const token = 'guest-token-abc';
+    const yes = signRsvp(token, 'yes', secret);
+    expect(verifyRsvp(token, 'yes', yes, secret)).toBe(true);
+    expect(verifyRsvp(token, 'no', yes, secret)).toBe(false);
+    expect(verifyRsvp(token, 'yes', `${yes.slice(0, -2)}xx`, secret)).toBe(false);
+    expect(verifyRsvp(token, 'maybe', yes, secret)).toBe(false);
+    expect(rsvpLink('https://tiwa.app/', token, 'no', secret)).toBe(
+      `https://tiwa.app/i/${token}?r=no&sig=${signRsvp(token, 'no', secret)}`,
+    );
+  });
+});
+
+describe('batch lists', () => {
+  it('lists batches with counts and deliveries with redaction', async () => {
+    const { batchDeliveries, listBatches } = await import('./invites.js');
+    const { createInviteBatch } = await import('./batches.js');
+    const { addGuests } = await import('./guests.js');
+    const host = await makeHost();
+    const { eventId } = await createEventDraft(host, { type: 'birthday' });
+    events.push(eventId);
+    const { enableInvites } = await import('./invites.js');
+    await enableInvites(host, { eventId, enabled: true });
+    await addGuests(host, { eventId, guests: [{ name: 'Ada', phone: '08031234567', groupIds: [] }] });
+    const preview = await createInviteBatch(host, {
+      eventId,
+      audience: { type: 'all' },
+      channels: ['SMS'],
+      smart: true,
+      message: 'hi',
+      kind: 'INVITE',
+    });
+    const batches = await listBatches(host, { eventId });
+    expect(batches).toHaveLength(1);
+    expect(batches[0]).toMatchObject({
+      id: preview.batchId,
+      kind: 'INVITE',
+      status: 'DRAFT',
+      total: 1,
+      sent: 0,
+      failed: 0,
+    });
+    const detail = await batchDeliveries(host, { batchId: preview.batchId });
+    expect(detail.deliveries).toHaveLength(1);
+    expect(detail.deliveries[0]).toMatchObject({ guestName: 'Ada', channel: 'SMS', status: 'QUEUED' });
+    expect(detail.deliveries[0]?.contact).toBe('+2348031234567');
   });
 });
