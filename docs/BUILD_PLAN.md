@@ -15,37 +15,37 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 
 ## Status
 
-| Phase | Name | Status | Gate passed on |
-|-------|------|--------|----------------|
-| P0 | Foundation and tooling | DONE | 2026-10-28 |
-| P1 | Design system and app frames | DONE | 2026-10-29 |
-| P2 | Accounts, organisations, permissions | DONE | 2026-10-29 |
-| P3 | Events and planning | DONE | 2026-10-30 |
-| P4 | Guests and one-click invitations | TODO | |
-| P5 | Moments | TODO | |
-| P6 | Marketplace and chat | TODO | |
-| P7 | Quotes and bookings | TODO | |
-| P8 | Payments, ledger, held payments, payouts | TODO | |
-| P9 | Budget and finance | TODO | |
-| P10 | Planner workspace and vendor dashboard | TODO | |
-| P11 | Tickets and check-in | TODO | |
-| P12 | Event day | TODO | |
-| P13 | Notifications and event-team chat | TODO | |
-| P14 | Reviews and event close | TODO | |
-| P15 | AI assistant | TODO | |
-| P16 | Admin console | TODO | |
-| P17 | Hardening and launch readiness | TODO | |
+| Phase | Name                                     | Status      | Gate passed on |
+| ----- | ---------------------------------------- | ----------- | -------------- |
+| P0    | Foundation and tooling                   | DONE        | 2026-10-28     |
+| P1    | Design system and app frames             | DONE        | 2026-10-29     |
+| P2    | Accounts, organisations, permissions     | DONE        | 2026-10-29     |
+| P3    | Events and planning                      | DONE        | 2026-10-30     |
+| P4    | Guests and one-click invitations         | GATE FAILED |                |
+| P5    | Moments                                  | TODO        |                |
+| P6    | Marketplace and chat                     | TODO        |                |
+| P7    | Quotes and bookings                      | TODO        |                |
+| P8    | Payments, ledger, held payments, payouts | TODO        |                |
+| P9    | Budget and finance                       | TODO        |                |
+| P10   | Planner workspace and vendor dashboard   | TODO        |                |
+| P11   | Tickets and check-in                     | TODO        |                |
+| P12   | Event day                                | TODO        |                |
+| P13   | Notifications and event-team chat        | TODO        |                |
+| P14   | Reviews and event close                  | TODO        |                |
+| P15   | AI assistant                             | TODO        |                |
+| P16   | Admin console                            | TODO        |                |
+| P17   | Hardening and launch readiness           | TODO        |                |
 
 Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 
 **Milestone releases** (deploy to staging and demo):
 
-| Milestone | After phase | What a real user can do |
-|-----------|-------------|-------------------------|
-| M1 "Invite & remember" | P5 | Create any event, invite guests in one click, guests RSVP and share photos in Moments. **Pilot with founding planners.** |
-| M2 "Chat, book & pay" | P9 | Find vendors and venues, chat with them, get quotes, book, pay (direct/offline; held behind flag), track the budget |
-| M3 "Run the business" | P12 | Planner/vendor workspaces, tickets and check-in, event-day run-of-show |
-| M4 "Launch candidate" | P17 | Everything in the PRD MVP scope, hardened, all budgets met |
+| Milestone              | After phase | What a real user can do                                                                                                  |
+| ---------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| M1 "Invite & remember" | P5          | Create any event, invite guests in one click, guests RSVP and share photos in Moments. **Pilot with founding planners.** |
+| M2 "Chat, book & pay"  | P9          | Find vendors and venues, chat with them, get quotes, book, pay (direct/offline; held behind flag), track the budget      |
+| M3 "Run the business"  | P12         | Planner/vendor workspaces, tickets and check-in, event-day run-of-show                                                   |
+| M4 "Launch candidate"  | P17         | Everything in the PRD MVP scope, hardened, all budgets met                                                               |
 
 ---
 
@@ -71,6 +71,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P0-T15 Deploy previews: Vercel project for `apps/web`; Neon (or chosen DB) with branch-per-PR; record region latency test to Lagos in `decision.md`.
 
 **GATE P0**
+
 - [x] `pnpm install && pnpm db:up && pnpm db:migrate && pnpm dev` works on a clean machine using only the README. (Verified 2026-10-28 via fresh `git clone` + README First-run block: install, db:up healthy, migrate, seed, dev 200 + worker listening. Shares the host Docker daemon; empty-volume migrate proven in P0-T07.)
 - [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e` pass locally and in CI. (Local: green, incl. `pnpm gate 0` 11/11. CI: `ci.yml` present but never run — needs `git push` + a PR; say the word.)
 - [ ] A pull request produces a preview URL; Lighthouse CI and size-limit run on it. (Blocked: Q-001/Q-002 external accounts. Runbook ready at `docs/runbooks/preview-deployments.md`.)
@@ -98,6 +99,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P1-T12 PWA basics: manifest, icons, Serwist service worker with static asset caching; installability check.
 
 **GATE P1**
+
 - [x] `/dev/ui` renders every component in light and dark at 360, 390, 768, 1280, 1440 px with no horizontal scroll (automated test).
 - [x] axe: zero serious/critical issues on `/dev/ui`.
 - [x] Lighthouse mobile on `/dev/ui` ≥ 95; CLS 0.
@@ -124,6 +126,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P2-T11 e2e: UF-01, UF-02.
 
 **GATE P2**
+
 - [x] UF-01 and UF-02 acceptance checks pass at both widths. (UF-01-5 verified with a team invite; the event co-host landing is checked in P3-T07.)
 - [x] Permission matrix test covers 100% of actions × roles.
 - [x] Rate limits verified by tests (OTP, login).
@@ -151,6 +154,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [?] P3-T13 Cut `/events/[id]` mobile LCP from ~3.4 s to ≤ 2.0 s (GATE P3 failure 2026-10-29: perf 0.91 passes, text LCP delayed by webfont swap; see docs/PROGRESS.md). Waived at GATE P3 (D-X15): sim ~2.5 s, real-throttle 1.8 s; carries to P17-T01 + preview/prod re-measure (Q-001/Q-002).
 
 **GATE P3**
+
 - [x] UF-03, UF-04, UF-05 checks pass at both widths.
 - [x] Creating a birthday takes < 60 s in the e2e timer.
 - [x] grep test: no event-type words ("wedding", "bride", "groom", "burial"…) in `apps/web/app/**/*.tsx` outside config-driven code.
@@ -177,11 +181,12 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P4-T12 Live tracking table with counters; e2e UF-06–UF-09; load test script (k6) for 2,000 invites with fake providers.
 
 **GATE P4**
-- [ ] UF-06, UF-07, UF-08, UF-09 checks pass at both widths.
-- [ ] 2,000 invites sent in < 5 min with fakes; no guest gets > 2 reminders (tested with time travel).
+
+- [x] UF-06, UF-07, UF-08, UF-09 checks pass at both widths.
+- [x] 2,000 invites sent in < 5 min with fakes; no guest gets > 2 reminders (tested with time travel).
 - [ ] `/i/[token]`: LCP ≤ 1.5 s, JS ≤ 90 KB, Lighthouse ≥ 95 mobile.
-- [ ] A plain GET of an email RSVP link records nothing (UF-08-3).
-- [ ] With invitations OFF, invites UI is hidden and all P3 tests still pass.
+- [x] A plain GET of an email RSVP link records nothing (UF-08-3).
+- [x] With invitations OFF, invites UI is hidden and all P3 tests still pass.
 
 ---
 
@@ -205,6 +210,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P5-T13 Seed gallery (200 generated images, 10 videos); e2e UF-10–UF-12 including throttled 3G and offline toggle.
 
 **GATE P5 (Milestone M1 demo on staging)**
+
 - [ ] UF-10, UF-11, UF-12 checks pass at both widths, on iOS Safari (WebKit project) and Android Chrome (Chromium project).
 - [ ] No GPS EXIF in any served file (automated check over seed outputs).
 - [ ] k6: 500 concurrent uploaders to one gallery, error rate < 1%, p95 `create` < 300 ms.
@@ -239,6 +245,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P6-T19 e2e UF-30 (except quote cards, done in P7) and UF-31; k6: 1,000 connected inbox streams, 50 messages/s.
 
 **GATE P6**
+
 - [ ] UF-13 checks pass; UF-14-1, UF-14-2 and UF-29-1 pass.
 - [ ] UF-30 (1–5, 7–10) and UF-31 checks pass at both widths; voice notes play across iOS Safari, Android Chrome and desktop Firefox.
 - [ ] Message delivery p95 < 2 s with 1,000 connected streams (k6).
@@ -267,6 +274,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P7-T13 e2e UF-14 (request), UF-15, UF-16, UF-19, UF-29-2, UF-29-3, UF-29-6, UF-29-7, UF-30-4 (after booking), UF-30-6.
 
 **GATE P7**
+
 - [ ] UF-15, UF-16, UF-19 checks pass at both widths; UF-29-2, -3, -6, -7 pass (no double booking under concurrency).
 - [ ] Server-side totals equal client-side totals for 1,000 random quotes (property test).
 - [ ] Vendor isolation test: vendor A cannot read vendor B's quote for the same event.
@@ -299,6 +307,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P8-T18 Write `docs/QUESTIONS.md` entry: licensed escrow partner + legal sign-off required before enabling `payments.held` / `payments.payouts` in production.
 
 **GATE P8**
+
 - [ ] UF-17, UF-18, UF-29-4 and UF-29-5 checks pass with the Fake provider at both widths; sandbox suite passes for Paystack and Flutterwave when keys are present.
 - [ ] Ledger: trial balance = 0 after the full e2e suite; no UPDATE/DELETE possible on ledger tables.
 - [ ] Duplicate and out-of-order webhook tests pass; booking never confirmed from browser callback alone.
@@ -323,6 +332,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P9-T08 e2e UF-20.
 
 **GATE P9 (Milestone M2 demo on staging)**
+
 - [ ] UF-20 checks pass at both widths.
 - [ ] Figures reconcile with ledger and bookings for all seeded events (automated consistency check).
 - [ ] `/events/[id]/money` Lighthouse ≥ 90 mobile.
@@ -348,6 +358,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P10-T11 e2e UF-21; seeded planner with 10 events.
 
 **GATE P10**
+
 - [ ] UF-21 checks pass.
 - [ ] Planner with 10 events: `/home` LCP ≤ 2.0 s; ≤ 6 DB queries per request (query count test).
 - [ ] Hidden vendor prices never reach the host's browser (inspect server payloads in test).
@@ -371,6 +382,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P11-T10 e2e UF-22, UF-23; concurrency test 200 buyers / 100 seats; k6 300 scans/min.
 
 **GATE P11**
+
 - [ ] UF-22, UF-23 checks pass at both widths.
 - [ ] Overselling impossible (concurrency test passes 20 runs in a row).
 - [ ] Scan result ≤ 300 ms p95; offline sync resolves duplicates.
@@ -393,6 +405,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P12-T08 e2e UF-24 including offline mode.
 
 **GATE P12 (Milestone M3 demo on staging)**
+
 - [ ] UF-24 checks pass at both widths.
 - [ ] Dependants computed correctly for random DAGs (property test, cycles rejected on create).
 - [ ] Staging demo: a public conference with tickets and check-in, and a private party with run-of-show and vendor check-ins.
@@ -412,6 +425,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P13-T06 Tests: preference and quiet-hour rules; push subscription lifecycle.
 
 **GATE P13**
+
 - [ ] Each notification type is delivered on the channels the preference allows (table-driven test).
 - [ ] iOS: web push works after home-screen install (manual check logged), SMS fallback for urgent alerts verified.
 
@@ -429,6 +443,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P14-T05 e2e UF-25.
 
 **GATE P14**
+
 - [ ] UF-25 checks pass; review impossible before booking COMPLETED (server test).
 
 ---
@@ -447,6 +462,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P15-T07 e2e UF-27 (with Fake LLM).
 
 **GATE P15**
+
 - [ ] UF-27 checks pass; flag OFF hides all AI UI.
 - [ ] Context test: no data outside the actor's permissions appears in any prompt (snapshot tests).
 
@@ -467,6 +483,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P16-T08 e2e UF-26 (admin part), UF-28.
 
 **GATE P16**
+
 - [ ] UF-26 and UF-28 checks pass.
 - [ ] Every admin action creates an AuditLog row (test enumerates admin actions).
 - [ ] Non-admins get 404 on every `/admin` route.
@@ -490,6 +507,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [ ] P17-T10 Launch gates from the product spec tracked in `docs/PROGRESS.md` (founding planners, vendors onboarded, 20 beta events across ≥ 4 types, 30 days clean reconciliation).
 
 **GATE P17 (Milestone M4: launch candidate)**
+
 - [ ] Every earlier gate re-run and passing on the release candidate.
 - [ ] All `Frontend.md §9` budgets met on production infrastructure.
 - [ ] Zero open critical/high security findings.

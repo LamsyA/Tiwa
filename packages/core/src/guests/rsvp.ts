@@ -10,8 +10,8 @@ import { audit } from '../shared/outbox.js';
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
 // Guest answers on their personal link (/i/[token], UF-08).
-// GET never answers (UF-08-3): links carry ?r=…&sig=… and the page POSTs on
-// load with an Undo window; /api/rsvp is the JSON twin for no-JS clients.
+// GET never answers (UF-08-3): links only ever render the answer form;
+// answering always takes a server-action form POST.
 
 export type RsvpAnswer = 'YES' | 'NO';
 
@@ -41,6 +41,7 @@ export interface InvitePage {
     plusOnes: number;
     meal: string | null;
     dietary: string | null;
+    respondedAt: Date | null;
     answers: Record<string, unknown>;
   };
   event: {
@@ -77,6 +78,7 @@ export async function invitePage(token: string): Promise<InvitePage> {
       plusOnes: true,
       meal: true,
       dietary: true,
+      respondedAt: true,
       answers: true,
       inviteRevokedAt: true,
       event: {
@@ -114,6 +116,7 @@ export async function invitePage(token: string): Promise<InvitePage> {
       plusOnes: guest.plusOnes,
       meal: guest.meal,
       dietary: guest.dietary,
+      respondedAt: guest.respondedAt,
       answers,
     },
     event: {

@@ -885,7 +885,9 @@
     "forwardText": "{event} — you can RSVP here: {link}",
     "forwardHint": "Allowed to forward? Share your link with plus-ones.",
     "errors": {
-      "sendFailed": "We couldn't save that — please try again."
-    }
+      "sendFailed": "We couldn't save that — please try again.",
+      "closed": "RSVP is closed for this event."
+    },
+    "extrasSave": "Save details"
   }
 }
