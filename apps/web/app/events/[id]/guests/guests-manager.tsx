@@ -55,6 +55,7 @@ export interface GuestsManagerProps {
   tab: 'list' | 'groups' | 'tables' | 'headcount';
   tables: TableItem[];
   report: HeadcountReport | null;
+  appUrl: string;
 }
 
 export function errorText(t: (key: string) => string, result: Extract<ActionResult<unknown>, { ok: false }>): string {
@@ -74,7 +75,7 @@ export function errorText(t: (key: string) => string, result: Extract<ActionResu
 }
 
 export function GuestsManager(props: GuestsManagerProps) {
-  const { eventId, canManage, counts, guests, redacted, groups, filters, tab, tables, report } = props;
+  const { eventId, canManage, counts, guests, redacted, groups, filters, tab, tables, report, appUrl } = props;
   const t = useTranslations('events.guests');
   const router = useRouter();
   const [selected, setSelected] = React.useState<string[]>([]);
@@ -257,7 +258,7 @@ export function GuestsManager(props: GuestsManagerProps) {
                       {
                         key: 'actions',
                         header: '',
-                        cell: (row: GuestRow) => <EditGuestDialog eventId={eventId} guest={row} />,
+                        cell: (row: GuestRow) => <EditGuestDialog eventId={eventId} guest={row} appUrl={appUrl} />,
                       } satisfies { key: string; header: string; cell: (row: GuestRow) => React.ReactNode },
                     ]
                   : []),

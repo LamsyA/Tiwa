@@ -7,8 +7,14 @@ import {
   enableInvitesSchema,
   markSentManually,
   markSentManuallySchema,
+  revokeInvite,
+  revokeInviteSchema,
   sendInviteBatch,
   sendInviteBatchSchema,
+  setReminderPolicy,
+  setReminderPolicySchema,
+  toggleForwarding,
+  toggleForwardingSchema,
   toggleSharedLink,
   toggleSharedLinkSchema,
 } from '@tiwa/core';
@@ -47,5 +53,23 @@ export const markSentManuallyAction = userAction(markSentManuallySchema, async (
   const result = await markSentManually(ctx.actor, input);
   await publishLive(`invites:${result.eventId}`, 'invites');
   revalidate(result.eventId);
+  return result;
+});
+
+export const setReminders = userAction(setReminderPolicySchema, async (input, ctx) => {
+  const result = await setReminderPolicy(ctx.actor, input);
+  revalidate(input.eventId);
+  return result;
+});
+
+export const setForwarding = userAction(toggleForwardingSchema, async (input, ctx) => {
+  const result = await toggleForwarding(ctx.actor, input);
+  revalidate(input.eventId);
+  return result;
+});
+
+export const revokeInviteAction = userAction(revokeInviteSchema, async (input, ctx) => {
+  const result = await revokeInvite(ctx.actor, input);
+  revalidate(input.eventId);
   return result;
 });

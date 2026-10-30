@@ -19,6 +19,7 @@ import {
   previewPaste,
   suggestMapping,
 } from './actions.js';
+import { revokeInviteAction } from '../invites/actions.js';
 
 function useRun() {
   const te = useTranslations('events.guests.errors');
@@ -440,13 +441,28 @@ export function CsvDialog({
   );
 }
 
-export function EditGuestDialog({ eventId, guest }: { eventId: string; guest: GuestRow }) {
+export function EditGuestDialog({
+  eventId,
+  guest,
+  appUrl,
+}: {
+  eventId: string;
+  guest: GuestRow & { inviteToken?: string | undefined };
+  appUrl: string;
+}) {
   const t = useTranslations('events.guests');
+  const tp = useTranslations('events.invites.policies');
   const { run, busy, error } = useRun();
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState(guest.name);
   const [phone, setPhone] = React.useState(guest.phone ?? '');
   const [email, setEmail] = React.useState(guest.email ?? '');
+  const [link, setLink] = React.useState<string | undefined>(
+    guest.inviteToken ? `${appUrl}/i/${guest.inviteToken}` : undefined,
+  );
+  const [copied, setCopied] = React.useState(false);
+  const [revoking, setRevoking] = React.useState(false);
 
   return (
     <ResponsiveDialog
@@ -508,6 +524,48 @@ export function EditGuestDialog({ eventId, guest }: { eventId: string; guest: Gu
           </Button>
         </div>
       </form>
+      {link && (
+        <div className="border-border flex flex-col gap-2 border-t pt-3">
+          <p className="text-sm font-medium">{tp('linkLabel')}</p>
+          <div className="flex gap-2">
+            <Input
+              value={link}
+              readOnly
+              aria-label={tp('linkLabel')}
+              className="min-w-0 flex-1"
+              onChange={() => undefined}
+            />
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void navigator.clipboard.writeText(link).then(() => setCopied(true));
+              }}
+            >
+              {copied ? tp('copied') : tp('copy')}
+            </Button>
+          </div>
+          <div>
+            <Button
+              variant="ghost"
+              loading={revoking}
+              onClick={() =>
+                void (async () => {
+                  setRevoking(true);
+                  const result = await revokeInviteAction({ eventId, guestId: guest.id });
+                  setRevoking(false);
+                  if (result.ok) {
+                    setLink(`${appUrl}/i/${result.data.token}`);
+                    setCopied(false);
+                    router.refresh();
+                  }
+                })()
+              }
+            >
+              {tp('revoke')}
+            </Button>
+          </div>
+        </div>
+      )}
     </ResponsiveDialog>
   );
 }

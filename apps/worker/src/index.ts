@@ -4,6 +4,7 @@ import { env } from '@tiwa/config';
 import { createLogger, scrubSentryEvent } from '@tiwa/core';
 import { Redis } from 'ioredis';
 import { DEADLINE_ALERTS_EVERY_MS, DEADLINE_ALERTS_JOB, handleDeadlineAlerts } from './jobs/deadline-alerts.js';
+import { REMINDERS_EVERY_MS, REMINDERS_JOB, handleReminders } from './jobs/reminders.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
 import { SEND_INVITE_JOB, handleSendInvite } from './jobs/send-invite.js';
@@ -35,6 +36,7 @@ async function main() {
       if (job.name === PING_JOB) return handlePing();
       if (job.name === PUBLISH_OUTBOX_JOB) return handlePublishOutbox(queue);
       if (job.name === DEADLINE_ALERTS_JOB) return handleDeadlineAlerts(log);
+      if (job.name === REMINDERS_JOB) return handleReminders(log);
       if (job.name === SEND_INVITE_JOB) return handleSendInvite(job.data, log);
       const handler = TOPIC_HANDLERS[job.name];
       if (handler) return handler(job.data, log, queue);
@@ -83,6 +85,11 @@ async function main() {
     DEADLINE_ALERTS_JOB,
     { every: DEADLINE_ALERTS_EVERY_MS },
     { name: DEADLINE_ALERTS_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
+  );
+  await queue.upsertJobScheduler(
+    REMINDERS_JOB,
+    { every: REMINDERS_EVERY_MS },
+    { name: REMINDERS_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
   );
   log.info({ queue: QUEUE_NAME }, 'listening');
 }

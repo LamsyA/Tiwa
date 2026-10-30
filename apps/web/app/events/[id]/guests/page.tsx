@@ -1,3 +1,4 @@
+import { env } from '@tiwa/config';
 import { authorize, countGuests, headcount, listGroups, listGuests, listTables } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner } from '@tiwa/ui';
@@ -91,6 +92,7 @@ export default async function GuestsPage({
         tab={query.tab === 'groups' || query.tab === 'tables' || query.tab === 'headcount' ? query.tab : 'list'}
         tables={tables}
         report={report}
+        appUrl={env.APP_URL.replace(/\/$/, '')}
       />
     </EventFrame>
   );

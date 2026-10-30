@@ -7,6 +7,7 @@ import { EventFrame, loadEventPage } from '@/components/event-frame.js';
 import { Composer } from './composer.js';
 import { FreeQueue } from './free-queue.js';
 import { InvitesSwitch } from './invites-switch.js';
+import { PolicyToggles } from './policy-toggles.js';
 import { ShareSection } from './share-section.js';
 import { TrackingSection } from './tracking-table.js';
 
@@ -47,7 +48,14 @@ export default async function InvitesPage({
   })();
   const event = await prisma.event.findUniqueOrThrow({
     where: { id },
-    select: { name: true, slug: true, currency: true, sharedLinkEnabled: true },
+    select: {
+      name: true,
+      slug: true,
+      currency: true,
+      sharedLinkEnabled: true,
+      remindersEnabled: true,
+      allowForwarding: true,
+    },
   });
   const shareUrl = `${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}/rsvp`;
   const [listed, groups, batches, queue] =
@@ -96,6 +104,9 @@ export default async function InvitesPage({
           </Card>
         )}
         {invitesOn && canManage && queue.items.length > 0 && <FreeQueue items={queue.items} />}
+        {invitesOn && canManage && (
+          <PolicyToggles eventId={id} remindersOn={event.remindersEnabled} forwardingOn={event.allowForwarding} />
+        )}
         {invitesOn && canManage && (
           <TrackingSection
             eventId={id}

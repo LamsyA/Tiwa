@@ -811,6 +811,18 @@
         "skip": "Skip",
         "done": "All caught up — every WhatsApp message is sent.",
         "hint": "Each tap opens your WhatsApp with the message ready. Press send there, come back, and mark it sent."
+      },
+      "policies": {
+        "title": "Automatic reminders & forwarding",
+        "reminders": "Reminder messages",
+        "remindersHint": "Two nudges for guests who haven't replied: around 3 days out, then day-before.",
+        "forwarding": "Allow forwarding",
+        "forwardingHint": "Guests may share their personal link with plus-ones. Revoking a link stops the old one working.",
+        "linkLabel": "Personal link",
+        "copy": "Copy",
+        "copied": "Copied",
+        "revoke": "Revoke & issue new link",
+        "revoked": "New link issued — the old one no longer works."
       }
     }
   },

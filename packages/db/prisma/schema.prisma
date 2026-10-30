@@ -130,6 +130,7 @@ model Event {
   momentsEnabled         Boolean            @default(true)
   sharedLinkEnabled      Boolean            @default(false)
   allowForwarding        Boolean            @default(true)
+  remindersEnabled       Boolean            @default(true)
   hostCanSeeVendorPrices Boolean            @default(true)
   wizardStep             String?
   createdById            String
