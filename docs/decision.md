@@ -238,6 +238,7 @@ Template:
 - Affects: apps/web/app/sw.ts, e2e/sw-navigation.spec.ts.
 
 ### 2026-10-30 — Phone formatter loads on demand; one React version workspace-wide
+
 - ID: D-X14
 - Status: AGENT
 - Decision: `PhoneInput` dynamic-imports `libphonenumber-js` on mount (reformatting + re-emitting on arrival) instead of statically bundling every country's metadata into the shared chunk. `packages/ui` devDeps now pin react/react-dom 19.3.1, matching `apps/web`, so the workspace resolves a single React DOM.
@@ -245,9 +246,10 @@ Template:
 - Affects: packages/ui (phone-money, inputs tests, package.json), pnpm-lock.yaml.
 
 ### 2026-10-30 — GATE P3 closed with an LCP-simulation waiver
+
 - ID: D-X15
 - Status: LOCKED (human directed in session)
-- Decision: Phase 3 closes although Lighthouse *simulated* LCP on `/events/[id]` measures ~2.5 s against the ≤ 2.0 s bar. Perf score (0.94–0.99), CLS (0) and every other gate check pass; devtools-throttled LCP is 1.8 s and observed LCP 0.39 s. P3-T13 stays open as `- [?]` and carries to the P17 production Lighthouse pass (P17-T01) and the preview/prod re-measure blocked on Q-001/Q-002.
+- Decision: Phase 3 closes although Lighthouse _simulated_ LCP on `/events/[id]` measures ~2.5 s against the ≤ 2.0 s bar. Perf score (0.94–0.99), CLS (0) and every other gate check pass; devtools-throttled LCP is 1.8 s and observed LCP 0.39 s. P3-T13 stays open as `- [?]` and carries to the P17 production Lighthouse pass (P17-T01) and the preview/prod re-measure blocked on Q-001/Q-002.
 - Why: after the D-X12/D-X13/D-X14 fixes (JS 258→221 KB, SW navigation wedge fixed, access-load dedupe), the residual simulated gap is simulated TLS/RTT plus React/Next framework CPU on a loaded dev host — not app code. Blocking the phase on the local simulator would stall P4+ for an environment artifact.
 - Affects: BUILD_PLAN.md GATE P3, P3-T13, P17-T01.
 
@@ -258,3 +260,11 @@ Template:
 - Decision: Begin Phase 5 on explicit human direction while Phase 4 remains GATE FAILED with P4-T12 open (carrying the `/i` localhost-sim LCP/JS budget item). No P4 code is being changed; P4-T12 work (load run, e2e, perf evidence) is already committed and pushed.
 - Why: human explicitly directed the next P5 batch; the carried item needs preview/prod to resolve and must not stall Moments.
 - Affects: BUILD_PLAN.md Phase 4/5.
+
+### 2026-10-30 — Moderation ships Fake-only; real provider + CSAM is a launch decision
+
+- ID: D-X17
+- Status: AGENT
+- Decision: `packages/moderation` ships the adapter interface plus `FakeModeration` only. No vendor SDK is wired: CSAM hash-matching (PhotoDNA/NCMEC) needs a partnership and legal sign-off, and every commercial vision API needs a billing key — both are human calls (Q-004).
+- Why: Per AGENTS §5, missing external credentials ship as Fake + `.env.example` entry + a QUESTIONS.md item. Fake approves everything, so it must never reach production unnoticed: `MODERATION_PROVIDER` defaults to `fake` and any other value already throws `unsupported moderation provider` until a real adapter lands.
+- Affects: packages/moderation, docs/QUESTIONS.md (Q-004), P4-T07 send path already renders via templates (unaffected).
