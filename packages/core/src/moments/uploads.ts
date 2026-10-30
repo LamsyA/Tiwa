@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { Actor, EventAccess } from '../auth/authorize.js';
 import { resolveEventAccess } from '../events/access.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
-import { generateToken } from '../shared/ids.js';
+import { uuidv7 } from '../shared/ids.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import type { Storage } from '@tiwa/storage';
 
@@ -37,7 +37,7 @@ export const createUploadSchema = z.object({
 });
 
 function sanitizeFileName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120) || 'file';
+  return name.replace(/[^a-zA-Z0-9.-]+/g, '_').slice(0, 120) || 'file';
 }
 
 async function galleryForEvent(eventId: string) {
@@ -69,14 +69,17 @@ async function authorizeUpload(
 
 /**
  * Start a browser-direct multipart upload (arc §5). Validates type, size and
- * gallery limits, creates the MediaItem in UPLOADING state and opens the MPU.
+ * gallery limits, then mints the MediaItem row in UPLOADING state and returns
+ * its storage key. The client drives the S3 protocol itself afterwards via
+ * /api/uploads/sign (used with @uppy/aws-s3 `signRequest`); the server
+ * never sees the bytes. The row id is embedded in the key so signing can
+ * resolve the upload without extra client state.
  */
 export async function createUpload(
-  storage: Storage,
   actor: UploaderActor,
   input: z.infer<typeof createUploadSchema>,
   preloaded?: EventAccess,
-): Promise<{ mediaId: string; uploadId: string; key: string }> {
+): Promise<{ mediaId: string; key: string }> {
   const gallery = await galleryForEvent(input.eventId);
   if (actor.kind === 'gallery-session') {
     if (actor.galleryId !== gallery.id) throw new ForbiddenError('Session does not belong to this gallery', {});
@@ -98,11 +101,12 @@ export async function createUpload(
   const live = await prisma.mediaItem.count({ where: { galleryId: gallery.id, deletedAt: null } });
   if (live >= gallery.itemLimit) throw new ValidationError('Gallery is full', { key: 'galleryFull' });
 
-  const key = `galleries/${gallery.id}/originals/${generateToken(16)}/${sanitizeFileName(input.fileName)}`;
-  const { uploadId } = await storage.createMultipart(key, input.mime);
-  const created = await prisma.$transaction(async (tx) => {
-    const item = await tx.mediaItem.create({
+  const mediaId = uuidv7();
+  const key = `galleries/${gallery.id}/originals/${mediaId}/${sanitizeFileName(input.fileName)}`;
+  await prisma.$transaction(async (tx) => {
+    await tx.mediaItem.create({
       data: {
+        id: mediaId,
         galleryId: gallery.id,
         album: input.album,
         uploaderUserId: actor.kind === 'user' ? actor.userId : null,
@@ -113,24 +117,24 @@ export async function createUpload(
         sizeBytes: input.sizeBytes,
         durationSec: input.kind === 'VIDEO' && input.durationSec !== undefined ? input.durationSec : null,
       },
-      select: { id: true },
     });
     await audit(tx, {
       actor: actor.kind === 'user' ? actor : { kind: 'guest', guestId: actor.sessionId, eventId: input.eventId },
       action: 'moments.createUpload',
       targetType: 'MediaItem',
-      targetId: item.id,
+      targetId: mediaId,
       data: { kind: input.kind },
     });
-    return item;
   });
-  return { mediaId: created.id, uploadId, key };
+  return { mediaId, key };
 }
 
-export const signPartSchema = z.object({
-  mediaId: z.string().uuid(),
-  uploadId: z.string().min(1).max(200),
-  partNumber: z.number().int().min(1).max(MAX_PART_NUMBER),
+export const signUploadSchema = z.object({
+  /** S3-shaped signing request, as @uppy/aws-s3 sends it. */
+  key: z.string().min(1).max(500),
+  method: z.enum(['PUT', 'POST', 'DELETE', 'GET']),
+  uploadId: z.string().max(200).optional(),
+  partNumber: z.number().int().min(1).max(MAX_PART_NUMBER).optional(),
 });
 
 async function loadOwnUpload(actor: UploaderActor, mediaId: string) {
@@ -140,44 +144,58 @@ async function loadOwnUpload(actor: UploaderActor, mediaId: string) {
     if (item.uploaderSessionId !== actor.sessionId || item.galleryId !== actor.galleryId) {
       throw new ForbiddenError('Not your upload', {});
     }
-  } else {
-    if (item.uploaderUserId !== actor.userId) {
-      // Hosts/photographers may finish uploads they started from another device.
-      await resolveEventAccess(actor, item.gallery.eventId, 'moments.upload.official');
-    }
+  } else if (item.uploaderUserId !== actor.userId) {
+    // Hosts/photographers may finish uploads they started from another device.
+    await resolveEventAccess(actor, item.gallery.eventId, 'moments.upload.official');
   }
   return item;
 }
 
-/** Pre-signed URL for one 5 MB part (browser PUTs straight to storage). */
-export async function signPart(
+/**
+ * Sign one step of the browser-driven S3 multipart protocol (used with
+ * @uppy/aws-s3 `signRequest`). The mediaId is recovered from the key path
+ * (`galleries/{galleryId}/originals/{mediaId}/{file}`), and the row's own
+ * stored key is what gets signed — never the client-supplied one — so a
+ * signed URL can never point anywhere else. Create calls carry no uploadId
+ * yet; every other op requires the S3 id Uppy parsed from the create
+ * response. Abandoned multipart uploads on the bucket expire via the bucket
+ * lifecycle rule (R2 default 7 days).
+ */
+export async function signS3Upload(
   storage: Storage,
   actor: UploaderActor,
-  input: z.infer<typeof signPartSchema>,
+  input: z.infer<typeof signUploadSchema>,
 ): Promise<{ url: string }> {
-  const item = await loadOwnUpload(actor, input.mediaId);
+  const segments = input.key.split('/');
+  const mediaId =
+    segments.length === 5 && segments[0] === 'galleries' && segments[2] === 'originals' ? segments[3] : undefined;
+  if (!mediaId) throw new NotFoundError('Upload not found', { key: 'unknownKey' });
+  const item = await loadOwnUpload(actor, mediaId);
   if (item.state !== 'UPLOADING') throw new ValidationError('Upload is not open', { key: 'notOpen' });
-  // The browser returns the uploadId from createUpload on every part call —
-  // rows never store it, so leaked ids can't resurrect finished uploads.
-  return { url: await storage.signPart(item.originalKey, input.uploadId, input.partNumber) };
+  if (item.originalKey !== input.key) throw new ForbiddenError('Key mismatch', { key: 'keyMismatch' });
+  const key = item.originalKey;
+  switch (input.method) {
+    case 'POST':
+      if (input.uploadId) return { url: await storage.signCompleteMultipart(key, input.uploadId) };
+      return { url: await storage.signCreateMultipart(key) };
+    case 'PUT':
+      if (input.partNumber === undefined) throw new ValidationError('Missing part number', { key: 'missingPart' });
+      if (!input.uploadId) throw new ValidationError('Missing upload id', { key: 'missingUploadId' });
+      return { url: await storage.signPart(key, input.uploadId, input.partNumber) };
+    case 'DELETE':
+      if (!input.uploadId) throw new ValidationError('Missing upload id', { key: 'missingUploadId' });
+      return { url: await storage.signAbortMultipart(key, input.uploadId) };
+    case 'GET':
+      if (!input.uploadId) throw new ValidationError('Missing upload id', { key: 'missingUploadId' });
+      return { url: await storage.signListParts(key, input.uploadId) };
+  }
 }
 
 export const completeUploadSchema = z.object({
   mediaId: z.string().uuid(),
-  uploadId: z.string().min(1).max(200),
-  parts: z
-    .array(z.object({ eTag: z.string().min(1), partNumber: z.number().int().min(1).max(MAX_PART_NUMBER) }))
-    .min(1)
-    .max(MAX_PART_NUMBER),
-  sha256: z
-    .string()
-    .regex(/^[0-9a-f]{64}$/)
-    .optional(),
-  width: z.number().int().min(1).max(20000).optional(),
-  height: z.number().int().min(1).max(20000).optional(),
 });
 
-/** Finish the MPU, verify the object exists, move to PROCESSING and enqueue the worker. */
+/** Mark the upload complete: verify the object exists, move to PROCESSING and enqueue the worker. */
 export async function completeUpload(
   storage: Storage,
   actor: UploaderActor,
@@ -185,19 +203,12 @@ export async function completeUpload(
 ): Promise<{ mediaId: string }> {
   const item = await loadOwnUpload(actor, input.mediaId);
   if (item.state !== 'UPLOADING') throw new ValidationError('Upload is not open', { key: 'notOpen' });
-  await storage.completeMultipart(item.originalKey, input.uploadId, input.parts);
   const head = await storage.head(item.originalKey);
   if (!head) throw new ValidationError('Upload is empty', { key: 'emptyUpload' });
   const result = await prisma.$transaction(async (tx) => {
     await tx.mediaItem.update({
       where: { id: item.id },
-      data: {
-        state: 'PROCESSING',
-        sizeBytes: head.sizeBytes,
-        ...(input.sha256 !== undefined ? { sha256: input.sha256 } : {}),
-        ...(input.width !== undefined ? { width: input.width } : {}),
-        ...(input.height !== undefined ? { height: input.height } : {}),
-      },
+      data: { state: 'PROCESSING', sizeBytes: head.sizeBytes },
     });
     await enqueue(tx, item.kind === 'PHOTO' ? 'media/process-image' : 'media/process-video', {
       mediaItemId: item.id,
@@ -216,17 +227,17 @@ export async function completeUpload(
 
 export const abortUploadSchema = z.object({
   mediaId: z.string().uuid(),
-  uploadId: z.string().min(1).max(200),
 });
 
-/** Abort the MPU and drop the UPLOADING row (nothing was ever published). */
+/**
+ * Drop an UPLOADING row (the browser aborts the S3 multipart itself first via
+ * a signed URL). Orphaned S3 parts expire via the bucket lifecycle rule.
+ */
 export async function abortUpload(
-  storage: Storage,
   actor: UploaderActor,
   input: z.infer<typeof abortUploadSchema>,
 ): Promise<{ aborted: true }> {
   const item = await loadOwnUpload(actor, input.mediaId);
-  await storage.abortMultipart(item.originalKey, input.uploadId).catch(() => undefined);
   await prisma.mediaItem.deleteMany({ where: { id: item.id, state: 'UPLOADING' } });
   return { aborted: true };
 }

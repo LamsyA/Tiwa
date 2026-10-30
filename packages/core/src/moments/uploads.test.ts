@@ -11,7 +11,7 @@ import {
   createUpload,
   guestSessionCookieName,
   signGuestSession,
-  signPart,
+  signS3Upload,
   verifyGuestSessionCookie,
   VIDEO_MAX_BYTES,
 } from './uploads.js';
@@ -67,10 +67,9 @@ afterAll(async () => {
 });
 
 describe('createUpload', () => {
-  it('opens an MPU for a host photo upload', async () => {
-    const storage = new FakeStorage();
+  it('mints a MediaItem row and key with no S3 calls', async () => {
     const { host, eventId } = await eventWithGallery();
-    const result = await createUpload(storage, host, {
+    const result = await createUpload(host, {
       eventId,
       album: 'GUEST',
       fileName: 'party.jpg',
@@ -78,19 +77,19 @@ describe('createUpload', () => {
       sizeBytes: 1024 * 1024,
       kind: 'PHOTO',
     });
-    expect(result.key).toContain('galleries/');
-    expect(result.uploadId).toBeTruthy();
+    expect(result.mediaId).toBeTruthy();
+    expect(result.key).toContain(result.mediaId);
+    expect(result.key.endsWith('/party.jpg')).toBe(true);
     const item = await prisma.mediaItem.findUniqueOrThrow({ where: { id: result.mediaId } });
-    expect(item).toMatchObject({ state: 'UPLOADING', kind: 'PHOTO' });
+    expect(item).toMatchObject({ state: 'UPLOADING', kind: 'PHOTO', originalKey: result.key });
   });
 
   it('rejects bad types, oversize files and official uploads by guests', async () => {
-    const storage = new FakeStorage();
     const { host, eventId, galleryId } = await eventWithGallery();
     const { sessionId } = await prisma.$transaction((tx) => createGuestSession(tx, galleryId, 'Ada'));
     const guest = { kind: 'gallery-session' as const, sessionId, galleryId };
     await expect(
-      createUpload(storage, guest, {
+      createUpload(guest, {
         eventId,
         album: 'GUEST',
         fileName: 'x.exe',
@@ -100,7 +99,7 @@ describe('createUpload', () => {
       }),
     ).rejects.toThrow(/Unsupported file type/);
     await expect(
-      createUpload(storage, guest, {
+      createUpload(guest, {
         eventId,
         album: 'GUEST',
         fileName: 'big.mp4',
@@ -110,7 +109,7 @@ describe('createUpload', () => {
       }),
     ).rejects.toThrow(/too large/i);
     await expect(
-      createUpload(storage, guest, {
+      createUpload(guest, {
         eventId,
         album: 'OFFICIAL',
         fileName: 'a.jpg',
@@ -120,7 +119,7 @@ describe('createUpload', () => {
       }),
     ).rejects.toThrow(/guest album/);
     await expect(
-      createUpload(storage, host, {
+      createUpload(host, {
         eventId,
         album: 'OFFICIAL',
         fileName: 'a.jpg',
@@ -133,11 +132,10 @@ describe('createUpload', () => {
   });
 
   it('enforces the gallery item limit', async () => {
-    const storage = new FakeStorage();
     const { host, eventId } = await eventWithGallery();
     await prisma.event.update({ where: { id: eventId }, data: { gallery: { update: { itemLimit: 0 } } } });
     await expect(
-      createUpload(storage, host, {
+      createUpload(host, {
         eventId,
         album: 'GUEST',
         fileName: 'a.jpg',
@@ -149,13 +147,13 @@ describe('createUpload', () => {
   });
 });
 
-describe('sign/complete/abort', () => {
-  it('signs parts only for the uploader and completes into PROCESSING + enqueue', async () => {
+describe('signS3Upload', () => {
+  it('signs each S3 op against the row key and rejects strangers', async () => {
     const storage = new FakeStorage();
     const { eventId, galleryId } = await eventWithGallery();
     const { sessionId } = await prisma.$transaction((tx) => createGuestSession(tx, galleryId));
     const guest = { kind: 'gallery-session' as const, sessionId, galleryId };
-    const started = await createUpload(storage, guest, {
+    const started = await createUpload(guest, {
       eventId,
       album: 'GUEST',
       fileName: 'a.jpg',
@@ -163,48 +161,70 @@ describe('sign/complete/abort', () => {
       sizeBytes: 100,
       kind: 'PHOTO',
     });
-    const { url } = await signPart(storage, guest, {
-      mediaId: started.mediaId,
-      uploadId: started.uploadId,
-      partNumber: 1,
+    const key = started.key;
+    expect((await signS3Upload(storage, guest, { key, method: 'POST' })).url).toContain('fake://mpu-create/');
+    expect((await signS3Upload(storage, guest, { key, method: 'PUT', uploadId: 'up-1', partNumber: 1 })).url).toContain(
+      'fake://part/',
+    );
+    expect((await signS3Upload(storage, guest, { key, method: 'POST', uploadId: 'up-1' })).url).toContain(
+      'fake://mpu-complete/',
+    );
+    expect((await signS3Upload(storage, guest, { key, method: 'DELETE', uploadId: 'up-1' })).url).toContain(
+      'fake://mpu-abort/',
+    );
+    expect((await signS3Upload(storage, guest, { key, method: 'GET', uploadId: 'up-1' })).url).toContain(
+      'fake://mpu-list/',
+    );
+    await expect(signS3Upload(storage, guest, { key, method: 'PUT', uploadId: 'up-1' })).rejects.toThrow(
+      /part number/i,
+    );
+    await expect(
+      signS3Upload(storage, guest, {
+        key: 'galleries/x/originals/00000000-0000-0000-0000-000000000000/a.jpg',
+        method: 'POST',
+      }),
+    ).rejects.toThrow();
+
+    const { sessionId: otherId } = await prisma.$transaction((tx) => createGuestSession(tx, galleryId));
+    await expect(
+      signS3Upload(storage, { kind: 'gallery-session', sessionId: otherId, galleryId }, { key, method: 'POST' }),
+    ).rejects.toThrow();
+  });
+});
+
+describe('complete/abort', () => {
+  it('completes on an existing object and enqueues processing', async () => {
+    const storage = new FakeStorage();
+    const { eventId, galleryId } = await eventWithGallery();
+    const { sessionId } = await prisma.$transaction((tx) => createGuestSession(tx, galleryId));
+    const guest = { kind: 'gallery-session' as const, sessionId, galleryId };
+    const started = await createUpload(guest, {
+      eventId,
+      album: 'GUEST',
+      fileName: 'a.jpg',
+      mime: 'image/jpeg',
+      sizeBytes: 100,
+      kind: 'PHOTO',
     });
-    expect(url).toContain('fake://part/');
-    const bytes = new TextEncoder().encode('fake-jpeg-bytes');
-    storage.seedPart(started.key, started.uploadId, 1, bytes);
-    const done = await completeUpload(storage, guest, {
-      mediaId: started.mediaId,
-      uploadId: started.uploadId,
-      parts: [{ eTag: 'etag-1', partNumber: 1 }],
-      sha256: 'a'.repeat(64),
-      width: 100,
-      height: 100,
-    });
+    const row = await prisma.mediaItem.findUniqueOrThrow({ where: { id: started.mediaId } });
+    await storage.put(row.originalKey, new Uint8Array([1, 2, 3]), 'image/jpeg');
+    const done = await completeUpload(storage, guest, { mediaId: started.mediaId });
     expect(done).toEqual({ mediaId: started.mediaId });
     const item = await prisma.mediaItem.findUniqueOrThrow({ where: { id: started.mediaId } });
     expect(item.state).toBe('PROCESSING');
-    expect(item.sizeBytes).toBe(bytes.byteLength);
+    expect(item.sizeBytes).toBe(3);
     const outbox = await prisma.outboxEvent.findFirst({
       where: { topic: 'media/process-image' },
       orderBy: { createdAt: 'desc' },
     });
     expect(outbox?.payload).toMatchObject({ mediaItemId: started.mediaId });
     await prisma.outboxEvent.deleteMany({ where: { topic: { in: ['media/process-image', 'media/process-video'] } } });
-
-    // A stranger cannot touch someone else's upload.
-    const { sessionId: otherId } = await prisma.$transaction((tx) => createGuestSession(tx, galleryId));
-    await expect(
-      signPart(
-        storage,
-        { kind: 'gallery-session', sessionId: otherId, galleryId },
-        { mediaId: started.mediaId, uploadId: started.uploadId, partNumber: 1 },
-      ),
-    ).rejects.toThrow();
   });
 
-  it('aborts and drops the UPLOADING row', async () => {
+  it('rejects completing a missing object and drops aborted uploads', async () => {
     const storage = new FakeStorage();
     const { host, eventId } = await eventWithGallery();
-    const started = await createUpload(storage, host, {
+    const started = await createUpload(host, {
       eventId,
       album: 'GUEST',
       fileName: 'a.jpg',
@@ -212,9 +232,8 @@ describe('sign/complete/abort', () => {
       sizeBytes: 100,
       kind: 'PHOTO',
     });
-    await expect(await abortUpload(storage, host, { mediaId: started.mediaId, uploadId: started.uploadId })).toEqual({
-      aborted: true,
-    });
+    await expect(completeUpload(storage, host, { mediaId: started.mediaId })).rejects.toThrow(/empty/i);
+    await expect(await abortUpload(host, { mediaId: started.mediaId })).toEqual({ aborted: true });
     expect(await prisma.mediaItem.findUnique({ where: { id: started.mediaId } })).toBeNull();
   });
 });
@@ -230,13 +249,11 @@ describe('guest sessions', () => {
   });
 
   it('blocked sessions cannot upload', async () => {
-    const storage = new FakeStorage();
     const { eventId, galleryId } = await eventWithGallery();
     const { sessionId } = await prisma.$transaction((tx) => createGuestSession(tx, galleryId));
     await prisma.guestSession.update({ where: { id: sessionId }, data: { blockedAt: new Date() } });
     await expect(
       createUpload(
-        storage,
         { kind: 'gallery-session', sessionId, galleryId },
         { eventId, album: 'GUEST', fileName: 'a.jpg', mime: 'image/jpeg', sizeBytes: 100, kind: 'PHOTO' },
       ),
@@ -244,7 +261,6 @@ describe('guest sessions', () => {
   });
 
   it('view-only members may upload to the guest album but not the official one', async () => {
-    const storage = new FakeStorage();
     const { host, eventId } = await eventWithGallery();
     const invite = await addParticipant(host, {
       eventId,
@@ -254,8 +270,7 @@ describe('guest sessions', () => {
     });
     users.push(invite.userId);
     const viewer = { kind: 'user' as const, userId: invite.userId, isAdmin: false };
-    // moments:'upload' is in the view_only preset — the album is participatory.
-    const ok = await createUpload(storage, viewer, {
+    const ok = await createUpload(viewer, {
       eventId,
       album: 'GUEST',
       fileName: 'a.jpg',
@@ -266,7 +281,7 @@ describe('guest sessions', () => {
     expect(ok.mediaId).toBeTruthy();
     await prisma.mediaItem.delete({ where: { id: ok.mediaId } });
     await expect(
-      createUpload(storage, viewer, {
+      createUpload(viewer, {
         eventId,
         album: 'OFFICIAL',
         fileName: 'a.jpg',

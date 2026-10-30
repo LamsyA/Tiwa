@@ -2,8 +2,7 @@ import { createUpload, createUploadSchema } from '@tiwa/core';
 import { RATE_LIMITS } from '@tiwa/core/auth/rate-limit';
 import { NextResponse } from 'next/server';
 import { checkRedisRateLimit } from '@/lib/rate-store.js';
-import { privateStorage } from '@/lib/storage.js';
-import { actorFromRequest, ipOf } from '../_auth.js';
+import { actorForUpload, ipOf } from '../_auth.js';
 import { coreErrorResponse } from '@/lib/api-error.js';
 
 export const dynamic = 'force-dynamic';
@@ -31,7 +30,7 @@ export async function POST(request: Request) {
       { status: 429 },
     );
   }
-  const actor = await actorFromRequest(request, { eventId: input.data.eventId });
+  const actor = await actorForUpload(request, { eventId: input.data.eventId });
   if (!actor) return NextResponse.json({ ok: false, error: { code: 'UNAUTHENTICATED' } }, { status: 401 });
   if (actor.kind === 'user') {
     const userCheck = await checkRedisRateLimit(
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
     }
   }
   try {
-    const result = await createUpload(privateStorage(), actor, input.data);
+    const result = await createUpload(actor, input.data);
     return NextResponse.json({ ok: true, data: result });
   } catch (error) {
     return coreErrorResponse(error);

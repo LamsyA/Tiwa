@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListPartsCommand,
   PutObjectCommand,
   S3Client,
   UploadPartCommand,
@@ -33,17 +34,21 @@ export interface Storage {
   get(key: string): Promise<{ body: Uint8Array; contentType: string | undefined } | null>;
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   delete(key: string): Promise<void>;
-  /** Multipart upload for large media (arc §5: 5 MB parts, browser → storage direct). */
-  createMultipart(key: string, contentType: string): Promise<{ uploadId: string }>;
-  /** Pre-signed URL for one part upload (part numbers start at 1). */
+  /**
+   * S3-native presigned URLs for browser-driven multipart (arc §5; used with
+   * @uppy/aws-s3 `signRequest`). The browser talks to S3 directly; the app
+   * only mints MediaItem rows and signs. Part numbers start at 1.
+   * Content-Type is deliberately never part of a signature: browsers report
+   * types inconsistently (empty for some HEIC files) and S3 ignores unsigned
+   * non-x-amz headers, so signing it would only create mismatches. Type
+   * safety comes from the server allowlist at create and magic-byte
+   * verification in the worker (Backend §12).
+   */
+  signCreateMultipart(key: string, ttlSec?: number): Promise<string>;
   signPart(key: string, uploadId: string, partNumber: number, ttlSec?: number): Promise<string>;
-  completeMultipart(key: string, uploadId: string, parts: MultipartPart[]): Promise<void>;
-  abortMultipart(key: string, uploadId: string): Promise<void>;
-}
-
-export interface MultipartPart {
-  eTag: string;
-  partNumber: number;
+  signCompleteMultipart(key: string, uploadId: string, ttlSec?: number): Promise<string>;
+  signAbortMultipart(key: string, uploadId: string, ttlSec?: number): Promise<string>;
+  signListParts(key: string, uploadId: string, ttlSec?: number): Promise<string>;
 }
 
 export interface S3StorageConfig {
@@ -130,15 +135,19 @@ export class S3Storage implements Storage {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
   }
 
-  async createMultipart(key: string, contentType: string): Promise<{ uploadId: string }> {
-    const result = await this.client.send(
-      new CreateMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, ContentType: contentType }),
-    );
-    if (!result.UploadId) throw new Error('multipart init failed: no upload id');
-    return { uploadId: result.UploadId };
+  async signCreateMultipart(key: string, ttlSec = 900): Promise<string> {
+    // Deliberately no Content-Type: the browser sends whatever its File API
+    // reports (empty string for some HEIC files), and S3 ignores unsigned
+    // non-x-amz headers. Type safety comes from the allowlist at create time
+    // plus magic-byte verification in the worker — not from the signature.
+    return getSignedUrl(this.client, new CreateMultipartUploadCommand({ Bucket: this.config.bucket, Key: key }), {
+      expiresIn: ttlSec,
+    });
   }
 
   async signPart(key: string, uploadId: string, partNumber: number, ttlSec = 900): Promise<string> {
+    // No Content-Type is signed: S3 ignores unsigned non-x-amz headers, and
+    // the browser sends none for Uint8Array chunk bodies.
     return getSignedUrl(
       this.client,
       new UploadPartCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId, PartNumber: partNumber }),
@@ -146,20 +155,29 @@ export class S3Storage implements Storage {
     );
   }
 
-  async completeMultipart(key: string, uploadId: string, parts: MultipartPart[]): Promise<void> {
-    await this.client.send(
-      new CompleteMultipartUploadCommand({
-        Bucket: this.config.bucket,
-        Key: key,
-        UploadId: uploadId,
-        MultipartUpload: { Parts: parts.map((part) => ({ ETag: part.eTag, PartNumber: part.partNumber })) },
-      }),
+  async signCompleteMultipart(key: string, uploadId: string, ttlSec = 900): Promise<string> {
+    // No Content-Type is signed: S3 ignores unsigned non-x-amz-* headers,
+    // so the client's application/xml body header passes verification.
+    return getSignedUrl(
+      this.client,
+      new CompleteMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
+      { expiresIn: ttlSec },
     );
   }
 
-  async abortMultipart(key: string, uploadId: string): Promise<void> {
-    await this.client.send(
+  async signAbortMultipart(key: string, uploadId: string, ttlSec = 900): Promise<string> {
+    return getSignedUrl(
+      this.client,
       new AbortMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
+      { expiresIn: ttlSec },
+    );
+  }
+
+  async signListParts(key: string, uploadId: string, ttlSec = 900): Promise<string> {
+    return getSignedUrl(
+      this.client,
+      new ListPartsCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
+      { expiresIn: ttlSec },
     );
   }
 }
@@ -167,7 +185,6 @@ export class S3Storage implements Storage {
 /** In-memory storage for tests: "signed" URLs are inert strings; `put` simulates the browser upload. */
 export class FakeStorage implements Storage {
   readonly objects = new Map<string, { body: Uint8Array; contentType: string }>();
-  readonly multiparts = new Map<string, { contentType: string; parts: Map<number, Uint8Array> }>();
 
   async signPut(key: string, contentType: string, sizeBytes: number): Promise<string> {
     return `fake://put/${encodeURIComponent(key)}?type=${encodeURIComponent(contentType)}&size=${sizeBytes}`;
@@ -199,47 +216,24 @@ export class FakeStorage implements Storage {
     this.objects.delete(key);
   }
 
-  async createMultipart(key: string, contentType: string): Promise<{ uploadId: string }> {
-    const uploadId = `fake-mpu-${Math.random().toString(36).slice(2)}`;
-    this.multiparts.set(`${key}::${uploadId}`, { contentType, parts: new Map() });
-    return { uploadId };
+  async signCreateMultipart(key: string): Promise<string> {
+    return `fake://mpu-create/${encodeURIComponent(key)}`;
   }
 
-  async signPart(key: string, uploadId: string, _partNumber?: number, _ttlSec?: number): Promise<string> {
-    void _partNumber;
-    void _ttlSec;
-    return `fake://part/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}`;
+  async signPart(key: string, uploadId: string, partNumber = 1): Promise<string> {
+    return `fake://part/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}&part=${partNumber}`;
   }
 
-  async completeMultipart(key: string, uploadId: string, parts: MultipartPart[]): Promise<void> {
-    const upload = this.multiparts.get(`${key}::${uploadId}`);
-    if (!upload) throw new Error('unknown multipart upload');
-    const ordered = [...parts].sort((a, b) => a.partNumber - b.partNumber);
-    const bodies = ordered.map((part) => {
-      const body = upload.parts.get(part.partNumber);
-      if (!body) throw new Error(`missing part ${part.partNumber}`);
-      return body;
-    });
-    const total = bodies.reduce((sum, body) => sum + body.byteLength, 0);
-    const merged = new Uint8Array(total);
-    let offset = 0;
-    for (const body of bodies) {
-      merged.set(body, offset);
-      offset += body.byteLength;
-    }
-    this.objects.set(key, { body: merged, contentType: upload.contentType });
-    this.multiparts.delete(`${key}::${uploadId}`);
+  async signCompleteMultipart(key: string, uploadId: string): Promise<string> {
+    return `fake://mpu-complete/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}`;
   }
 
-  async abortMultipart(key: string, uploadId: string): Promise<void> {
-    this.multiparts.delete(`${key}::${uploadId}`);
+  async signAbortMultipart(key: string, uploadId: string): Promise<string> {
+    return `fake://mpu-abort/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}`;
   }
 
-  /** Test seam: simulate the browser PUT of one part. */
-  seedPart(key: string, uploadId: string, partNumber: number, body: Uint8Array): void {
-    const upload = this.multiparts.get(`${key}::${uploadId}`);
-    if (!upload) throw new Error('unknown multipart upload');
-    upload.parts.set(partNumber, body);
+  async signListParts(key: string, uploadId: string): Promise<string> {
+    return `fake://mpu-list/${encodeURIComponent(key)}?uploadId=${encodeURIComponent(uploadId)}`;
   }
 }
 

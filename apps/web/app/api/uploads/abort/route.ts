@@ -1,7 +1,6 @@
 import { abortUpload, abortUploadSchema } from '@tiwa/core';
 import { NextResponse } from 'next/server';
-import { privateStorage } from '@/lib/storage.js';
-import { actorFromRequest } from '../_auth.js';
+import { actorForUpload } from '../_auth.js';
 import { coreErrorResponse } from '@/lib/api-error.js';
 
 export const dynamic = 'force-dynamic';
@@ -13,10 +12,10 @@ export async function POST(request: Request) {
   if (!input.success) {
     return NextResponse.json({ ok: false, error: { code: 'VALIDATION' } }, { status: 400 });
   }
-  const actor = await actorFromRequest(request, { mediaId: input.data.mediaId });
+  const actor = await actorForUpload(request, { mediaId: input.data.mediaId });
   if (!actor) return NextResponse.json({ ok: false, error: { code: 'UNAUTHENTICATED' } }, { status: 401 });
   try {
-    const result = await abortUpload(privateStorage(), actor, input.data);
+    const result = await abortUpload(actor, input.data);
     return NextResponse.json({ ok: true, data: result });
   } catch (error) {
     return coreErrorResponse(error);

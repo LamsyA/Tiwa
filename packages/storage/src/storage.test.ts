@@ -28,24 +28,13 @@ describe('FakeStorage', () => {
     expect(await storage.head('a/b.pdf')).toBeNull();
   });
 
-  it('completes a multipart upload in order and drops aborted ones', async () => {
+  it('signs every S3-op of the browser-driven multipart flow', async () => {
     const storage = new FakeStorage();
-    const { uploadId } = await storage.createMultipart('g/o.bin', 'application/octet-stream');
-    expect(await storage.signPart('g/o.bin', uploadId, 1)).toContain('fake://part/');
-    storage.seedPart('g/o.bin', uploadId, 2, new Uint8Array([3, 4]));
-    storage.seedPart('g/o.bin', uploadId, 1, new Uint8Array([1, 2]));
-    await storage.completeMultipart('g/o.bin', uploadId, [
-      { eTag: 'a', partNumber: 1 },
-      { eTag: 'b', partNumber: 2 },
-    ]);
-    expect(await storage.head('g/o.bin')).toEqual({ sizeBytes: 4, contentType: 'application/octet-stream' });
-    expect([...(await storage.readStart('g/o.bin', 4))]).toEqual([1, 2, 3, 4]);
-
-    const again = await storage.createMultipart('g/o2.bin', 'application/octet-stream');
-    await storage.abortMultipart('g/o2.bin', again.uploadId);
-    await expect(storage.completeMultipart('g/o2.bin', again.uploadId, [{ eTag: 'a', partNumber: 1 }])).rejects.toThrow(
-      /unknown multipart/,
-    );
+    expect(await storage.signCreateMultipart('g/o.bin')).toContain('fake://mpu-create/');
+    expect(await storage.signPart('g/o.bin', 'up-1', 3)).toContain('fake://part/');
+    expect(await storage.signCompleteMultipart('g/o.bin', 'up-1')).toContain('fake://mpu-complete/');
+    expect(await storage.signAbortMultipart('g/o.bin', 'up-1')).toContain('fake://mpu-abort/');
+    expect(await storage.signListParts('g/o.bin', 'up-1')).toContain('fake://mpu-list/');
   });
 });
 
