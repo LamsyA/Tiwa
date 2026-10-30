@@ -17,13 +17,17 @@
     "@tiwa/core": "workspace:*",
     "@tiwa/db": "workspace:^",
     "bullmq": "^5.15.0",
-    "ioredis": "^5.4.2"
+    "ioredis": "^5.4.2",
+    "@tiwa/storage": "workspace:*",
+    "papaparse": "^5.5.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
     "dotenv-cli": "^11.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@types/papaparse": "^5.3.16"
   }
 }

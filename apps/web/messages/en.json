@@ -226,7 +226,8 @@
       "money": "Money",
       "settings": "Settings",
       "sections": "Event sections",
-      "documents": "Documents"
+      "documents": "Documents",
+      "guests": "Guests"
     },
     "roles": {
       "HOST": "Host",
@@ -478,6 +479,146 @@
         "uploadFailed": "{name}: the upload didn't finish. Please try again.",
         "generic": "{name}: something went wrong. Please try again."
       }
+    },
+    "guests": {
+      "title": "Guests",
+      "tabs": {
+        "list": "Guests",
+        "groups": "Groups"
+      },
+      "counters": {
+        "invited": "Invited",
+        "yes": "Yes",
+        "no": "No",
+        "noReply": "No reply",
+        "checkedIn": "Checked in"
+      },
+      "searchPlaceholder": "Search name, phone or email",
+      "filters": {
+        "allGroups": "All groups",
+        "allRsvp": "Any RSVP",
+        "anyCheckin": "Anyone",
+        "checkedInOnly": "Checked in",
+        "notCheckedIn": "Not checked in",
+        "clear": "Clear"
+      },
+      "empty": {
+        "title": "Add your guests",
+        "body": "Type names one by one, paste a list, import a CSV file, or pick from your contacts.",
+        "add": "Type names",
+        "paste": "Paste a list",
+        "csv": "Import CSV",
+        "contacts": "From contacts",
+        "contactsUnsupported": "Your browser doesn't support picking contacts — paste the list instead."
+      },
+      "addAction": "Add guests",
+      "bulk": {
+        "selected": "{count} selected",
+        "group": "Add to group",
+        "delete": "Delete",
+        "clear": "Clear",
+        "deleted": "Guests deleted",
+        "grouped": "Guests updated"
+      },
+      "table": {
+        "name": "Name",
+        "contact": "Contact",
+        "groups": "Groups",
+        "rsvp": "RSVP",
+        "noContact": "No contact yet",
+        "redacted": "Hidden",
+        "edit": "Edit",
+        "merge": "Merge"
+      },
+      "addDialog": {
+        "title": "Add a guest",
+        "name": "Name",
+        "phone": "Phone (optional)",
+        "email": "Email (optional)",
+        "groups": "Groups",
+        "save": "Add guest",
+        "fromContacts": "Pick from contacts",
+        "added": "Guest added"
+      },
+      "pasteDialog": {
+        "title": "Paste a guest list",
+        "hint": "One guest per line: name, phone and email in any order.",
+        "placeholder": "Adaeze Okafor, 08031234567, ada@example.com",
+        "preview": "Preview",
+        "parse": "Check list",
+        "confirm": "Add {count} guests",
+        "badPhone": "Phone not recognised — imports without it",
+        "badEmail": "Email not recognised — imports without it",
+        "noName": "No name — uses the contact instead",
+        "empty": "Paste at least one line first",
+        "back": "Back to text"
+      },
+      "csvDialog": {
+        "title": "Import a CSV file",
+        "pick": "Choose a CSV file",
+        "headers": "Match your columns",
+        "column": "Column",
+        "ignore": "Ignore this column",
+        "uploading": "Uploading…",
+        "importing": "Importing {done} of {total}…",
+        "done": "Imported {count} guests",
+        "tooMany": "At most 5,000 rows per file",
+        "badFile": "That file isn't a CSV",
+        "fields": {
+          "name": "Name",
+          "phone": "Phone",
+          "email": "Email",
+          "group": "Group",
+          "plusOnes": "Plus-ones",
+          "meal": "Meal",
+          "dietary": "Dietary needs"
+        }
+      },
+      "editDialog": {
+        "title": "Edit guest",
+        "save": "Save",
+        "saved": "Saved",
+        "plusOnes": "Plus-ones allowed",
+        "meal": "Meal choice",
+        "dietary": "Dietary needs"
+      },
+      "mergeDialog": {
+        "title": "Possible duplicates",
+        "body": "These guests are already on the list with the same phone or email. Merge them into one?",
+        "keep": "Keep",
+        "mergeInto": "Merge into {name}",
+        "merged": "Guests merged",
+        "skip": "Keep separate"
+      },
+      "groups": {
+        "title": "Groups",
+        "add": "New group",
+        "name": "Group name",
+        "members": "{count} guests",
+        "save": "Save group",
+        "delete": "Delete group",
+        "deleteConfirm": "Delete this group? Guests stay on the list.",
+        "empty": "No groups yet. Groups help you invite and seat people together."
+      },
+      "readOnly": "You can see the guest list. Ask the host for edit access to change it.",
+      "errors": {
+        "generic": "We couldn't save that. Please try again.",
+        "FORBIDDEN": "You don't have permission to do that.",
+        "invalidPhone": "That phone number doesn't look right",
+        "invalidEmail": "That email doesn't look right",
+        "unknownGroup": "That group doesn't exist on this event",
+        "guestNotFound": "That guest is no longer on the list",
+        "groupNotFound": "That group doesn't exist",
+        "mergeSelf": "Pick different guests to merge",
+        "invalidFileKey": "That upload isn't valid — please try again"
+      },
+      "rsvpLabels": {
+        "YES": "Yes",
+        "NO": "No",
+        "MAYBE": "Maybe",
+        "NONE": "No reply"
+      },
+      "contactsPicked": "{count} contacts picked"
     }
   }
 }

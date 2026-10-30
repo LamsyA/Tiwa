@@ -43,7 +43,10 @@ async function myAlerts(now: Date) {
 describe('events/deadline-alerts', () => {
   it('finds due-soon and overdue, skipping done, undated, distant and closed events', async () => {
     const host = await makeHost();
-    const now = new Date('2031-05-01T12:00:00Z');
+    // Year 2000: the shared dev DB holds thousands of stale dated tasks (e2e runs);
+    // dating the fixture in the past keeps them outside the scan window by query
+    // construction, so the take-500 cap can't cut off our own rows.
+    const now = new Date('2000-05-01T12:00:00Z');
     const { eventId } = await createEventDraft(host, { type: 'birthday' });
     mine.push(eventId);
 
@@ -76,7 +79,7 @@ describe('events/deadline-alerts', () => {
 
   it('is idempotent: running twice returns the same counts', async () => {
     const host = await makeHost();
-    const now = new Date('2031-06-01T12:00:00Z');
+    const now = new Date('2000-06-01T12:00:00Z');
     const { eventId } = await createEventDraft(host, { type: 'birthday' });
     mine.push(eventId);
     await createTask(host, { eventId, title: 'Nudge me', dueAt: iso(2 * 60 * 60 * 1000, now.getTime()) });

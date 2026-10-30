@@ -1,4 +1,5 @@
 import type { createLogger } from '@tiwa/core';
+import { GUESTS_IMPORT_TOPIC, handleGuestCsvImport } from './csv-import.js';
 
 type Log = ReturnType<typeof createLogger>;
 
@@ -8,6 +9,7 @@ type Log = ReturnType<typeof createLogger>;
  * retry forever; the outbox row keeps the record.
  */
 export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log) => Promise<unknown>> = {
+  [GUESTS_IMPORT_TOPIC]: async (data, log) => handleGuestCsvImport(data, log),
   // Stub until the export builder (ZIP of JSON + media links, Backend.md §12).
   'account.export.requested': async (data, log) => {
     log.info(
