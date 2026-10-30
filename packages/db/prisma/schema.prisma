@@ -41,9 +41,10 @@ model User {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   deletedAt           DateTime?
-  memberships         Membership[]
-  participants        EventParticipant[]
-  ownedTasks          Task[]             @relation("TaskOwner")
+  memberships        Membership[]
+  participants       EventParticipant[]
+  createdEvents      Event[]
+  ownedTasks         Task[]             @relation("TaskOwner")
   sessions            Session[]
   accounts            Account[]
 }
@@ -132,6 +133,7 @@ model Event {
   hostCanSeeVendorPrices Boolean            @default(true)
   wizardStep             String?
   createdById            String
+  createdBy              User               @relation(fields: [createdById], references: [id])
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   cancelledAt            DateTime?

@@ -175,7 +175,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P4-T06 Invite composer (Who · How · Message, smart channel choice, previews per channel, SMS cost estimate) and **one-click Send** (`sendInviteBatch`, idempotent).
 - [x] P4-T07 Worker: `send-invite-batch` fan-out, `send-invite` with per-provider rate limiters, status updates, SSE `invites:{eventId}`.
 - [x] P4-T08 WhatsApp free-mode queue screen (`wa.me` one by one, mark sent manually).
-- [ ] P4-T09 Guest invitation page `/i/[token]` (GuestShell, one-tap RSVP island, extras when enabled, client-side POST for email one-tap links with Undo), pass page with QR, `.ics` endpoint and Google Calendar link.
+- [x] P4-T09 Guest invitation page `/i/[token]` (GuestShell, one-tap RSVP island, extras when enabled, client-side POST for email one-tap links with Undo), pass page with QR, `.ics` endpoint and Google Calendar link.
 - [ ] P4-T10 WhatsApp reply-button webhook → RSVP; email/SMS delivery webhooks → statuses.
 - [ ] P4-T11 Reminders job (non-responders max 2, day-before), updates to all/attending, revoke token, forwarding setting.
 - [ ] P4-T12 Live tracking table with counters; e2e UF-06–UF-09; load test script (k6) for 2,000 invites with fake providers.

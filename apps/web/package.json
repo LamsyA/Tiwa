@@ -45,6 +45,7 @@
     "typescript": "^5.6.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^3.2.4",
-    "@types/papaparse": "^5.3.16"
+    "@types/papaparse": "^5.3.16",
+    "node-ical": "^0.16.1"
   }
 }

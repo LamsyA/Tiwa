@@ -31,4 +31,5 @@ export * from './guests/guests.js';
 export * from './guests/tables.js';
 export * from './guests/headcount.js';
 export * from './guests/invites.js';
+export * from './guests/rsvp.js';
 export * from './guests/batches.js';

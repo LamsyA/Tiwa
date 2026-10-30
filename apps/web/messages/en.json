@@ -850,5 +850,30 @@
         "generic": "We couldn't save that. Please try again."
       }
     }
+  },
+  "invite": {
+    "coming": "I'm coming",
+    "cantCome": "Can't come",
+    "hostedBy": "Hosted by {host}",
+    "declined": "You marked Can't come",
+    "declinedHint": "Change your mind any time from this same link.",
+    "extrasHeading": "Extras",
+    "plusOnes": "Plus-ones",
+    "meal": "Meal choice",
+    "mealPlaceholder": "e.g. Vegetarian, no nuts",
+    "undo": "Undo",
+    "passQr": "Your pass QR",
+    "passHint": "Show this at the entrance.",
+    "googleCal": "Add to Google Calendar",
+    "icsDownload": "Download .ics",
+    "viewPass": "View your pass",
+    "directions": "Get directions",
+    "moments": "Add photos to Moments",
+    "passFor": "Pass for {name}",
+    "forwardText": "{event} — you can RSVP here: {link}",
+    "forwardHint": "Allowed to forward? Share your link with plus-ones.",
+    "errors": {
+      "sendFailed": "We couldn't save that — please try again."
+    }
   }
 }
