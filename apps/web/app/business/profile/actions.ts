@@ -26,26 +26,31 @@ import {
   upsertBusinessProfile,
   upsertBusinessProfileSchema,
 } from '@tiwa/core';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { z } from 'zod';
 import { userAction } from '@/lib/ctx.js';
 import { privateStorage } from '@/lib/storage.js';
 
-/** P6-T02: business profile editing (org ADMIN+ enforced in core). */
+/** P6-T02: business profile editing (org ADMIN+ enforced in core). Public
+ * pages cache by tag `vendor:{orgId}` (P6-T04), so every mutation refreshes them. */
+function refreshBusiness(orgId: string) {
+  revalidatePath('/business/profile');
+  updateTag(`vendor:${orgId}`);
+}
 
 export const saveBusinessProfile = userAction(upsertBusinessProfileSchema, async (input, ctx) => {
   await upsertBusinessProfile(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const saveBusinessPackage = userAction(savePackageSchema, async (input, ctx) => {
   await saveCorePackage(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const archiveBusinessPackage = userAction(archivePackageSchema, async (input, ctx) => {
   await archivePackage(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const startPortfolioItem = userAction(startPortfolioUploadSchema, async (input, ctx) => {
@@ -54,32 +59,32 @@ export const startPortfolioItem = userAction(startPortfolioUploadSchema, async (
 
 export const completePortfolioItem = userAction(portfolioItemSchema, async (input, ctx) => {
   await completePortfolioUpload(privateStorage(), ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const removePortfolioPhoto = userAction(portfolioItemSchema, async (input, ctx) => {
   await removePortfolioItem(privateStorage(), ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const blockBusinessDate = userAction(blockAvailabilitySchema, async (input, ctx) => {
   await blockAvailability(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const unblockBusinessDate = userAction(unblockAvailabilitySchema, async (input, ctx) => {
   await unblockAvailability(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const confirmBusinessAvailability = userAction(confirmAvailabilitySchema, async (input, ctx) => {
   await confirmAvailability(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const setProfilePublished = userAction(publishProfileSchema, async (input, ctx) => {
   await publishProfile(ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const startVerificationDoc = userAction(startVerificationUploadSchema, async (input, ctx) => {
@@ -88,7 +93,7 @@ export const startVerificationDoc = userAction(startVerificationUploadSchema, as
 
 export const submitBusinessVerification = userAction(submitVerificationSchema, async (input, ctx) => {
   await submitVerification(privateStorage(), ctx.actor, input);
-  revalidatePath('/business/profile');
+  refreshBusiness(input.orgId);
 });
 
 export const removeVerificationDoc = userAction(

@@ -1152,5 +1152,24 @@
     "verifySubmitted": "Submitted — we review business verifications in order.",
     "verifyUploading": "Uploading…",
     "removeDoc": "Remove"
+  },
+  "marketplace": {
+    "about": "About",
+    "portfolio": "Portfolio",
+    "packages": "Packages",
+    "availability": "Availability",
+    "reviews": "Reviews",
+    "verified": "Verified",
+    "newOnTiwa": "New on Tiwa",
+    "bookingsDone": "{count} events done",
+    "reviewsCount": "{count} reviews",
+    "serviceArea": "Serves {city} + {km} km",
+    "calendarConfirmed": "Calendar confirmed {date}",
+    "calendarUnconfirmed": "Availability not confirmed recently — message to check dates",
+    "noPackages": "No packages listed yet.",
+    "requestQuoteSoon": "Quote requests open with bookings — check back soon.",
+    "blocked": "Booked",
+    "includesHeading": "What's included",
+    "startingFromLabel": "Starting from"
   }
 }

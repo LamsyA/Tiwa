@@ -158,3 +158,10 @@ Template:
 - Decision: Next 15.2.4 → 16.4.3 (+ React 19.3.1, Sentry 11, next-intl 4.14.9). Dev and builds pin webpack (`--webpack`): Turbopack (the 16 default) has no equivalent of webpack's `resolve.extensionAlias`, which our NodeNext `.js`→`.ts` sources require — verified by failed build, kept the hook + a revisit note. `withSentryConfig` import moved to `@sentry/nextjs/config` (v11 path change). Deep `@tiwa/ui/theme` imports + `sideEffects:false` keep Radix out of route bundles. The served-HTML bundle checker replaces manifest parsing (Next 16 dropped `app-build-manifest.json`); it excludes legacy nomodule polyfills and error-boundary chunks.
 - Why: latest-stable rule (arc.md §2). Turbopack can't resolve our authoring convention; webpack stays fully supported in 16.
 - Affects: apps/web (config, scripts, layout imports), scripts/check-bundle.mjs, arc.md §2.
+
+### 2026-10-31 — Public profiles: data cache, not route ISR
+- ID: D-X18
+- Status: AGENT
+- Decision: `/vendors/[slug]` and `/planners/[slug]` cache profile data with `unstable_cache` tagged `vendor:{orgId}` (instant invalidation via `updateTag` on edit); portfolio photos resolve through `/api/profile-photo/[itemId]` (fresh signed redirect) so no expiring URLs sit in HTML. Route-level ISR is not claimed: the root layout reads the theme cookie, so every page (including `/`) renders dynamically.
+- Why: Full-route static caching would need public pages moved out of the themed root layout; the expensive reads are cached and edits invalidate instantly, which is the behaviour UF-13-3 needs. Revisit in P17 if profile-page budgets demand it.
+- Affects: apps/web (vendors, planners, profile-photo route, business actions), packages/core/src/marketplace/public.ts, P6-T04.

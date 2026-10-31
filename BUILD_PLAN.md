@@ -227,7 +227,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P6-T01 Prisma: BusinessProfile, VenueSpace, PortfolioItem, ServicePackage, AvailabilityBlock, BusinessVerification, Shortlist; trigram index and availability unique-index migrations.
 - [x] P6-T02 Business profile pages with completeness checklist; portfolio uploader (reuse upload stack); packages editor; availability calendar ("confirm availability" updates `availabilityConfirmedAt`).
 - [x] P6-T03 Publish rules (profile + ≥ 6 portfolio items + ≥ 1 package); verification submission (documents) → PENDING.
-- [ ] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
+- [x] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
 - [ ] P6-T05 Search `/vendors` with filters (category, city/radius via PostGIS, date availability, price, rating, verified), cursor pagination, sort; `/planners` search.
 - [ ] P6-T06 Shortlist (per event) and compare view (up to 4).
 - [ ] P6-T07 Event vendors page `/events/[id]/vendors` (categories from template with status).
