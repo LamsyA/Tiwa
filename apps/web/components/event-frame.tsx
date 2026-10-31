@@ -9,7 +9,7 @@ import type * as React from 'react';
 import { requirePageUser } from '@/lib/ctx.js';
 import { AppFrame } from './app-frame.js';
 
-export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'settings';
+export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'vendors' | 'settings';
 
 const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?: boolean; needsMoments?: boolean }[] = [
   { key: 'overview', path: '', needs: 'event.view' },
@@ -23,6 +23,8 @@ const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?:
   // only shows while the host has them on. Same for Moments (P5-T08).
   { key: 'invites', path: '/invites', needs: 'event.view', needsInvites: true },
   { key: 'moments', path: '/moments', needs: 'event.view', needsMoments: true },
+  // Vendor search and shortlisting for the event (P6-T07); quoting states arrive with P7.
+  { key: 'vendors', path: '/vendors', needs: 'event.view' },
   { key: 'settings', path: '/settings', needs: 'event.view' },
 ];
 
