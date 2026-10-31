@@ -229,7 +229,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P6-T03 Publish rules (profile + ≥ 6 portfolio items + ≥ 1 package); verification submission (documents) → PENDING.
 - [x] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
 - [x] P6-T05 Search `/vendors` with filters (category, city/radius via PostGIS, date availability, price, rating, verified), cursor pagination, sort; `/planners` search.
-- [ ] P6-T06 Shortlist (per event) and compare view (up to 4).
+- [x] P6-T06 Shortlist (per event) and compare view (up to 4).
 - [ ] P6-T07 Event vendors page `/events/[id]/vendors` (categories from template with status).
 - [ ] P6-T08 Venue spaces: `/business/spaces` editor (capacities, amenities, rules, slot prices, setup/teardown, security deposit, instant-book switch, hold length); per-space availability calendar with slot blocks; venue section on the public profile.
 - [ ] P6-T09 Venue search `/venues` (date + slot availability, capacity by layout ≥ guests, area, price, indoor/outdoor, amenities); "Find a venue" link from the event wizard and the event vendors page.
