@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import en from '@/messages/en.json';
 import { loadPublicProfile } from '@/components/marketplace/loader.js';
 
 /** OG card for planner profiles (UF-13-3). */
@@ -24,7 +25,7 @@ export default async function PlannerOgImage({ params }: { params: Promise<{ slu
       }}
     >
       <div style={{ fontSize: 64, fontWeight: 800 }}>{name}</div>
-      <div style={{ fontSize: 32, marginTop: 16, opacity: 0.8 }}>Find them on Tiwa</div>
+      <div style={{ fontSize: 32, marginTop: 16, opacity: 0.8 }}>{en.marketplace.ogTagline}</div>
     </div>,
     { ...size },
   );

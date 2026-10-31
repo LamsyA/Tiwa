@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { loadPublicProfile } from '@/components/marketplace/loader.js';
 import { PublicProfileView } from '@/components/marketplace/public-profile.js';
@@ -21,12 +22,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function PlannerProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { profile, photos, blockedDays } = await loadPublicProfile(slug, 'PLANNER');
+  const t = await getTranslations('marketplace');
   return (
     <main>
       <header className="border-border border-b">
         <div className="mx-auto w-full max-w-5xl px-4 py-3">
           <Link href="/" className="font-display text-lg font-bold">
-            Tiwa
+            {t('brandName')}
           </Link>
         </div>
       </header>

@@ -1206,6 +1206,8 @@
     "eventVendorsTitle": "Vendors for this event",
     "eventVendorsBody": "Suggested for this kind of event. Shortlist picks, then request quotes.",
     "findButton": "Find",
-    "shortlistedCount": "{count} shortlisted"
+    "shortlistedCount": "{count} shortlisted",
+    "brandName": "Tiwa",
+    "ogTagline": "Find them on Tiwa"
   }
 }
