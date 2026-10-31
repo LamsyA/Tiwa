@@ -1,5 +1,5 @@
 import {
-  getPublicAvailability,
+  getPublicAvailabilityRows,
   getPublicProfileForOrg,
   NotFoundError,
   resolvePublicOrgId,
@@ -41,11 +41,11 @@ export async function loadPublicProfile(slug: string, kind: PublicProfileKind) {
   const monthStart = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
   const lastDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
   const monthEnd = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-  const [photos, blockedDays] = await Promise.all([
+  const [photos, availabilityRows] = await Promise.all([
     Promise.resolve(
       profile.portfolio.map((item) => ({ id: item.id, url: `/api/profile-photo/${item.id}`, caption: item.caption })),
     ),
-    getPublicAvailability(orgId, monthStart, monthEnd),
+    getPublicAvailabilityRows(orgId, monthStart, monthEnd),
   ]);
-  return { profile, photos, blockedDays };
+  return { profile, photos, availabilityRows };
 }

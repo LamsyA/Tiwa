@@ -16,19 +16,32 @@ function monthGrid(year: number, month: number, blocked: Set<string>) {
   return { cells, blocked };
 }
 
+export interface AvailabilityRow {
+  date: string;
+  spaceId: string | null;
+  slot: string;
+}
+
 export async function PublicProfileView({
   profile,
   photos,
-  blockedDays,
+  availabilityRows,
 }: {
   profile: PublicProfile;
   photos: { id: string; url: string; caption: string | null }[];
-  blockedDays: string[];
+  availabilityRows: AvailabilityRow[];
 }) {
   const t = await getTranslations('marketplace');
   const now = new Date();
-  const { cells } = monthGrid(now.getUTCFullYear(), now.getUTCMonth(), new Set(blockedDays));
+  const wholeBlocked = new Set(availabilityRows.filter((row) => row.spaceId === null).map((row) => row.date));
+  const { cells } = monthGrid(now.getUTCFullYear(), now.getUTCMonth(), wholeBlocked);
   const showScore = profile.profile.ratingCount >= 5 && profile.profile.ratingAvg !== null;
+  const bySpace = new Map<string, AvailabilityRow[]>();
+  for (const row of availabilityRows.filter((item) => item.spaceId !== null)) {
+    const list = bySpace.get(row.spaceId!) ?? [];
+    list.push(row);
+    bySpace.set(row.spaceId!, list);
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 md:flex-row">
@@ -132,9 +145,9 @@ export async function PublicProfileView({
                   ) : (
                     <li
                       key={cell.date}
-                      aria-label={blockedDays.includes(cell.date) ? `${cell.date} ${t('blocked')}` : cell.date}
+                      aria-label={wholeBlocked.has(cell.date) ? `${cell.date} ${t('blocked')}` : cell.date}
                       className={
-                        blockedDays.includes(cell.date)
+                        wholeBlocked.has(cell.date)
                           ? 'bg-muted text-muted rounded-md py-1 line-through'
                           : 'rounded-md py-1'
                       }
@@ -154,6 +167,83 @@ export async function PublicProfileView({
             </div>
           </Card>
         </section>
+
+        {profile.spaces.length > 0 && (
+          <section aria-label={t('venueSectionTitle')}>
+            <h2 className="mb-2 font-medium">{t('venueSectionTitle')}</h2>
+            <ul className="flex flex-col gap-3">
+              {profile.spaces.map((space) => {
+                const spaceRows = bySpace.get(space.id) ?? [];
+                const coverKey = space.photoKeys[0] ?? null;
+                const coverId = coverKey?.split('/').pop() ?? null;
+                return (
+                  <li key={space.id}>
+                    <Card>
+                      <div className="flex flex-col gap-2 p-4">
+                        <div className="flex items-start gap-3">
+                          {coverId && (
+                            <img
+                              src={`/api/space-photo/${profile.org.id}/${space.id}/${coverId}`}
+                              alt=""
+                              className="size-20 shrink-0 rounded-lg object-cover"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <h3 className="font-medium">{space.name}</h3>
+                            <p className="text-muted text-sm">
+                              {[
+                                space.capacitySeated !== null ? `🪑 ${space.capacitySeated}` : null,
+                                space.capacityTheatre !== null ? `🎭 ${space.capacityTheatre}` : null,
+                                space.capacityStanding !== null ? `🧍 ${space.capacityStanding}` : null,
+                                space.sizeSqm !== null ? `${space.sizeSqm} m²` : null,
+                                space.indoor ? t('indoorLabel') : t('outdoorLabel'),
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                          </div>
+                        </div>
+                        {space.amenities.length > 0 && (
+                          <p className="text-muted text-sm">
+                            {space.amenities.map((key) => t(`amenity_${key}`)).join(' · ')}
+                          </p>
+                        )}
+                        {space.rules && <p className="text-muted text-sm">{space.rules}</p>}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                          {(['MORNING', 'AFTERNOON', 'EVENING', 'FULL_DAY'] as const).map(
+                            (slot) =>
+                              (space.slotPrices as Record<string, string>)[slot] && (
+                                <span key={slot}>
+                                  {slot}{' '}
+                                  <MoneyText
+                                    value={(space.slotPrices as Record<string, string>)[slot] as string}
+                                    currency={profile.profile.currency}
+                                  />
+                                </span>
+                              ),
+                          )}
+                          {space.securityDepositMinor && (
+                            <span>
+                              {t('depositLabel')}{' '}
+                              <MoneyText value={space.securityDepositMinor} currency={profile.profile.currency} />
+                            </span>
+                          )}
+                        </div>
+                        {spaceRows.length > 0 && (
+                          <p className="text-muted text-sm">
+                            {t('venueSpaceAvailability')}:{' '}
+                            {spaceRows.map((row) => `${row.date.slice(5)} ${row.slot}`).join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
       </div>
 
       <aside className="md:w-80 md:shrink-0">

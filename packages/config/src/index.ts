@@ -8,3 +8,4 @@ export {
   smsSegmentCostMinor,
 } from './messaging.js';
 export * from './event-types/index.js';
+export { DAY_SLOTS, VENUE_AMENITY_KEYS, type DaySlot, type VenueAmenity } from './marketplace.js';

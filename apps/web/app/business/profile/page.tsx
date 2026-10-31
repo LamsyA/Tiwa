@@ -17,6 +17,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
   const { org: orgParam } = await searchParams;
   const ctx = await requirePageUser('/business/profile');
   const t = await getTranslations('business');
+  const tm = await getTranslations('marketplace');
   const mine = (await listMyOrgs(ctx.actor.userId)).filter(
     (row) => row.org.kind === 'VENDOR' || row.org.kind === 'PLANNER',
   );
@@ -98,6 +99,13 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
                 </li>
               ))}
             </ul>
+            {current.role !== 'STAFF' && profile.profile?.categories.includes('venue') && (
+              <p className="mt-2 text-sm">
+                <Link href={`/business/spaces?org=${current.org.id}`} className="underline">
+                  {tm('spacesTitle')}
+                </Link>
+              </p>
+            )}
           </div>
         </Card>
         {!canManage && <Banner tone="warning">{t('forbiddenBody')}</Banner>}

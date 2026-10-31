@@ -26,10 +26,11 @@ export async function getPublicProfileForOrg(orgId: string, kind: PublicProfileK
   if (!org) throw new NotFoundError('Profile not found');
   const profile = await prisma.businessProfile.findUnique({ where: { orgId: org.id } });
   if (!profile?.published) throw new NotFoundError('Profile not found');
-  const [packages, portfolio, verification] = await Promise.all([
+  const [packages, portfolio, verification, spaces] = await Promise.all([
     prisma.servicePackage.findMany({ where: { orgId: org.id, active: true }, orderBy: { name: 'asc' } }),
     prisma.portfolioItem.findMany({ where: { orgId: org.id }, orderBy: { sortOrder: 'asc' } }),
     prisma.businessVerification.findFirst({ where: { orgId: org.id }, orderBy: { createdAt: 'desc' } }),
+    prisma.venueSpace.findMany({ where: { profileId: profile.id, active: true }, orderBy: { name: 'asc' } }),
   ]);
   const categoryLabels = profile.categories.map(
     (key) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key,
@@ -62,6 +63,22 @@ export async function getPublicProfileForOrg(orgId: string, kind: PublicProfileK
     })),
     portfolio: portfolio.map((row) => ({ id: row.id, key: row.key, caption: row.caption })),
     verified: verification?.status === 'APPROVED',
+    spaces: spaces.map((space) => ({
+      id: space.id,
+      name: space.name,
+      indoor: space.indoor,
+      capacitySeated: space.capacitySeated,
+      capacityTheatre: space.capacityTheatre,
+      capacityStanding: space.capacityStanding,
+      sizeSqm: space.sizeSqm,
+      amenities: space.amenities,
+      rules: space.rules,
+      slotPrices: space.slotPrices,
+      setupMinutes: space.setupMinutes,
+      teardownMinutes: space.teardownMinutes,
+      securityDepositMinor: space.securityDepositMinor?.toString() ?? null,
+      photoKeys: space.photoKeys,
+    })),
   };
 }
 
@@ -69,11 +86,21 @@ export type PublicProfile = Awaited<ReturnType<typeof getPublicProfile>>;
 
 /** Public blocked dates (YYYY-MM-DD) for the mini-calendar. Booking holds (P7) also appear here. */
 export async function getPublicAvailability(orgId: string, from: string, to: string): Promise<string[]> {
+  const rows = await getPublicAvailabilityRows(orgId, from, to);
+  return [...new Set(rows.map((row) => row.date))];
+}
+
+/** Availability rows with space/slot detail (the venue profile groups them per space). */
+export async function getPublicAvailabilityRows(
+  orgId: string,
+  from: string,
+  to: string,
+): Promise<{ date: string; spaceId: string | null; slot: string }[]> {
   const rows = await prisma.availabilityBlock.findMany({
     where: { orgId, date: { gte: new Date(from), lte: new Date(to) } },
-    select: { date: true },
+    select: { date: true, spaceId: true, slot: true },
   });
-  return rows.map((row) => row.date.toISOString().slice(0, 10));
+  return rows.map((row) => ({ date: row.date.toISOString().slice(0, 10), spaceId: row.spaceId, slot: row.slot }));
 }
 
 /** Storage key for a portfolio photo, only when the owner's profile is published (used by the redirect route). */
@@ -83,4 +110,16 @@ export async function getPublicPhotoKey(itemId: string): Promise<string> {
   const profile = await prisma.businessProfile.findUnique({ where: { orgId: item.orgId } });
   if (!profile?.published) throw new NotFoundError('Photo not found');
   return item.key;
+}
+
+/** Storage key for a space photo, only when the venue profile is published and the key is attached. */
+export async function getPublicSpacePhotoKey(orgId: string, spaceId: string, photoId: string): Promise<string> {
+  const space = await prisma.venueSpace.findFirst({
+    where: { id: spaceId, active: true, profile: { orgId } },
+    select: { photoKeys: true, profile: { select: { published: true } } },
+  });
+  if (!space?.profile.published) throw new NotFoundError('Photo not found');
+  const key = space.photoKeys.find((candidate) => candidate.endsWith(`/${photoId}`));
+  if (!key || !key.startsWith(`business/${orgId}/spaces/${spaceId}/`)) throw new NotFoundError('Photo not found');
+  return key;
 }
