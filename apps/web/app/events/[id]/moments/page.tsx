@@ -7,7 +7,7 @@ import {
   authorize,
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Card, StatCard, buttonClasses } from '@tiwa/ui';
+import { Card, StatCard, buttonClasses, Banner } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
@@ -27,8 +27,10 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
   const t = await getTranslations('events.momentsPage');
   const event = await prisma.event.findUniqueOrThrow({
     where: { id },
-    select: { name: true, momentsEnabled: true },
+    select: { name: true, momentsEnabled: true, timezone: true },
   });
+  const formatDay = (at: Date): string =>
+    new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium', timeZone: event.timezone }).format(at);
 
   const canModerate = (() => {
     try {
@@ -112,6 +114,17 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
     >
       <div className="flex flex-col gap-4 py-2">
         <h2 className="font-display text-xl font-bold">{t('title')}</h2>
+        {dashboard.gallery.expiresAt && (
+          <Banner tone={dashboard.gallery.daysLeft !== null && dashboard.gallery.daysLeft < 14 ? 'warning' : 'info'}>
+            {dashboard.gallery.daysLeft !== null && dashboard.gallery.daysLeft < 14
+              ? t('expiryWarning', { date: formatDay(dashboard.gallery.expiresAt) })
+              : t('expiryBanner', {
+                  date: formatDay(dashboard.gallery.expiresAt),
+                  used: dashboard.counts.total,
+                  limit: dashboard.gallery.itemLimit,
+                })}
+          </Banner>
+        )}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatCard label={t('statsItems')} value={dashboard.counts.total} />
           <StatCard label={t('statsPending')} value={dashboard.counts.pending} />
@@ -128,8 +141,8 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
             showFooter: dashboard.gallery.showFooter,
             accessCode: dashboard.gallery.accessCode,
           }}
-          galleryUrl={galleryUrl}
           canEdit
+          plan={dashboard.gallery.plan}
         />
         <MomentsQrCard eventName={event.name} galleryUrl={galleryUrl} />
         {canUploadOfficial && <OfficialAlbumPanel eventId={id} galleryId={dashboard.gallery.id} />}

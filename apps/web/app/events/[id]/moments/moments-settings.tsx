@@ -19,15 +19,14 @@ export interface MomentsSettingsValue {
 export function MomentsSettingsForm({
   eventId,
   initial,
-  galleryUrl: _galleryUrl,
   canEdit,
+  plan,
 }: {
   eventId: string;
   initial: MomentsSettingsValue;
-  galleryUrl: string;
   canEdit: boolean;
+  plan: 'FREE' | 'PLUS';
 }) {
-  void _galleryUrl;
   const t = useTranslations('events.momentsPage');
   const te = useTranslations('events.momentsPage.errors');
   const router = useRouter();
@@ -140,12 +139,14 @@ export function MomentsSettingsForm({
         </label>
         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
           <Switch
-            checked={value.showFooter}
+            checked={plan === 'FREE' ? true : value.showFooter}
+            disabled={plan === 'FREE'}
             onCheckedChange={(next) => setValue((prev) => ({ ...prev, showFooter: next }))}
             aria-label={t('footerLabel')}
           />
           {t('footerLabel')}
         </label>
+        {plan === 'FREE' && <p className="text-muted text-xs">{t('footerPlusHint')}</p>}
         {value.privacy === 'GUESTS_ONLY' && (
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">

@@ -37,6 +37,11 @@ export async function updateGallerySettings(
 ): Promise<{ galleryId: string }> {
   await requireModerator(actor, input.eventId, preloaded);
   const gallery = await galleryForEvent(input.eventId);
+  // Hiding the "Planned with Tiwa" footer is a Plus perk (P5-T12); free
+  // galleries always carry it. Entitlements arrive with P8 payments.
+  if (input.showFooter === false && gallery.plan !== 'PLUS') {
+    throw new ValidationError('Hiding the footer needs Moments Plus', { key: 'plusOnly' });
+  }
   // exactOptionalPropertyTypes: only defined fields reach Prisma; undefined
   // values are not assignable to GalleryUpdateInput.
   const data: Prisma.GalleryUpdateInput = {};
@@ -99,6 +104,10 @@ export interface MomentsDashboard {
     guestDownloads: boolean;
     showFooter: boolean;
     accessCode: string | null;
+    plan: 'FREE' | 'PLUS';
+    itemLimit: number;
+    expiresAt: Date | null;
+    daysLeft: number | null;
   };
   counts: { total: number; published: number; pending: number; hidden: number; reported: number; uploaders: number };
   lastZip: {
@@ -156,6 +165,10 @@ export async function getMomentsDashboard(
       guestDownloads: gallery.guestDownloads,
       showFooter: gallery.showFooter,
       accessCode: gallery.accessCode,
+      plan: gallery.plan === 'PLUS' ? 'PLUS' : 'FREE',
+      itemLimit: gallery.itemLimit,
+      expiresAt: gallery.expiresAt,
+      daysLeft: gallery.expiresAt ? Math.ceil((gallery.expiresAt.getTime() - Date.now()) / 86400000) : null,
     },
     counts: {
       total,

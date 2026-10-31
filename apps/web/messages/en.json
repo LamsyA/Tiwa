@@ -882,7 +882,8 @@
       "reportedBy": "Reported by {name}",
       "viewOriginal": "View full size",
       "errors": {
-        "generic": "Something went wrong — please try again."
+        "generic": "Something went wrong — please try again.",
+        "plusOnly": "Hiding the footer needs Moments Plus."
       },
       "processing": "Processing…",
       "loading": "Loading…",
@@ -912,7 +913,11 @@
       "hideMessage": "Hide",
       "unhideMessage": "Show",
       "guestbookEmptyHost": "No messages yet.",
-      "guestbookAnon": "Anonymous"
+      "guestbookAnon": "Anonymous",
+      "expiryBanner": "Photos stay until {date} · {used} of {limit} used",
+      "expiryWarning": "Photos expire {date} — download the ZIP or move to Plus to keep them longer.",
+      "footerPlusHint": "Hiding the footer needs Moments Plus. Free galleries always show it.",
+      "usageLabel": "Storage"
     }
   },
   "shared": {
