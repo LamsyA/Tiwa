@@ -63,6 +63,7 @@ afterAll(async () => {
     await prisma.mediaItem.findMany({ where: { galleryId: { in: galleryIds } }, select: { id: true } })
   ).map((row) => row.id);
   await prisma.report.deleteMany({ where: { targetId: { in: mediaIds } } });
+  await prisma.outboxEvent.deleteMany({ where: { topic: 'media/watermark' } });
   await prisma.mediaItem.deleteMany({ where: { galleryId: { in: galleryIds } } });
   await prisma.guestbookMessage.deleteMany({ where: { galleryId: { in: galleryIds } } });
   await prisma.guestSession.deleteMany({ where: { galleryId: { in: galleryIds } } });
@@ -138,6 +139,42 @@ describe('moderateMediaItem', () => {
     );
     const stranger = await makeHost();
     await expect(moderateMediaItem(stranger, { eventId, mediaId: blocked.id, action: 'hide' })).rejects.toThrow();
+  });
+
+  it('queues a watermark job when an official photo is published', async () => {
+    const { host, eventId, gallery } = await eventWithGallery();
+    const official = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'OFFICIAL',
+        kind: 'PHOTO',
+        state: 'PENDING_REVIEW',
+        originalKey: `g/${gallery.id}/wm.jpg`,
+        largeKey: `g/${gallery.id}/l.jpg`,
+        sizeBytes: 10,
+      },
+    });
+    await moderateMediaItem(host, { eventId, mediaId: official.id, action: 'approve' });
+    const rows = await prisma.outboxEvent.findMany({
+      where: { topic: 'media/watermark' },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+    expect(rows.some((row) => (row.payload as { mediaItemId?: string }).mediaItemId === official.id)).toBe(true);
+
+    const guest = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'GUEST',
+        kind: 'PHOTO',
+        state: 'PENDING_REVIEW',
+        originalKey: `g/${gallery.id}/nwm.jpg`,
+        sizeBytes: 10,
+      },
+    });
+    const before = await prisma.outboxEvent.count({ where: { topic: 'media/watermark' } });
+    await moderateMediaItem(host, { eventId, mediaId: guest.id, action: 'approve' });
+    expect(await prisma.outboxEvent.count({ where: { topic: 'media/watermark' } })).toBe(before);
   });
 });
 

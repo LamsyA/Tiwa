@@ -4,7 +4,7 @@ import type { Actor, EventAccess } from '../auth/authorize.js';
 import { resolveEventAccess } from '../events/access.js';
 import { shortCode } from '../shared/ids.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
-import { audit } from '../shared/outbox.js';
+import { audit, enqueue } from '../shared/outbox.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
@@ -157,6 +157,7 @@ export async function getMomentsDashboard(
 
 export interface PendingMediaItem {
   id: string;
+  album: 'OFFICIAL' | 'GUEST';
   kind: 'PHOTO' | 'VIDEO';
   thumbKey: string | null;
   largeKey: string | null;
@@ -208,6 +209,7 @@ export async function listPendingMedia(
   return {
     items: page.map((row) => ({
       id: row.id,
+      album: row.album,
       kind: row.kind,
       thumbKey: row.thumbKey,
       largeKey: row.largeKey,
@@ -228,11 +230,15 @@ export interface OpenMediaReport {
   reporterLabel: string;
   item: {
     id: string;
+    album: 'OFFICIAL' | 'GUEST';
     kind: 'PHOTO' | 'VIDEO';
     thumbKey: string | null;
     largeKey: string | null;
     state: string;
+    createdAt: Date;
+    uploaderLabel: string;
     uploaderSessionId: string | null;
+    featured: boolean;
   } | null;
 }
 
@@ -251,33 +257,41 @@ export async function listOpenMediaReports(
     orderBy: { createdAt: 'asc' },
     take: 100,
   });
-  const [items, sessions, users] = await Promise.all([
-    prisma.mediaItem.findMany({
-      where: { id: { in: reports.map((report) => report.targetId) } },
-      select: {
-        id: true,
-        kind: true,
-        thumbKey: true,
-        largeKey: true,
-        state: true,
-        uploaderSessionId: true,
-        uploaderUserId: true,
-      },
-    }),
-    prisma.guestSession.findMany({
-      where: {
-        id: { in: reports.map((report) => report.reporterSessionId).filter((id): id is string => id !== null) },
-      },
-      select: { id: true, name: true },
-    }),
-    prisma.user.findMany({
-      where: { id: { in: reports.map((report) => report.reporterUserId).filter((id): id is string => id !== null) } },
-      select: { id: true, name: true },
-    }),
+  const items = await prisma.mediaItem.findMany({
+    where: { id: { in: reports.map((report) => report.targetId) } },
+    select: {
+      id: true,
+      album: true,
+      kind: true,
+      thumbKey: true,
+      largeKey: true,
+      state: true,
+      createdAt: true,
+      uploaderSessionId: true,
+      uploaderUserId: true,
+      featured: true,
+    },
+  });
+  const sessionIds = [
+    ...reports.map((report) => report.reporterSessionId),
+    ...items.map((item) => item.uploaderSessionId),
+  ].filter((id): id is string => id !== null);
+  const userIds = [
+    ...reports.map((report) => report.reporterUserId),
+    ...items.map((item) => item.uploaderUserId),
+  ].filter((id): id is string => id !== null);
+  const [sessions, users] = await Promise.all([
+    prisma.guestSession.findMany({ where: { id: { in: sessionIds } }, select: { id: true, name: true } }),
+    prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } }),
   ]);
   const itemById = new Map(items.map((item) => [item.id, item]));
   const sessionById = new Map(sessions.map((session) => [session.id, session.name] as const));
   const userById = new Map(users.map((user) => [user.id, user.name] as const));
+  const uploaderLabelFor = (row: (typeof items)[number]): string => {
+    if (row.uploaderSessionId) return sessionById.get(row.uploaderSessionId) ?? 'Guest';
+    if (row.uploaderUserId) return userById.get(row.uploaderUserId) ?? 'Member';
+    return 'Guest';
+  };
   return {
     reports: reports.map((report) => {
       const item = itemById.get(report.targetId) ?? null;
@@ -294,11 +308,15 @@ export async function listOpenMediaReports(
         item: item
           ? {
               id: item.id,
+              album: item.album,
               kind: item.kind,
               thumbKey: item.thumbKey,
               largeKey: item.largeKey,
               state: item.state,
+              createdAt: item.createdAt,
+              uploaderLabel: uploaderLabelFor(item),
               uploaderSessionId: item.uploaderSessionId,
+              featured: item.featured,
             }
           : null,
       };
@@ -368,6 +386,11 @@ export async function moderateMediaItem(
       await tx.mediaItem.update({ where: { id: item.id }, data: { deletedAt: new Date() } });
     } else if (state !== item.state || featured !== item.featured) {
       await tx.mediaItem.update({ where: { id: item.id }, data: { state, featured } });
+    }
+    // Publishing an official photo queues the © watermark (P5-T10); the job
+    // skips anything already marked, so double approves are harmless.
+    if (input.action === 'approve' && state === 'PUBLISHED' && item.album === 'OFFICIAL' && !item.watermarked) {
+      await enqueue(tx, 'media/watermark', { mediaItemId: item.id });
     }
     await audit(tx, {
       actor,

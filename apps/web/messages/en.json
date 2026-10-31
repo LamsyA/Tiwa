@@ -888,7 +888,18 @@
       "loading": "Loading…",
       "showMore": "Show more",
       "photoAlt": "Event photo",
-      "openSlideshow": "Open slideshow"
+      "openSlideshow": "Open slideshow",
+      "officialTitle": "Official album",
+      "officialBody": "The photographer’s shots live here. They publish through the review queue below.",
+      "dropHint": "Drag photos here, or tap to choose",
+      "folderHint": "Whole folders welcome — they arrive flat, ready to publish.",
+      "chooseFiles": "Choose files",
+      "chooseFolder": "Choose a folder",
+      "uploadNow": "Upload {count} now",
+      "publishHint": "Uploaded — approve them in the review queue to publish.",
+      "watermarkNote": "Published official photos get a © watermark automatically.",
+      "albumOfficial": "Official",
+      "albumGuest": "Guest"
     }
   },
   "shared": {

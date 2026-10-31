@@ -5,7 +5,13 @@ import { FakeStorage } from '@tiwa/storage';
 import { writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { afterAll, describe, expect, it } from 'vitest';
-import { MEDIA_MODERATE_JOB, handleModerate, handleProcessImage, handleProcessVideo } from './media.js';
+import {
+  MEDIA_MODERATE_JOB,
+  handleModerate,
+  handleProcessImage,
+  handleProcessVideo,
+  handleWatermark,
+} from './media.js';
 import type { FanOutSink } from './send-invite.js';
 
 const users: string[] = [];
@@ -310,6 +316,66 @@ describe('media/moderate', () => {
     expect(row.moderationLabels).toEqual(['fake:block']);
     expect(await handleModerate({ mediaItemId: item.id }, fakeLog, { moderation: block })).toEqual({
       status: 'BLOCKED',
+    });
+  });
+});
+
+describe('media/watermark', () => {
+  async function officialItem(
+    state: 'PUBLISHED' | 'PENDING_REVIEW' = 'PUBLISHED',
+    album: 'OFFICIAL' | 'GUEST' = 'OFFICIAL',
+  ) {
+    const { gallery } = await makeGallery();
+    const item = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album,
+        kind: 'PHOTO',
+        state,
+        originalKey: `g/${gallery.id}/o.png`,
+        thumbKey: `g/${gallery.id}/img_320.avif`,
+        largeKey: `g/${gallery.id}/img_1080.avif`,
+        sizeBytes: 10,
+      },
+    });
+    return { gallery, item };
+  }
+
+  it('stamps official photos into .wm siblings and flips the flag', async () => {
+    const pub = new FakeStorage();
+    const { item } = await officialItem();
+    const bytes = await redPng(160, 120);
+    await pub.put(item.thumbKey!, bytes, 'image/avif');
+    await pub.put(item.largeKey!, bytes, 'image/avif');
+    expect(await handleWatermark({ mediaItemId: item.id }, fakeLog, { storagePublic: pub })).toEqual({
+      status: 'watermarked',
+    });
+    const row = await prisma.mediaItem.findUniqueOrThrow({ where: { id: item.id } });
+    expect(row.watermarked).toBe(true);
+    expect(row.thumbKey).toBe(`g/${row.galleryId}/img_320.wm.avif`);
+    expect(row.largeKey).toBe(`g/${row.galleryId}/img_1080.wm.avif`);
+    expect(pub.objects.has(row.thumbKey!)).toBe(true);
+    expect(pub.objects.has(row.largeKey!)).toBe(true);
+    expect(pub.objects.has(item.thumbKey!)).toBe(true);
+    // Idempotent: a second run skips.
+    expect(await handleWatermark({ mediaItemId: item.id }, fakeLog, { storagePublic: pub })).toEqual({
+      status: 'skipped',
+    });
+  });
+
+  it('skips guest albums, pending items and missing originals', async () => {
+    const pub = new FakeStorage();
+    const { item: guest } = await officialItem('PUBLISHED', 'GUEST');
+    expect(await handleWatermark({ mediaItemId: guest.id }, fakeLog, { storagePublic: pub })).toEqual({
+      status: 'skipped',
+    });
+    const { item: pending } = await officialItem('PENDING_REVIEW');
+    expect(await handleWatermark({ mediaItemId: pending.id }, fakeLog, { storagePublic: pub })).toEqual({
+      status: 'skipped',
+    });
+    const { item: missing } = await officialItem();
+    expect(await handleWatermark({ mediaItemId: missing.id }, fakeLog, { storagePublic: pub })).toEqual({
+      status: 'skipped',
     });
   });
 });

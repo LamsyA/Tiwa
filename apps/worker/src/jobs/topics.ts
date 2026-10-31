@@ -3,8 +3,10 @@ import { GUESTS_IMPORT_TOPIC, handleGuestCsvImport } from './csv-import.js';
 import {
   MEDIA_PROCESS_IMAGE_TOPIC,
   MEDIA_PROCESS_VIDEO_TOPIC,
+  MEDIA_WATERMARK_JOB,
   handleProcessImage,
   handleProcessVideo,
+  handleWatermark,
 } from './media.js';
 import { INVITE_BATCH_QUEUED_TOPIC, handleInviteBatchQueued, type FanOutSink } from './send-invite.js';
 
@@ -20,9 +22,24 @@ export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanO
   [INVITE_BATCH_QUEUED_TOPIC]: async (data, log, sink) => handleInviteBatchQueued(data, log, sink),
   [MEDIA_PROCESS_IMAGE_TOPIC]: async (data, log, sink) => handleProcessImage(data, log, sink),
   [MEDIA_PROCESS_VIDEO_TOPIC]: async (data, log, sink) => handleProcessVideo(data, log, sink),
+  [MEDIA_WATERMARK_JOB]: async (data, log) => handleWatermark(data, log),
   // Stub until chat sync (P13) consumes it; without this every finalized event burns 5 failing retries.
   'event.finalized': async (data, log) => {
     log.info({ topic: 'event.finalized', eventId: (data as { eventId?: string }).eventId }, 'event finalized (stub)');
+    return { stub: true };
+  },
+  // Stub: member adds/removes need no background work yet; without this every
+  // team change burns 5 failing retries (seen as unknown-job spam in dev logs).
+  'event.members.changed': async (data, log) => {
+    log.info(
+      { topic: 'event.members.changed', eventId: (data as { eventId?: string }).eventId },
+      'event members changed (stub)',
+    );
+    return { stub: true };
+  },
+  // Stub until refunds/notifications (P8/P13) consume it.
+  'event.cancelled': async (data, log) => {
+    log.info({ topic: 'event.cancelled', eventId: (data as { eventId?: string }).eventId }, 'event cancelled (stub)');
     return { stub: true };
   },
   // Stub until the export builder (ZIP of JSON + media links, Backend.md §12).

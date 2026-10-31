@@ -10,6 +10,7 @@ import { privateStorage } from '@/lib/storage.js';
 import { MomentsQrCard } from './moments-qr.js';
 import { MomentsSettingsForm } from './moments-settings.js';
 import { ModerationQueue } from './moderation-queue.js';
+import { OfficialAlbumPanel } from './official-album.js';
 
 /** P5-T08 / Frontend.md §6.3: host Moments page — settings, QR, queue, stats. */
 export default async function HostMomentsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +25,14 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
   const canModerate = (() => {
     try {
       authorize(ctx.actor, 'moments.moderate', { eventId: id, access });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  const canUploadOfficial = (() => {
+    try {
+      authorize(ctx.actor, 'moments.upload.official', { eventId: id, access });
       return true;
     } catch {
       return false;
@@ -68,8 +77,12 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
         item: report.item
           ? {
               id: report.item.id,
+              album: report.item.album,
               kind: report.item.kind,
               state: report.item.state,
+              createdAt: report.item.createdAt.toISOString(),
+              uploaderLabel: report.item.uploaderLabel,
+              featured: report.item.featured,
               thumbUrl: report.item.thumbKey ? await storage.getSignedUrl(report.item.thumbKey, 3600) : null,
               largeUrl: report.item.largeKey ? await storage.getSignedUrl(report.item.largeKey, 3600) : null,
             }
@@ -110,6 +123,7 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
           canEdit
         />
         <MomentsQrCard eventName={event.name} galleryUrl={galleryUrl} />
+        {canUploadOfficial && <OfficialAlbumPanel eventId={id} galleryId={dashboard.gallery.id} />}
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
@@ -129,6 +143,7 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
             eventId={id}
             initialPending={pending.map((item) => ({
               id: item.id,
+              album: item.album,
               kind: item.kind,
               thumbUrl: item.thumbUrl,
               largeUrl: item.largeUrl,

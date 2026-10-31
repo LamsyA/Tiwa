@@ -14,6 +14,7 @@ import {
 
 export interface QueueItem {
   id: string;
+  album: 'OFFICIAL' | 'GUEST';
   kind: 'PHOTO' | 'VIDEO';
   thumbUrl: string | null;
   largeUrl: string | null;
@@ -414,6 +415,7 @@ function PendingTile({
       </div>
       <div className="flex flex-col gap-1 p-2">
         <p className="text-muted truncate text-xs">
+          {item.album === 'OFFICIAL' ? t('albumOfficial') : t('albumGuest')} ·{' '}
           {t('byUploader', { name: item.uploaderLabel })} · {ageLabel(item.createdAt)}
         </p>
         <div className="flex flex-wrap gap-1">

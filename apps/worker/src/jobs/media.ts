@@ -27,6 +27,7 @@ const execFileAsync = promisify(execFile);
 export const MEDIA_PROCESS_IMAGE_TOPIC = 'media/process-image' as const;
 export const MEDIA_PROCESS_VIDEO_TOPIC = 'media/process-video' as const;
 export const MEDIA_MODERATE_JOB = 'media/moderate' as const;
+export const MEDIA_WATERMARK_JOB = 'media/watermark' as const;
 
 const THUMB_PX = 320;
 const LARGE_PX = 1080;
@@ -461,4 +462,90 @@ export async function handleModerate(
   await publishGallery(item.gallery.id);
   log.info({ topic: MEDIA_MODERATE_JOB, mediaItemId, verdict: verdict.verdict, review: next }, 'moderated');
   return { status: next };
+}
+
+function watermarkedKey(key: string): string | null {
+  const dot = key.lastIndexOf('.');
+  if (dot < 0) return null;
+  if (key.slice(0, dot).endsWith('.wm')) return null;
+  return `${key.slice(0, dot)}.wm${key.slice(dot)}`;
+}
+
+function watermarkSvg(width: number, height: number, text: string): string {
+  const size = Math.max(20, Math.round(Math.min(width, height) * 0.045));
+  const pad = Math.round(size * 0.6);
+  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 80);
+  const estWidth = Math.round(safe.length * size * 0.62) + pad * 2;
+  const estHeight = size + pad * 2;
+  const x = Math.max(0, width - estWidth - pad);
+  const y = Math.max(0, height - estHeight - pad);
+  return (
+    `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">` +
+    `<rect x="${x}" y="${y}" width="${estWidth}" height="${estHeight}" rx="${Math.round(size * 0.4)}" fill="rgba(0,0,0,0.45)"/>` +
+    `<text x="${x + pad}" y="${y + pad + size * 0.82}" font-family="sans-serif" font-size="${size}" fill="rgba(255,255,255,0.85)">© ${safe}</text>` +
+    `</svg>`
+  );
+}
+
+/**
+ * Official-album watermark (P5-T10): stamps `© event name` on the published
+ * derivatives of approved OFFICIAL photos and flips `watermarked`, so guest
+ * screenshots carry attribution. Writes `.wm` sibling keys rather than
+ * overwriting: derivatives are content-addressed and shared with duplicate
+ * uploads, which must stay clean. Idempotent via the flag; videos skip.
+ */
+export async function handleWatermark(data: unknown, log: Log, tools: MediaTools = {}): Promise<{ status: string }> {
+  const { mediaItemId } = itemPayloadSchema.parse(data);
+  const pub = publicStorage(tools.storagePublic);
+  const item = await prisma.mediaItem.findUnique({
+    where: { id: mediaItemId },
+    include: { gallery: { select: { id: true, event: { select: { name: true } } } } },
+  });
+  if (!item || item.deletedAt) {
+    log.info({ topic: MEDIA_WATERMARK_JOB, mediaItemId }, 'already gone, skipping');
+    return { status: 'missing' };
+  }
+  const eligible =
+    item.state === 'PUBLISHED' && item.album === 'OFFICIAL' && item.kind === 'PHOTO' && !item.watermarked;
+  if (!eligible || !item.largeKey) {
+    log.info(
+      { topic: MEDIA_WATERMARK_JOB, mediaItemId, state: item.state, album: item.album },
+      'not eligible, skipping',
+    );
+    return { status: 'skipped' };
+  }
+  const keys = [item.thumbKey, item.largeKey].filter((key): key is string => key !== null);
+  try {
+    const stamped = new Map<string, string>();
+    for (const key of keys) {
+      const target = watermarkedKey(key);
+      if (!target) continue;
+      const file = await pub.get(key);
+      if (!file) continue;
+      const image = sharp(file.body, { failOn: 'none' });
+      const meta = await image.metadata();
+      const overlay = Buffer.from(watermarkSvg(meta.width ?? 320, meta.height ?? 320, item.gallery.event.name));
+      const done = await image.composite([{ input: overlay, top: 0, left: 0 }]).toBuffer();
+      await pub.put(target, done, key.endsWith('.webp') ? 'image/webp' : 'image/avif');
+      stamped.set(key, target);
+      log.info({ topic: MEDIA_WATERMARK_JOB, mediaItemId, key: target }, 'derivative stamped');
+    }
+    if (stamped.size === 0) return { status: 'skipped' };
+    await prisma.mediaItem.update({
+      where: { id: item.id },
+      data: {
+        ...(item.thumbKey && stamped.get(item.thumbKey) ? { thumbKey: stamped.get(item.thumbKey) } : {}),
+        ...(stamped.get(item.largeKey) ? { largeKey: stamped.get(item.largeKey) } : {}),
+        watermarked: true,
+      },
+    });
+    await auditSystem('MediaItem', item.id, 'media.watermarked', { gallery: item.galleryId });
+    await publishGallery(item.galleryId);
+    log.info({ topic: MEDIA_WATERMARK_JOB, mediaItemId }, 'watermarked');
+    return { status: 'watermarked' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    log.info({ job: MEDIA_WATERMARK_JOB, mediaItemId, err: message.slice(0, 120) }, 'watermark failed');
+    return { status: 'failed' };
+  }
 }
