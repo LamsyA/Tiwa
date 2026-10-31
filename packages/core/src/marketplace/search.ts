@@ -20,7 +20,10 @@ export const searchMarketplaceSchema = z.object({
   maxPriceMinor: z.string().regex(/^\d+$/).optional(),
   minRating: z.number().min(0).max(5).optional(),
   verifiedOnly: z.boolean().default(false),
-  freeOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  freeOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   sort: z.enum(['rating', 'priceAsc', 'priceDesc', 'recent']).default('rating'),
   take: z.number().int().min(1).max(50).default(20),
   cursor: z.string().uuid().optional(),
@@ -131,7 +134,8 @@ export async function searchMarketplace(
       ratingCount: row.ratingCount,
       verified: row.org.verification === 'APPROVED',
       availabilityFresh:
-        Boolean(row.availabilityConfirmedAt) && Date.now() - row.availabilityConfirmedAt!.getTime() < AVAILABILITY_FRESH_MS,
+        Boolean(row.availabilityConfirmedAt) &&
+        Date.now() - row.availabilityConfirmedAt!.getTime() < AVAILABILITY_FRESH_MS,
     })),
     nextCursor: rows.length > input.take ? page[page.length - 1]!.id : null,
   };

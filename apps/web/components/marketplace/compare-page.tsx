@@ -26,7 +26,8 @@ export async function ComparePageBody({
   const access = await loadEventAccess(ctx.actor.userId, eventId);
   if (!access) notFound();
   const picks = (await listShortlist(ctx.actor, { eventId })).slice(0, 4);
-  const labels = (keys: string[]) => keys.map((key) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key).join(', ');
+  const labels = (keys: string[]) =>
+    keys.map((key) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key).join(', ');
 
   return (
     <AppFrame userId={ctx.actor.userId} active="more" title={t('compareTitle')}>

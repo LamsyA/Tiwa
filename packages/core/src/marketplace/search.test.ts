@@ -19,9 +19,22 @@ async function makeUser(name: string): Promise<UserActor> {
 
 let admin: UserActor;
 
-async function makePublished(kind: 'VENDOR' | 'PLANNER', tag: string, city: string, rating: number | null, price?: string) {
+async function makePublished(
+  kind: 'VENDOR' | 'PLANNER',
+  tag: string,
+  city: string,
+  rating: number | null,
+  price?: string,
+) {
   const org = await prisma.organization.create({
-    data: { kind, name: `${tag} ${RUN}`, slug: `${tag.toLowerCase()}-${RUN}`, city, countryCode: 'NG', verification: 'APPROVED' },
+    data: {
+      kind,
+      name: `${tag} ${RUN}`,
+      slug: `${tag.toLowerCase()}-${RUN}`,
+      city,
+      countryCode: 'NG',
+      verification: 'APPROVED',
+    },
   });
   orgIds.push(org.id);
   await prisma.membership.create({ data: { orgId: org.id, userId: admin.userId, role: 'ADMIN' } });
@@ -88,7 +101,12 @@ describe('searchMarketplace', () => {
 
     const first = await searchMarketplace(admin, { kind: 'VENDOR', take: 1, sort: 'rating' });
     expect(first.nextCursor).not.toBeNull();
-    const second = await searchMarketplace(admin, { kind: 'VENDOR', take: 1, sort: 'rating', cursor: first.nextCursor! });
+    const second = await searchMarketplace(admin, {
+      kind: 'VENDOR',
+      take: 1,
+      sort: 'rating',
+      cursor: first.nextCursor!,
+    });
     expect(second.hits[0]?.orgId).not.toBe(first.hits[0]?.orgId);
   });
 

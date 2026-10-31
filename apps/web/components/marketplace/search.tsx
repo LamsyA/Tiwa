@@ -162,7 +162,10 @@ export function SearchFilters({ base, initial }: { base: '/vendors' | '/planners
         </div>
         <div className="flex gap-2">
           <Button onClick={apply}>{t('apply')}</Button>
-          <Button variant="secondary" onClick={() => router.push(values.eventId ? `${base}?eventId=${values.eventId}` : base)}>
+          <Button
+            variant="secondary"
+            onClick={() => router.push(values.eventId ? `${base}?eventId=${values.eventId}` : base)}
+          >
             {t('reset')}
           </Button>
         </div>

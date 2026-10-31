@@ -40,7 +40,9 @@ export async function SearchPageBody({
     shortlisted = new Set(picks.map((row) => row.orgId));
   }
 
-  const sort = SORTS.includes(first(sp.sort) as (typeof SORTS)[number]) ? (first(sp.sort) as (typeof SORTS)[number]) : 'rating';
+  const sort = SORTS.includes(first(sp.sort) as (typeof SORTS)[number])
+    ? (first(sp.sort) as (typeof SORTS)[number])
+    : 'rating';
   const filters: SearchFilterValues = {
     q: first(sp.q) ?? '',
     category: first(sp.category) ?? '',
@@ -69,7 +71,17 @@ export async function SearchPageBody({
   });
 
   const kept = new URLSearchParams();
-  for (const [key, value] of Object.entries({ q: filters.q, category: filters.category, city: filters.city, minPrice: filters.minPrice, maxPrice: filters.maxPrice, minRating: filters.minRating, freeOn: filters.freeOn, sort: filters.sort, eventId: filters.eventId })) {
+  for (const [key, value] of Object.entries({
+    q: filters.q,
+    category: filters.category,
+    city: filters.city,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minRating: filters.minRating,
+    freeOn: filters.freeOn,
+    sort: filters.sort,
+    eventId: filters.eventId,
+  })) {
     if (value) kept.set(key, value);
   }
   if (filters.verified) kept.set('verified', '1');
@@ -114,9 +126,7 @@ export async function SearchPageBody({
                       ))}
                     </ChipGroup>
                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                      {hit.startingPriceMinor && (
-                        <MoneyText value={hit.startingPriceMinor} currency={hit.currency} />
-                      )}
+                      {hit.startingPriceMinor && <MoneyText value={hit.startingPriceMinor} currency={hit.currency} />}
                       {hit.ratingAvg !== null && hit.ratingCount >= 5 ? (
                         <span>
                           ★ {hit.ratingAvg.toFixed(1)} · {t('reviewsCount', { count: hit.ratingCount })}
