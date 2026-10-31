@@ -148,12 +148,11 @@ export async function saveEventStep(actor: UserActor, input: z.infer<typeof save
         if (endsAt && endsAt <= startsAt) endsAt = addDays(endsAt, 1); // ends after midnight
         await tx.event.update({ where: { id: event.id }, data: { name, startsAt, endsAt, ...advance } });
         // Keep day 1 in step with the start date when the schedule step hasn't set days yet.
-        const days = await tx.eventDay.count({ where: { eventId: event.id } });
-        if (days === 0) await tx.eventDay.create({ data: { eventId: event.id, date: new Date(`${date}T00:00:00Z`) } });
+        // One findFirst instead of count + findFirst: absent row means create.
+        const first = await tx.eventDay.findFirst({ where: { eventId: event.id }, orderBy: { sortOrder: 'asc' } });
+        if (!first) await tx.eventDay.create({ data: { eventId: event.id, date: new Date(`${date}T00:00:00Z`) } });
         else {
-          const first = await tx.eventDay.findFirst({ where: { eventId: event.id }, orderBy: { sortOrder: 'asc' } });
-          if (first)
-            await tx.eventDay.update({ where: { id: first.id }, data: { date: new Date(`${date}T00:00:00Z`) } });
+          await tx.eventDay.update({ where: { id: first.id }, data: { date: new Date(`${date}T00:00:00Z`) } });
         }
         break;
       }
@@ -234,65 +233,70 @@ export async function finalizeEvent(actor: UserActor, input: z.infer<typeof even
     if (event.status !== 'DRAFT') throw new InvalidTransitionError('Event is not a draft', { status: event.status });
     if (!event.startsAt) throw new ValidationError('Pick a date first', { field: 'date', key: 'dateRequired' });
     const template = templateOrThrow(event.type);
+    // Pure CPU work up front so the tx holds the connection for writes only.
+    const splits = allocate(
+      event.plannedBudgetMinor,
+      template.budget.map((split) => split.percent),
+    );
 
-    let days = await tx.eventDay.findMany({ where: { eventId: event.id }, orderBy: { sortOrder: 'asc' } });
+    // Reads in parallel instead of serially: days + existing task keys.
+    const [foundDays, taskKeys] = await Promise.all([
+      tx.eventDay.findMany({ where: { eventId: event.id }, orderBy: { sortOrder: 'asc' } }),
+      tx.task.findMany({ where: { eventId: event.id }, select: { key: true } }),
+    ]);
+    let days = foundDays;
     if (days.length === 0) {
       const day = await tx.eventDay.create({ data: { eventId: event.id, date: startOfDate(event.startsAt) } });
       days = [day];
     }
 
-    const existingKeys = new Set(
-      (await tx.task.findMany({ where: { eventId: event.id }, select: { key: true } })).map((row) => row.key),
-    );
-    await tx.task.createMany({
-      data: template.checklist
-        .filter((item) => !existingKeys.has(item.key))
-        .map((item, index) => ({
+    const existingKeys = new Set(taskKeys.map((row) => row.key));
+    const firstDay = days[0];
+    // Independent tables: tasks + budget + programme insert in parallel.
+    await Promise.all([
+      tx.task.createMany({
+        data: template.checklist
+          .filter((item) => !existingKeys.has(item.key))
+          .map((item, index) => ({
+            eventId: event.id,
+            key: item.key,
+            title: item.title,
+            timeframe: item.timeframe,
+            dueAt: dueFor(event.startsAt, item.timeframe, now),
+            priority: item.priority ?? 'NORMAL',
+            sortOrder: index,
+          })),
+      }),
+      tx.budgetCategory.createMany({
+        data: template.budget.map((split, index) => ({
           eventId: event.id,
-          key: item.key,
-          title: item.title,
-          timeframe: item.timeframe,
-          dueAt: dueFor(event.startsAt, item.timeframe, now),
-          priority: item.priority ?? 'NORMAL',
+          key: split.key,
+          label: split.label,
+          plannedMinor: splits[index] ?? 0n,
           sortOrder: index,
         })),
-    });
-
-    const splits = allocate(
-      event.plannedBudgetMinor,
-      template.budget.map((split) => split.percent),
-    );
-    await tx.budgetCategory.createMany({
-      data: template.budget.map((split, index) => ({
-        eventId: event.id,
-        key: split.key,
-        label: split.label,
-        plannedMinor: splits[index] ?? 0n,
-        sortOrder: index,
-      })),
-      skipDuplicates: true,
-    });
-
-    const firstDay = days[0];
-    await tx.programmeItem.createMany({
-      data: template.programme.map((item, index) => {
-        const startsAt =
-          item.offsetMinutes !== undefined && event.startsAt
-            ? new Date(event.startsAt.getTime() + item.offsetMinutes * 60_000)
-            : null;
-        const endsAt =
-          startsAt && item.durationMinutes ? new Date(startsAt.getTime() + item.durationMinutes * 60_000) : null;
-        return {
-          eventId: event.id,
-          dayId: firstDay?.id ?? null,
-          key: item.key,
-          title: item.title,
-          startsAt,
-          endsAt,
-          sortOrder: index,
-        };
+        skipDuplicates: true,
       }),
-    });
+      tx.programmeItem.createMany({
+        data: template.programme.map((item, index) => {
+          const startsAt =
+            item.offsetMinutes !== undefined && event.startsAt
+              ? new Date(event.startsAt.getTime() + item.offsetMinutes * 60_000)
+              : null;
+          const endsAt =
+            startsAt && item.durationMinutes ? new Date(startsAt.getTime() + item.durationMinutes * 60_000) : null;
+          return {
+            eventId: event.id,
+            dayId: firstDay?.id ?? null,
+            key: item.key,
+            title: item.title,
+            startsAt,
+            endsAt,
+            sortOrder: index,
+          };
+        }),
+      }),
+    ]);
 
     await tx.event.update({ where: { id: event.id }, data: { status: 'ACTIVE', wizardStep: null } });
     await ensureGallery(tx, event.id);

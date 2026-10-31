@@ -8,6 +8,7 @@ import {
   getMomentsDashboard,
   listOpenMediaReports,
   listPendingMedia,
+  listPublishedMedia,
   moderateMediaItem,
   resolveMediaReport,
   rotateAccessCode,
@@ -267,6 +268,44 @@ describe('dashboard + queues', () => {
 
     const stranger = await makeHost();
     await expect(getMomentsDashboard(stranger, eventId)).rejects.toThrow();
+  });
+
+  it('lists published rows newest-first across albums', async () => {
+    const { host, eventId, gallery } = await eventWithGallery();
+    await prisma.mediaItem.createMany({
+      data: [
+        {
+          galleryId: gallery.id,
+          album: 'GUEST',
+          kind: 'PHOTO',
+          state: 'PUBLISHED',
+          originalKey: `g/${gallery.id}/n1.jpg`,
+          sizeBytes: 10,
+        },
+        {
+          galleryId: gallery.id,
+          album: 'OFFICIAL',
+          kind: 'PHOTO',
+          state: 'PUBLISHED',
+          originalKey: `g/${gallery.id}/n2.jpg`,
+          sizeBytes: 10,
+        },
+        {
+          galleryId: gallery.id,
+          album: 'GUEST',
+          kind: 'PHOTO',
+          state: 'PENDING_REVIEW',
+          originalKey: `g/${gallery.id}/n3.jpg`,
+          sizeBytes: 10,
+        },
+      ],
+    });
+    const page = await listPublishedMedia(host, eventId);
+    expect(page.items).toHaveLength(2);
+    expect(page.items.map((i) => i.album).sort()).toEqual(['GUEST', 'OFFICIAL']);
+    expect(page.items.every((i) => i.state === 'PUBLISHED')).toBe(true);
+    const stranger = await makeHost();
+    await expect(listPublishedMedia(stranger, eventId)).rejects.toThrow();
   });
 });
 

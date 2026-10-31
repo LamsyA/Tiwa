@@ -49,7 +49,11 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
                     )}
                   </div>
                   <Link
-                    href={`/vendors?category=${encodeURIComponent(row.category)}&eventId=${eventId}`}
+                    href={
+                      row.category === 'venue'
+                        ? `/venues?eventId=${eventId}`
+                        : `/vendors?category=${encodeURIComponent(row.category)}&eventId=${eventId}`
+                    }
                     className="text-sm font-medium underline"
                   >
                     {t('findButton')}

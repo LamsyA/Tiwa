@@ -17,6 +17,7 @@ import {
 } from '@tiwa/ui';
 import { CalendarDays, MapPin, Search, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import type { ActionResult } from '@/lib/action.js';
@@ -397,6 +398,11 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
                     </Button>
                   </div>
                 )}
+                <p className="text-sm">
+                  <Link href="/venues" target="_blank" rel="noreferrer" className="underline">
+                    {t('findVenueLink')}
+                  </Link>
+                </p>
               </fieldset>
             );
           })}

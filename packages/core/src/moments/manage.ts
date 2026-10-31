@@ -259,6 +259,69 @@ export async function listPendingMedia(
   };
 }
 
+export interface PublishedMediaItem extends PendingMediaItem {
+  state: 'PUBLISHED';
+}
+
+/**
+ * Live gallery management (UF-11-1): newest published first, both albums.
+ * Hosts hide/feature/delete/block from here; approvals live on the pending tab.
+ */
+export async function listPublishedMedia(
+  actor: UserActor,
+  eventId: string,
+  opts?: { cursor?: string; limit?: number },
+  preloaded?: EventAccess,
+): Promise<{ items: PublishedMediaItem[]; nextCursor: string | null }> {
+  await requireModerator(actor, eventId, preloaded);
+  const gallery = await galleryForEvent(eventId);
+  const limit = Math.min(Math.max(opts?.limit ?? 60, 1), 100);
+  const where: Prisma.MediaItemWhereInput = { galleryId: gallery.id, deletedAt: null, state: 'PUBLISHED' };
+  if (opts?.cursor) {
+    const [iso, id] = opts.cursor.split('|');
+    const at = new Date(iso ?? '');
+    if (!Number.isNaN(at.getTime()) && id)
+      where.OR = [{ createdAt: { lt: at } }, { createdAt: { equals: at }, id: { lt: id } }];
+  }
+  const rows = await prisma.mediaItem.findMany({
+    where,
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: limit + 1,
+  });
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const sessionIds = page.map((row) => row.uploaderSessionId).filter((id): id is string => id !== null);
+  const userIds = page.map((row) => row.uploaderUserId).filter((id): id is string => id !== null);
+  const [sessions, users] = await Promise.all([
+    prisma.guestSession.findMany({ where: { id: { in: sessionIds } }, select: { id: true, name: true } }),
+    prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } }),
+  ]);
+  const sessionById = new Map(sessions.map((session) => [session.id, session.name] as const));
+  const userById = new Map(users.map((user) => [user.id, user.name] as const));
+  const last = page[page.length - 1];
+  return {
+    items: page.map((row) => ({
+      id: row.id,
+      album: row.album,
+      kind: row.kind,
+      thumbKey: row.thumbKey,
+      largeKey: row.largeKey,
+      posterKey: row.posterKey,
+      createdAt: row.createdAt,
+      uploaderLabel:
+        row.uploaderSessionId != null
+          ? (sessionById.get(row.uploaderSessionId) ?? 'Guest')
+          : row.uploaderUserId != null
+            ? (userById.get(row.uploaderUserId) ?? 'Member')
+            : 'Guest',
+      uploaderSessionId: row.uploaderSessionId,
+      featured: row.featured,
+      state: 'PUBLISHED' as const,
+    })),
+    nextCursor: hasMore && last ? `${last.createdAt.toISOString()}|${last.id}` : null,
+  };
+}
+
 export interface OpenMediaReport {
   id: string;
   reason: string;
