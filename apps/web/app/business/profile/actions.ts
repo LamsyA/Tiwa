@@ -9,17 +9,25 @@ import {
   confirmAvailability,
   confirmAvailabilitySchema,
   portfolioItemSchema,
+  publishProfile,
+  publishProfileSchema,
   removePortfolioItem,
-  savePackage,
+  removeVerificationDocument,
+  savePackage as saveCorePackage,
   savePackageSchema,
   startPortfolioUpload,
   startPortfolioUploadSchema,
+  startVerificationUpload,
+  startVerificationUploadSchema,
+  submitVerification,
+  submitVerificationSchema,
   unblockAvailability,
   unblockAvailabilitySchema,
   upsertBusinessProfile,
   upsertBusinessProfileSchema,
 } from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { userAction } from '@/lib/ctx.js';
 import { privateStorage } from '@/lib/storage.js';
 
@@ -31,7 +39,7 @@ export const saveBusinessProfile = userAction(upsertBusinessProfileSchema, async
 });
 
 export const saveBusinessPackage = userAction(savePackageSchema, async (input, ctx) => {
-  await savePackage(ctx.actor, input);
+  await saveCorePackage(ctx.actor, input);
   revalidatePath('/business/profile');
 });
 
@@ -68,3 +76,24 @@ export const confirmBusinessAvailability = userAction(confirmAvailabilitySchema,
   await confirmAvailability(ctx.actor, input);
   revalidatePath('/business/profile');
 });
+
+export const setProfilePublished = userAction(publishProfileSchema, async (input, ctx) => {
+  await publishProfile(ctx.actor, input);
+  revalidatePath('/business/profile');
+});
+
+export const startVerificationDoc = userAction(startVerificationUploadSchema, async (input, ctx) => {
+  return startVerificationUpload(privateStorage(), ctx.actor, input);
+});
+
+export const submitBusinessVerification = userAction(submitVerificationSchema, async (input, ctx) => {
+  await submitVerification(privateStorage(), ctx.actor, input);
+  revalidatePath('/business/profile');
+});
+
+export const removeVerificationDoc = userAction(
+  z.object({ orgId: z.string().uuid(), storageKey: z.string().min(1) }),
+  async (input, ctx) => {
+    await removeVerificationDocument(privateStorage(), ctx.actor, input);
+  },
+);

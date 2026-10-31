@@ -44,3 +44,4 @@ export * from './marketplace/profile.js';
 export * from './marketplace/packages.js';
 export * from './marketplace/portfolio.js';
 export * from './marketplace/availability.js';
+export * from './marketplace/verification.js';

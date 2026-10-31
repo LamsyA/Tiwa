@@ -1,4 +1,4 @@
-import { getBusinessProfile, getChecklist, listMyOrgs } from '@tiwa/core';
+import { getBusinessProfile, getChecklist, getVerification, listMyOrgs } from '@tiwa/core';
 import { Banner, Card, EmptyState, StatusPill } from '@tiwa/ui';
 import { Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -10,6 +10,7 @@ import { AvailabilityManager } from './availability-manager.js';
 import { PackagesEditor } from './packages-editor.js';
 import { PortfolioManager } from './portfolio-manager.js';
 import { ProfileForm } from './profile-form.js';
+import { PublishManager } from './publish-manager.js';
 
 /** MKT-01, P6-T02: business profile editing with a publish-readiness checklist. */
 export default async function BusinessProfilePage({ searchParams }: { searchParams: Promise<{ org?: string }> }) {
@@ -38,9 +39,10 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
   }
 
   const canManage = current.role === 'OWNER' || current.role === 'ADMIN';
-  const [profile, checklist] = await Promise.all([
+  const [profile, checklist, verification] = await Promise.all([
     getBusinessProfile(ctx.actor, current.org.id),
     getChecklist(ctx.actor, current.org.id),
+    getVerification(ctx.actor, current.org.id),
   ]);
   const storage = privateStorage();
   const photos = await Promise.all(
@@ -144,11 +146,15 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               confirmedAt={profile.profile?.availabilityConfirmedAt?.toISOString() ?? null}
               stale={!checklist.availability}
             />
+            <PublishManager
+              orgId={current.org.id}
+              published={profile.profile?.published ?? false}
+              publishable={checklist.publishable}
+              verificationStatus={verification?.status ?? null}
+            />
             <Card>
               <div className="flex flex-col gap-1 p-4">
-                <h3 className="font-medium">{t('verificationHeading')}</h3>
-                <p className="text-muted text-sm">{t('verificationComing')}</p>
-                <h3 className="mt-2 font-medium">{t('bankHeading')}</h3>
+                <h3 className="font-medium">{t('bankHeading')}</h3>
                 <p className="text-muted text-sm">{t('bankComing')}</p>
               </div>
             </Card>

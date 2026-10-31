@@ -1139,6 +1139,18 @@
       "FORBIDDEN": "You don't have access to do that.",
       "CONFLICT": "That clashes with something already saved.",
       "NOT_FOUND": "That item no longer exists."
-    }
+    },
+    "publishHeading": "Publish",
+    "publishBody": "Your public profile goes live when the checklist above is complete.",
+    "publish": "Publish profile",
+    "unpublish": "Unpublish",
+    "publishedNote": "Live — unpublishing hides it immediately.",
+    "publishBlocked": "Complete the checklist first: profile details, 6 photos and one package.",
+    "verifyIdLabel": "ID document",
+    "verifyCacLabel": "CAC certificate",
+    "verifySubmit": "Submit for verification",
+    "verifySubmitted": "Submitted — we review business verifications in order.",
+    "verifyUploading": "Uploading…",
+    "removeDoc": "Remove"
   }
 }

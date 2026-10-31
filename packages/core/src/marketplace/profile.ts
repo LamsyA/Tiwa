@@ -95,6 +95,38 @@ export async function getBusinessProfile(actor: UserActor, orgId: string) {
   return { org, profile, packages, portfolio, blocks, verification };
 }
 
+export const publishProfileSchema = z.object({ orgId: z.string().uuid(), published: z.boolean() });
+
+/** Publish gate (UF-13-1): profile + ≥6 portfolio + ≥1 package. Unpublishing is always allowed. */
+export async function publishProfile(actor: UserActor, input: z.infer<typeof publishProfileSchema>) {
+  await loadAccess(actor, input.orgId, 'org.manage');
+  return prisma.$transaction(async (tx) => {
+    if (input.published) {
+      const [profile, portfolioCount, packageCount] = await Promise.all([
+        tx.businessProfile.findUnique({ where: { orgId: input.orgId } }),
+        tx.portfolioItem.count({ where: { orgId: input.orgId } }),
+        tx.servicePackage.count({ where: { orgId: input.orgId, active: true } }),
+      ]);
+      const ready =
+        Boolean(profile && profile.categories.length > 0 && profile.city) && portfolioCount >= 6 && packageCount >= 1;
+      if (!ready) throw new ConflictError('Profile is not complete', { reason: 'profile-incomplete' });
+    }
+    const profile = await tx.businessProfile.upsert({
+      where: { orgId: input.orgId },
+      create: { orgId: input.orgId, categories: [], city: '', currency: 'NGN', published: input.published },
+      update: { published: input.published },
+    });
+    await audit(tx, {
+      actor,
+      action: input.published ? 'org.profile.publish' : 'org.profile.unpublish',
+      targetType: 'Organization',
+      targetId: input.orgId,
+      data: {},
+    });
+    return profile;
+  });
+}
+
 export interface ProfileChecklist {
   profile: boolean;
   portfolio: boolean;
