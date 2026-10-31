@@ -56,6 +56,10 @@ function snapshot(uppy: Uppy<UploadMeta>): QueuedFile[] {
  */
 export function UploadQueueProvider({ children, ...options }: { children: React.ReactNode } & GalleryUploaderOptions) {
   const [uppy] = React.useState(() => createGalleryUploader(options));
+  // DEBUG-ONLY: expose for e2e diagnostics (removed before gate).
+  React.useEffect(() => {
+    (globalThis as Record<string, unknown>).__uppyDebug = uppy;
+  }, [uppy]);
   const [files, setFiles] = React.useState<QueuedFile[]>([]);
   const [restoredCount, setRestoredCount] = React.useState(0);
   const retryTimers = React.useRef(new Map<string, ReturnType<typeof setTimeout>>());

@@ -40,3 +40,7 @@ export * from './moments/uploads.js';
 export * from './guests/rsvp.js';
 export * from './guests/reminders.js';
 export * from './guests/batches.js';
+export * from './marketplace/profile.js';
+export * from './marketplace/packages.js';
+export * from './marketplace/portfolio.js';
+export * from './marketplace/availability.js';

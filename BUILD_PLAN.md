@@ -225,7 +225,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `PRD.md MKT-*, VEN-*, MSG-*`, `UF-13`, `UF-14 (search part)`, `UF-29`, `UF-30`, `UF-31`, `Backend.md §3 (marketplace, chat), §9a`, `Frontend.md §4 (chat components), §6.1, §6.3 (/inbox)`.
 
 - [x] P6-T01 Prisma: BusinessProfile, VenueSpace, PortfolioItem, ServicePackage, AvailabilityBlock, BusinessVerification, Shortlist; trigram index and availability unique-index migrations.
-- [ ] P6-T02 Business profile pages with completeness checklist; portfolio uploader (reuse upload stack); packages editor; availability calendar ("confirm availability" updates `availabilityConfirmedAt`).
+- [x] P6-T02 Business profile pages with completeness checklist; portfolio uploader (reuse upload stack); packages editor; availability calendar ("confirm availability" updates `availabilityConfirmedAt`).
 - [ ] P6-T03 Publish rules (profile + ≥ 6 portfolio items + ≥ 1 package); verification submission (documents) → PENDING.
 - [ ] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
 - [ ] P6-T05 Search `/vendors` with filters (category, city/radius via PostGIS, date availability, price, rating, verified), cursor pagination, sort; `/planners` search.
