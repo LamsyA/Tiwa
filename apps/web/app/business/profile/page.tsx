@@ -58,7 +58,11 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
     { key: 'stepPortfolio', done: checklist.portfolio },
     { key: 'stepPackages', done: checklist.packages },
     { key: 'stepAvailability', done: checklist.availability },
-    { key: 'stepVerification', done: checklist.verification === 'APPROVED', review: checklist.verification === 'PENDING' },
+    {
+      key: 'stepVerification',
+      done: checklist.verification === 'APPROVED',
+      review: checklist.verification === 'PENDING',
+    },
     { key: 'stepBank', done: false, soon: true },
   ];
 
@@ -72,9 +76,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
                 key={row.org.id}
                 href={`/business/profile?org=${row.org.id}`}
                 aria-current={row.org.id === current.org.id ? 'page' : undefined}
-                className={
-                  row.org.id === current.org.id ? 'font-medium underline' : 'text-muted underline'
-                }
+                className={row.org.id === current.org.id ? 'font-medium underline' : 'text-muted underline'}
               >
                 {row.org.name}
               </Link>

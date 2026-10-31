@@ -60,7 +60,11 @@ export function AvailabilityManager({
         <div className="flex items-center justify-between">
           <h3 className="font-medium">{t('availabilityHeading')}</h3>
           <StatusPill tone={stale ? 'warning' : 'success'}>
-            {confirmedAt ? (stale ? t('stale', { date: confirmedAt.slice(0, 10) }) : t('confirmed', { date: confirmedAt.slice(0, 10) })) : t('neverConfirmed')}
+            {confirmedAt
+              ? stale
+                ? t('stale', { date: confirmedAt.slice(0, 10) })
+                : t('confirmed', { date: confirmedAt.slice(0, 10) })
+              : t('neverConfirmed')}
           </StatusPill>
         </div>
         <p className="text-muted text-sm">{t('availabilityBody')}</p>

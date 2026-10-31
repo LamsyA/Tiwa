@@ -54,7 +54,10 @@ export function PublishManager({
       if (!started.ok) throw new Error(started.code);
       const put = await fetch(started.data.uploadUrl, { method: 'PUT', body: file });
       if (!put.ok) throw new Error('UPLOAD_FAILED');
-      setDocs((current) => [...current.filter((doc) => doc.type !== type), { type, storageKey: started.data.storageKey }]);
+      setDocs((current) => [
+        ...current.filter((doc) => doc.type !== type),
+        { type, storageKey: started.data.storageKey },
+      ]);
     } catch {
       setError(t('errors.generic'));
     } finally {

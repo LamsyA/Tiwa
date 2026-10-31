@@ -36,7 +36,11 @@ export function ProfileForm({ orgId, initial }: { orgId: string; initial: Profil
 
   function toggleCategory(key: string) {
     setCategories((current) =>
-      current.includes(key) ? current.filter((item) => item !== key) : current.length >= 5 ? current : [...current, key],
+      current.includes(key)
+        ? current.filter((item) => item !== key)
+        : current.length >= 5
+          ? current
+          : [...current, key],
     );
   }
 

@@ -21,10 +21,7 @@ export const upsertBusinessProfileSchema = z.object({
   serviceAreaKm: z.number().int().min(0).max(1000).default(50),
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
-  startingPriceMinor: z
-    .string()
-    .regex(/^\d+$/, 'priceInvalid')
-    .optional(),
+  startingPriceMinor: z.string().regex(/^\d+$/, 'priceInvalid').optional(),
   currency: z.string().regex(/^[A-Z]{3}$/, 'currencyInvalid'),
   travelFeeNote: z.string().trim().max(500, 'travelFeeTooLong').optional(),
   allowGuestEnquiries: z.boolean().default(true),

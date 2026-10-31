@@ -22,10 +22,7 @@ export const savePackageSchema = z.object({
   packageId: z.string().uuid().optional(),
   name: z.string().trim().min(1, 'nameRequired').max(120, 'nameTooLong'),
   description: z.string().trim().max(2000, 'descriptionTooLong').optional(),
-  priceMinor: z
-    .string()
-    .regex(/^\d+$/, 'priceInvalid')
-    .optional(),
+  priceMinor: z.string().regex(/^\d+$/, 'priceInvalid').optional(),
   currency: z.string().regex(/^[A-Z]{3}$/, 'currencyInvalid'),
   includes: z.array(z.string().trim().min(1).max(200)).max(30).default([]),
   addOns: z.array(z.string().trim().min(1).max(200)).max(30).default([]),

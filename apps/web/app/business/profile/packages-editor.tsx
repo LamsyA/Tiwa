@@ -48,9 +48,7 @@ export function PackagesEditor({ orgId, packages }: { orgId: string; packages: P
               <li key={row.id} className="border-border flex items-center gap-3 rounded-lg border p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{row.name}</p>
-                  <p className="text-muted truncate text-sm">
-                    {row.includes.slice(0, 3).join(' · ')}
-                  </p>
+                  <p className="text-muted truncate text-sm">{row.includes.slice(0, 3).join(' · ')}</p>
                 </div>
                 <Button variant="secondary" onClick={() => setEditing(row)}>
                   {t('editPackage')}
@@ -80,15 +78,7 @@ export function PackagesEditor({ orgId, packages }: { orgId: string; packages: P
   );
 }
 
-function PackageForm({
-  orgId,
-  initial,
-  onClose,
-}: {
-  orgId: string;
-  initial: PackageRow | null;
-  onClose: () => void;
-}) {
+function PackageForm({ orgId, initial, onClose }: { orgId: string; initial: PackageRow | null; onClose: () => void }) {
   const t = useTranslations('business');
   const router = useRouter();
   const uid = React.useId();

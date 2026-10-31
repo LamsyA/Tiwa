@@ -85,13 +85,38 @@ describe('upsertBusinessProfile', () => {
 
 describe('packages', () => {
   it('creates, updates and archives; cross-org ids are not found', async () => {
-    const created = await savePackage(owner, { orgId, name: 'Full service', currency: 'NGN', priceMinor: '5000000', includes: [], addOns: [], active: true });
+    const created = await savePackage(owner, {
+      orgId,
+      name: 'Full service',
+      currency: 'NGN',
+      priceMinor: '5000000',
+      includes: [],
+      addOns: [],
+      active: true,
+    });
     expect(created.priceMinor?.toString()).toBe('5000000');
     const other = await makeOrg('VENDOR', 'other-org');
-    await expect(savePackage(owner, { orgId: other, packageId: created.id, name: 'X', currency: 'NGN', includes: [], addOns: [], active: true })).rejects
-      .toBeInstanceOf(Error);
     await expect(
-      savePackage(staff, { orgId, packageId: created.id, name: 'X', currency: 'NGN', includes: [], addOns: [], active: true }),
+      savePackage(owner, {
+        orgId: other,
+        packageId: created.id,
+        name: 'X',
+        currency: 'NGN',
+        includes: [],
+        addOns: [],
+        active: true,
+      }),
+    ).rejects.toBeInstanceOf(Error);
+    await expect(
+      savePackage(staff, {
+        orgId,
+        packageId: created.id,
+        name: 'X',
+        currency: 'NGN',
+        includes: [],
+        addOns: [],
+        active: true,
+      }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     await archivePackage(owner, { orgId, packageId: created.id });
     const archived = await prisma.servicePackage.findUniqueOrThrow({ where: { id: created.id } });

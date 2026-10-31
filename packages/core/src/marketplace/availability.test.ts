@@ -3,12 +3,7 @@ import { FakeStorage } from '@tiwa/storage';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { ForbiddenError, ValidationError } from '../shared/errors.js';
-import {
-  blockAvailability,
-  confirmAvailability,
-  listAvailability,
-  unblockAvailability,
-} from './availability.js';
+import { blockAvailability, confirmAvailability, listAvailability, unblockAvailability } from './availability.js';
 import { completePortfolioUpload, removePortfolioItem, startPortfolioUpload } from './portfolio.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;

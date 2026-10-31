@@ -73,9 +73,19 @@ describe('publishProfile', () => {
 describe('verification', () => {
   it('uploads documents and submits once; a second pending submission conflicts', async () => {
     const storage = new FakeStorage();
-    const first = await startVerificationUpload(storage, admin, { orgId, docType: 'cac', mime: 'application/pdf', sizeBytes: 5 });
+    const first = await startVerificationUpload(storage, admin, {
+      orgId,
+      docType: 'cac',
+      mime: 'application/pdf',
+      sizeBytes: 5,
+    });
     await storage.put(`business/${orgId}/verification/${first.uploadId}`, PDF, 'application/pdf');
-    const second = await startVerificationUpload(storage, admin, { orgId, docType: 'id', mime: 'application/pdf', sizeBytes: 5 });
+    const second = await startVerificationUpload(storage, admin, {
+      orgId,
+      docType: 'id',
+      mime: 'application/pdf',
+      sizeBytes: 5,
+    });
     await storage.put(`business/${orgId}/verification/${second.uploadId}`, PDF, 'application/pdf');
     const submitted = await submitVerification(storage, admin, {
       orgId,
@@ -120,7 +130,10 @@ describe('verification', () => {
     });
     // Never PUT: the file is missing.
     await expect(
-      submitVerification(storage, freshAdmin, { orgId: fresh.id, documents: [{ type: 'cac', storageKey: upload.storageKey }] }),
+      submitVerification(storage, freshAdmin, {
+        orgId: fresh.id,
+        documents: [{ type: 'cac', storageKey: upload.storageKey }],
+      }),
     ).rejects.toBeInstanceOf(ValidationError);
     await prisma.businessVerification.deleteMany({ where: { orgId: fresh.id } });
     await prisma.membership.deleteMany({ where: { orgId: fresh.id } });
