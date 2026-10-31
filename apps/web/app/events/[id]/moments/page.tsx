@@ -1,5 +1,11 @@
 import { env } from '@tiwa/config';
-import { getMomentsDashboard, listOpenMediaReports, listPendingMedia, authorize } from '@tiwa/core';
+import {
+  getMomentsDashboard,
+  listGuestbookMessagesForHost,
+  listOpenMediaReports,
+  listPendingMedia,
+  authorize,
+} from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Card, StatCard, buttonClasses } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -11,6 +17,8 @@ import { MomentsQrCard } from './moments-qr.js';
 import { MomentsSettingsForm } from './moments-settings.js';
 import { ModerationQueue } from './moderation-queue.js';
 import { OfficialAlbumPanel } from './official-album.js';
+import { HostGuestbook } from './host-guestbook.js';
+import { ZipPanel } from './zip-panel.js';
 
 /** P5-T08 / Frontend.md §6.3: host Moments page — settings, QR, queue, stats. */
 export default async function HostMomentsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -58,10 +66,11 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
     );
   }
 
-  const [dashboard, pendingPage, reported] = await Promise.all([
+  const [dashboard, pendingPage, reported, wall] = await Promise.all([
     getMomentsDashboard(ctx.actor, id, access),
     listPendingMedia(ctx.actor, id, { limit: 60 }, access),
     listOpenMediaReports(ctx.actor, id, access),
+    listGuestbookMessagesForHost(ctx.actor, id, access),
   ]);
   const base = env.APP_URL.replace(/\/$/, '');
   const galleryUrl = `${base}/m/${dashboard.gallery.code}`;
@@ -124,6 +133,31 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
         />
         <MomentsQrCard eventName={event.name} galleryUrl={galleryUrl} />
         {canUploadOfficial && <OfficialAlbumPanel eventId={id} galleryId={dashboard.gallery.id} />}
+        <ZipPanel
+          eventId={id}
+          lastZip={
+            dashboard.lastZip
+              ? {
+                  id: dashboard.lastZip.id,
+                  status: dashboard.lastZip.status,
+                  itemCount: dashboard.lastZip.itemCount,
+                  sizeBytes: dashboard.lastZip.sizeBytes,
+                  createdAt: dashboard.lastZip.createdAt.toISOString(),
+                }
+              : null
+          }
+        />
+        <HostGuestbook
+          eventId={id}
+          eventName={event.name}
+          initialMessages={wall.messages.map((m) => ({
+            id: m.id,
+            name: m.name,
+            body: m.body,
+            createdAt: m.createdAt.toISOString(),
+            hidden: m.hidden,
+          }))}
+        />
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">

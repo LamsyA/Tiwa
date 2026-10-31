@@ -899,7 +899,20 @@
       "publishHint": "Uploaded — approve them in the review queue to publish.",
       "watermarkNote": "Published official photos get a © watermark automatically.",
       "albumOfficial": "Official",
-      "albumGuest": "Guest"
+      "albumGuest": "Guest",
+      "zipTitle": "Takeout",
+      "zipBody": "Pack every published photo into one ZIP and email the link.",
+      "requestZip": "Prepare download",
+      "zipPending": "Preparing your ZIP — the link arrives by email.",
+      "zipReady": "Ready",
+      "downloadZip": "Download ZIP",
+      "guestbookSectionTitle": "Guestbook",
+      "guestbookSectionBody": "Messages from the wall. Hiding removes them from the gallery instantly.",
+      "exportPdf": "Export PDF",
+      "hideMessage": "Hide",
+      "unhideMessage": "Show",
+      "guestbookEmptyHost": "No messages yet.",
+      "guestbookAnon": "Anonymous"
     }
   },
   "shared": {
@@ -1038,6 +1051,16 @@
     "fullscreen": "Full screen",
     "exitFullscreen": "Exit full screen",
     "backToGalleryLink": "Gallery",
-    "slideCounter": "{index} of {total}"
+    "slideCounter": "{index} of {total}",
+    "guestbookTab": "Guestbook",
+    "guestbookTitle": "Guestbook",
+    "guestbookEmpty": "No messages yet — leave the first one.",
+    "guestName": "Your name (optional)",
+    "guestNamePlaceholder": "e.g. Ada",
+    "guestMessage": "Message",
+    "guestMessagePlaceholder": "Wishing you...",
+    "signButton": "Sign guestbook",
+    "signingIn": "Signing…",
+    "downloadPhoto": "Download photo"
   }
 }

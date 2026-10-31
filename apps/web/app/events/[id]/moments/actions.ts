@@ -6,9 +6,12 @@ import {
   listPendingMedia,
   moderateMediaItem,
   moderateMediaSchema,
+  requestGalleryZip,
   resolveMediaReport,
   resolveReportSchema,
   rotateAccessCode,
+  setGuestbookHidden,
+  setGuestbookHiddenSchema,
   updateGallerySettings,
   updateGallerySettingsSchema,
 } from '@tiwa/core';
@@ -60,6 +63,18 @@ export const bulkModerateMoments = userAction(bulkSchema, async (input, ctx) => 
 export const blockMomentUploader = userAction(blockUploaderSchema, async (input, ctx) => {
   const result = await blockUploader(ctx.actor, input);
   revalidate(input.eventId, result.galleryId);
+  return result;
+});
+
+export const requestMomentsZip = userAction(z.object({ eventId: z.string().uuid() }), async (input, ctx) => {
+  const result = await requestGalleryZip(ctx.actor, input);
+  revalidate(input.eventId);
+  return result;
+});
+
+export const setMomentGuestbookHidden = userAction(setGuestbookHiddenSchema, async (input, ctx) => {
+  const result = await setGuestbookHidden(ctx.actor, input);
+  revalidate(input.eventId);
   return result;
 });
 

@@ -101,6 +101,14 @@ export interface MomentsDashboard {
     accessCode: string | null;
   };
   counts: { total: number; published: number; pending: number; hidden: number; reported: number; uploaders: number };
+  lastZip: {
+    id: string;
+    status: 'PENDING' | 'READY' | 'FAILED';
+    itemCount: number;
+    sizeBytes: number | null;
+    createdAt: Date;
+    readyAt: Date | null;
+  } | null;
 }
 
 export async function getMomentsDashboard(
@@ -130,6 +138,11 @@ export async function getMomentsDashboard(
     where: { status: 'OPEN', targetType: 'media' },
     select: { targetId: true },
   });
+  const lastZipRow = await prisma.mediaZip.findFirst({
+    where: { galleryId: gallery.id },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, status: true, itemCount: true, sizeBytes: true, createdAt: true, readyAt: true },
+  });
   const itemIds = new Set(
     (await prisma.mediaItem.findMany({ where: { galleryId: gallery.id }, select: { id: true } })).map((row) => row.id),
   );
@@ -152,6 +165,16 @@ export async function getMomentsDashboard(
       reported: openReports.filter((report) => itemIds.has(report.targetId)).length,
       uploaders: sessions.length + users.length,
     },
+    lastZip: lastZipRow
+      ? {
+          id: lastZipRow.id,
+          status: lastZipRow.status,
+          itemCount: lastZipRow.itemCount,
+          sizeBytes: lastZipRow.sizeBytes,
+          createdAt: lastZipRow.createdAt,
+          readyAt: lastZipRow.readyAt,
+        }
+      : null,
   };
 }
 

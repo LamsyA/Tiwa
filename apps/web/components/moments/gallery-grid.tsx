@@ -121,12 +121,14 @@ export function GalleryGrid({
   code,
   album,
   access,
+  canDownload,
   initialItems,
   initialCursor,
 }: {
   code: string;
   album: 'OFFICIAL' | 'GUEST';
   access: string;
+  canDownload: boolean;
   initialItems: GalleryGridItem[];
   initialCursor: string | null;
 }) {
@@ -395,6 +397,14 @@ export function GalleryGrid({
               />
             )}
             <div className="mt-2 flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
+              {canDownload && (
+                <a
+                  href={`/api/gallery/media/${active.id}/download${access ? `?access=${encodeURIComponent(access)}` : ''}`}
+                  className="rounded-full bg-white/10 px-3 py-1.5 text-sm text-white"
+                >
+                  {t('downloadPhoto')}
+                </a>
+              )}{' '}
               {active.mine && (
                 <button
                   type="button"

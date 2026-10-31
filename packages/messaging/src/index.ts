@@ -15,5 +15,6 @@ export type {
 export { CloudWhatsApp, FakeWhatsApp, parseWhatsAppWebhook, verifyWhatsAppSignature } from './whatsapp.js';
 export { EmailLayout, type EmailLayoutProps } from './templates/layout.js';
 export { InviteEmail, type InviteEmailProps } from './templates/invite.js';
+export { ZipEmail, type ZipEmailProps } from './templates/zip.js';
 export { ReminderEmail, type ReminderEmailProps } from './templates/reminder.js';
 export { UpdateEmail, type UpdateEmailProps } from './templates/update.js';

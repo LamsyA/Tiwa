@@ -33,6 +33,7 @@ export * from './guests/headcount.js';
 export * from './guests/invites.js';
 export * from './moments/galleries.js';
 export * from './moments/gallery-view.js';
+export * from './moments/exports.js';
 export * from './moments/manage.js';
 export * from './moments/uploads.js';
 export * from './guests/rsvp.js';

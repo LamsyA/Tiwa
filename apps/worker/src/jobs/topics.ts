@@ -8,6 +8,7 @@ import {
   handleProcessVideo,
   handleWatermark,
 } from './media.js';
+import { MEDIA_ZIP_JOB, handleZip } from './zip.js';
 import { INVITE_BATCH_QUEUED_TOPIC, handleInviteBatchQueued, type FanOutSink } from './send-invite.js';
 
 type Log = ReturnType<typeof createLogger>;
@@ -23,6 +24,7 @@ export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanO
   [MEDIA_PROCESS_IMAGE_TOPIC]: async (data, log, sink) => handleProcessImage(data, log, sink),
   [MEDIA_PROCESS_VIDEO_TOPIC]: async (data, log, sink) => handleProcessVideo(data, log, sink),
   [MEDIA_WATERMARK_JOB]: async (data, log) => handleWatermark(data, log),
+  [MEDIA_ZIP_JOB]: async (data, log) => handleZip(data, log),
   // Stub until chat sync (P13) consumes it; without this every finalized event burns 5 failing retries.
   'event.finalized': async (data, log) => {
     log.info({ topic: 'event.finalized', eventId: (data as { eventId?: string }).eventId }, 'event finalized (stub)');

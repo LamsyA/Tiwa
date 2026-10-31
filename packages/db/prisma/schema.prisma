@@ -408,6 +408,27 @@ model GuestbookMessage {
   @@index([galleryId, createdAt])
 }
 
+enum MediaZipStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+model MediaZip {
+  id                String         @id @default(uuid(7))
+  galleryId         String
+  requestedByUserId String?
+  status            MediaZipStatus @default(PENDING)
+  key               String?
+  sizeBytes         Int?
+  itemCount         Int            @default(0)
+  failReason        String?
+  createdAt         DateTime       @default(now())
+  readyAt           DateTime?
+
+  @@index([galleryId, createdAt])
+}
+
 model Report {
   id                String   @id @default(uuid(7))
   targetType        String // media | review | profile | message

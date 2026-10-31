@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { GalleryGrid } from '@/components/moments/gallery-grid.js';
 import { GalleryLivePill } from '@/components/moments/gallery-live.js';
+import { GuestbookPanel } from '@/components/moments/guestbook.js';
 import { galleryViewer } from '@/lib/gallery-viewer.js';
 import { withSignedUrls } from '@/lib/gallery-urls.js';
 import { privateStorage } from '@/lib/storage.js';
@@ -28,13 +29,14 @@ export default async function GalleryPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ album?: string; access?: string; guest?: string }>;
+  searchParams: Promise<{ album?: string; access?: string; guest?: string; tab?: string }>;
 }) {
   const { code } = await params;
   const query = await searchParams;
   const album = query.album === 'OFFICIAL' ? ('OFFICIAL' as const) : ('GUEST' as const);
   const access = (query.access ?? '').trim();
   const guestToken = (query.guest ?? '').trim() || undefined;
+  const showGuestbook = query.tab === 'guestbook';
   const t = await getTranslations('gallery');
 
   const { viewer, sessionIds } = await galleryViewer();
@@ -72,10 +74,14 @@ export default async function GalleryPage({
     throw error;
   }
 
-  const window = await listGalleryMedia(page.gallery.id, viewer as GalleryViewer, { album, limit: 60 });
+  const window = showGuestbook
+    ? { items: [], nextCursor: null as string | null }
+    : await listGalleryMedia(page.gallery.id, viewer as GalleryViewer, { album, limit: 60 });
   const items = await withSignedUrls(
     window.items.map((item) => ({ ...item, createdAt: item.createdAt.toISOString() })),
   );
+  const { listGuestbookMessages } = await import('@tiwa/core');
+  const wall = showGuestbook ? await listGuestbookMessages(page.gallery.id) : { messages: [] };
 
   const coverUrl = page.event.coverKey
     ? await privateStorage()
@@ -108,7 +114,7 @@ export default async function GalleryPage({
       {day && <p className="text-muted text-sm">{day}</p>}
       <nav aria-label={t('albums')} className="mt-3 flex gap-2">
         {(['OFFICIAL', 'GUEST'] as const).map((tab) => {
-          const active = tab === album;
+          const active = tab === album && !showGuestbook;
           const count = tab === 'OFFICIAL' ? page.counts.official : page.counts.guest;
           return (
             <Link
@@ -125,16 +131,36 @@ export default async function GalleryPage({
             </Link>
           );
         })}
+        <Link
+          href={`/m/${page.gallery.code}?tab=guestbook${access ? `&access=${encodeURIComponent(access)}` : ''}`}
+          aria-current={showGuestbook ? 'page' : undefined}
+          className={
+            showGuestbook
+              ? 'rounded-full bg-surface-2 px-4 py-2 text-sm font-semibold'
+              : 'rounded-full px-4 py-2 text-sm text-muted'
+          }
+        >
+          {t('guestbookTab')}
+        </Link>
       </nav>
       <div className="mt-3">
-        <GalleryGrid
-          key={`${page.gallery.id}-${album}`}
-          code={page.gallery.code}
-          album={album}
-          access={access}
-          initialItems={items}
-          initialCursor={window.nextCursor}
-        />
+        {showGuestbook ? (
+          <GuestbookPanel
+            code={page.gallery.code}
+            access={access}
+            initialMessages={wall.messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))}
+          />
+        ) : (
+          <GalleryGrid
+            key={`${page.gallery.id}-${album}`}
+            code={page.gallery.code}
+            album={album}
+            access={access}
+            canDownload={page.gallery.guestDownloads || page.isMember}
+            initialItems={items}
+            initialCursor={window.nextCursor}
+          />
+        )}
       </div>
     </GuestShell>
   );
