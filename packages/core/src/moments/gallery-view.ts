@@ -349,3 +349,46 @@ export async function requestMediaRemoval(
   });
   return { reportId: report.id };
 }
+
+export interface SlideshowItem {
+  id: string;
+  kind: 'PHOTO' | 'VIDEO';
+  width: number | null;
+  height: number | null;
+  durationSec: number | null;
+  thumbKey: string | null;
+  largeKey: string | null;
+  posterKey: string | null;
+  featured: boolean;
+  createdAt: Date;
+}
+
+/**
+ * Slideshow feed (P5-T09, UF-12): featured photos first, then newest.
+ * Published rows only; the page re-polls so host moderation lands within
+ * seconds (UF-11-1). Caller runs the privacy gate (`getGalleryPage`) first.
+ */
+export async function listSlideshowFeed(
+  galleryId: string,
+  opts?: { limit?: number },
+): Promise<{ items: SlideshowItem[] }> {
+  const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 200);
+  const rows = await prisma.mediaItem.findMany({
+    where: { galleryId, state: 'PUBLISHED', deletedAt: null },
+    orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+    take: limit,
+    select: {
+      id: true,
+      kind: true,
+      width: true,
+      height: true,
+      durationSec: true,
+      thumbKey: true,
+      largeKey: true,
+      posterKey: true,
+      featured: true,
+      createdAt: true,
+    },
+  });
+  return { items: rows };
+}

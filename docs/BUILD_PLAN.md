@@ -203,7 +203,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P5-T06 Gallery page `/m/[code]`: Official/Guest tabs, virtualised grid, lightbox, "My uploads", live new-items pill, privacy modes (guests-only via invite/ticket cookie or access code).
 - [x] P5-T07 Guest upload sheet with first-name + consent line; delete own uploads; request removal.
 - [x] P5-T08 Host Moments page: settings, QR downloads (table card, poster, badge), moderation queue (swipe/keys/bulk), feature/hide/delete/block uploader.
-- [ ] P5-T09 Slideshow page (delay, crossfade, wake lock, corner QR).
+- [x] P5-T09 Slideshow page (delay, crossfade, wake lock, corner QR).
 - [ ] P5-T10 Official album: photographer upload (desktop drag-and-drop, folders), publish, watermark job (`media/watermark`).
 - [ ] P5-T11 Download all (ZIP job + email link); guestbook (post, hide, PDF export).
 - [ ] P5-T12 Plans: free limits (500 items, 3 months, 30 s video) vs Plus (entitlement stub until P8 payments); expiry warning and purge jobs; "Planned with Tiwa" footer.

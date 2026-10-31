@@ -887,7 +887,8 @@
       "processing": "Processing…",
       "loading": "Loading…",
       "showMore": "Show more",
-      "photoAlt": "Event photo"
+      "photoAlt": "Event photo",
+      "openSlideshow": "Open slideshow"
     }
   },
   "shared": {
@@ -1015,6 +1016,17 @@
     "starting": "Starting…",
     "startError": "Could not start — check your connection and try again.",
     "reportReasonLabel": "Why should this be removed? (optional)",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "slideshow": "Slideshow",
+    "slideshowEmpty": "No photos yet — check back during the event.",
+    "scanToAdd": "Scan to add your photos",
+    "pause": "Pause",
+    "play": "Play",
+    "prevSlide": "Previous",
+    "nextSlide": "Next",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen",
+    "backToGalleryLink": "Gallery",
+    "slideCounter": "{index} of {total}"
   }
 }

@@ -1,8 +1,9 @@
 import { env } from '@tiwa/config';
 import { getMomentsDashboard, listOpenMediaReports, listPendingMedia, authorize } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Card, StatCard } from '@tiwa/ui';
+import { Card, StatCard, buttonClasses } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
 import { withSignedUrls } from '@/lib/gallery-urls.js';
 import { privateStorage } from '@/lib/storage.js';
@@ -110,9 +111,19 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
         />
         <MomentsQrCard eventName={event.name} galleryUrl={galleryUrl} />
         <Card className="flex flex-col gap-3 p-4">
-          <div>
-            <h3 className="font-medium">{t('queueTitle')}</h3>
-            <p className="text-muted text-sm">{t('queueBody')}</p>
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-medium">{t('queueTitle')}</h3>
+              <p className="text-muted text-sm">{t('queueBody')}</p>
+            </div>
+            <Link
+              href={`/m/${dashboard.gallery.code}/slideshow`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClasses({ variant: 'secondary', size: 'sm' })}
+            >
+              {t('openSlideshow')}
+            </Link>
           </div>
           <ModerationQueue
             eventId={id}

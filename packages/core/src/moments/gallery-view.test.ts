@@ -7,6 +7,7 @@ import {
   deleteOwnMedia,
   getGalleryPage,
   listGalleryMedia,
+  listSlideshowFeed,
   requestMediaRemoval,
 } from './gallery-view.js';
 import { createEventDraft } from '../events/commands.js';
@@ -137,6 +138,48 @@ describe('listGalleryMedia', () => {
     const official = await listGalleryMedia(gallery.id, { kind: 'anonymous' }, { album: 'OFFICIAL' });
     expect(official.items).toHaveLength(1);
     expect(official.nextCursor).toBeNull();
+  });
+});
+
+describe('listSlideshowFeed', () => {
+  it('returns published rows featured-first then newest, capped by limit', async () => {
+    const { gallery } = await eventWithGallery('PUBLIC');
+    const first = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'GUEST',
+        kind: 'PHOTO',
+        state: 'PUBLISHED',
+        originalKey: `g/${gallery.id}/s1.jpg`,
+        largeKey: `g/${gallery.id}/l1.jpg`,
+        sizeBytes: 10,
+      },
+    });
+    await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'GUEST',
+        kind: 'PHOTO',
+        state: 'HIDDEN',
+        originalKey: `g/${gallery.id}/s2.jpg`,
+        sizeBytes: 10,
+      },
+    });
+    const featured = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'OFFICIAL',
+        kind: 'PHOTO',
+        state: 'PUBLISHED',
+        originalKey: `g/${gallery.id}/s3.jpg`,
+        largeKey: `g/${gallery.id}/l3.jpg`,
+        sizeBytes: 10,
+        featured: true,
+      },
+    });
+    const feed = await listSlideshowFeed(gallery.id);
+    expect(feed.items.map((item) => item.id)).toEqual([featured.id, first.id]);
+    expect(await listSlideshowFeed(gallery.id, { limit: 1 })).toMatchObject({ items: [{ id: featured.id }] });
   });
 });
 
