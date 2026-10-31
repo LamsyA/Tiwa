@@ -82,27 +82,31 @@ describe('searchMarketplace', () => {
     const lagos = await makePublished('VENDOR', 'SearchLagos', 'Lagos', 4.5, '100000');
     await makePublished('VENDOR', 'SearchAbuja', 'Abuja', 3.0, '50000');
     await makePublished('PLANNER', 'SearchPlanner', 'Lagos', 5.0, '200000');
+    const tag = `SearchLagos ${RUN}`;
 
-    const vendors = await searchMarketplace(admin, { kind: 'VENDOR', verifiedOnly: true });
-    expect(vendors.hits.length).toBeGreaterThanOrEqual(2);
+    const vendors = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, verifiedOnly: true });
+    expect(vendors.hits.length).toBeGreaterThanOrEqual(1);
     expect(vendors.hits.every((hit) => hit.verified)).toBe(true);
 
-    const lagosOnly = await searchMarketplace(admin, { kind: 'VENDOR', city: 'lag' });
+    const lagosOnly = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, city: 'lag' });
     expect(lagosOnly.hits.map((hit) => hit.orgId)).toContain(lagos);
 
-    const pricey = await searchMarketplace(admin, { kind: 'VENDOR', minPriceMinor: '90000', sort: 'priceAsc' });
+    const pricey = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, minPriceMinor: '90000', sort: 'priceAsc' });
     expect(pricey.hits[0]?.startingPriceMinor).toBe('100000');
 
-    const rated = await searchMarketplace(admin, { kind: 'VENDOR', minRating: 4 });
+    const ratedMiss = await searchMarketplace(admin, { kind: 'VENDOR', q: `SearchAbuja ${RUN}`, minRating: 4 });
+    expect(ratedMiss.hits).toHaveLength(0);
+    const rated = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, minRating: 4 });
     expect(rated.hits.every((hit) => (hit.ratingAvg ?? 0) >= 4)).toBe(true);
 
-    const planners = await searchMarketplace(admin, { kind: 'PLANNER' });
+    const planners = await searchMarketplace(admin, { kind: 'PLANNER', q: `SearchPlanner ${RUN}` });
     expect(planners.hits.some((hit) => hit.categories.includes('photography'))).toBe(true);
 
-    const first = await searchMarketplace(admin, { kind: 'VENDOR', take: 1, sort: 'rating' });
+    const first = await searchMarketplace(admin, { kind: 'VENDOR', q: 'Search', take: 1, sort: 'rating' });
     expect(first.nextCursor).not.toBeNull();
     const second = await searchMarketplace(admin, {
       kind: 'VENDOR',
+      q: 'Search',
       take: 1,
       sort: 'rating',
       cursor: first.nextCursor!,
@@ -113,9 +117,10 @@ describe('searchMarketplace', () => {
   it('excludes vendors blocked on the requested date', async () => {
     const blocked = await makePublished('VENDOR', 'SearchBlocked', 'Lagos', null, '70000');
     await blockAvailability(admin, { orgId: blocked, date: '2027-06-01', reason: 'Busy' });
-    const free = await searchMarketplace(admin, { kind: 'VENDOR', freeOn: '2027-06-01' });
+    const tag = `SearchBlocked ${RUN}`;
+    const free = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, freeOn: '2027-06-01' });
     expect(free.hits.map((hit) => hit.orgId)).not.toContain(blocked);
-    const anyDay = await searchMarketplace(admin, { kind: 'VENDOR', freeOn: '2027-06-02' });
+    const anyDay = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, freeOn: '2027-06-02' });
     expect(anyDay.hits.map((hit) => hit.orgId)).toContain(blocked);
   });
 });

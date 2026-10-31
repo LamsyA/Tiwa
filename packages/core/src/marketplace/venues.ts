@@ -115,8 +115,8 @@ export async function searchVenues(
   });
 
   // Date/slot blocks (whole-business FULL_DAY or per-space) remove spaces.
-  let blockedBySpace = new Map<string, Set<string>>();
-  let blockedOrgIds = new Set<string>();
+  const blockedBySpace = new Map<string, Set<string>>();
+  const blockedOrgIds = new Set<string>();
   if (input.date) {
     const blocks = await prisma.availabilityBlock.findMany({
       where: { orgId: { in: profiles.map((p) => p.orgId) }, date: new Date(input.date) },

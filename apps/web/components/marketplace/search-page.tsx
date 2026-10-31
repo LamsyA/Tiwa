@@ -69,6 +69,11 @@ export async function SearchPageBody({
     take: 20,
     ...(first(sp.cursor) ? { cursor: first(sp.cursor)! } : {}),
   });
+  const fs = await import('node:fs');
+  fs.appendFileSync(
+    '/tmp/search-debug.log',
+    `${new Date().toISOString()} q=${filters.q} sort=${sort} hits=${result.hits.length}\n`,
+  );
 
   const kept = new URLSearchParams();
   for (const [key, value] of Object.entries({

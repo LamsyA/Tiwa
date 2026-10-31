@@ -233,7 +233,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P6-T07 Event vendors page `/events/[id]/vendors` (categories from template with status).
 - [x] P6-T08 Venue spaces: `/business/spaces` editor (capacities, amenities, rules, slot prices, setup/teardown, security deposit, instant-book switch, hold length); per-space availability calendar with slot blocks; venue section on the public profile.
 - [x] P6-T09 Venue search `/venues` (date + slot availability, capacity by layout ≥ guests, area, price, indoor/outdoor, amenities); "Find a venue" link from the event wizard and the event vendors page.
-- [ ] P6-T10 Seed 40 vendors + 8 venues with spaces (and `db:seed:load` 5,000); e2e UF-13, UF-14 search part, UF-29-1.
+- [x] P6-T10 Seed 40 vendors + 8 venues with spaces (and `db:seed:load` 5,000); e2e UF-13, UF-14 search part, UF-29-1.
 - [ ] P6-T11 Chat data: Thread, ThreadParticipant, Message, UserBlock (`Backend.md §3`); `canMessage()` with a table-driven test of every row in `Backend.md §9a.1`.
 - [ ] P6-T12 Chat core: `startThread` (reuses existing threads), `sendMessage` (idempotent `clientMessageId`), edit/delete, mark delivered/read, mute/archive; business team inboxes (reply on behalf of the business); event-team threads created automatically for every event (host, co-hosts, planner, staff) with @mentions and mark-as-decision.
 - [ ] P6-T13 Real time: `/api/sse/inbox` (one stream per user), Redis channels per user/org, typing endpoint, receipts; client store with optimistic sending and offline retry queue (IndexedDB).

@@ -485,7 +485,7 @@ function SpacePhotos({
         <ul className="grid grid-cols-4 gap-2">
           {photos.map((photo) => (
             <li key={photo.key} className="group relative aspect-square overflow-hidden rounded-lg">
-              <img src={photo.url} alt="" className="size-full object-cover" loading="lazy" />
+              <img src={photo.url} alt={t('spacePhotoAlt')} className="size-full object-cover" loading="lazy" />
               {canManage && (
                 <ConfirmDialog
                   trigger={

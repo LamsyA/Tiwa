@@ -15,7 +15,7 @@ export default async function VenuesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : undefined);
+  const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
   const sp = await searchParams;
   const ctx = await requirePageUser('/venues');
   const t = await getTranslations('marketplace');

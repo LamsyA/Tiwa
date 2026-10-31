@@ -65,18 +65,21 @@ afterAll(async () => {
 
 describe('searchVenues', () => {
   it('filters by capacity, price and date/slot blocks', async () => {
-    const big = await searchVenues(admin, { guests: 200 });
+    const venueTag = `BigHall ${RUN}`;
+    const smallTag = `SmallRoom ${RUN}`;
+    const big = await searchVenues(admin, { q: venueTag, guests: 200 });
     expect(big.hits.map((hit) => hit.orgId)).toContain(venueOrgId);
     expect(big.hits.every((hit) => hit.spaces.length > 0)).toBe(true);
 
-    const cheap = await searchVenues(admin, { slot: 'EVENING', maxPriceMinor: '2000000' });
-    expect(cheap.hits.map((hit) => hit.orgId)).not.toContain(venueOrgId);
+    const cheap = await searchVenues(admin, { q: smallTag, slot: 'EVENING', maxPriceMinor: '2000000' });
     expect(cheap.hits.length).toBeGreaterThan(0);
+    const pricey = await searchVenues(admin, { q: venueTag, slot: 'EVENING', maxPriceMinor: '2000000' });
+    expect(pricey.hits.map((hit) => hit.orgId)).not.toContain(venueOrgId);
 
     await blockAvailability(admin, { orgId: venueOrgId, date: '2027-10-01' });
-    const free = await searchVenues(admin, { date: '2027-10-01', slot: 'EVENING' });
+    const free = await searchVenues(admin, { q: venueTag, date: '2027-10-01', slot: 'EVENING' });
     expect(free.hits.map((hit) => hit.orgId)).not.toContain(venueOrgId);
-    const other = await searchVenues(admin, { date: '2027-10-02', slot: 'EVENING' });
+    const other = await searchVenues(admin, { q: venueTag, date: '2027-10-02', slot: 'EVENING' });
     expect(other.hits.map((hit) => hit.orgId)).toContain(venueOrgId);
   });
 });

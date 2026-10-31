@@ -1270,6 +1270,11 @@
     "allSlots": "Any slot",
     "spaceFor": "{count} matching spaces",
     "noVenues": "No venues match. Try another date or fewer guests.",
-    "findVenue": "Find a venue"
+    "findVenue": "Find a venue",
+    "blockDate": "Block date",
+    "unblock": "Unblock",
+    "done": "Done",
+    "pending": "To do",
+    "spacePhotoAlt": "Venue space photo"
   }
 }
