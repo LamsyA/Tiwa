@@ -9,7 +9,8 @@ import type * as React from 'react';
 import { requirePageUser } from '@/lib/ctx.js';
 import { AppFrame } from './app-frame.js';
 
-export type EventSection = 'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'vendors' | 'settings';
+export type EventSection =
+  'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'vendors' | 'settings';
 
 const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?: boolean; needsMoments?: boolean }[] = [
   { key: 'overview', path: '', needs: 'event.view' },
