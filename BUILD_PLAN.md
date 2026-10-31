@@ -23,7 +23,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | P3    | Events and planning                      | DONE        | 2026-10-30     |
 | P4    | Guests and one-click invitations         | GATE FAILED |                |
 | P5    | Moments                                  | TODO        |                |
-| P6    | Marketplace and chat                     | TODO        |                |
+| P6    | Marketplace and chat                     | IN PROGRESS |                |
 | P7    | Quotes and bookings                      | TODO        |                |
 | P8    | Payments, ledger, held payments, payouts | TODO        |                |
 | P9    | Budget and finance                       | TODO        |                |
@@ -224,7 +224,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** vendors, venues and planners publish profiles; hosts search, shortlist and compare; **everyone can chat** (client ↔ vendor/planner, planner ↔ vendor, guests ↔ vendors after events).
 **Read first:** `PRD.md MKT-*, VEN-*, MSG-*`, `UF-13`, `UF-14 (search part)`, `UF-29`, `UF-30`, `UF-31`, `Backend.md §3 (marketplace, chat), §9a`, `Frontend.md §4 (chat components), §6.1, §6.3 (/inbox)`.
 
-- [ ] P6-T01 Prisma: BusinessProfile, VenueSpace, PortfolioItem, ServicePackage, AvailabilityBlock, BusinessVerification, Shortlist; trigram index and availability unique-index migrations.
+- [x] P6-T01 Prisma: BusinessProfile, VenueSpace, PortfolioItem, ServicePackage, AvailabilityBlock, BusinessVerification, Shortlist; trigram index and availability unique-index migrations.
 - [ ] P6-T02 Business profile pages with completeness checklist; portfolio uploader (reuse upload stack); packages editor; availability calendar ("confirm availability" updates `availabilityConfirmedAt`).
 - [ ] P6-T03 Publish rules (profile + ≥ 6 portfolio items + ≥ 1 package); verification submission (documents) → PENDING.
 - [ ] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
