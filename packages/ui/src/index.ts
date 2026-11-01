@@ -56,3 +56,4 @@ export {
 export { AppShell, navigationForRole, type AppRole, type NavItem } from './components/shell.js';
 export { GuestShell, type GuestShellProps } from './components/guest-shell.js';
 export { cn } from './lib/cn.js';
+export { ThemeToggle } from './components/theme-toggle.js';

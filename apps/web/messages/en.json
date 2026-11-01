@@ -8,8 +8,7 @@
     "title": "Home",
     "emptyTitle": "Nothing planned yet",
     "emptyBody": "Create your first event and invite the people helping you.",
-    "createEvent": "Create an event",
-    "placeholderNote": "P0-T04 placeholder — real home lands in P1/P3."
+    "createEvent": "Create an event"
   },
   "errors": {
     "genericTitle": "Something went wrong",
@@ -1755,5 +1754,136 @@
     "viewBookings": "Bookings",
     "viewCalendar": "Calendar",
     "bookingsTitle": "Bookings"
+  },
+  "landing": {
+    "nav": {
+      "how": "How it works",
+      "features": "Features",
+      "vendors": "For vendors",
+      "login": "Log in",
+      "start": "Start planning",
+      "menu": "Main navigation"
+    },
+    "theme": {
+      "light": "Switch to light mode",
+      "dark": "Switch to dark mode"
+    },
+    "hero": {
+      "badge": "For every kind of celebration and gathering",
+      "titleA": "Plan any event,",
+      "titleB": "together.",
+      "body": "One place for hosts, planners, vendors and guests to plan, book, pay, run and remember the day — from a small birthday to a thousand-person conference.",
+      "primary": "Start planning — it's free",
+      "secondary": "Find vendors",
+      "note": "No app to install. Guests never need an account."
+    },
+    "mock": {
+      "eventName": "Ada turns 30",
+      "eventMeta": "Saturday · 4:00 PM",
+      "rsvp": "RSVPs",
+      "coming": "coming",
+      "budget": "Budget",
+      "paid": "paid",
+      "tasks": "Checklist",
+      "done": "done",
+      "chat": "Your cake is booked for Saturday!",
+      "chatFrom": "Sweet Crumbs",
+      "moments": "Moments",
+      "newPhotos": "+48 new photos"
+    },
+    "types": {
+      "title": "Made for every occasion"
+    },
+    "features": {
+      "eyebrow": "Everything in one place",
+      "title": "From first idea to the last photo",
+      "body": "Stop juggling spreadsheets, group chats and bank screenshots. Tiwa keeps the whole event together.",
+      "items": {
+        "plan": {
+          "title": "Plan with a checklist that builds itself",
+          "body": "Pick an event type and get tasks, timelines and a budget split ready to edit."
+        },
+        "guests": {
+          "title": "Invites and RSVPs",
+          "body": "Share a link, track who's coming, and check guests in on the day with a QR pass."
+        },
+        "vendors": {
+          "title": "Vendors and quotes",
+          "body": "Compare quotes side by side, book in a tap, and keep every version in writing."
+        },
+        "money": {
+          "title": "An honest budget",
+          "body": "See planned, committed, paid and outstanding at a glance — plus pledges and income."
+        },
+        "chat": {
+          "title": "Chat that keeps context",
+          "body": "Talk to vendors and your team in threads tied to the event and each booking."
+        },
+        "moments": {
+          "title": "Moments, shared",
+          "body": "Guests drop photos into one gallery; the official album sits right next to it."
+        }
+      }
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "Four steps to a great day",
+      "steps": {
+        "one": {
+          "title": "Create your event",
+          "body": "Choose the type, date and budget. Tiwa sets up the plan for you."
+        },
+        "two": {
+          "title": "Bring your people",
+          "body": "Add co-hosts and a planner with exactly the access they need."
+        },
+        "three": {
+          "title": "Book vendors",
+          "body": "Request quotes, compare, accept and track every payment."
+        },
+        "four": {
+          "title": "Enjoy and remember",
+          "body": "Run the day from your phone, then relive it in Moments."
+        }
+      }
+    },
+    "roles": {
+      "eyebrow": "Built for everyone involved",
+      "title": "One event. Every role.",
+      "host": {
+        "title": "Hosts",
+        "body": "Plan without the stress, share the load, stay on budget."
+      },
+      "planner": {
+        "title": "Planners",
+        "body": "Run many events and clients from one calm dashboard."
+      },
+      "vendor": {
+        "title": "Vendors",
+        "body": "Get real enquiries, send clear quotes, get booked."
+      },
+      "guest": {
+        "title": "Guests",
+        "body": "RSVP, get your pass and share photos — no account needed."
+      }
+    },
+    "vendorCta": {
+      "title": "Are you a vendor or venue?",
+      "body": "List your business, answer enquiries with professional quotes and fill your calendar.",
+      "cta": "List your business"
+    },
+    "cta": {
+      "title": "Your next event starts here.",
+      "body": "Set it up in two minutes. Invite everyone else when you're ready.",
+      "primary": "Create your event",
+      "secondary": "Log in"
+    },
+    "footer": {
+      "tagline": "Plan any event, together.",
+      "rights": "All rights reserved.",
+      "privacy": "Privacy",
+      "product": "Product",
+      "company": "Company"
+    }
   }
 }
