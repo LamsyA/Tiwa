@@ -1288,7 +1288,8 @@
     "proposeLabel": "Proposed time",
     "addTime": "Add another time",
     "sendVisit": "Send request",
-    "visitNotesLabel": "Notes"
+    "visitNotesLabel": "Notes",
+    "visitsHeading": "Site visits"
   },
   "inbox": {
     "title": "Inbox",
@@ -1386,7 +1387,11 @@
     "guestEnquiryHeading": "Message the team behind this event",
     "guestEnquiryHint": "Loved the food, music or photos? Ask them directly. You'll verify your phone number first.",
     "verifyPhoneToMessage": "Verify your phone to message",
-    "metAt": "Met at: {event}"
+    "metAt": "Met at: {event}",
+    "cardQuote": "Quote from {vendor}",
+    "cardBooking": "Booking · {category}",
+    "cardChange": "Change request v{version}",
+    "cardVisit": "Site visit confirmed"
   },
   "quotes": {
     "categoryTitle": "{category} quotes",
@@ -1495,7 +1500,6 @@
     "pendingBody": "{side} proposed version {version}.",
     "diffAdded": "Price difference: {amount}",
     "noFiles": "No files attached yet.",
-    "paymentsSoon": "Online payments arrive in the next phase; milestones below are the agreed schedule.",
     "messagesSoon": "The booking chat thread arrives with the next tasks.",
     "viewQuote": "View quote",
     "errors": {
@@ -1509,5 +1513,62 @@
     "serviceDateLabel": "Service date",
     "waitingBody": "Version {version} is with the vendor for a decision.",
     "notesLabel": "Notes"
+  },
+  "payments": {
+    "secured": "Paid",
+    "awaiting": "Awaiting vendor confirmation",
+    "outstanding": "Still to pay",
+    "due": "due {date}",
+    "paidOutside": "I paid outside Tiwa",
+    "viewReceipt": "View receipt",
+    "offlineNote": "Pay the vendor directly (bank transfer, cash or POS) and record it here. The vendor confirms they received it.",
+    "recordTitle": "Record a payment made outside Tiwa",
+    "paidOnLabel": "Date paid",
+    "methodLabel": "How did you pay?",
+    "method": {
+      "bank_transfer": "Bank transfer",
+      "cash": "Cash",
+      "pos": "POS / card",
+      "other": "Other"
+    },
+    "receiptLabel": "Receipt or transfer screenshot (optional)",
+    "noteLabel": "Note for the vendor (optional)",
+    "notePlaceholder": "Transfer reference or who paid",
+    "recordBody": "The vendor will be asked to confirm they received it.",
+    "recordSubmit": "Record payment",
+    "toConfirmHeading": "Payments to confirm",
+    "confirmReceived": "Confirm received",
+    "notReceived": "Not received",
+    "notReceivedTitle": "Mark as not received?",
+    "notReceivedBody": "The host will be told and can record the payment again.",
+    "state": {
+      "SCHEDULED": "Not paid",
+      "PENDING_PAYMENT": "Payment pending",
+      "PAID_DIRECT": "Paid",
+      "HELD": "Held by Tiwa",
+      "RELEASED": "Released",
+      "REFUNDED": "Refunded",
+      "PARTLY_REFUNDED": "Partly refunded",
+      "DISPUTED": "Disputed",
+      "RECORDED_OFFLINE": "Awaiting vendor confirmation",
+      "CONFIRMED_OFFLINE": "Paid (confirmed)"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "VALIDATION": "Check the details and try again.",
+      "CONFLICT": "This payment was already recorded or answered.",
+      "FORBIDDEN": "You do not have access to do that.",
+      "NOT_FOUND": "That payment no longer exists.",
+      "INVALID_TRANSITION": "That action is not available right now.",
+      "amountMismatch": "The amount must match this payment.",
+      "futureDate": "The payment date can't be in the future.",
+      "invalidReceipt": "That receipt couldn't be read. Upload a photo or PDF.",
+      "heldNotOffline": "This booking is paid through Tiwa.",
+      "bookingClosed": "This booking is closed.",
+      "typeNotAllowed": "Upload a photo or PDF.",
+      "tooLarge": "That file is too large (10 MB max).",
+      "emptyFile": "That file is empty.",
+      "uploadFailed": "The receipt didn't upload. Try again."
+    }
   }
 }

@@ -59,11 +59,13 @@ function QuoteCard({
   category,
   quote,
   heldEnabled,
+  onlineEnabled,
   onDone,
 }: {
   category: string;
   quote: QuoteView;
   heldEnabled: boolean;
+  onlineEnabled: boolean;
   onDone: (bookingId?: string) => void;
 }) {
   const t = useTranslations('quotes');
@@ -72,7 +74,7 @@ function QuoteCard({
   const [changesOpen, setChangesOpen] = React.useState(false);
   const [message, setMessage] = React.useState('');
   const [acceptOpen, setAcceptOpen] = React.useState(false);
-  const [mode, setMode] = React.useState<'DIRECT' | 'HELD' | 'OFFLINE'>('DIRECT');
+  const [mode, setMode] = React.useState<'DIRECT' | 'HELD' | 'OFFLINE'>(onlineEnabled ? 'DIRECT' : 'OFFLINE');
   const [agreed, setAgreed] = React.useState(false);
   const [declineOthers, setDeclineOthers] = React.useState(true);
   const [working, setWorking] = React.useState(false);
@@ -175,7 +177,8 @@ function QuoteCard({
             <fieldset className="flex flex-col gap-2">
               <legend className="text-sm font-medium">{t('paymentModeLabel')}</legend>
               {(['DIRECT', 'HELD', 'OFFLINE'] as const)
-                .filter((option) => option !== 'HELD' || heldEnabled)
+                // Online modes need a real payment provider (lean P8, D-X27); Held also needs its flag.
+                .filter((option) => option === 'OFFLINE' || (onlineEnabled && (option !== 'HELD' || heldEnabled)))
                 .map((option) => (
                   <label key={option} className="flex items-center gap-2 text-sm">
                     <input
@@ -210,11 +213,13 @@ export function QuoteCards({
   eventId,
   category,
   heldEnabled,
+  onlineEnabled,
   quotes,
 }: {
   eventId: string;
   category: string;
   heldEnabled: boolean;
+  onlineEnabled: boolean;
   quotes: QuoteView[];
 }) {
   const t = useTranslations('quotes');
@@ -236,6 +241,7 @@ export function QuoteCards({
             category={category}
             quote={quote}
             heldEnabled={heldEnabled}
+            onlineEnabled={onlineEnabled}
             onDone={(created) => {
               if (created) setBookingId(created);
               router.refresh();

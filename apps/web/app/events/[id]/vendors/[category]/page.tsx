@@ -1,4 +1,4 @@
-import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { env, VENDOR_CATEGORIES } from '@tiwa/config';
 import { getCategoryOverview, getFlagsFor } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, EmptyState } from '@tiwa/ui';
@@ -89,6 +89,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
               eventId={eventId}
               category={label}
               heldEnabled={flags['payments.held']}
+              onlineEnabled={env.PAYMENT_PROVIDER !== 'fake'}
               quotes={overview.quotes.map((quote) => ({
                 id: quote.id,
                 vendorName: quote.vendor?.name ?? quote.vendorOrgId,

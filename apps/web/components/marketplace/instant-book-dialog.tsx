@@ -43,7 +43,8 @@ export function InstantBookDialog({
         spaceId: spaceId || undefined,
         serviceDate: date,
         slot: slot as 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_DAY',
-        paymentMode: 'DIRECT',
+        // No online checkout yet (lean P8, D-X27): instant bookings are paid outside Tiwa and recorded.
+        paymentMode: 'OFFLINE',
         terms,
       });
       if (!result.ok) setError(te(result.code as 'VALIDATION'));

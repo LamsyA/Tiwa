@@ -296,7 +296,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [-] P8-T05 Flutterwave adapter (same capabilities); provider chosen by config; run the payment test suite against both adapters' sandbox in a separate CI job (skipped when keys missing). *(Deferred — lean P8, D-X27.)*
 - [-] P8-T06 Bank account setup (list banks, resolve name, confirm, create subaccount + recipient job); OTP + 24 h payout pause on change. *(Deferred — lean P8, D-X27.)*
 - [-] P8-T07 Checkout: `startCheckout`, inline provider UI, "Confirming…" screen via SSE `payment:{id}`, webhook route → `process-webhook` job → transitions + ledger + receipt; `verify-pending` safety job. *(Deferred — lean P8, D-X27.)*
-- [ ] P8-T08 Offline payments: record with receipt, vendor confirm.
+- [x] P8-T08 Offline payments: record with receipt, vendor confirm.
 - [-] P8-T09 Refunds per cancellation terms (full/partial) in DIRECT and HELD. *(Deferred — lean P8, D-X27.)*
 - [-] P8-T10 HELD mode (flag `payments.held`): `EscrowProvider` interface + Fake; hold on success; release engine job (rules + auto-release + dispute check); host delivery sign-off action. *(Deferred — lean P8, D-X27.)*
 - [-] P8-T11 Payouts (flag `payments.payouts`): payout job, transfer, status via webhook/poll, retries, exceptions. *(Deferred — lean P8, D-X27.)*

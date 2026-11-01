@@ -1,4 +1,4 @@
-import { listEnquiries, listMyOrgs, listPendingChanges, listSiteVisits } from '@tiwa/core';
+import { listEnquiries, listMyOrgs, listPendingChanges, listPendingOfflinePayments, listSiteVisits } from '@tiwa/core';
 import { Button, Card, EmptyState, StatusPill } from '@tiwa/ui';
 import { Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { ChangeCards } from './change-cards.js';
+import { PaymentCards } from './payment-cards.js';
 import { VisitCards } from './visit-cards.js';
 
 /** Vendor quote inbox (VND-01, P7-T04): open briefs with status. Full quotes arrive with P7-T05. */
@@ -38,11 +39,17 @@ export default async function QuotesInboxPage() {
       vendorOrgIds.map((orgId) => listPendingChanges(ctx.actor, { vendorOrgId: orgId }).catch(() => [])),
     )
   ).flat();
+  const payments = (
+    await Promise.all(
+      vendorOrgIds.map((orgId) => listPendingOfflinePayments(ctx.actor, { vendorOrgId: orgId }).catch(() => [])),
+    )
+  ).flat();
 
   return (
     <AppFrame userId={ctx.actor.userId} active="quotes" title={t('inboxTitle')}>
       <div className="flex flex-col gap-4 py-4">
         <p className="text-muted text-sm">{t('inboxBody')}</p>
+        <PaymentCards payments={payments} />
         <VisitCards visits={visits} />
         <ChangeCards changes={changes} />
         {enquiries === null ? (

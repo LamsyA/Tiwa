@@ -1,4 +1,4 @@
-import { diffScopes, getBooking } from '@tiwa/core';
+import { bookingMoney, diffScopes, getBooking, listBookingPayments } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, MoneyText, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
 import { BookingTabbar } from './booking-tabbar.js';
 import { ChangeRequestDialog, PendingDecision } from './change-dialog.js';
+import { PaymentsPanel } from './payments-panel.js';
 
 interface ScopeView {
   items: { name: string; qty: number; unitMinor: string }[];
@@ -15,7 +16,7 @@ interface ScopeView {
   slot: 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_DAY' | null;
 }
 
-/** Booking page (P7-T07): details, versions, payments (read-only until P8), files. */
+/** Booking page (P7-T07): details, versions, payments (offline recording, P8-T08), files. */
 export default async function BookingPage({
   params,
   searchParams,
@@ -55,6 +56,9 @@ export default async function BookingPage({
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, mime: true, sizeBytes: true },
   });
+  const payments = await listBookingPayments(booking.id);
+  const money = bookingMoney(booking.milestones);
+  const closed = booking.status === 'CANCELLED' || booking.status === 'COMPLETED';
 
   const tabs = [
     { value: 'details', label: t('detailsTab') },
@@ -164,20 +168,31 @@ export default async function BookingPage({
           </ul>
         )}
         {active === 'payments' && (
-          <Card>
-            <div className="flex flex-col gap-2 p-4 text-sm">
-              <p className="text-muted">{t('paymentsSoon')}</p>
-              <ul className="flex flex-col gap-1">
-                {booking.milestones.map((row) => (
-                  <li key={row.id} className="flex items-center gap-2">
-                    <StatusPill tone={row.state === 'SCHEDULED' ? 'neutral' : 'brand'}>{row.state}</StatusPill>
-                    <span className="flex-1">{row.label}</span>
-                    <MoneyText value={row.amountMinor} currency={row.currency} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
+          <PaymentsPanel
+            currency={booking.currency}
+            canRecord={data.viewer === 'host' && booking.paymentMode !== 'HELD' && !closed}
+            money={{
+              securedMinor: money.securedMinor.toString(),
+              awaitingMinor: money.awaitingMinor.toString(),
+              outstandingMinor: money.outstandingMinor.toString(),
+            }}
+            milestones={booking.milestones.map((row) => ({
+              id: row.id,
+              label: row.label,
+              amountMinor: String(row.amountMinor),
+              currency: row.currency,
+              state: row.state,
+              dueAt: row.dueAt ? new Date(row.dueAt).toISOString() : null,
+            }))}
+            payments={payments.map((row) => ({
+              id: row.id,
+              milestoneId: row.milestoneId,
+              status: row.status,
+              paidAt: row.paidAt?.toISOString() ?? null,
+              offlineMethod: row.offlineMethod,
+              hasReceipt: row.hasReceipt,
+            }))}
+          />
         )}
         {active === 'messages' && (
           <Card>
