@@ -29,7 +29,7 @@ const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?:
   { key: 'settings', path: '/settings', needs: 'event.view' },
 ];
 
-function can(access: EventAccess, userId: string, action: Action): boolean {
+export function can(access: EventAccess, userId: string, action: Action): boolean {
   try {
     authorize({ kind: 'user', userId, isAdmin: false }, action, { eventId: access.eventId, access });
     return true;

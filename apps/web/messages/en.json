@@ -404,7 +404,46 @@
       "planned": "Planned budget",
       "categoriesHeading": "Budget by category",
       "empty": "Categories appear when the event is created.",
-      "comingSoon": "Expenses, payments and contributions arrive with bookings and payments."
+      "committed": "Committed",
+      "paid": "Paid",
+      "outstanding": "Outstanding",
+      "uncommitted": "Uncommitted",
+      "overBudget": "Over budget",
+      "barLabel": "Planned, committed and paid",
+      "otherLine": "Other",
+      "nothingYet": "Nothing booked or spent here yet.",
+      "unallocated": "Not allocated to a category",
+      "noPayments": "No payments scheduled yet",
+      "noPaymentsBody": "Payment schedules appear when you accept a vendor's quote.",
+      "dueOn": "Due {date}",
+      "noContributions": "No pledges yet",
+      "noContributionsBody": "Track pledges from family, friends or a committee.",
+      "noExpenses": "No expenses yet",
+      "noExpensesBody": "Add costs you pay outside a booking, like printing or transport.",
+      "incomeExpected": "Expected",
+      "incomeReceived": "Received",
+      "ticketsLater": "Shown when ticket sales open",
+      "viewOnly": "You can view the budget but not change it.",
+      "tabs": {
+        "budget": "Budget",
+        "payments": "Payments",
+        "contributions": "Contributions",
+        "expenses": "Expenses",
+        "income": "Income"
+      },
+      "state": {
+        "paid": "Paid",
+        "awaiting": "Awaiting confirmation",
+        "due": "Due"
+      },
+      "kinds": {
+        "family": "Family",
+        "committee": "Committee",
+        "member": "Member",
+        "sponsor": "Sponsor",
+        "other_income": "Other income",
+        "tickets": "Tickets"
+      }
     },
     "plan": {
       "heading": "Plan",

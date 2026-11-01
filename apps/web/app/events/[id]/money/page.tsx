@@ -1,26 +1,35 @@
+import { budgetSummary, listContributions, listExpenses, listPaymentSchedule, OTHER_KEY } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Card, MoneyText } from '@tiwa/ui';
+import { Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
-import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
+import Link from 'next/link';
+import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
+import { MoneyTabbar } from './money-tabbar.js';
+
+const TABS = ['budget', 'payments', 'contributions', 'expenses', 'income'] as const;
+type Tab = (typeof TABS)[number];
+const SECURED = ['PAID_DIRECT', 'HELD', 'RELEASED', 'CONFIRMED_OFFLINE'];
 
 /**
- * Money section. P3 shows the planned budget by category (from the template);
- * expenses, payments and contributions arrive in P8/P9. Guarded by money.view:
- * a View only member gets the 403 panel and no figures (UF-04-1).
+ * Money (UF-20, BUD-01–BUD-08; D-X28): five figures, a Planned/Committed/Paid
+ * bar (plain CSS, no chart library), and tabs Budget / Payments /
+ * Contributions / Expenses / Income. Guarded by money.view (UF-20-3).
  */
-export default async function EventMoneyPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EventMoneyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(id, '/money', 'money.view');
   const t = await getTranslations('events.money');
-  const event = await prisma.event.findUniqueOrThrow({
-    where: { id },
-    select: { name: true, currency: true, plannedBudgetMinor: true },
-  });
-  const categories = allowed
-    ? await prisma.budgetCategory.findMany({ where: { eventId: id }, orderBy: { sortOrder: 'asc' } })
-    : [];
+  const event = await prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } });
+  const active: Tab = TABS.includes(tab as Tab) ? (tab as Tab) : 'budget';
 
-  return (
+  const frame = (children: React.ReactNode) => (
     <EventFrame
       eventId={id}
       userId={ctx.actor.userId}
@@ -30,34 +39,217 @@ export default async function EventMoneyPage({ params }: { params: Promise<{ id:
       active="money"
       title={event.name}
     >
-      {!allowed ? (
-        <Forbidden eventId={id} />
-      ) : (
-        <div className="flex flex-col gap-4 py-2">
-          <Card className="flex flex-col gap-1 p-4">
-            <p className="text-muted text-sm">{t('planned')}</p>
-            <p className="font-display text-2xl font-bold">
-              <MoneyText value={event.plannedBudgetMinor.toString()} currency={event.currency} />
+      {children}
+    </EventFrame>
+  );
+  if (!allowed) return frame(<Forbidden eventId={id} />);
+
+  const summary = await budgetSummary(ctx.actor, { eventId: id }, access);
+  const { totals, currency } = summary;
+  const canEdit = can(access, ctx.actor.userId, 'money.edit');
+  const max = [totals.plannedMinor, totals.committedMinor, totals.paidMinor].reduce((a, b) => (b > a ? b : a), 1n);
+  const pct = (value: bigint) => Number((value * 1000n) / max) / 10;
+  const money = (value: bigint | string) => <MoneyText value={value.toString()} currency={currency} />;
+
+  const [schedule, expenses, contributions] = await Promise.all([
+    active === 'payments' ? listPaymentSchedule(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
+    active === 'expenses' ? listExpenses(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
+    active === 'contributions' || active === 'income'
+      ? listContributions(ctx.actor, { eventId: id }, access)
+      : Promise.resolve([]),
+  ]);
+
+  return frame(
+    <div className="flex flex-col gap-4 py-2">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatCard label={t('planned')} value={money(totals.plannedMinor)} />
+        <StatCard label={t('committed')} value={money(totals.committedMinor)} />
+        <StatCard label={t('paid')} value={money(totals.paidMinor)} />
+        <StatCard label={t('outstanding')} value={money(totals.outstandingMinor)} />
+        <StatCard
+          className="col-span-2 lg:col-span-1"
+          label={t('uncommitted')}
+          value={money(totals.uncommittedMinor)}
+          {...(totals.uncommittedMinor < 0n ? { delta: { tone: 'danger' as const, text: t('overBudget') } } : {})}
+        />
+      </div>
+
+      <Card className="flex flex-col gap-2 p-4" aria-label={t('barLabel')}>
+        {(
+          [
+            ['planned', totals.plannedMinor, 'bg-border'],
+            ['committed', totals.committedMinor, 'bg-brand-soft'],
+            ['paid', totals.paidMinor, 'bg-brand'],
+          ] as const
+        ).map(([key, value, tone]) => (
+          <div key={key} className="flex items-center gap-3 text-sm">
+            <span className="text-muted w-24 shrink-0">{t(key)}</span>
+            <div className="bg-surface-2 h-3 flex-1 overflow-hidden rounded-full">
+              <div className={`${tone} h-full rounded-full`} style={{ width: `${pct(value)}%` }} />
+            </div>
+          </div>
+        ))}
+      </Card>
+
+      <MoneyTabbar eventId={id} active={active} items={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))} />
+
+      {active === 'budget' && (
+        <Card className="p-2 sm:p-4">
+          {summary.lines.length === 0 ? (
+            <EmptyState title={t('empty')} body="" />
+          ) : (
+            <ul className="divide-border divide-y text-sm">
+              {summary.lines.map((line) => (
+                <li key={line.key}>
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none flex-col gap-1 px-2 py-3 sm:flex-row sm:items-center">
+                      <span className="flex-1 font-medium">
+                        {line.key === OTHER_KEY ? t('otherLine') : (line.label ?? line.key)}
+                        {line.uncommittedMinor < 0n && (
+                          <StatusPill tone="danger" className="ml-2">
+                            {t('overBudget')}
+                          </StatusPill>
+                        )}
+                      </span>
+                      <span className="text-muted grid grid-cols-3 gap-3 sm:w-96">
+                        <span>
+                          <span className="block text-xs">{t('planned')}</span>
+                          {money(line.plannedMinor)}
+                        </span>
+                        <span>
+                          <span className="block text-xs">{t('committed')}</span>
+                          {money(line.committedMinor)}
+                        </span>
+                        <span>
+                          <span className="block text-xs">{t('paid')}</span>
+                          {money(line.paidMinor)}
+                        </span>
+                      </span>
+                    </summary>
+                    <ul className="text-muted flex flex-col gap-1 px-4 pb-3">
+                      {line.bookings.length + line.expenses.length === 0 && <li>{t('nothingYet')}</li>}
+                      {line.bookings.map((row) => (
+                        <li key={row.id} className="flex gap-2">
+                          <Link href={`/events/${id}/bookings/${row.id}`} className="flex-1 underline">
+                            {row.vendorName}
+                          </Link>
+                          {money(row.committedMinor)}
+                        </li>
+                      ))}
+                      {line.expenses.map((row) => (
+                        <li key={row.id} className="flex gap-2">
+                          <span className="flex-1">{row.description}</span>
+                          {money(row.amountMinor)}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          )}
+          {summary.unallocatedMinor !== 0n && (
+            <p className="text-muted px-2 pt-2 text-sm">
+              {t('unallocated')}: {money(summary.unallocatedMinor)}
             </p>
-          </Card>
-          <Card className="p-4">
-            <h2 className="mb-2 font-medium">{t('categoriesHeading')}</h2>
-            {categories.length === 0 ? (
-              <p className="text-muted text-sm">{t('empty')}</p>
-            ) : (
-              <ul className="divide-border divide-y">
-                {categories.map((category) => (
-                  <li key={category.id} className="flex items-center justify-between gap-3 py-2">
-                    <span>{category.label}</span>
-                    <MoneyText value={category.plannedMinor.toString()} currency={event.currency} />
+          )}
+        </Card>
+      )}
+
+      {active === 'payments' && (
+        <Card className="p-2 sm:p-4">
+          {schedule.length === 0 ? (
+            <EmptyState title={t('noPayments')} body={t('noPaymentsBody')} />
+          ) : (
+            <ul className="divide-border divide-y text-sm">
+              {schedule.map((row) => (
+                <li key={row.id} className="flex flex-col gap-1 px-2 py-3 sm:flex-row sm:items-center">
+                  <Link href={`/events/${id}/bookings/${row.bookingId}?tab=payments`} className="flex-1">
+                    <span className="font-medium">{row.vendorName}</span>
+                    <span className="text-muted"> · {row.label}</span>
+                  </Link>
+                  <span className="text-muted">
+                    {row.dueAt ? t('dueOn', { date: new Date(row.dueAt).toLocaleDateString() }) : ''}
+                  </span>
+                  <span className="font-medium">{money(row.amountMinor)}</span>
+                  <StatusPill tone={SECURED.includes(row.state) ? 'success' : 'neutral'}>
+                    {t(
+                      `state.${SECURED.includes(row.state) ? 'paid' : row.state === 'RECORDED_OFFLINE' ? 'awaiting' : 'due'}`,
+                    )}
+                  </StatusPill>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+
+      {active === 'contributions' && (
+        <Card className="p-2 sm:p-4">
+          {contributions.filter((row) => !['sponsor', 'other_income'].includes(row.kind)).length === 0 ? (
+            <EmptyState title={t('noContributions')} body={t('noContributionsBody')} />
+          ) : (
+            <ul className="divide-border divide-y text-sm">
+              {contributions
+                .filter((row) => !['sponsor', 'other_income'].includes(row.kind))
+                .map((row) => (
+                  <li key={row.id} className="flex flex-col gap-1 px-2 py-3 sm:flex-row sm:items-center">
+                    <span className="flex-1 font-medium">{row.contributorName}</span>
+                    <span className="text-muted">{t(`kinds.${row.kind}`)}</span>
+                    <span>
+                      {money(row.receivedMinor)} / {money(row.pledgedMinor)}
+                    </span>
                   </li>
                 ))}
-              </ul>
-            )}
-          </Card>
-          <p className="text-muted text-sm">{t('comingSoon')}</p>
-        </div>
+            </ul>
+          )}
+        </Card>
       )}
-    </EventFrame>
+
+      {active === 'expenses' && (
+        <Card className="p-2 sm:p-4">
+          {expenses.length === 0 ? (
+            <EmptyState title={t('noExpenses')} body={t('noExpensesBody')} />
+          ) : (
+            <ul className="divide-border divide-y text-sm">
+              {expenses.map((row) => (
+                <li key={row.id} className="flex flex-col gap-1 px-2 py-3 sm:flex-row sm:items-center">
+                  <span className="flex-1 font-medium">{row.description}</span>
+                  <span className="text-muted">
+                    {summary.lines.find((line) => line.key === row.categoryKey)?.label ?? t('otherLine')}
+                  </span>
+                  <span className="font-medium">{money(row.amountMinor)}</span>
+                  <StatusPill tone={row.paidAt ? 'success' : 'neutral'}>
+                    {row.paidAt ? t('state.paid') : t('state.due')}
+                  </StatusPill>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+
+      {active === 'income' && (
+        <Card className="flex flex-col gap-3 p-4 text-sm">
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label={t('incomeExpected')} value={money(summary.incomeTotals.pledgedMinor)} />
+            <StatCard label={t('incomeReceived')} value={money(summary.incomeTotals.receivedMinor)} />
+          </div>
+          <ul className="divide-border divide-y">
+            {summary.income.map((row) => (
+              <li key={row.kind} className="flex items-center gap-2 py-2">
+                <span className="flex-1">{t(`kinds.${row.kind}`)}</span>
+                {money(row.receivedMinor)} / {money(row.pledgedMinor)}
+              </li>
+            ))}
+            <li className="text-muted flex items-center gap-2 py-2">
+              <span className="flex-1">{t('kinds.tickets')}</span>
+              {t('ticketsLater')}
+            </li>
+          </ul>
+        </Card>
+      )}
+      {canEdit ? null : <p className="text-muted text-sm">{t('viewOnly')}</p>}
+    </div>,
   );
 }
