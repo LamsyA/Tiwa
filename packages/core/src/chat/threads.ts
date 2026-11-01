@@ -336,7 +336,7 @@ export async function archiveThread(actor: UserActor, input: z.infer<typeof arch
 }
 
 /** Event-team members pin a message as a decision; it shows on the event overview (§6). */
-export async function markDecision(actor: UserActor, input: z.infer<typeof messageIdSchema> & { decision?: boolean }) {
+export async function markDecision(actor: UserActor, input: z.infer<typeof messageIdSchema> & { decision?: boolean | undefined }) {
   const message = await prisma.message.findUnique({ where: { id: input.messageId }, include: { thread: true } });
   if (!message || message.deletedAt) throw new NotFoundError('Message not found');
   if (message.thread.kind !== 'EVENT') throw new ValidationError('Only in event-team chats', { key: 'notEventThread' });
