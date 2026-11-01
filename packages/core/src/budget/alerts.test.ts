@@ -26,9 +26,9 @@ describe('budgetAlerts', () => {
       {
         totals: figures(1000n, 1200n),
         lines: [
-          { key: 'venue', label: 'Venue', ...figures(500n, 800n), bookings: [], expenses: [] },
-          { key: 'food', label: 'Food', ...figures(500n, 400n), bookings: [], expenses: [] },
-          { key: '__other', label: null, ...figures(0n, 0n), bookings: [], expenses: [] },
+          { key: 'venue', label: 'Venue', plannedMinor: 500n, uncommittedMinor: -300n },
+          { key: 'food', label: 'Food', plannedMinor: 500n, uncommittedMinor: 100n },
+          { key: '__other', label: null, plannedMinor: 0n, uncommittedMinor: 0n },
         ],
       },
       [],

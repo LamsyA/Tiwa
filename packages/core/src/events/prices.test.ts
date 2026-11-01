@@ -134,7 +134,7 @@ describe('vendor price visibility (EVT-12)', () => {
     const quote = (await compareQuotes(host, { eventId }))[0]!;
     expect(quote.totalMinor).toBe(TOTAL.toString());
     const booking = await getBooking(host, { bookingId });
-    expect((booking.booking as { totalMinor: string }).totalMinor).toBe(TOTAL.toString());
+    expect((booking.booking as unknown as { totalMinor: string }).totalMinor).toBe(TOTAL.toString());
   });
 
   it('only the planner team may flip the switch', async () => {
@@ -178,6 +178,6 @@ describe('vendor price visibility (EVT-12)', () => {
     const quote = (await compareQuotes(planner, { eventId }))[0]!;
     expect(quote.totalMinor).toBe(TOTAL.toString());
     const vendorBooking = await getBooking(vendorOwner, { bookingId });
-    expect((vendorBooking.booking as { totalMinor: string }).totalMinor).toBe(TOTAL.toString());
+    expect((vendorBooking.booking as unknown as { totalMinor: string }).totalMinor).toBe(TOTAL.toString());
   });
 });
