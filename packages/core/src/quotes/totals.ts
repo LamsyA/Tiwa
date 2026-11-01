@@ -32,7 +32,8 @@ export function calcQuoteTotals(
   const items = z.array(quoteItemSchema).min(1, 'itemsRequired').parse(rawItems);
   const taxBps = BPS.parse(rawTaxBps);
   const serviceBps = BPS.parse(rawServiceBps);
-  const travelMinor = typeof rawTravelMinor === 'bigint' ? rawTravelMinor : BigInt(z.string().regex(/^\d+$/).parse(rawTravelMinor));
+  const travelMinor =
+    typeof rawTravelMinor === 'bigint' ? rawTravelMinor : BigInt(z.string().regex(/^\d+$/).parse(rawTravelMinor));
   if (travelMinor < 0n) throw new ValidationError('Travel fee cannot be negative', { key: 'amountInvalid' });
 
   let subtotalMinor = 0n;

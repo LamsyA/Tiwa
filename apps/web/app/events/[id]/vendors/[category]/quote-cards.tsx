@@ -1,6 +1,16 @@
 'use client';
 
-import { Banner, Button, Card, Checkbox, ConfirmDialog, MoneyText, ResponsiveDialog, StatusPill, Textarea } from '@tiwa/ui';
+import {
+  Banner,
+  Button,
+  Card,
+  Checkbox,
+  ConfirmDialog,
+  MoneyText,
+  ResponsiveDialog,
+  StatusPill,
+  Textarea,
+} from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,8 +31,26 @@ interface QuoteView {
   expiresAt: string;
 }
 
-function errorKey(code: string): 'VALIDATION' | 'CONFLICT' | 'FORBIDDEN' | 'NOT_FOUND' | 'LIMIT_REACHED' | 'INVALID_TRANSITION' | 'FEATURE_DISABLED' | 'generic' {
-  return ['VALIDATION', 'CONFLICT', 'FORBIDDEN', 'NOT_FOUND', 'LIMIT_REACHED', 'INVALID_TRANSITION', 'FEATURE_DISABLED'].includes(code)
+function errorKey(
+  code: string,
+):
+  | 'VALIDATION'
+  | 'CONFLICT'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'LIMIT_REACHED'
+  | 'INVALID_TRANSITION'
+  | 'FEATURE_DISABLED'
+  | 'generic' {
+  return [
+    'VALIDATION',
+    'CONFLICT',
+    'FORBIDDEN',
+    'NOT_FOUND',
+    'LIMIT_REACHED',
+    'INVALID_TRANSITION',
+    'FEATURE_DISABLED',
+  ].includes(code)
     ? (code as 'VALIDATION')
     : 'generic';
 }
@@ -96,7 +124,9 @@ function QuoteCard({
         </div>
         <ul className="text-muted flex flex-col gap-0.5">
           {quote.items.map((item, i) => (
-            <li key={i}>{item.name} × {item.qty}</li>
+            <li key={i}>
+              {item.name} × {item.qty}
+            </li>
           ))}
         </ul>
         <p className="font-medium">
@@ -106,13 +136,18 @@ function QuoteCard({
         <h4 className="font-medium">{t('scheduleHeading')}</h4>
         <ul className="text-muted flex flex-col gap-0.5">
           {quote.schedule.map((entry, i) => (
-            <li key={i}>{entry.label} · {entry.percentBps !== undefined ? `${entry.percentBps / 100}%` : entry.amountMinor} · {entry.due}</li>
+            <li key={i}>
+              {entry.label} · {entry.percentBps !== undefined ? `${entry.percentBps / 100}%` : entry.amountMinor} ·{' '}
+              {entry.due}
+            </li>
           ))}
         </ul>
         {actionable && (
           <div className="flex flex-wrap gap-2 pt-1">
             <Button onClick={() => setAcceptOpen(true)}>{t('accept')}</Button>
-            <Button variant="secondary" onClick={() => setChangesOpen(true)}>{t('requestChanges')}</Button>
+            <Button variant="secondary" onClick={() => setChangesOpen(true)}>
+              {t('requestChanges')}
+            </Button>
             <ConfirmDialog
               trigger={<Button variant="secondary">{t('decline')}</Button>}
               title={t('declineTitle')}
@@ -124,7 +159,11 @@ function QuoteCard({
         )}
         <ResponsiveDialog open={changesOpen} onOpenChange={setChangesOpen} title={t('requestChanges')}>
           <div className="flex flex-col gap-3 p-4">
-            <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t('changesPlaceholder')} />
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={t('changesPlaceholder')}
+            />
             <Button disabled={working || !message.trim()} onClick={() => void onSendChanges()}>
               {t('sendChanges')}
             </Button>
@@ -139,7 +178,12 @@ function QuoteCard({
                 .filter((option) => option !== 'HELD' || heldEnabled)
                 .map((option) => (
                   <label key={option} className="flex items-center gap-2 text-sm">
-                    <input type="radio" name={`mode-${quote.id}`} checked={mode === option} onChange={() => setMode(option)} />
+                    <input
+                      type="radio"
+                      name={`mode-${quote.id}`}
+                      checked={mode === option}
+                      onChange={() => setMode(option)}
+                    />
                     {t(option === 'DIRECT' ? 'payDirect' : option === 'HELD' ? 'payHeld' : 'payOffline')}
                   </label>
                 ))}

@@ -102,7 +102,10 @@ export async function requestQuotes(actor: UserActor, raw: z.infer<typeof reques
   for (const vendorOrgId of uniqueVendorIds) {
     const org = byId.get(vendorOrgId);
     if (!org || org.kind !== 'VENDOR' || !org.profile?.published || !org.profile.categories.includes(input.category)) {
-      throw new ValidationError('Vendor cannot receive this request', { field: 'vendorOrgIds', key: 'vendorIneligible' });
+      throw new ValidationError('Vendor cannot receive this request', {
+        field: 'vendorOrgIds',
+        key: 'vendorIneligible',
+      });
     }
   }
 

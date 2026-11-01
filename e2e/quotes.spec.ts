@@ -1,4 +1,4 @@
-import { test, type Browser, type Page } from '@playwright/test';
+import { test, type Page } from '@playwright/test';
 import { expect, freshPhone, isolateIp, signInWithPhone } from './support/auth.js';
 
 // P7-T13: UF-14 (request) → UF-15 (vendor quote) → UF-16 (compare + accept
@@ -92,7 +92,10 @@ async function newHostWithEvent(page: Page, name: string): Promise<string> {
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/events\/new$/);
 
-  await page.getByRole('button', { name: /Birthday/ }).first().click();
+  await page
+    .getByRole('button', { name: /Birthday/ })
+    .first()
+    .click();
   await expect(page.getByRole('heading', { name: 'The basics' })).toBeVisible();
   await page.getByLabel('Event name').fill(name);
   await page.getByLabel('Date', { exact: true }).fill('2031-06-01');
@@ -125,7 +128,10 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
     await host.reload().catch(() => undefined);
     await expect(host.getByRole('link', { name: vendorName }).first()).toBeVisible({ timeout: 10_000 });
   }).toPass({ timeout: 90_000 });
-  await host.getByRole('button', { name: /Shortlist/ }).first().click();
+  await host
+    .getByRole('button', { name: /Shortlist/ })
+    .first()
+    .click();
   await expect(host.getByRole('button', { name: /Shortlisted/ }).first()).toBeVisible();
 
   // UF-14: request up to 5 vendors with a prefilled brief.

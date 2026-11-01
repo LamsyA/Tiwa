@@ -18,7 +18,12 @@ async function makeUser(name: string): Promise<UserActor> {
 
 async function makeVendorOrg(name: string, categories: string[]): Promise<string> {
   const org = await prisma.organization.create({
-    data: { kind: 'VENDOR', name, slug: `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, countryCode: 'NG' },
+    data: {
+      kind: 'VENDOR',
+      name,
+      slug: `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      countryCode: 'NG',
+    },
   });
   orgs.push(org.id);
   await prisma.businessProfile.create({
@@ -90,9 +95,9 @@ describe('requestQuotes', () => {
   });
 
   it('rejects unknown categories, duplicates and unpublished vendors', async () => {
-    await expect(requestQuotes(host, { eventId, category: 'nope', vendorOrgIds: [vendorIds[0]!] })).rejects.toBeInstanceOf(
-      ValidationError,
-    );
+    await expect(
+      requestQuotes(host, { eventId, category: 'nope', vendorOrgIds: [vendorIds[0]!] }),
+    ).rejects.toBeInstanceOf(ValidationError);
     await expect(
       requestQuotes(host, { eventId, category: 'catering', vendorOrgIds: [vendorIds[2]!, vendorIds[2]!] }),
     ).rejects.toBeInstanceOf(ValidationError);

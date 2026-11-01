@@ -76,7 +76,9 @@ export async function getCategoryOverview(actor: UserActor, raw: z.infer<typeof 
     quotes,
     counts: {
       shortlisted: shortlisted.length,
-      requested: new Set(requests.filter((row) => row.status === 'OPEN' || row.status === 'QUOTED').map((row) => row.vendorOrgId)).size,
+      requested: new Set(
+        requests.filter((row) => row.status === 'OPEN' || row.status === 'QUOTED').map((row) => row.vendorOrgId),
+      ).size,
       quoted: quoteCounts.size,
     },
   };

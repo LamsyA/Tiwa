@@ -39,7 +39,9 @@ beforeAll(async () => {
   orgs.push(org.id);
   orgId = org.id;
   await prisma.membership.create({ data: { orgId, userId: vendor.userId, role: 'OWNER' } });
-  await prisma.businessProfile.create({ data: { orgId, categories: ['catering'], city: 'Lagos', currency: 'NGN', published: true } });
+  await prisma.businessProfile.create({
+    data: { orgId, categories: ['catering'], city: 'Lagos', currency: 'NGN', published: true },
+  });
   const event = await prisma.event.create({
     data: {
       slug: `booking-${Date.now()}`,

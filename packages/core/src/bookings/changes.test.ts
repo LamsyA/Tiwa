@@ -31,7 +31,9 @@ let bookingId = '';
 
 async function makeBooking(totalMinor = 1_000_000n): Promise<string> {
   const req = await requestQuotes(host, { eventId, category: 'catering', vendorOrgIds: [orgId] }).catch(async () => {
-    const existing = await prisma.quoteRequest.findFirstOrThrow({ where: { eventId, category: 'catering', vendorOrgId: orgId } });
+    const existing = await prisma.quoteRequest.findFirstOrThrow({
+      where: { eventId, category: 'catering', vendorOrgId: orgId },
+    });
     return { requests: [{ id: existing.id }], brief: {} as never };
   });
   const quote = await prisma.quote.create({
@@ -67,7 +69,9 @@ beforeAll(async () => {
   orgs.push(org.id);
   orgId = org.id;
   await prisma.membership.create({ data: { orgId, userId: vendor.userId, role: 'OWNER' } });
-  await prisma.businessProfile.create({ data: { orgId, categories: ['catering'], city: 'Lagos', currency: 'NGN', published: true } });
+  await prisma.businessProfile.create({
+    data: { orgId, categories: ['catering'], city: 'Lagos', currency: 'NGN', published: true },
+  });
   const event = await prisma.event.create({
     data: {
       slug: `change-${Date.now()}`,
@@ -119,7 +123,11 @@ describe('booking change requests', () => {
     expect(proposed.version).toBe(2);
     // Total unchanged until acceptance (UF-19-2).
     expect((await prisma.booking.findUniqueOrThrow({ where: { id: bookingId } })).totalMinor).toBe(1_000_000n);
-    const decided = await respondBookingChange(host, { versionId: proposed.versionId, accept: true }, { ip: '9.9.9.9' });
+    const decided = await respondBookingChange(
+      host,
+      { versionId: proposed.versionId, accept: true },
+      { ip: '9.9.9.9' },
+    );
     expect(decided.status).toBe('ACCEPTED');
     const booking = await prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: { versions: true } });
     expect(booking.totalMinor).toBe(2_000_000n);
@@ -147,7 +155,9 @@ describe('booking change requests', () => {
   it('rejects a second pending proposal while one waits', async () => {
     const third = await makeBooking();
     await requestBookingChange(host, { bookingId: third, scope: changedScope, reason: 'First' });
-    await expect(requestBookingChange(vendor, { bookingId: third, scope: changedScope, reason: 'Second' })).rejects.toThrow();
+    await expect(
+      requestBookingChange(vendor, { bookingId: third, scope: changedScope, reason: 'Second' }),
+    ).rejects.toThrow();
   });
 
   it('diffScopes reports price and field moves', () => {

@@ -93,7 +93,10 @@ export const requestChangesSchema = z.object({
 export async function requestQuoteChanges(actor: UserActor, raw: z.infer<typeof requestChangesSchema>) {
   const input = requestChangesSchema.parse(raw);
   const { quote } = await hostQuote(actor, input.quoteId);
-  authorize(actor, 'event.edit', { eventId: quote.eventId, access: await loadEventAccess(actor.userId, quote.eventId) });
+  authorize(actor, 'event.edit', {
+    eventId: quote.eventId,
+    access: await loadEventAccess(actor.userId, quote.eventId),
+  });
   assertQuoteTransition(quote.status, 'CHANGES_REQUESTED');
   const updated = await prisma.quote.update({ where: { id: quote.id }, data: { status: 'CHANGES_REQUESTED' } });
   await audit(prisma, {
@@ -118,7 +121,10 @@ export const declineQuoteSchema = z.object({ quoteId: z.string().uuid() });
 export async function declineQuote(actor: UserActor, raw: z.infer<typeof declineQuoteSchema>) {
   const { quoteId } = declineQuoteSchema.parse(raw);
   const { quote } = await hostQuote(actor, quoteId);
-  authorize(actor, 'event.edit', { eventId: quote.eventId, access: await loadEventAccess(actor.userId, quote.eventId) });
+  authorize(actor, 'event.edit', {
+    eventId: quote.eventId,
+    access: await loadEventAccess(actor.userId, quote.eventId),
+  });
   assertQuoteTransition(quote.status, 'DECLINED');
   const updated = await prisma.quote.update({ where: { id: quote.id }, data: { status: 'DECLINED' } });
   await audit(prisma, {
@@ -128,6 +134,10 @@ export async function declineQuote(actor: UserActor, raw: z.infer<typeof decline
     targetId: quote.id,
     data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId },
   });
-  await enqueue(prisma, 'quote.declined', { quoteId: quote.id, eventId: quote.eventId, vendorOrgId: quote.vendorOrgId });
+  await enqueue(prisma, 'quote.declined', {
+    quoteId: quote.id,
+    eventId: quote.eventId,
+    vendorOrgId: quote.vendorOrgId,
+  });
   return { status: updated.status };
 }

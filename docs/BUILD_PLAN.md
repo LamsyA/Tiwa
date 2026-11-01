@@ -260,19 +260,19 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** request quotes, build and send them, accept into versioned bookings, handle change requests.
 **Read first:** `PRD.md QTE-*`, `UF-14 (request)`, `UF-15`, `UF-16`, `UF-19`, `Backend.md §3 (quotes & bookings), §5.1, §5.2`.
 
-- [ ] P7-T01 Prisma: QuoteRequest, Quote, Booking, BookingVersion (with PROPOSED status for change requests), SiteVisit, PaymentMilestone (fields only; payments logic in P8); migration.
-- [ ] P7-T02 Core: quote totals (integer maths, tax/service bps), state machines for Quote and Booking with full transition tests.
-- [ ] P7-T03 Request quotes (≤ 5 vendors per category) with brief prefilled from event.
-- [ ] P7-T04 Vendor enquiries inbox and quote builder (templates, line items, totals, terms, proposed schedule, expiry) + quote expiry job.
-- [ ] P7-T05 Quote view + compare (desktop columns, mobile swipe cards); accept / request changes / decline.
-- [ ] P7-T06 Accept flow: payment-mode choice (Held hidden unless flag), terms agreement, creates Booking v1 + milestones from schedule; records user/time/IP.
-- [ ] P7-T07 Booking page: details, versions, payments tab (read-only until P8), files.
-- [ ] P7-T08 Change requests with diff view and acceptance creating version N+1.
-- [ ] P7-T09 Booking brief for vendors (no guest contacts).
-- [ ] P7-T10 Venue booking: instant book and venue quotes create the booking and the AvailabilityBlock in one transaction (unique index → friendly "just booked" message); provisional hold with `holdExpiresAt` and the `bookings/expire-holds` job.
-- [ ] P7-T11 Site visits: request (up to 3 times), venue confirm/decline, calendar entries, reminder job.
-- [ ] P7-T12 Chat cards: share quote, booking and site-visit cards in chat (live status); booking confirmation turns the existing thread into the booking thread and unmasks contact details; booking threads created automatically (`chat/sync-participants`).
-- [ ] P7-T13 e2e UF-14 (request), UF-15, UF-16, UF-19, UF-29-2, UF-29-3, UF-29-6, UF-29-7, UF-30-4 (after booking), UF-30-6.
+- [x] P7-T01 Prisma: QuoteRequest, Quote, Booking, BookingVersion (with PROPOSED status for change requests), SiteVisit, PaymentMilestone (fields only; payments logic in P8); migration.
+- [x] P7-T02 Core: quote totals (integer maths, tax/service bps), state machines for Quote and Booking with full transition tests.
+- [x] P7-T03 Request quotes (≤ 5 vendors per category) with brief prefilled from event.
+- [x] P7-T04 Vendor enquiries inbox and quote builder (templates, line items, totals, terms, proposed schedule, expiry) + quote expiry job.
+- [x] P7-T05 Quote view + compare (desktop columns, mobile swipe cards); accept / request changes / decline.
+- [x] P7-T06 Accept flow: payment-mode choice (Held hidden unless flag), terms agreement, creates Booking v1 + milestones from schedule; records user/time/IP.
+- [x] P7-T07 Booking page: details, versions, payments tab (read-only until P8), files.
+- [x] P7-T08 Change requests with diff view and acceptance creating version N+1.
+- [x] P7-T09 Booking brief for vendors (no guest contacts).
+- [x] P7-T10 Venue booking: instant book and venue quotes create the booking and the AvailabilityBlock in one transaction (unique index → friendly "just booked" message); provisional hold with `holdExpiresAt` and the `bookings/expire-holds` job.
+- [x] P7-T11 Site visits: request (up to 3 times), venue confirm/decline, calendar entries, reminder job.
+- [x] P7-T12 Chat cards: share quote, booking and site-visit cards in chat (live status); booking confirmation turns the existing thread into the booking thread and unmasks contact details; booking threads created automatically (`chat/sync-participants`).
+- [x] P7-T13 e2e UF-14 (request), UF-15, UF-16, UF-19, UF-29-2, UF-29-3, UF-29-6, UF-29-7, UF-30-4 (after booking), UF-30-6.
 
 **GATE P7**
 

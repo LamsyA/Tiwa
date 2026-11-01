@@ -29,12 +29,24 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
         <section aria-label={t('briefHeading')} className="border-border rounded-lg border p-4 text-sm">
           <h2 className="font-medium">{t('briefHeading')}</h2>
           <dl className="text-muted mt-2 flex flex-col gap-1">
-            <div className="flex gap-2"><dt>{brief.eventName ?? enquiry.event.name}</dt></div>
-            {brief.venue && <div className="flex gap-2"><dd>{brief.venue}</dd></div>}
-            {typeof brief.expectedGuests === 'number' && (
-              <div className="flex gap-2"><dd>{brief.expectedGuests}</dd></div>
+            <div className="flex gap-2">
+              <dt>{brief.eventName ?? enquiry.event.name}</dt>
+            </div>
+            {brief.venue && (
+              <div className="flex gap-2">
+                <dd>{brief.venue}</dd>
+              </div>
             )}
-            {brief.notes && <div className="flex gap-2"><dd>{brief.notes}</dd></div>}
+            {typeof brief.expectedGuests === 'number' && (
+              <div className="flex gap-2">
+                <dd>{brief.expectedGuests}</dd>
+              </div>
+            )}
+            {brief.notes && (
+              <div className="flex gap-2">
+                <dd>{brief.notes}</dd>
+              </div>
+            )}
           </dl>
         </section>
         <QuoteBuilder

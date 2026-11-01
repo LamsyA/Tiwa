@@ -26,7 +26,9 @@ async function makeVendorOrg(name: string, categories: string[]): Promise<{ orgI
   });
   orgs.push(org.id);
   await prisma.membership.create({ data: { orgId: org.id, userId: owner.userId, role: 'OWNER' } });
-  await prisma.businessProfile.create({ data: { orgId: org.id, categories, city: 'Lagos', currency: 'NGN', published: true } });
+  await prisma.businessProfile.create({
+    data: { orgId: org.id, categories, city: 'Lagos', currency: 'NGN', published: true },
+  });
   return { orgId: org.id, owner };
 }
 
@@ -85,7 +87,9 @@ beforeAll(async () => {
   });
   events.push(event.id);
   eventId = event.id;
-  await prisma.eventParticipant.create({ data: { eventId, userId: host.userId, role: 'HOST', permissions: toStoredPermissions(permissionsFor('HOST')) } });
+  await prisma.eventParticipant.create({
+    data: { eventId, userId: host.userId, role: 'HOST', permissions: toStoredPermissions(permissionsFor('HOST')) },
+  });
   ({ orgId: orgA } = await makeVendorOrg('AcceptVendor', ['catering']));
 });
 

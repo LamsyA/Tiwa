@@ -23,7 +23,10 @@ type UserActor = Extract<Actor, { kind: 'user' }>;
 export const bookingScopeSchema = z.object({
   items: z.array(quoteItemSchema).min(1, 'itemsRequired').max(100, 'itemsTooMany'),
   notes: z.string().max(4000, 'notesTooLong').nullable(),
-  serviceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateInvalid').nullable(),
+  serviceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'dateInvalid')
+    .nullable(),
   slot: z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'FULL_DAY']).nullable(),
   spaceId: z.string().uuid().nullable(),
 });
@@ -101,12 +104,16 @@ export async function requestBookingChange(actor: UserActor, raw: z.infer<typeof
     if (!date || !input.scope.slot) {
       throw new ValidationError('Venue bookings need a date and a slot', { key: 'slotRequired' });
     }
-    await checkVenueAvailability(prisma, {
-      vendorOrgId: booking.vendorOrgId,
-      spaceId: input.scope.spaceId ?? booking.spaceId,
-      date,
-      slot: input.scope.slot,
-    }, { ignoreBookingId: booking.id });
+    await checkVenueAvailability(
+      prisma,
+      {
+        vendorOrgId: booking.vendorOrgId,
+        spaceId: input.scope.spaceId ?? booking.spaceId,
+        date,
+        slot: input.scope.slot,
+      },
+      { ignoreBookingId: booking.id },
+    );
   }
 
   const version = await prisma.bookingVersion.create({
@@ -151,14 +158,19 @@ export const respondChangeSchema = z.object({
   accept: z.boolean(),
 });
 
-export async function respondBookingChange(actor: UserActor, raw: z.infer<typeof respondChangeSchema>, opts?: { ip?: string }) {
+export async function respondBookingChange(
+  actor: UserActor,
+  raw: z.infer<typeof respondChangeSchema>,
+  opts?: { ip?: string },
+) {
   const input = respondChangeSchema.parse(raw);
   const version = await prisma.bookingVersion.findUnique({
     where: { id: input.versionId },
     include: { booking: true },
   });
   if (!version) throw new NotFoundError('Change request not found');
-  if (version.status !== 'PROPOSED') throw new ValidationError('This request was already decided', { key: 'alreadyDecided' });
+  if (version.status !== 'PROPOSED')
+    throw new ValidationError('This request was already decided', { key: 'alreadyDecided' });
   if (version.proposedById === actor.userId) {
     throw new ForbiddenError('The other side decides on a change request');
   }
@@ -180,137 +192,155 @@ export async function respondBookingChange(actor: UserActor, raw: z.infer<typeof
       eventId: version.booking.eventId,
     });
     try {
-      await postCard(actor, { threadId: await ensureBookingThread(version.bookingId), type: 'change', refId: version.id });
+      await postCard(actor, {
+        threadId: await ensureBookingThread(version.bookingId),
+        type: 'change',
+        refId: version.id,
+      });
     } catch (error) {
-      log.warn({ err: error instanceof Error ? error.message : String(error), versionId: version.id }, 'change card failed');
+      log.warn(
+        { err: error instanceof Error ? error.message : String(error), versionId: version.id },
+        'change card failed',
+      );
     }
     return { status: 'DECLINED' as const };
   }
 
   const scope = version.scope as unknown as BookingScope;
   const diff = version.totalMinor - version.booking.totalMinor;
-  return prisma.$transaction(async (tx) => {
-    const current = await tx.bookingVersion.findFirst({
-      where: { bookingId: version.bookingId, status: 'ACCEPTED' },
-      select: { id: true },
-    });
-    if (current) {
-      await tx.bookingVersion.update({ where: { id: current.id }, data: { status: 'SUPERSEDED' } });
-    }
-    const isVendor = side === 'vendor';
-    await tx.bookingVersion.update({
-      where: { id: version.id },
-      data: {
-        status: 'ACCEPTED',
-        decidedAt: now,
-        ...(isVendor
-          ? { acceptedByVendorId: actor.userId, acceptedByVendorAt: now }
-          : { acceptedByHostId: actor.userId, acceptedByHostAt: now, acceptedByHostIp: opts?.ip ?? null }),
-      },
-    });
-    await tx.booking.update({
-      where: { id: version.bookingId },
-      data: {
-        currentVersion: version.version,
-        totalMinor: version.totalMinor,
-        serviceDate: scope.serviceDate ? new Date(scope.serviceDate) : null,
-        slot: scope.slot,
-        spaceId: scope.spaceId,
-      },
-    });
-    {
-      // A venue date/space/slot move carries the availability block with it.
-      const wasVenue = version.booking.spaceId !== null || version.booking.category === 'venue';
-      const newDate = scope.serviceDate ? new Date(scope.serviceDate) : null;
-      const movedVenue =
-        wasVenue &&
-        ((scope.serviceDate ?? null) !== (version.booking.serviceDate?.toISOString().slice(0, 10) ?? null) ||
-          (scope.slot ?? null) !== version.booking.slot ||
-          (scope.spaceId ?? null) !== version.booking.spaceId);
-      if (movedVenue) {
-        if (!newDate || !scope.slot) throw new ValidationError('Venue bookings need a date and a slot', { key: 'slotRequired' });
-        await checkVenueAvailability(
-          tx,
-          {
-            vendorOrgId: version.booking.vendorOrgId,
-            spaceId: scope.spaceId ?? version.booking.spaceId,
-            date: newDate,
-            slot: scope.slot,
-          },
-          { ignoreBookingId: version.bookingId },
-        );
-        await tx.availabilityBlock.deleteMany({ where: { bookingId: version.bookingId } });
-        try {
-          await tx.availabilityBlock.create({
-            data: {
-              orgId: version.booking.vendorOrgId,
+  return prisma
+    .$transaction(async (tx) => {
+      const current = await tx.bookingVersion.findFirst({
+        where: { bookingId: version.bookingId, status: 'ACCEPTED' },
+        select: { id: true },
+      });
+      if (current) {
+        await tx.bookingVersion.update({ where: { id: current.id }, data: { status: 'SUPERSEDED' } });
+      }
+      const isVendor = side === 'vendor';
+      await tx.bookingVersion.update({
+        where: { id: version.id },
+        data: {
+          status: 'ACCEPTED',
+          decidedAt: now,
+          ...(isVendor
+            ? { acceptedByVendorId: actor.userId, acceptedByVendorAt: now }
+            : { acceptedByHostId: actor.userId, acceptedByHostAt: now, acceptedByHostIp: opts?.ip ?? null }),
+        },
+      });
+      await tx.booking.update({
+        where: { id: version.bookingId },
+        data: {
+          currentVersion: version.version,
+          totalMinor: version.totalMinor,
+          serviceDate: scope.serviceDate ? new Date(scope.serviceDate) : null,
+          slot: scope.slot,
+          spaceId: scope.spaceId,
+        },
+      });
+      {
+        // A venue date/space/slot move carries the availability block with it.
+        const wasVenue = version.booking.spaceId !== null || version.booking.category === 'venue';
+        const newDate = scope.serviceDate ? new Date(scope.serviceDate) : null;
+        const movedVenue =
+          wasVenue &&
+          ((scope.serviceDate ?? null) !== (version.booking.serviceDate?.toISOString().slice(0, 10) ?? null) ||
+            (scope.slot ?? null) !== version.booking.slot ||
+            (scope.spaceId ?? null) !== version.booking.spaceId);
+        if (movedVenue) {
+          if (!newDate || !scope.slot)
+            throw new ValidationError('Venue bookings need a date and a slot', { key: 'slotRequired' });
+          await checkVenueAvailability(
+            tx,
+            {
+              vendorOrgId: version.booking.vendorOrgId,
               spaceId: scope.spaceId ?? version.booking.spaceId,
               date: newDate,
               slot: scope.slot,
-              bookingId: version.bookingId,
             },
-          });
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-            throw new ConflictError('That date was just booked', { key: 'slotTaken' });
+            { ignoreBookingId: version.bookingId },
+          );
+          await tx.availabilityBlock.deleteMany({ where: { bookingId: version.bookingId } });
+          try {
+            await tx.availabilityBlock.create({
+              data: {
+                orgId: version.booking.vendorOrgId,
+                spaceId: scope.spaceId ?? version.booking.spaceId,
+                date: newDate,
+                slot: scope.slot,
+                bookingId: version.bookingId,
+              },
+            });
+          } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+              throw new ConflictError('That date was just booked', { key: 'slotTaken' });
+            }
+            throw error;
           }
-          throw error;
         }
       }
-    }
-    if (diff !== 0n) {      // UF-19: the extra (or reduced) amount lands on the next unpaid
-      // milestone, or a new one when everything is already scheduled.
-      const next = await tx.paymentMilestone.findFirst({
-        where: { bookingId: version.bookingId, state: 'SCHEDULED' },
-        orderBy: { createdAt: 'asc' },
-        select: { id: true, amountMinor: true },
+      if (diff !== 0n) {
+        // UF-19: the extra (or reduced) amount lands on the next unpaid
+        // milestone, or a new one when everything is already scheduled.
+        const next = await tx.paymentMilestone.findFirst({
+          where: { bookingId: version.bookingId, state: 'SCHEDULED' },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, amountMinor: true },
+        });
+        if (next) {
+          const adjusted = next.amountMinor + diff;
+          await tx.paymentMilestone.update({
+            where: { id: next.id },
+            data: { amountMinor: adjusted < 0n ? 0n : adjusted },
+          });
+        } else {
+          await tx.paymentMilestone.create({
+            data: {
+              bookingId: version.bookingId,
+              kind: 'PAYMENT',
+              label: diff > 0n ? 'Balance adjustment' : 'Reduction',
+              amountMinor: diff > 0n ? diff : 0n,
+              currency: version.booking.currency,
+              dueAt: now,
+              releaseRule: 'ON_PAYMENT',
+            },
+          });
+        }
+      }
+      await audit(tx, {
+        actor,
+        action: 'booking.acceptChange',
+        targetType: 'BookingVersion',
+        targetId: version.id,
+        data: { eventId: version.booking.eventId, side },
+        ...(opts?.ip ? { ip: opts.ip } : {}),
       });
-      if (next) {
-        const adjusted = next.amountMinor + diff;
-        await tx.paymentMilestone.update({
-          where: { id: next.id },
-          data: { amountMinor: adjusted < 0n ? 0n : adjusted },
-        });
-      } else {
-        await tx.paymentMilestone.create({
-          data: {
-            bookingId: version.bookingId,
-            kind: 'PAYMENT',
-            label: diff > 0n ? 'Balance adjustment' : 'Reduction',
-            amountMinor: diff > 0n ? diff : 0n,
-            currency: version.booking.currency,
-            dueAt: now,
-            releaseRule: 'ON_PAYMENT',
-          },
-        });
+      await enqueue(tx, 'booking.changed', {
+        versionId: version.id,
+        bookingId: version.bookingId,
+        eventId: version.booking.eventId,
+        vendorOrgId: version.booking.vendorOrgId,
+      });
+      return { status: 'ACCEPTED' as const, version: version.version };
+    })
+    .then(async (result) => {
+      if (result.status === 'ACCEPTED') {
+        try {
+          await postCard(actor, {
+            threadId: await ensureBookingThread(version.bookingId),
+            type: 'change',
+            refId: version.id,
+          });
+          await mirrorToEventTeam(actor, version.booking.eventId, 'change', version.id);
+        } catch (error) {
+          log.warn(
+            { err: error instanceof Error ? error.message : String(error), versionId: version.id },
+            'change card failed',
+          );
+        }
       }
-    }
-    await audit(tx, {
-      actor,
-      action: 'booking.acceptChange',
-      targetType: 'BookingVersion',
-      targetId: version.id,
-      data: { eventId: version.booking.eventId, side },
-      ...(opts?.ip ? { ip: opts.ip } : {}),
+      return result;
     });
-    await enqueue(tx, 'booking.changed', {
-      versionId: version.id,
-      bookingId: version.bookingId,
-      eventId: version.booking.eventId,
-      vendorOrgId: version.booking.vendorOrgId,
-    });
-    return { status: 'ACCEPTED' as const, version: version.version };
-  }).then(async (result) => {
-    if (result.status === 'ACCEPTED') {
-      try {
-        await postCard(actor, { threadId: await ensureBookingThread(version.bookingId), type: 'change', refId: version.id });
-        await mirrorToEventTeam(actor, version.booking.eventId, 'change', version.id);
-      } catch (error) {
-        log.warn({ err: error instanceof Error ? error.message : String(error), versionId: version.id }, 'change card failed');
-      }
-    }
-    return result;
-  });
 }
 
 export interface ScopeDiff {
@@ -348,8 +378,20 @@ export async function listPendingChanges(actor: UserActor, raw: z.infer<typeof l
 
 /** Old vs new for the diff view (UF-19): price difference plus what moved. */
 export function diffScopes(
-  oldScope: { items: unknown; notes: string | null; serviceDate: string | null; slot: string | null; totalMinor: string },
-  newScope: { items: unknown; notes: string | null; serviceDate: string | null; slot: string | null; totalMinor: string },
+  oldScope: {
+    items: unknown;
+    notes: string | null;
+    serviceDate: string | null;
+    slot: string | null;
+    totalMinor: string;
+  },
+  newScope: {
+    items: unknown;
+    notes: string | null;
+    serviceDate: string | null;
+    slot: string | null;
+    totalMinor: string;
+  },
 ): ScopeDiff {
   return {
     totalDiffMinor: (BigInt(newScope.totalMinor) - BigInt(oldScope.totalMinor)).toString(),

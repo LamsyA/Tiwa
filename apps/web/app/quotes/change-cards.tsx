@@ -38,13 +38,17 @@ export function ChangeCards({ changes }: { changes: PendingChangeRow[] }) {
             <Card>
               <div className="flex flex-col gap-2 p-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <p className="flex-1 font-medium">{row.booking.event.name} · v{row.version}</p>
+                  <p className="flex-1 font-medium">
+                    {row.booking.event.name} · v{row.version}
+                  </p>
                   <StatusPill tone="brand">{t('pendingBadge')}</StatusPill>
                 </div>
                 {row.reason && <p className="text-muted">{row.reason}</p>}
                 <div className="flex gap-2">
                   <Button onClick={() => void onRespond(row.id, true)}>{t('acceptChange')}</Button>
-                  <Button variant="secondary" onClick={() => void onRespond(row.id, false)}>{t('declineChange')}</Button>
+                  <Button variant="secondary" onClick={() => void onRespond(row.id, false)}>
+                    {t('declineChange')}
+                  </Button>
                 </div>
               </div>
             </Card>

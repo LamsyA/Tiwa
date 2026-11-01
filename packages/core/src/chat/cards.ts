@@ -78,7 +78,12 @@ export async function postCard(
 }
 
 /** Mirror a card into the event-team thread when one already exists. */
-export async function mirrorToEventTeam(actor: UserActor, eventId: string, type: CardType, refId: string): Promise<void> {
+export async function mirrorToEventTeam(
+  actor: UserActor,
+  eventId: string,
+  type: CardType,
+  refId: string,
+): Promise<void> {
   const threadId = await findEventTeamThread(eventId);
   if (!threadId) return;
   await postCard(actor, { threadId, type, refId });

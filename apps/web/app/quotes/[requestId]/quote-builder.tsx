@@ -152,20 +152,27 @@ export function QuoteBuilder({
               />
             </div>
           ))}
-          <Button
-            variant="secondary"
-            onClick={() => setItems([...items, { name: '', qty: 1, unitMinor: '0' }])}
-          >
+          <Button variant="secondary" onClick={() => setItems([...items, { name: '', qty: 1, unitMinor: '0' }])}>
             {t('addItem')}
           </Button>
           <div className="flex gap-2">
             <label className="flex flex-1 flex-col gap-1 text-sm">
               {t('taxLabel')}
-              <Input type="number" min={0} value={String(taxBps)} onChange={(e) => setTaxBps(Number(e.target.value) || 0)} />
+              <Input
+                type="number"
+                min={0}
+                value={String(taxBps)}
+                onChange={(e) => setTaxBps(Number(e.target.value) || 0)}
+              />
             </label>
             <label className="flex flex-1 flex-col gap-1 text-sm">
               {t('serviceLabel')}
-              <Input type="number" min={0} value={String(serviceBps)} onChange={(e) => setServiceBps(Number(e.target.value) || 0)} />
+              <Input
+                type="number"
+                min={0}
+                value={String(serviceBps)}
+                onChange={(e) => setServiceBps(Number(e.target.value) || 0)}
+              />
             </label>
           </div>
           <label className="flex flex-col gap-1 text-sm">
@@ -215,7 +222,9 @@ export function QuoteBuilder({
                 className="border-border rounded-md border px-2 text-sm"
               >
                 {DUE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
             </div>

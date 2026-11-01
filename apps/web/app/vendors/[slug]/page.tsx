@@ -68,23 +68,19 @@ export default async function VendorProfilePage({
         photos={photos}
         availabilityRows={availabilityRows}
         instantBook={
-          canBook && eventId
-            ? (
-              <InstantBookDialog
-                eventId={eventId}
-                vendorOrgId={profile.org.id}
-                spaces={profile.spaces.map((space) => ({
-                  id: space.id,
-                  name: space.name,
-                  slotPrices: space.slotPrices as Record<string, string>,
-                }))}
-              />
-            )
-            : null
+          canBook && eventId ? (
+            <InstantBookDialog
+              eventId={eventId}
+              vendorOrgId={profile.org.id}
+              spaces={profile.spaces.map((space) => ({
+                id: space.id,
+                name: space.name,
+                slotPrices: space.slotPrices as Record<string, string>,
+              }))}
+            />
+          ) : null
         }
-        siteVisit={
-          showVisit && eventId ? <SiteVisitDialog eventId={eventId} vendorOrgId={profile.org.id} /> : null
-        }
+        siteVisit={showVisit && eventId ? <SiteVisitDialog eventId={eventId} vendorOrgId={profile.org.id} /> : null}
       />
     </main>
   );

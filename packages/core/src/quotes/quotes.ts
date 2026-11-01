@@ -42,7 +42,10 @@ export const createQuoteSchema = z.object({
   eventId: z.string().uuid(),
   vendorOrgId: z.string().uuid(),
   spaceId: z.string().uuid().optional(),
-  serviceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateInvalid').optional(),
+  serviceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'dateInvalid')
+    .optional(),
   slot: z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'FULL_DAY']).optional(),
   items: z.array(quoteItemSchema).min(1, 'itemsRequired').max(100, 'itemsTooMany'),
   taxBps: z.number().int().min(0).max(100_000).default(0),
@@ -58,14 +61,16 @@ export async function createQuote(actor: UserActor, raw: z.infer<typeof createQu
   const input = createQuoteSchema.parse(raw);
   await loadOrgAccess(actor, input.vendorOrgId, 'org.manage');
   const org = await prisma.organization.findUnique({ where: { id: input.vendorOrgId }, select: { kind: true } });
-  if (!org || org.kind !== 'VENDOR') throw new ValidationError('Quotes come from vendor businesses', { key: 'notVendor' });
+  if (!org || org.kind !== 'VENDOR')
+    throw new ValidationError('Quotes come from vendor businesses', { key: 'notVendor' });
 
   if (input.requestId) {
     const request = await prisma.quoteRequest.findUnique({ where: { id: input.requestId } });
     if (!request || request.vendorOrgId !== input.vendorOrgId || request.eventId !== input.eventId) {
       throw new NotFoundError('Quote request not found');
     }
-    if (request.status !== 'OPEN') throw new ValidationError('This request is no longer open', { key: 'requestClosed' });
+    if (request.status !== 'OPEN')
+      throw new ValidationError('This request is no longer open', { key: 'requestClosed' });
   }
 
   const totals = calcQuoteTotals(input.items, input.taxBps, input.serviceBps, input.travelFeeMinor);
@@ -90,7 +95,8 @@ export async function createQuote(actor: UserActor, raw: z.infer<typeof createQu
       travelFeeMinor: BigInt(input.travelFeeMinor),
       subtotalMinor: totals.subtotalMinor,
       totalMinor: totals.totalMinor,
-      currency: (await prisma.event.findUniqueOrThrow({ where: { id: input.eventId }, select: { currency: true } })).currency,
+      currency: (await prisma.event.findUniqueOrThrow({ where: { id: input.eventId }, select: { currency: true } }))
+        .currency,
       notes: input.notes ?? null,
       cancellationTerms: input.cancellationTerms,
       proposedSchedule: input.proposedSchedule,
@@ -98,7 +104,13 @@ export async function createQuote(actor: UserActor, raw: z.infer<typeof createQu
     },
     select: { id: true, totalMinor: true },
   });
-  await audit(prisma, { actor, action: 'quote.create', targetType: 'Quote', targetId: quote.id, data: { eventId: input.eventId, vendorOrgId: input.vendorOrgId } });
+  await audit(prisma, {
+    actor,
+    action: 'quote.create',
+    targetType: 'Quote',
+    targetId: quote.id,
+    data: { eventId: input.eventId, vendorOrgId: input.vendorOrgId },
+  });
   return { quoteId: quote.id, totalMinor: quote.totalMinor.toString() };
 }
 
@@ -112,22 +124,30 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
   assertQuoteTransition(quote.status, 'SENT');
   if (quote.expiresAt <= new Date()) throw new ValidationError('This quote has expired', { key: 'quoteExpired' });
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.quote.update({ where: { id: quoteId }, data: { status: 'SENT', sentAt: new Date() } });
-    if (quote.requestId) {
-      await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'QUOTED' } });
-    }
-    await audit(tx, { actor, action: 'quote.send', targetType: 'Quote', targetId: quoteId, data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId } });
-    await enqueue(tx, 'quote.sent', { quoteId, eventId: quote.eventId, vendorOrgId: quote.vendorOrgId });
-    return { status: updated.status };
-  }).then(async (result) => {
-    try {
-      await mirrorToEventTeam(actor, quote.eventId, 'quote', quoteId);
-    } catch {
-      // Best-effort mirror; the send already succeeded.
-    }
-    return result;
-  });
+  return prisma
+    .$transaction(async (tx) => {
+      const updated = await tx.quote.update({ where: { id: quoteId }, data: { status: 'SENT', sentAt: new Date() } });
+      if (quote.requestId) {
+        await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'QUOTED' } });
+      }
+      await audit(tx, {
+        actor,
+        action: 'quote.send',
+        targetType: 'Quote',
+        targetId: quoteId,
+        data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId },
+      });
+      await enqueue(tx, 'quote.sent', { quoteId, eventId: quote.eventId, vendorOrgId: quote.vendorOrgId });
+      return { status: updated.status };
+    })
+    .then(async (result) => {
+      try {
+        await mirrorToEventTeam(actor, quote.eventId, 'quote', quoteId);
+      } catch {
+        // Best-effort mirror; the send already succeeded.
+      }
+      return result;
+    });
 }
 
 export async function withdrawQuote(actor: UserActor, raw: z.infer<typeof quoteIdSchema>) {
@@ -137,7 +157,13 @@ export async function withdrawQuote(actor: UserActor, raw: z.infer<typeof quoteI
   await loadOrgAccess(actor, quote.vendorOrgId, 'org.manage');
   assertQuoteTransition(quote.status, 'WITHDRAWN');
   const updated = await prisma.quote.update({ where: { id: quoteId }, data: { status: 'WITHDRAWN' } });
-  await audit(prisma, { actor, action: 'quote.withdraw', targetType: 'Quote', targetId: quoteId, data: { eventId: quote.eventId } });
+  await audit(prisma, {
+    actor,
+    action: 'quote.withdraw',
+    targetType: 'Quote',
+    targetId: quoteId,
+    data: { eventId: quote.eventId },
+  });
   return { status: updated.status };
 }
 
@@ -168,16 +194,23 @@ export async function updateQuote(actor: UserActor, raw: z.infer<typeof updateQu
     patch.travelFeeMinor ?? quote.travelFeeMinor.toString(),
   );
   let percentSum = 0;
-  const schedule = patch.proposedSchedule ?? (quote.proposedSchedule as unknown as { label: string; percentBps?: number }[]);
+  const schedule =
+    patch.proposedSchedule ?? (quote.proposedSchedule as unknown as { label: string; percentBps?: number }[]);
   for (const entry of schedule) percentSum += entry.percentBps ?? 0;
   if (percentSum > 10_000) throw new ValidationError('Schedule percents exceed 100%', { key: 'scheduleOver100' });
 
   const spaceId = patch.spaceId ?? quote.spaceId;
   const serviceDate = patch.serviceDate ? new Date(patch.serviceDate) : quote.serviceDate;
   const slot = patch.slot ?? quote.slot;
-  if ((spaceId || serviceDate || slot) && (patch.spaceId !== undefined || patch.serviceDate !== undefined || patch.slot !== undefined)) {
+  if (
+    (spaceId || serviceDate || slot) &&
+    (patch.spaceId !== undefined || patch.serviceDate !== undefined || patch.slot !== undefined)
+  ) {
     const space = spaceId
-      ? await prisma.venueSpace.findFirst({ where: { id: spaceId, profile: { orgId: quote.vendorOrgId } }, select: { id: true } })
+      ? await prisma.venueSpace.findFirst({
+          where: { id: spaceId, profile: { orgId: quote.vendorOrgId } },
+          select: { id: true },
+        })
       : null;
     if (spaceId && !space) throw new NotFoundError('Space not found');
     if (serviceDate && slot) {
@@ -205,12 +238,20 @@ export async function updateQuote(actor: UserActor, raw: z.infer<typeof updateQu
       ...(patch.proposedSchedule ? { proposedSchedule: patch.proposedSchedule } : {}),
       ...(patch.expiresAt ? { expiresAt: new Date(patch.expiresAt) } : {}),
       ...(patch.spaceId !== undefined ? { spaceId: patch.spaceId ?? null } : {}),
-      ...(patch.serviceDate !== undefined ? { serviceDate: patch.serviceDate ? new Date(patch.serviceDate) : null } : {}),
+      ...(patch.serviceDate !== undefined
+        ? { serviceDate: patch.serviceDate ? new Date(patch.serviceDate) : null }
+        : {}),
       ...(patch.slot !== undefined ? { slot: patch.slot ?? null } : {}),
     },
     select: { id: true, totalMinor: true },
   });
-  await audit(prisma, { actor, action: 'quote.update', targetType: 'Quote', targetId: quoteId, data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId } });
+  await audit(prisma, {
+    actor,
+    action: 'quote.update',
+    targetType: 'Quote',
+    targetId: quoteId,
+    data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId },
+  });
   return { quoteId: updated.id, totalMinor: updated.totalMinor.toString() };
 }
 
@@ -222,7 +263,13 @@ export async function declineEnquiry(actor: UserActor, raw: unknown) {
   await loadOrgAccess(actor, request.vendorOrgId, 'org.manage');
   if (request.status !== 'OPEN') throw new ValidationError('This request is no longer open', { key: 'requestClosed' });
   await prisma.quoteRequest.update({ where: { id: requestId }, data: { status: 'DECLINED_BY_VENDOR' } });
-  await audit(prisma, { actor, action: 'quote.declineEnquiry', targetType: 'QuoteRequest', targetId: requestId, data: { eventId: request.eventId } });
+  await audit(prisma, {
+    actor,
+    action: 'quote.declineEnquiry',
+    targetType: 'QuoteRequest',
+    targetId: requestId,
+    data: { eventId: request.eventId },
+  });
   return { status: 'DECLINED_BY_VENDOR' as const };
 }
 
@@ -288,10 +335,16 @@ export async function listEnquiries(actor: UserActor) {
       brief: true,
       status: true,
       createdAt: true,
-      event: { select: { name: true, type: true, startsAt: true, timezone: true, expectedGuests: true, currency: true } },
+      event: {
+        select: { name: true, type: true, startsAt: true, timezone: true, expectedGuests: true, currency: true },
+      },
     },
   });
-  const quoteCounts = await prisma.quote.groupBy({ by: ['requestId'], where: { requestId: { in: requests.map((row) => row.id) } }, _count: true });
+  const quoteCounts = await prisma.quote.groupBy({
+    by: ['requestId'],
+    where: { requestId: { in: requests.map((row) => row.id) } },
+    _count: true,
+  });
   const counts = new Map(quoteCounts.map((row) => [row.requestId, row._count]));
   return requests.map((row) => ({ ...row, draftQuotes: row.id ? (counts.get(row.id) ?? 0) : 0 }));
 }
@@ -304,7 +357,15 @@ export async function getEnquiry(actor: UserActor, raw: unknown) {
   await loadOrgAccess(actor, request.vendorOrgId, 'org.manage');
   const event = await prisma.event.findUniqueOrThrow({
     where: { id: request.eventId },
-    select: { name: true, type: true, startsAt: true, endsAt: true, timezone: true, expectedGuests: true, currency: true },
+    select: {
+      name: true,
+      type: true,
+      startsAt: true,
+      endsAt: true,
+      timezone: true,
+      expectedGuests: true,
+      currency: true,
+    },
   });
   const quotes = await prisma.quote.findMany({
     where: { requestId },
@@ -312,7 +373,14 @@ export async function getEnquiry(actor: UserActor, raw: unknown) {
     select: { id: true, status: true, totalMinor: true, currency: true, expiresAt: true },
   });
   return {
-    request: { id: request.id, eventId: request.eventId, category: request.category, vendorOrgId: request.vendorOrgId, brief: request.brief, status: request.status },
+    request: {
+      id: request.id,
+      eventId: request.eventId,
+      category: request.category,
+      vendorOrgId: request.vendorOrgId,
+      brief: request.brief,
+      status: request.status,
+    },
     event,
     quotes: quotes.map((quote) => ({ ...quote, totalMinor: quote.totalMinor.toString() })),
   };
@@ -330,7 +398,10 @@ export async function expireQuotes(now = new Date()) {
   const due = await findExpiredQuotes(now);
   let expired = 0;
   for (const quote of due) {
-    const updated = await prisma.quote.updateMany({ where: { id: quote.id, status: { in: ['DRAFT', 'SENT', 'CHANGES_REQUESTED'] } }, data: { status: 'EXPIRED' } });
+    const updated = await prisma.quote.updateMany({
+      where: { id: quote.id, status: { in: ['DRAFT', 'SENT', 'CHANGES_REQUESTED'] } },
+      data: { status: 'EXPIRED' },
+    });
     if (updated.count === 0) continue;
     expired += 1;
     await audit(prisma, {
@@ -340,7 +411,11 @@ export async function expireQuotes(now = new Date()) {
       targetId: quote.id,
       data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId },
     });
-    await enqueue(prisma, 'quote.expired', { quoteId: quote.id, eventId: quote.eventId, vendorOrgId: quote.vendorOrgId });
+    await enqueue(prisma, 'quote.expired', {
+      quoteId: quote.id,
+      eventId: quote.eventId,
+      vendorOrgId: quote.vendorOrgId,
+    });
   }
   return { expired };
 }

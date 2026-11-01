@@ -116,7 +116,11 @@ export function ChangeRequestDialog({
           </label>
           <label className="flex flex-col gap-1">
             {t('changeReasonLabel')}
-            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('changeReasonPlaceholder')} />
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder={t('changeReasonPlaceholder')}
+            />
           </label>
           <label className="flex flex-col gap-1">
             {t('serviceDateLabel')}
@@ -131,7 +135,17 @@ export function ChangeRequestDialog({
   );
 }
 
-export function PendingDecision({ versionId, mine, vendorName, version }: { versionId: string; mine: boolean; vendorName: string; version: number }) {
+export function PendingDecision({
+  versionId,
+  mine,
+  vendorName,
+  version,
+}: {
+  versionId: string;
+  mine: boolean;
+  vendorName: string;
+  version: number;
+}) {
   const t = useTranslations('bookings');
   const te = useTranslations('bookings.errors');
   const router = useRouter();

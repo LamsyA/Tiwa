@@ -34,15 +34,22 @@ describe('calcQuoteTotals', () => {
   it('property: total always equals subtotal + tax + service + travel', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.record({ qty: fc.integer({ min: 1, max: 100 }), unitMinor: fc.integer({ min: 0, max: 50_000_000 }) }), {
-          minLength: 1,
-          maxLength: 8,
-        }),
+        fc.array(
+          fc.record({ qty: fc.integer({ min: 1, max: 100 }), unitMinor: fc.integer({ min: 0, max: 50_000_000 }) }),
+          {
+            minLength: 1,
+            maxLength: 8,
+          },
+        ),
         fc.integer({ min: 0, max: 20_000 }),
         fc.integer({ min: 0, max: 20_000 }),
         fc.integer({ min: 0, max: 10_000_000 }),
         (rawItems, taxBps, serviceBps, travel) => {
-          const items = rawItems.map((item, i) => ({ name: `item ${i}`, qty: item.qty, unitMinor: String(item.unitMinor) }));
+          const items = rawItems.map((item, i) => ({
+            name: `item ${i}`,
+            qty: item.qty,
+            unitMinor: String(item.unitMinor),
+          }));
           const totals = calcQuoteTotals(items, taxBps, serviceBps, String(travel));
           const subtotal = items.reduce((sum, item) => sum + BigInt(item.qty) * BigInt(item.unitMinor), 0n);
           expect(totals.subtotalMinor).toBe(subtotal);

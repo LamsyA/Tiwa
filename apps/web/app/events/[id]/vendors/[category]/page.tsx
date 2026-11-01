@@ -10,11 +10,7 @@ import { QuoteCards } from './quote-cards.js';
 import { RequestDialog } from './request-dialog.js';
 
 /** Category detail (P7-T03/T05/T06): shortlist, requests, compare, decide. */
-export default async function VendorCategoryPage({
-  params,
-}: {
-  params: Promise<{ id: string; category: string }>;
-}) {
+export default async function VendorCategoryPage({ params }: { params: Promise<{ id: string; category: string }> }) {
   const { id: eventId, category } = await params;
   const label = VENDOR_CATEGORIES[category as keyof typeof VENDOR_CATEGORIES];
   if (!label) notFound();
@@ -22,7 +18,15 @@ export default async function VendorCategoryPage({
   const t = await getTranslations('quotes');
   if (!allowed) {
     return (
-      <EventFrame eventId={eventId} userId={ctx.actor.userId} access={access} active="vendors" title={label} invitesOn={invitesOn} momentsOn={momentsOn}>
+      <EventFrame
+        eventId={eventId}
+        userId={ctx.actor.userId}
+        access={access}
+        active="vendors"
+        title={label}
+        invitesOn={invitesOn}
+        momentsOn={momentsOn}
+      >
         <Banner tone="warning">{t('errors.FORBIDDEN')}</Banner>
       </EventFrame>
     );
@@ -33,7 +37,10 @@ export default async function VendorCategoryPage({
   ]);
   const flags = await getFlagsFor(event.countryCode);
   const unrequested = overview.shortlisted.filter(
-    (row) => !overview.requests.some((request) => request.vendorOrgId === row.orgId && (request.status === 'OPEN' || request.status === 'QUOTED')),
+    (row) =>
+      !overview.requests.some(
+        (request) => request.vendorOrgId === row.orgId && (request.status === 'OPEN' || request.status === 'QUOTED'),
+      ),
   );
 
   return (
@@ -92,7 +99,12 @@ export default async function VendorCategoryPage({
                 currency: quote.currency,
                 notes: quote.notes,
                 cancellationTerms: quote.cancellationTerms,
-                schedule: quote.proposedSchedule as { label: string; percentBps?: number; amountMinor?: string; due: string }[],
+                schedule: quote.proposedSchedule as {
+                  label: string;
+                  percentBps?: number;
+                  amountMinor?: string;
+                  due: string;
+                }[],
                 expiresAt: quote.expiresAt instanceof Date ? quote.expiresAt.toISOString() : String(quote.expiresAt),
               }))}
             />

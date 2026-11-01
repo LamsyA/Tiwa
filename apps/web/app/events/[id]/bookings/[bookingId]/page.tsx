@@ -29,7 +29,15 @@ export default async function BookingPage({
   const t = await getTranslations('bookings');
   if (!allowed) {
     return (
-      <EventFrame eventId={eventId} userId={ctx.actor.userId} access={access} active="vendors" title={t('title')} invitesOn={invitesOn} momentsOn={momentsOn}>
+      <EventFrame
+        eventId={eventId}
+        userId={ctx.actor.userId}
+        access={access}
+        active="vendors"
+        title={t('title')}
+        invitesOn={invitesOn}
+        momentsOn={momentsOn}
+      >
         <Banner tone="warning">{t('errors.FORBIDDEN')}</Banner>
       </EventFrame>
     );
@@ -38,7 +46,8 @@ export default async function BookingPage({
   if (!data || data.booking.eventId !== eventId) notFound();
   const { booking, vendor, event } = data;
 
-  const current = booking.versions.find((row) => row.status === 'ACCEPTED') ?? booking.versions[booking.versions.length - 1]!;
+  const current =
+    booking.versions.find((row) => row.status === 'ACCEPTED') ?? booking.versions[booking.versions.length - 1]!;
   const pending = booking.versions.find((row) => row.status === 'PROPOSED');
   const scope = current.scope as unknown as ScopeView & { totalMinor?: string };
   const files = await prisma.document.findMany({
@@ -74,7 +83,9 @@ export default async function BookingPage({
           </span>
           <span className="text-muted">{booking.paymentMode}</span>
           {booking.holdExpiresAt && booking.status === 'DEPOSIT_DUE' && (
-            <span className="text-muted">{t('holdLabel', { date: new Date(booking.holdExpiresAt).toLocaleString() })}</span>
+            <span className="text-muted">
+              {t('holdLabel', { date: new Date(booking.holdExpiresAt).toLocaleString() })}
+            </span>
           )}
         </div>
         {pending && (
@@ -92,7 +103,9 @@ export default async function BookingPage({
               <h3 className="font-medium">{t('scopeHeading')}</h3>
               <ul className="text-muted flex flex-col gap-0.5">
                 {scope.items.map((item, i) => (
-                  <li key={i}>{item.name} × {item.qty}</li>
+                  <li key={i}>
+                    {item.name} × {item.qty}
+                  </li>
                 ))}
               </ul>
               {scope.notes && <p className="text-muted">{scope.notes}</p>}
@@ -101,10 +114,14 @@ export default async function BookingPage({
               <h3 className="font-medium">{t('scheduleHeading')}</h3>
               <ul className="text-muted flex flex-col gap-0.5">
                 {booking.milestones.map((row) => (
-                  <li key={row.id}>{row.label} · {row.amountMinor} {row.currency} · {row.state}</li>
+                  <li key={row.id}>
+                    {row.label} · {row.amountMinor} {row.currency} · {row.state}
+                  </li>
                 ))}
               </ul>
-              <p className="text-muted">{event.name} · {event.timezone}</p>
+              <p className="text-muted">
+                {event.name} · {event.timezone}
+              </p>
               <div className="flex gap-2">
                 <ChangeRequestDialog
                   bookingId={booking.id}
@@ -122,7 +139,9 @@ export default async function BookingPage({
               <li key={row.id} className="border-border rounded-lg border p-3 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">v{row.version}</span>
-                  <StatusPill tone={row.status === 'ACCEPTED' ? 'success' : row.status === 'PROPOSED' ? 'brand' : 'neutral'}>
+                  <StatusPill
+                    tone={row.status === 'ACCEPTED' ? 'success' : row.status === 'PROPOSED' ? 'brand' : 'neutral'}
+                  >
                     {row.status}
                   </StatusPill>
                   {row.version === booking.currentVersion && <span className="text-muted">{t('currentBadge')}</span>}
@@ -164,7 +183,9 @@ export default async function BookingPage({
           <Card>
             <div className="p-4 text-sm">
               <p className="text-muted">{t('messagesSoon')}</p>
-              <Link href="/inbox" className="underline">{t('messagesTab')}</Link>
+              <Link href="/inbox" className="underline">
+                {t('messagesTab')}
+              </Link>
             </div>
           </Card>
         )}
@@ -173,7 +194,9 @@ export default async function BookingPage({
             <div className="flex flex-col gap-1 p-4 text-sm">
               {files.length === 0 && <p className="text-muted">{t('noFiles')}</p>}
               {files.map((file) => (
-                <p key={file.id}>{file.name} · {file.sizeBytes}</p>
+                <p key={file.id}>
+                  {file.name} · {file.sizeBytes}
+                </p>
               ))}
             </div>
           </Card>

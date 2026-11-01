@@ -110,99 +110,104 @@ export async function instantBook(actor: UserActor, raw: z.infer<typeof instantB
   }
 
   const date = new Date(input.serviceDate);
-  return prisma.$transaction(async (tx) => {
-    await checkVenueAvailability(tx, {
-      vendorOrgId: input.vendorOrgId,
-      spaceId: input.spaceId ?? null,
-      date,
-      slot: input.slot,
-    });
-    const booking = await tx.booking.create({
-      data: {
-        eventId: input.eventId,
+  return prisma
+    .$transaction(async (tx) => {
+      await checkVenueAvailability(tx, {
         vendorOrgId: input.vendorOrgId,
-        quoteId: null,
-        category: 'venue',
-        spaceId: input.spaceId ?? null,
-        serviceDate: date,
-        slot: input.slot,
-        status: 'ACCEPTED',
-        paymentMode: input.paymentMode,
-        totalMinor,
-        currency: event.currency,
-      },
-      select: { id: true },
-    });
-    await tx.bookingVersion.create({
-      data: {
-        bookingId: booking.id,
-        version: 1,
-        status: 'ACCEPTED',
-        scope: {
-          items: [{ name: space.name, qty: 1, unitMinor: totalMinor.toString() }],
-          notes: null,
-          schedule: [{ label: 'Full payment', percentBps: 10000, due: 'on_accept' }],
-          spaceId: input.spaceId ?? null,
-          serviceDate: input.serviceDate,
-          slot: input.slot,
-          quoteId: null,
-          taxBps: 0,
-          serviceBps: 0,
-          travelFeeMinor: '0',
-          instant: true,
-        },
-        totalMinor,
-        terms: input.terms,
-        proposedById: actor.userId,
-        decidedAt: new Date(),
-        acceptedByHostId: actor.userId,
-        acceptedByHostAt: new Date(),
-      },
-    });
-    await tx.paymentMilestone.create({
-      data: {
-        bookingId: booking.id,
-        kind: 'PAYMENT',
-        label: 'Full payment',
-        amountMinor: totalMinor,
-        currency: event.currency,
-        dueAt: new Date(),
-        releaseRule: 'ON_PAYMENT',
-      },
-    });
-    await tx.availabilityBlock.create({
-      data: {
-        orgId: input.vendorOrgId,
         spaceId: input.spaceId ?? null,
         date,
         slot: input.slot,
+      });
+      const booking = await tx.booking.create({
+        data: {
+          eventId: input.eventId,
+          vendorOrgId: input.vendorOrgId,
+          quoteId: null,
+          category: 'venue',
+          spaceId: input.spaceId ?? null,
+          serviceDate: date,
+          slot: input.slot,
+          status: 'ACCEPTED',
+          paymentMode: input.paymentMode,
+          totalMinor,
+          currency: event.currency,
+        },
+        select: { id: true },
+      });
+      await tx.bookingVersion.create({
+        data: {
+          bookingId: booking.id,
+          version: 1,
+          status: 'ACCEPTED',
+          scope: {
+            items: [{ name: space.name, qty: 1, unitMinor: totalMinor.toString() }],
+            notes: null,
+            schedule: [{ label: 'Full payment', percentBps: 10000, due: 'on_accept' }],
+            spaceId: input.spaceId ?? null,
+            serviceDate: input.serviceDate,
+            slot: input.slot,
+            quoteId: null,
+            taxBps: 0,
+            serviceBps: 0,
+            travelFeeMinor: '0',
+            instant: true,
+          },
+          totalMinor,
+          terms: input.terms,
+          proposedById: actor.userId,
+          decidedAt: new Date(),
+          acceptedByHostId: actor.userId,
+          acceptedByHostAt: new Date(),
+        },
+      });
+      await tx.paymentMilestone.create({
+        data: {
+          bookingId: booking.id,
+          kind: 'PAYMENT',
+          label: 'Full payment',
+          amountMinor: totalMinor,
+          currency: event.currency,
+          dueAt: new Date(),
+          releaseRule: 'ON_PAYMENT',
+        },
+      });
+      await tx.availabilityBlock.create({
+        data: {
+          orgId: input.vendorOrgId,
+          spaceId: input.spaceId ?? null,
+          date,
+          slot: input.slot,
+          bookingId: booking.id,
+        },
+      });
+      await audit(tx, {
+        actor,
+        action: 'booking.instant',
+        targetType: 'Booking',
+        targetId: booking.id,
+        data: { eventId: input.eventId, vendorOrgId: input.vendorOrgId },
+      });
+      await enqueue(tx, 'booking.created', {
         bookingId: booking.id,
-      },
+        eventId: input.eventId,
+        vendorOrgId: input.vendorOrgId,
+        paymentMode: input.paymentMode,
+      });
+      return { bookingId: booking.id };
+    })
+    .then(async (result) => {
+      try {
+        const threadId = await ensureBookingThread(result.bookingId);
+        await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
+        await mirrorToEventTeam(actor, input.eventId, 'booking', result.bookingId);
+      } catch (error) {
+        log.warn(
+          { err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId },
+          'booking cards failed',
+        );
+      }
+      return result;
     });
-    await audit(tx, {
-      actor,
-      action: 'booking.instant',
-      targetType: 'Booking',
-      targetId: booking.id,
-      data: { eventId: input.eventId, vendorOrgId: input.vendorOrgId },
-    });
-    await enqueue(tx, 'booking.created', {
-      bookingId: booking.id,
-      eventId: input.eventId,
-      vendorOrgId: input.vendorOrgId,
-      paymentMode: input.paymentMode,
-    });
-    return { bookingId: booking.id };
-  }).then(async (result) => {
-    try {
-      const threadId = await ensureBookingThread(result.bookingId);
-      await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
-      await mirrorToEventTeam(actor, input.eventId, 'booking', result.bookingId);
-    } catch (error) {
-      log.warn({ err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId }, 'booking cards failed');
-    }
-    return result;
-  });
 }
 
 /** Deposit holds past their deadline: CANCELLED, and the date is freed. */

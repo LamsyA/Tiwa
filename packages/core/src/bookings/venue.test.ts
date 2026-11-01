@@ -34,7 +34,9 @@ const DATE_B = '2027-03-11';
 
 async function makeVenueQuote(date = DATE_A) {
   const req = await requestQuotes(host, { eventId, category: 'venue', vendorOrgIds: [orgId] }).catch(async () => {
-    const existing = await prisma.quoteRequest.findFirstOrThrow({ where: { eventId, category: 'venue', vendorOrgId: orgId } });
+    const existing = await prisma.quoteRequest.findFirstOrThrow({
+      where: { eventId, category: 'venue', vendorOrgId: orgId },
+    });
     return { requests: [{ id: existing.id }], brief: {} as never };
   });
   const created = await prisma.quote.create({
@@ -142,21 +144,40 @@ describe('venue bookings', () => {
       paymentMode: 'DIRECT',
       terms: 'No refund within 7 days',
     });
-    const booking = await prisma.booking.findUniqueOrThrow({ where: { id: result.bookingId }, include: { milestones: true } });
+    const booking = await prisma.booking.findUniqueOrThrow({
+      where: { id: result.bookingId },
+      include: { milestones: true },
+    });
     expect(booking.totalMinor).toBe(3_000_000n);
     expect(booking.quoteId).toBeNull();
     expect(booking.milestones).toHaveLength(1);
     await expect(
-      instantBook(host, { eventId, vendorOrgId: orgId, spaceId, serviceDate: DATE_B, slot: 'EVENING', paymentMode: 'DIRECT', terms: 'x'.repeat(10) }),
+      instantBook(host, {
+        eventId,
+        vendorOrgId: orgId,
+        spaceId,
+        serviceDate: DATE_B,
+        slot: 'EVENING',
+        paymentMode: 'DIRECT',
+        terms: 'x'.repeat(10),
+      }),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   it('moving a venue booking onto a taken date is refused', async () => {
-    const booking = await prisma.booking.findFirstOrThrow({ where: { eventId, category: 'venue', serviceDate: new Date(DATE_B) } });
+    const booking = await prisma.booking.findFirstOrThrow({
+      where: { eventId, category: 'venue', serviceDate: new Date(DATE_B) },
+    });
     await expect(
       requestBookingChange(host, {
         bookingId: booking.id,
-        scope: { items: [{ name: 'Grand Hall', qty: 1, unitMinor: '3000000' }], notes: null, serviceDate: DATE_A, slot: 'FULL_DAY', spaceId },
+        scope: {
+          items: [{ name: 'Grand Hall', qty: 1, unitMinor: '3000000' }],
+          notes: null,
+          serviceDate: DATE_A,
+          slot: 'FULL_DAY',
+          spaceId,
+        },
         reason: 'Move to the busy day',
       }),
     ).rejects.toThrow();
@@ -196,13 +217,18 @@ describe('venue bookings', () => {
       },
       select: { id: true },
     });
-    const edited = await updateQuote(vendor, { quoteId: draft.id, items: [{ name: 'Hall', qty: 2, unitMinor: '1000000' }] });
+    const edited = await updateQuote(vendor, {
+      quoteId: draft.id,
+      items: [{ name: 'Hall', qty: 2, unitMinor: '1000000' }],
+    });
     expect(edited.totalMinor).toBe('2000000');
     // DATE_B EVENING is held by the instant booking: moving onto it is refused.
-    await expect(updateQuote(vendor, { quoteId: draft.id, serviceDate: DATE_B, slot: 'EVENING' as const })).rejects.toBeInstanceOf(
-      ConflictError,
-    );
+    await expect(
+      updateQuote(vendor, { quoteId: draft.id, serviceDate: DATE_B, slot: 'EVENING' as const }),
+    ).rejects.toBeInstanceOf(ConflictError);
     await sendQuote(vendor, { quoteId: draft.id });
-    await expect(updateQuote(vendor, { quoteId: draft.id, notes: 'late edit' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(updateQuote(vendor, { quoteId: draft.id, notes: 'late edit' })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
   });
 });

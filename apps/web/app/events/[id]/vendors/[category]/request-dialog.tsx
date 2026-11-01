@@ -58,10 +58,14 @@ export function RequestDialog({
                 <Checkbox
                   checked={picked.includes(vendor.orgId)}
                   onCheckedChange={(checked) =>
-                    setPicked(checked ? [...picked, vendor.orgId].slice(0, 5) : picked.filter((id) => id !== vendor.orgId))
+                    setPicked(
+                      checked ? [...picked, vendor.orgId].slice(0, 5) : picked.filter((id) => id !== vendor.orgId),
+                    )
                   }
                 />
-                <span className="flex-1">{vendor.name} · {vendor.city}</span>
+                <span className="flex-1">
+                  {vendor.name} · {vendor.city}
+                </span>
               </label>
             </li>
           ))}

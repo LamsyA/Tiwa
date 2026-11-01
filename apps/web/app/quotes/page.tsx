@@ -34,7 +34,9 @@ export default async function QuotesInboxPage() {
       })(),
     }));
   const changes = (
-    await Promise.all(vendorOrgIds.map((orgId) => listPendingChanges(ctx.actor, { vendorOrgId: orgId }).catch(() => [])))
+    await Promise.all(
+      vendorOrgIds.map((orgId) => listPendingChanges(ctx.actor, { vendorOrgId: orgId }).catch(() => [])),
+    )
   ).flat();
 
   return (

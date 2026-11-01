@@ -104,7 +104,11 @@ describe('site visits', () => {
     visits.push(visitId);
     const declined = await declineSiteVisit(venue, { visitId });
     expect(declined.status).toBe('DECLINED');
-    const { visitId: second } = await requestSiteVisit(host, { eventId, vendorOrgId: orgId, proposedTimes: [future(7)] });
+    const { visitId: second } = await requestSiteVisit(host, {
+      eventId,
+      vendorOrgId: orgId,
+      proposedTimes: [future(7)],
+    });
     visits.push(second);
     const cancelled = await cancelSiteVisit(host, { visitId: second });
     expect(cancelled.status).toBe('CANCELLED');

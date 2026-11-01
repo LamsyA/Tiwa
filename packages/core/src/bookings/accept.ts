@@ -92,7 +92,10 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
 
   let category = 'other';
   if (quote.requestId) {
-    const request = await prisma.quoteRequest.findUnique({ where: { id: quote.requestId }, select: { category: true } });
+    const request = await prisma.quoteRequest.findUnique({
+      where: { id: quote.requestId },
+      select: { category: true },
+    });
     if (request) category = request.category;
   } else {
     const profile = await prisma.businessProfile.findUnique({
@@ -111,137 +114,156 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
     select: { holdHours: true },
   });
 
-  return prisma.$transaction(async (tx) => {
-    const booking = await tx.booking.create({
-      data: {
-        eventId: quote.eventId,
-        vendorOrgId: quote.vendorOrgId,
-        quoteId: quote.id,
-        category,
-        spaceId: quote.spaceId,
-        serviceDate: quote.serviceDate,
-        slot: quote.slot,
-        status: depositDue ? 'DEPOSIT_DUE' : 'ACCEPTED',
-        paymentMode: input.paymentMode,
-        holdExpiresAt: depositDue ? new Date(now.getTime() + (profile?.holdHours ?? 72) * 3_600_000) : null,
-        totalMinor: quote.totalMinor,
-        currency: quote.currency,
-      },
-      select: { id: true },
-    });
-    await tx.bookingVersion.create({
-      data: {
-        bookingId: booking.id,
-        version: 1,
-        status: 'ACCEPTED',
-        scope: { items: quote.items, notes: quote.notes, schedule: quote.proposedSchedule, spaceId: quote.spaceId, serviceDate: quote.serviceDate?.toISOString() ?? null, slot: quote.slot, quoteId: quote.id, taxBps: quote.taxBps, serviceBps: quote.serviceBps, travelFeeMinor: quote.travelFeeMinor.toString() },
-        totalMinor: quote.totalMinor,
-        terms: quote.cancellationTerms,
-        proposedById: actor.userId,
-        decidedAt: now,
-        acceptedByHostId: actor.userId,
-        acceptedByHostAt: now,
-        acceptedByHostIp: opts?.ip ?? null,
-      },
-    });
-    for (let i = 0; i < schedule.length; i += 1) {
-      const entry = schedule[i]!;
-      await tx.paymentMilestone.create({
+  return prisma
+    .$transaction(async (tx) => {
+      const booking = await tx.booking.create({
+        data: {
+          eventId: quote.eventId,
+          vendorOrgId: quote.vendorOrgId,
+          quoteId: quote.id,
+          category,
+          spaceId: quote.spaceId,
+          serviceDate: quote.serviceDate,
+          slot: quote.slot,
+          status: depositDue ? 'DEPOSIT_DUE' : 'ACCEPTED',
+          paymentMode: input.paymentMode,
+          holdExpiresAt: depositDue ? new Date(now.getTime() + (profile?.holdHours ?? 72) * 3_600_000) : null,
+          totalMinor: quote.totalMinor,
+          currency: quote.currency,
+        },
+        select: { id: true },
+      });
+      await tx.bookingVersion.create({
         data: {
           bookingId: booking.id,
-          kind: 'PAYMENT',
-          label: entry.label,
-          amountMinor: amounts[i] ?? 0n,
-          currency: quote.currency,
-          dueAt: milestoneDueAt(entry.due, event.startsAt, now),
-          releaseRule: 'ON_PAYMENT',
+          version: 1,
+          status: 'ACCEPTED',
+          scope: {
+            items: quote.items,
+            notes: quote.notes,
+            schedule: quote.proposedSchedule,
+            spaceId: quote.spaceId,
+            serviceDate: quote.serviceDate?.toISOString() ?? null,
+            slot: quote.slot,
+            quoteId: quote.id,
+            taxBps: quote.taxBps,
+            serviceBps: quote.serviceBps,
+            travelFeeMinor: quote.travelFeeMinor.toString(),
+          },
+          totalMinor: quote.totalMinor,
+          terms: quote.cancellationTerms,
+          proposedById: actor.userId,
+          decidedAt: now,
+          acceptedByHostId: actor.userId,
+          acceptedByHostAt: now,
+          acceptedByHostIp: opts?.ip ?? null,
         },
       });
-    }
-    await tx.quote.update({ where: { id: quote.id }, data: { status: 'ACCEPTED' } });
-    if (quote.requestId) {
-      await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'CLOSED' } });
-    }
-    if (quote.spaceId && quote.serviceDate && quote.slot) {
-      // Venue quotes hold the date the moment they are accepted (P7-T10).
-      await checkVenueAvailability(tx, {
-        vendorOrgId: quote.vendorOrgId,
-        spaceId: quote.spaceId,
-        date: quote.serviceDate,
-        slot: quote.slot,
-      });
-      try {
-        await tx.availabilityBlock.create({
+      for (let i = 0; i < schedule.length; i += 1) {
+        const entry = schedule[i]!;
+        await tx.paymentMilestone.create({
           data: {
-            orgId: quote.vendorOrgId,
-            spaceId: quote.spaceId,
-            date: quote.serviceDate,
-            slot: quote.slot,
             bookingId: booking.id,
+            kind: 'PAYMENT',
+            label: entry.label,
+            amountMinor: amounts[i] ?? 0n,
+            currency: quote.currency,
+            dueAt: milestoneDueAt(entry.due, event.startsAt, now),
+            releaseRule: 'ON_PAYMENT',
           },
         });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          throw new ConflictError('That date was just booked', { key: 'slotTaken' });
-        }
-        throw error;
       }
-    }
-    if (input.declineOthers) {
-      // UF-16: only quotes in the same category are declined, never the whole event.
-      const others = await tx.quote.findMany({
-        where: {
-          eventId: quote.eventId,
-          id: { not: quote.id },
-          status: { in: ['SENT', 'CHANGES_REQUESTED'] },
-        },
-        select: { id: true, requestId: true, vendorOrgId: true },
-      });
-      const toDecline: string[] = [];
-      for (const other of others) {
-        let otherCategory: string | null = null;
-        if (other.requestId) {
-          const peer = await tx.quoteRequest.findUnique({ where: { id: other.requestId }, select: { category: true } });
-          otherCategory = peer?.category ?? null;
-        }
-        if (!otherCategory) {
-          const peerProfile = await tx.businessProfile.findUnique({
-            where: { orgId: other.vendorOrgId },
-            select: { categories: true },
+      await tx.quote.update({ where: { id: quote.id }, data: { status: 'ACCEPTED' } });
+      if (quote.requestId) {
+        await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'CLOSED' } });
+      }
+      if (quote.spaceId && quote.serviceDate && quote.slot) {
+        // Venue quotes hold the date the moment they are accepted (P7-T10).
+        await checkVenueAvailability(tx, {
+          vendorOrgId: quote.vendorOrgId,
+          spaceId: quote.spaceId,
+          date: quote.serviceDate,
+          slot: quote.slot,
+        });
+        try {
+          await tx.availabilityBlock.create({
+            data: {
+              orgId: quote.vendorOrgId,
+              spaceId: quote.spaceId,
+              date: quote.serviceDate,
+              slot: quote.slot,
+              bookingId: booking.id,
+            },
           });
-          otherCategory = peerProfile?.categories[0] ?? null;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            throw new ConflictError('That date was just booked', { key: 'slotTaken' });
+          }
+          throw error;
         }
-        if (otherCategory === category) toDecline.push(other.id);
       }
-      if (toDecline.length > 0) {
-        await tx.quote.updateMany({ where: { id: { in: toDecline } }, data: { status: 'DECLINED' } });
+      if (input.declineOthers) {
+        // UF-16: only quotes in the same category are declined, never the whole event.
+        const others = await tx.quote.findMany({
+          where: {
+            eventId: quote.eventId,
+            id: { not: quote.id },
+            status: { in: ['SENT', 'CHANGES_REQUESTED'] },
+          },
+          select: { id: true, requestId: true, vendorOrgId: true },
+        });
+        const toDecline: string[] = [];
+        for (const other of others) {
+          let otherCategory: string | null = null;
+          if (other.requestId) {
+            const peer = await tx.quoteRequest.findUnique({
+              where: { id: other.requestId },
+              select: { category: true },
+            });
+            otherCategory = peer?.category ?? null;
+          }
+          if (!otherCategory) {
+            const peerProfile = await tx.businessProfile.findUnique({
+              where: { orgId: other.vendorOrgId },
+              select: { categories: true },
+            });
+            otherCategory = peerProfile?.categories[0] ?? null;
+          }
+          if (otherCategory === category) toDecline.push(other.id);
+        }
+        if (toDecline.length > 0) {
+          await tx.quote.updateMany({ where: { id: { in: toDecline } }, data: { status: 'DECLINED' } });
+        }
       }
-    }
-    await audit(tx, {
-      actor,
-      action: 'booking.accept',
-      targetType: 'Booking',
-      targetId: booking.id,
-      data: { eventId: quote.eventId, quoteId: quote.id, paymentMode: input.paymentMode },
-      ...(opts?.ip ? { ip: opts.ip } : {}),
+      await audit(tx, {
+        actor,
+        action: 'booking.accept',
+        targetType: 'Booking',
+        targetId: booking.id,
+        data: { eventId: quote.eventId, quoteId: quote.id, paymentMode: input.paymentMode },
+        ...(opts?.ip ? { ip: opts.ip } : {}),
+      });
+      await enqueue(tx, 'booking.created', {
+        bookingId: booking.id,
+        eventId: quote.eventId,
+        vendorOrgId: quote.vendorOrgId,
+        paymentMode: input.paymentMode,
+      });
+      return { bookingId: booking.id, status: depositDue ? ('DEPOSIT_DUE' as const) : ('ACCEPTED' as const) };
+    })
+    .then(async (result) => {
+      // Chat cards (P7-T12): best-effort — a card failure must never undo the booking.
+      try {
+        const threadId = await ensureBookingThread(result.bookingId);
+        await postCard(actor, { threadId, type: 'quote', refId: quote.id });
+        await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
+        await mirrorToEventTeam(actor, quote.eventId, 'booking', result.bookingId);
+      } catch (error) {
+        log.warn(
+          { err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId },
+          'booking cards failed',
+        );
+      }
+      return result;
     });
-    await enqueue(tx, 'booking.created', {
-      bookingId: booking.id,
-      eventId: quote.eventId,
-      vendorOrgId: quote.vendorOrgId,
-      paymentMode: input.paymentMode,
-    });
-    return { bookingId: booking.id, status: depositDue ? ('DEPOSIT_DUE' as const) : ('ACCEPTED' as const) };
-  }).then(async (result) => {
-    // Chat cards (P7-T12): best-effort — a card failure must never undo the booking.
-    try {
-      const threadId = await ensureBookingThread(result.bookingId);
-      await postCard(actor, { threadId, type: 'quote', refId: quote.id });
-      await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
-      await mirrorToEventTeam(actor, quote.eventId, 'booking', result.bookingId);
-    } catch (error) {
-      log.warn({ err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId }, 'booking cards failed');
-    }
-    return result;
-  });
 }

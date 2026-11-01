@@ -84,14 +84,26 @@ export async function listEventBookings(actor: UserActor, raw: z.infer<typeof li
   const bookings = await prisma.booking.findMany({
     where: { eventId },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, vendorOrgId: true, category: true, status: true, paymentMode: true, totalMinor: true, currency: true },
+    select: {
+      id: true,
+      vendorOrgId: true,
+      category: true,
+      status: true,
+      paymentMode: true,
+      totalMinor: true,
+      currency: true,
+    },
   });
   const orgs = await prisma.organization.findMany({
     where: { id: { in: [...new Set(bookings.map((row) => row.vendorOrgId))] } },
     select: { id: true, name: true },
   });
   const names = new Map(orgs.map((org) => [org.id, org.name]));
-  return bookings.map((row) => ({ ...row, totalMinor: row.totalMinor.toString(), vendorName: names.get(row.vendorOrgId) ?? null }));
+  return bookings.map((row) => ({
+    ...row,
+    totalMinor: row.totalMinor.toString(),
+    vendorName: names.get(row.vendorOrgId) ?? null,
+  }));
 }
 
 export const vendorBriefSchema = z.object({ bookingId: z.string().uuid() });

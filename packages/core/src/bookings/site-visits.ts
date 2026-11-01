@@ -44,7 +44,10 @@ export const requestSiteVisitSchema = z.object({
   eventId: z.string().uuid(),
   vendorOrgId: z.string().uuid(),
   spaceId: z.string().uuid().optional(),
-  proposedTimes: z.array(z.string().datetime({ offset: true })).min(1, 'timesRequired').max(3, 'tooManyTimes'),
+  proposedTimes: z
+    .array(z.string().datetime({ offset: true }))
+    .min(1, 'timesRequired')
+    .max(3, 'tooManyTimes'),
   notes: z.string().trim().max(2000, 'notesTooLong').optional(),
 });
 
@@ -107,7 +110,11 @@ export async function confirmSiteVisit(actor: UserActor, raw: z.infer<typeof con
   }
   await prisma.siteVisit.update({ where: { id: visit.id }, data: { status: 'CONFIRMED', confirmedAt } });
   await audit(prisma, { actor, action: 'siteVisit.confirm', targetType: 'SiteVisit', targetId: visit.id, data: {} });
-  await enqueue(prisma, 'site_visit.confirmed', { visitId: visit.id, eventId: visit.eventId, vendorOrgId: visit.vendorOrgId });
+  await enqueue(prisma, 'site_visit.confirmed', {
+    visitId: visit.id,
+    eventId: visit.eventId,
+    vendorOrgId: visit.vendorOrgId,
+  });
   if (visit.eventId) {
     try {
       await mirrorToEventTeam(actor, visit.eventId, 'site_visit', visit.id);
@@ -133,7 +140,8 @@ export async function completeSiteVisit(actor: UserActor, raw: z.infer<typeof vi
   const { visitId } = visitIdSchema.parse(raw);
   const visit = await loadVisit(visitId);
   await visitAccess(actor, visit);
-  if (visit.status !== 'CONFIRMED') throw new ValidationError('Only a confirmed visit can complete', { key: 'visitNotConfirmed' });
+  if (visit.status !== 'CONFIRMED')
+    throw new ValidationError('Only a confirmed visit can complete', { key: 'visitNotConfirmed' });
   await prisma.siteVisit.update({ where: { id: visit.id }, data: { status: 'DONE' } });
   await audit(prisma, { actor, action: 'siteVisit.complete', targetType: 'SiteVisit', targetId: visit.id, data: {} });
   return { status: 'DONE' as const };
@@ -180,7 +188,15 @@ export async function listSiteVisits(actor: UserActor, raw: z.infer<typeof listS
     return prisma.siteVisit.findMany({
       where: { eventId: input.eventId },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, vendorOrgId: true, spaceId: true, proposedTimes: true, confirmedAt: true, status: true, notes: true },
+      select: {
+        id: true,
+        vendorOrgId: true,
+        spaceId: true,
+        proposedTimes: true,
+        confirmedAt: true,
+        status: true,
+        notes: true,
+      },
     });
   }
   if (input.vendorOrgId) {

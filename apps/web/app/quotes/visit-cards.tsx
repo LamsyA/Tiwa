@@ -4,7 +4,12 @@ import { Banner, Button, Card, Input, StatusPill } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { cancelSiteVisitAction, completeSiteVisitAction, confirmSiteVisitAction, declineSiteVisitAction } from './actions.js';
+import {
+  cancelSiteVisitAction,
+  completeSiteVisitAction,
+  confirmSiteVisitAction,
+  declineSiteVisitAction,
+} from './actions.js';
 
 export interface VisitRow {
   id: string;
@@ -76,7 +81,10 @@ export function VisitCards({ visits }: { visits: VisitRow[] }) {
                 )}
                 {visit.status === 'CONFIRMED' && (
                   <div className="flex gap-2">
-                    <Button variant="secondary" onClick={() => void run(completeSiteVisitAction({ visitId: visit.id }))}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => void run(completeSiteVisitAction({ visitId: visit.id }))}
+                    >
                       {t('completeVisit')}
                     </Button>
                     <Button variant="secondary" onClick={() => void run(cancelSiteVisitAction({ visitId: visit.id }))}>

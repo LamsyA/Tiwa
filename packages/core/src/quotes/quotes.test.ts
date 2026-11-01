@@ -25,7 +25,9 @@ async function makeVendorOrg(name: string): Promise<{ orgId: string; owner: User
   });
   orgs.push(org.id);
   await prisma.membership.create({ data: { orgId: org.id, userId: owner.userId, role: 'OWNER' } });
-  await prisma.businessProfile.create({ data: { orgId: org.id, categories: ['catering'], city: 'Lagos', currency: 'NGN', published: true } });
+  await prisma.businessProfile.create({
+    data: { orgId: org.id, categories: ['catering'], city: 'Lagos', currency: 'NGN', published: true },
+  });
   return { orgId: org.id, owner };
 }
 
@@ -56,7 +58,9 @@ beforeAll(async () => {
   });
   events.push(event.id);
   eventId = event.id;
-  await prisma.eventParticipant.create({ data: { eventId, userId: host.userId, role: 'HOST', permissions: { preset: 'host' } } });
+  await prisma.eventParticipant.create({
+    data: { eventId, userId: host.userId, role: 'HOST', permissions: { preset: 'host' } },
+  });
   ({ orgId: orgA, owner: vendorA } = await makeVendorOrg('QuoteVendorA'));
   ({ orgId: orgB, owner: vendorB } = await makeVendorOrg('QuoteVendorB'));
   const req = await requestQuotes(host, { eventId, category: 'catering', vendorOrgIds: [orgA] });
@@ -96,7 +100,9 @@ describe('vendor quoting', () => {
     });
     quoteIds.push(result.quoteId);
     const subtotal = 100n * 150_000n;
-    expect(result.totalMinor).toBe((subtotal + (subtotal * 750n) / 10_000n + (subtotal * 500n) / 10_000n + 250_000n).toString());
+    expect(result.totalMinor).toBe(
+      (subtotal + (subtotal * 750n) / 10_000n + (subtotal * 500n) / 10_000n + 250_000n).toString(),
+    );
   });
 
   it('sends the quote and marks the request QUOTED', async () => {
