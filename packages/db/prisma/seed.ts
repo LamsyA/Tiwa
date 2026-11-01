@@ -88,6 +88,8 @@ async function wipeDemoEvents(userId: string) {
   await prisma.guestGroup.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.seatingTable.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.document.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.expense.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.contribution.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: ids } } });
   // P5-T13: gallery universe (media, guestbook, sessions, zips + media outbox rows).
   const galleryIds = (await prisma.gallery.findMany({ where: { eventId: { in: ids } }, select: { id: true } })).map(
@@ -465,7 +467,201 @@ async function main() {
   await seedMarketplace();
   // P6-T19: an ended event the e2e venue worked on, with a guest who said yes (UF-31).
   await seedChatEnquiry(user.id, now);
+  // P10-T11: a planner org with 10 events, tasks, a booking, enquiries and leads (UF-21).
+  await seedPlannerUniverse(now);
   console.log(`[seed] demo host ${DEMO_EMAIL} + ${ids.length} events (birthday, end-of-year, concert, church).`);
+}
+
+// ───────────── P10-T11: planner universe (UF-21) ─────────────
+// Deterministic counts the planner e2e asserts: 10 events (3 this week),
+// 2 overdue tasks, 1 milestone due in 3 days, 2 open enquiries, pipeline
+// 2/1/1/0. Idempotent: wipes `seed-plan-*` events, the e2e planner's orgs
+// and their CRM rows before recreating.
+
+const PLANNER_E2E_EMAIL = 'planner-e2e@tiwa.test';
+
+async function seedPlannerUniverse(now: Date) {
+  const day = 86_400_000;
+  const daysOut = [1, 3, 6, 10, 15, 20, 30, 45, 60, -5];
+
+  const planner = await prisma.user.upsert({
+    where: { email: PLANNER_E2E_EMAIL },
+    update: { name: 'E2E Planner', countryCode: 'NG' },
+    create: { email: PLANNER_E2E_EMAIL, name: 'E2E Planner', countryCode: 'NG', emailVerified: true },
+    select: { id: true },
+  });
+
+  // Wipe previous run: events first (dependents), then orgs and CRM rows.
+  const oldEvents = await prisma.event.findMany({
+    where: { slug: { startsWith: 'seed-plan-' } },
+    select: { id: true },
+  });
+  const oldIds = oldEvents.map((row) => row.id);
+  if (oldIds.length > 0) {
+    await prisma.paymentMilestone.deleteMany({ where: { booking: { eventId: { in: oldIds } } } });
+    await prisma.bookingVersion.deleteMany({ where: { booking: { eventId: { in: oldIds } } } });
+    await prisma.booking.deleteMany({ where: { eventId: { in: oldIds } } });
+    await prisma.quoteRequest.deleteMany({ where: { eventId: { in: oldIds } } });
+    await prisma.task.deleteMany({ where: { eventId: { in: oldIds } } });
+    await prisma.eventParticipant.deleteMany({ where: { eventId: { in: oldIds } } });
+    await prisma.auditLog.deleteMany({ where: { targetId: { in: oldIds } } });
+    await prisma.event.deleteMany({ where: { id: { in: oldIds } } });
+  }
+  const oldOrgs = await prisma.organization.findMany({
+    where: { slug: { in: ['seed-planner-e2e', 'seed-plan-vendor'] } },
+    select: { id: true },
+  });
+  const oldOrgIds = oldOrgs.map((row) => row.id);
+  if (oldOrgIds.length > 0) {
+    await prisma.invoice.deleteMany({ where: { orgId: { in: oldOrgIds } } });
+    await prisma.proposal.deleteMany({ where: { orgId: { in: oldOrgIds } } });
+    await prisma.client.deleteMany({ where: { orgId: { in: oldOrgIds } } });
+    await prisma.vendorBookEntry.deleteMany({ where: { plannerOrgId: { in: oldOrgIds } } });
+    await prisma.membership.deleteMany({ where: { orgId: { in: oldOrgIds } } });
+    await prisma.auditLog.deleteMany({ where: { targetId: { in: oldOrgIds } } });
+    await prisma.organization.deleteMany({ where: { id: { in: oldOrgIds } } });
+  }
+
+  // A second planner login, so mobile + desktop projects sign in as their
+  // own person (magic links are single-use; chat.spec.ts does the same).
+  const plannerTwo = await prisma.user.upsert({
+    where: { email: 'planner-e2e-2@tiwa.test' },
+    update: { name: 'E2E Planner Two', countryCode: 'NG' },
+    create: { email: 'planner-e2e-2@tiwa.test', name: 'E2E Planner Two', countryCode: 'NG', emailVerified: true },
+    select: { id: true },
+  });
+  const plannerOrg = await prisma.organization.create({
+    data: {
+      kind: 'PLANNER',
+      name: 'E2E Planning Co',
+      slug: 'seed-planner-e2e',
+      countryCode: 'NG',
+      city: 'Lagos',
+      members: {
+        create: [
+          { userId: planner.id, role: 'OWNER' },
+          { userId: plannerTwo.id, role: 'ADMIN' },
+        ],
+      },
+    },
+    select: { id: true },
+  });
+  const vendorOrg = await prisma.organization.create({
+    data: { kind: 'VENDOR', name: 'Seed Plan Catering', slug: 'seed-plan-vendor', countryCode: 'NG', city: 'Lagos' },
+    select: { id: true },
+  });
+
+  const eventIds: string[] = [];
+  for (let i = 0; i < daysOut.length; i += 1) {
+    const startsAt = new Date(now.getTime() + (daysOut[i] as number) * day);
+    const event = await prisma.event.create({
+      data: {
+        slug: `seed-plan-${String(i + 1).padStart(2, '0')}`,
+        type: 'birthday',
+        format: 'PRIVATE_CELEBRATION',
+        status: 'ACTIVE',
+        name: `Seed Plan Event ${i + 1}`,
+        countryCode: 'NG',
+        currency: 'NGN',
+        timezone: 'Africa/Lagos',
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + 4 * 3_600_000),
+        createdById: planner.id,
+        participants: {
+          create: [{ userId: planner.id, orgId: plannerOrg.id, role: 'PLANNER', acceptedAt: now }],
+        },
+      },
+      select: { id: true },
+    });
+    eventIds.push(event.id);
+  }
+
+  // 2 overdue tasks (events 1–2) + future tasks elsewhere (not counted).
+  await prisma.task.createMany({
+    data: [
+      {
+        eventId: eventIds[0] as string,
+        title: 'Overdue flowers',
+        status: 'TODO',
+        dueAt: new Date(now.getTime() - day),
+      },
+      {
+        eventId: eventIds[1] as string,
+        title: 'Overdue cake',
+        status: 'IN_PROGRESS',
+        dueAt: new Date(now.getTime() - 2 * day),
+      },
+      {
+        eventId: eventIds[2] as string,
+        title: 'Future lights',
+        status: 'TODO',
+        dueAt: new Date(now.getTime() + 30 * day),
+      },
+    ],
+  });
+
+  // 1 booking with a milestone due in 3 days (paymentsDue = 1).
+  await prisma.booking.create({
+    data: {
+      eventId: eventIds[0] as string,
+      vendorOrgId: vendorOrg.id,
+      category: 'catering',
+      status: 'CONFIRMED',
+      paymentMode: 'OFFLINE',
+      totalMinor: 5_000_000n,
+      currency: 'NGN',
+      versions: {
+        create: {
+          version: 1,
+          status: 'ACCEPTED',
+          scope: { items: [] },
+          totalMinor: 5_000_000n,
+          terms: 'seed',
+          proposedById: planner.id,
+        },
+      },
+      milestones: {
+        create: {
+          label: 'Deposit',
+          amountMinor: 1_500_000n,
+          currency: 'NGN',
+          state: 'SCHEDULED',
+          dueAt: new Date(now.getTime() + 3 * day),
+        },
+      },
+    },
+  });
+
+  // 2 open enquiries addressed to the planner org.
+  await prisma.quoteRequest.createMany({
+    data: [
+      {
+        eventId: eventIds[3] as string,
+        category: 'planning',
+        vendorOrgId: plannerOrg.id,
+        brief: { note: 'seed' },
+        createdById: planner.id,
+      },
+      {
+        eventId: eventIds[4] as string,
+        category: 'coordination',
+        vendorOrgId: plannerOrg.id,
+        brief: { note: 'seed' },
+        createdById: planner.id,
+      },
+    ],
+  });
+
+  // Pipeline 2/1/1/0.
+  await prisma.client.createMany({
+    data: [
+      { orgId: plannerOrg.id, name: 'Seed Lead One', stage: 'ENQUIRY' },
+      { orgId: plannerOrg.id, name: 'Seed Lead Two', stage: 'ENQUIRY' },
+      { orgId: plannerOrg.id, name: 'Seed Proposal', stage: 'PROPOSAL_SENT' },
+      { orgId: plannerOrg.id, name: 'Seed Won', stage: 'WON' },
+    ],
+  });
+  console.log('[seed] planner universe: planner-e2e@tiwa.test + 10 events, 2 overdue tasks, 1 due milestone.');
 }
 
 // ───────────── P5-T13: gallery media seeding ─────────────
