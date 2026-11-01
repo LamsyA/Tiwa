@@ -156,6 +156,10 @@ model Event {
   budgetCategories       BudgetCategory[]
   guests                 Guest[]
   gallery                Gallery?
+  quoteRequests          QuoteRequest[]
+  quotes                 Quote[]
+  bookings               Booking[]
+  siteVisits             SiteVisit[]
 
   @@index([status, startsAt])
   @@index([createdById])
@@ -808,6 +812,218 @@ model Shortlist {
 
   @@unique([eventId, orgId])
   @@index([eventId])
+}
+
+// ───────────── Quotes & bookings (Backend.md §3, §5.1–§5.2; P7-T01) ─────────────
+// A QuoteRequest is the host/planner asking up to 5 vendors in one category
+// for a quote (QTE-01, UF-14). A Quote is the vendor's itemised offer
+// (QTE-02, UF-15). Accepting creates a Booking v1 + PaymentMilestones
+// (QTE-05, UF-16; money movement itself is P8). Change requests are new
+// BookingVersions with status PROPOSED (D-D03).
+
+model QuoteRequest {
+  id          String             @id @default(uuid(7))
+  eventId     String
+  category    String
+  vendorOrgId String
+  brief       Json
+  status      QuoteRequestStatus @default(OPEN)
+  createdById String
+  createdAt   DateTime           @default(now())
+  event       Event              @relation(fields: [eventId], references: [id])
+
+  @@unique([eventId, category, vendorOrgId])
+  @@index([vendorOrgId, status])
+  @@index([eventId, status])
+}
+
+enum QuoteRequestStatus {
+  OPEN
+  QUOTED
+  DECLINED_BY_VENDOR
+  CLOSED
+}
+
+model Quote {
+  id                String      @id @default(uuid(7))
+  requestId         String?
+  eventId           String
+  vendorOrgId       String
+  spaceId           String? // venue quotes: the space, date and slot offered
+  serviceDate       DateTime?   @db.Date
+  slot              DaySlot?
+  status            QuoteStatus @default(DRAFT)
+  items             Json // [{name, qty, unitMinor}]
+  taxBps            Int         @default(0)
+  serviceBps        Int         @default(0)
+  travelFeeMinor    BigInt      @default(0)
+  subtotalMinor     BigInt
+  totalMinor        BigInt
+  currency          String
+  notes             String?
+  cancellationTerms String
+  proposedSchedule  Json // [{label, percentBps | amountMinor, due: "on_accept"|"days_before:N"|"date:YYYY-MM-DD"}]
+  expiresAt         DateTime
+  sentAt            DateTime?
+  createdAt         DateTime    @default(now())
+  event             Event       @relation(fields: [eventId], references: [id])
+
+  @@index([eventId, status])
+  @@index([vendorOrgId, status])
+  @@index([requestId])
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  CHANGES_REQUESTED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+}
+
+model Booking {
+  id             String             @id @default(uuid(7))
+  eventId        String
+  vendorOrgId    String
+  quoteId        String             @unique
+  category       String
+  spaceId        String? // venue bookings
+  serviceDate    DateTime?          @db.Date
+  slot           DaySlot?
+  status         BookingStatus      @default(ACCEPTED)
+  paymentMode    PaymentMode
+  holdExpiresAt  DateTime? // provisional hold: unpaid deposit by this time → CANCELLED, date freed
+  currentVersion Int                @default(1) // number of the ACCEPTED BookingVersion in force
+  totalMinor     BigInt // cache of the current version's total
+  currency       String
+  deliveredAt    DateTime?
+  signedOffAt    DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime           @default(now())
+  event          Event              @relation(fields: [eventId], references: [id])
+  versions       BookingVersion[]
+  milestones     PaymentMilestone[]
+
+  @@index([vendorOrgId, status])
+  @@index([eventId, status])
+}
+
+enum BookingStatus {
+  ACCEPTED
+  DEPOSIT_DUE
+  CONFIRMED
+  IN_PROGRESS
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentMode {
+  DIRECT
+  HELD
+  OFFLINE
+}
+
+// Every version of a booking's agreed scope. A change request is simply a
+// PROPOSED version: accepting it makes it ACCEPTED (and the previous one
+// SUPERSEDED); declining keeps the old one in force.
+model BookingVersion {
+  id                 String        @id @default(uuid(7))
+  bookingId          String
+  version            Int
+  status             VersionStatus @default(PROPOSED)
+  scope              Json // items, notes, deliverables, date/slot changes
+  totalMinor         BigInt
+  terms              String
+  proposedById       String
+  reason             String? // null for version 1
+  decidedAt          DateTime?
+  acceptedByHostId   String?
+  acceptedByHostAt   DateTime?
+  acceptedByHostIp   String?
+  acceptedByVendorId String?
+  acceptedByVendorAt DateTime?
+  createdAt          DateTime      @default(now())
+  booking            Booking       @relation(fields: [bookingId], references: [id])
+
+  @@unique([bookingId, version])
+  @@index([bookingId, status])
+}
+
+enum VersionStatus {
+  PROPOSED
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+  SUPERSEDED
+}
+
+model SiteVisit {
+  id            String     @id @default(uuid(7))
+  eventId       String?
+  vendorOrgId   String // the venue
+  spaceId       String?
+  requestedById String
+  proposedTimes DateTime[] // up to 3 options
+  confirmedAt   DateTime? // the time the venue accepted
+  status        String     @default("REQUESTED") // REQUESTED | CONFIRMED | DECLINED | DONE | CANCELLED
+  notes         String?
+  createdAt     DateTime   @default(now())
+  event         Event?     @relation(fields: [eventId], references: [id])
+
+  @@index([vendorOrgId, status])
+  @@index([eventId])
+}
+
+// ───────────── Money (fields only in P7; behaviour in P8) ─────────────
+
+model PaymentMilestone {
+  id                    String         @id @default(uuid(7))
+  bookingId             String
+  kind                  MilestoneKind  @default(PAYMENT)
+  label                 String
+  amountMinor           BigInt
+  currency              String
+  dueAt                 DateTime?
+  releaseRule           ReleaseRule    @default(ON_PAYMENT)
+  releaseAt             DateTime? // for ON_DATE
+  autoReleaseAfterHours Int?
+  state                 MilestoneState @default(SCHEDULED)
+  paidAt                DateTime?
+  releasedAt            DateTime?
+  booking               Booking        @relation(fields: [bookingId], references: [id])
+
+  @@index([state, releaseAt])
+  @@index([bookingId])
+}
+
+enum MilestoneKind {
+  PAYMENT
+  SECURITY_DEPOSIT
+}
+
+enum ReleaseRule {
+  ON_PAYMENT
+  ON_DATE
+  ON_VENDOR_CHECK_IN
+  ON_HOST_SIGNOFF
+}
+
+enum MilestoneState {
+  SCHEDULED
+  PENDING_PAYMENT
+  PAID_DIRECT
+  HELD
+  RELEASED
+  REFUNDED
+  PARTLY_REFUNDED
+  DISPUTED
+  RECORDED_OFFLINE
+  CONFIRMED_OFFLINE
 }
 
 // ───────────── Chat (Backend.md §3, §9a; P6-T11) ─────────────
