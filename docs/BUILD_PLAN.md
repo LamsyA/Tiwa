@@ -327,7 +327,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P9-T02 Core `budgetSummary` (Planned, Committed, Paid, Outstanding, Uncommitted; per category; includes offline confirmed; income lines) with property tests.
 - [x] P9-T03 Money page with stat cards, chart (lazy), tabs Budget / Payments / Contributions / Expenses / Income.
 - [x] P9-T04 Allocations editor, expenses with receipt photo, contributions (pledged/received, kinds), income lines (tickets auto-filled later in P11).
-- [ ] P9-T05 Alerts job (over budget; payment due 7 d / 1 d). *(D-X28: computed on read and shown in-app; notification delivery with P13.)*
+- [x] P9-T05 Alerts job (over budget; payment due 7 d / 1 d). *(D-X28: computed on read and shown in-app; notification delivery with P13.)*
 - [ ] P9-T06 Exports (PDF via worker, CSV direct). *(D-X28: PDF = print-ready page, no worker.)*
 - [ ] P9-T07 Overview money card wired; live update via SSE when payments land. *(D-X28: 5 s refresh while visible, no Redis needed.)*
 - [ ] P9-T08 e2e UF-20.

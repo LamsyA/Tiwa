@@ -1,6 +1,13 @@
-import { budgetSummary, listContributions, listExpenses, listPaymentSchedule, OTHER_KEY } from '@tiwa/core';
+import {
+  budgetAlerts,
+  budgetSummary,
+  listContributions,
+  listExpenses,
+  listPaymentSchedule,
+  OTHER_KEY,
+} from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa/ui';
+import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
@@ -62,15 +69,40 @@ export default async function EventMoneyPage({
   const money = (value: bigint | string) => <MoneyText value={value.toString()} currency={currency} />;
 
   const [schedule, expenses, contributions] = await Promise.all([
-    active === 'payments' ? listPaymentSchedule(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
+    listPaymentSchedule(ctx.actor, { eventId: id }, access),
     active === 'expenses' ? listExpenses(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
     active === 'contributions' || active === 'income'
       ? listContributions(ctx.actor, { eventId: id }, access)
       : Promise.resolve([]),
   ]);
 
+  const alerts = budgetAlerts(summary, schedule);
+
   return frame(
     <div className="flex flex-col gap-4 py-2">
+      {alerts.length > 0 && (
+        <div className="flex flex-col gap-2" role="status">
+          {alerts.map((alert) =>
+            alert.kind === 'over_budget' ? (
+              <Banner key={`over-${alert.key ?? 'total'}`} tone="warning">
+                {alert.key === null ? t('alerts.overTotal') : t('alerts.overLine', { line: alert.label ?? alert.key })}{' '}
+                {money(alert.overMinor)}
+              </Banner>
+            ) : (
+              <Banner key={alert.milestoneId} tone={alert.within === '1d' ? 'danger' : 'info'}>
+                <Link href={`/events/${id}/bookings/${alert.bookingId}?tab=payments`} className="underline">
+                  {t(alert.within === '1d' ? 'alerts.dueDay' : 'alerts.dueWeek', {
+                    vendor: alert.vendorName,
+                    label: alert.label,
+                    date: alert.dueAt.toLocaleDateString(),
+                  })}
+                </Link>{' '}
+                {money(alert.amountMinor)}
+              </Banner>
+            ),
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label={t('planned')} value={money(totals.plannedMinor)} />
         <StatCard label={t('committed')} value={money(totals.committedMinor)} />

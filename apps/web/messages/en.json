@@ -485,6 +485,12 @@
         "typeNotAllowed": "Upload a photo or PDF.",
         "tooLarge": "That file is too large (10 MB max).",
         "uploadFailed": "The receipt didn't upload. Try again."
+      },
+      "alerts": {
+        "overTotal": "Committed spending is over your total budget by",
+        "overLine": "{line} is over its budget by",
+        "dueWeek": "{vendor} · {label} due {date}:",
+        "dueDay": "Due now — {vendor} · {label} ({date}):"
       }
     },
     "plan": {
