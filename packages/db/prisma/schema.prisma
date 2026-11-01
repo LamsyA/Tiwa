@@ -49,10 +49,10 @@ model User {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   deletedAt           DateTime?
-  memberships        Membership[]
-  participants       EventParticipant[]
-  createdEvents      Event[]
-  ownedTasks         Task[]             @relation("TaskOwner")
+  memberships         Membership[]
+  participants        EventParticipant[]
+  createdEvents       Event[]
+  ownedTasks          Task[]             @relation("TaskOwner")
   sessions            Session[]
   accounts            Account[]
 }
@@ -77,7 +77,7 @@ model Organization {
   createdAt     DateTime           @default(now())
   deletedAt     DateTime?
   members       Membership[]
-  profile      BusinessProfile?
+  profile       BusinessProfile?
   // bankAccounts BankAccount[] — arrives with P8 (BankAccount model)
 }
 
@@ -153,7 +153,7 @@ model Event {
   programme              ProgrammeItem[]
   tasks                  Task[]
   documents              Document[]
-  budgetCategories         BudgetCategory[]
+  budgetCategories       BudgetCategory[]
   guests                 Guest[]
   gallery                Gallery?
 
@@ -311,20 +311,20 @@ model Document {
 // ───────────── Moments (Backend.md §3; galleries auto-created on finalize) ─────────────
 
 model Gallery {
-  id                  String         @id @default(uuid(7))
-  eventId             String         @unique
-  code                String         @unique // short public code for /m/{code}
-  accessCode          String?                   // printed on cards for guests-only galleries
-  privacy             GalleryPrivacy @default(LINK)
-  moderation          ModerationMode @default(INSTANT)
-  slideshowDelaySec   Int            @default(30)
-  guestDownloads      Boolean        @default(true)
-  showFooter          Boolean        @default(true)
-  plan                GalleryPlan    @default(FREE)
-  itemLimit           Int            @default(500)
-  expiresAt           DateTime?
-  event               Event          @relation(fields: [eventId], references: [id])
-  items               MediaItem[]
+  id                String         @id @default(uuid(7))
+  eventId           String         @unique
+  code              String         @unique // short public code for /m/{code}
+  accessCode        String? // printed on cards for guests-only galleries
+  privacy           GalleryPrivacy @default(LINK)
+  moderation        ModerationMode @default(INSTANT)
+  slideshowDelaySec Int            @default(30)
+  guestDownloads    Boolean        @default(true)
+  showFooter        Boolean        @default(true)
+  plan              GalleryPlan    @default(FREE)
+  itemLimit         Int            @default(500)
+  expiresAt         DateTime?
+  event             Event          @relation(fields: [eventId], references: [id])
+  items             MediaItem[]
 }
 
 enum GalleryPrivacy {
@@ -688,28 +688,28 @@ enum DeliveryStatus {
 // One public profile per business. Organization.kind (PLANNER | VENDOR) says which kind it is.
 
 model BusinessProfile {
-  id           String   @id @default(uuid(7))
-  orgId        String   @unique
-  categories   String[] // keys from packages/config
-  bio          String?
-  city         String
-  serviceAreaKm Int     @default(50)
-  lat          Float?
-  lng          Float?
-  startingPriceMinor BigInt?
-  currency     String
-  travelFeeNote String?
-  instantBook  Boolean  @default(false) // venues/vendors that accept bookings without a quote step
-  holdHours    Int      @default(72) // provisional hold length before the deposit is due
-  allowGuestEnquiries Boolean @default(true) // guests of events this business worked on may message it after the event
-  published    Boolean  @default(false)
+  id                      String       @id @default(uuid(7))
+  orgId                   String       @unique
+  categories              String[] // keys from packages/config
+  bio                     String?
+  city                    String
+  serviceAreaKm           Int          @default(50)
+  lat                     Float?
+  lng                     Float?
+  startingPriceMinor      BigInt?
+  currency                String
+  travelFeeNote           String?
+  instantBook             Boolean      @default(false) // venues/vendors that accept bookings without a quote step
+  holdHours               Int          @default(72) // provisional hold length before the deposit is due
+  allowGuestEnquiries     Boolean      @default(true) // guests of events this business worked on may message it after the event
+  published               Boolean      @default(false)
   availabilityConfirmedAt DateTime?
-  ratingAvg    Float? // cache, recomputed by marketplace/rating-rollup
-  ratingCount  Int      @default(0) // cache
-  completedBookings Int @default(0) // cache
-  searchText   String? // denormalised for trigram search
-  org          Organization @relation(fields: [orgId], references: [id])
-  spaces       VenueSpace[]
+  ratingAvg               Float? // cache, recomputed by marketplace/rating-rollup
+  ratingCount             Int          @default(0) // cache
+  completedBookings       Int          @default(0) // cache
+  searchText              String? // denormalised for trigram search
+  org                     Organization @relation(fields: [orgId], references: [id])
+  spaces                  VenueSpace[]
 
   @@index([city])
 }
@@ -717,23 +717,23 @@ model BusinessProfile {
 // A bookable space inside a venue business: a hall, garden, rooftop, conference room.
 // Only vendors with the "venue" category have spaces.
 model VenueSpace {
-  id            String   @id @default(uuid(7))
-  profileId     String
-  name          String // "Grand Hall", "Garden"
-  indoor        Boolean  @default(true)
-  capacitySeated   Int? // banquet / round tables
-  capacityTheatre  Int? // rows of chairs
-  capacityStanding Int?
-  sizeSqm       Int?
-  amenities     String[] // keys: parking, power_backup, air_conditioning, stage, changing_room, kitchen, sound_system, wheelchair_access
-  rules         String? // e.g. curfew, decor limits, outside caterer policy
-  slotPrices    Json // {"MORNING": "15000000", ...} minor units as strings
-  setupMinutes    Int    @default(120) // included setup time before the slot
-  teardownMinutes Int    @default(60)
+  id                   String          @id @default(uuid(7))
+  profileId            String
+  name                 String // "Grand Hall", "Garden"
+  indoor               Boolean         @default(true)
+  capacitySeated       Int? // banquet / round tables
+  capacityTheatre      Int? // rows of chairs
+  capacityStanding     Int?
+  sizeSqm              Int?
+  amenities            String[] // keys: parking, power_backup, air_conditioning, stage, changing_room, kitchen, sound_system, wheelchair_access
+  rules                String? // e.g. curfew, decor limits, outside caterer policy
+  slotPrices           Json // {"MORNING": "15000000", ...} minor units as strings
+  setupMinutes         Int             @default(120) // included setup time before the slot
+  teardownMinutes      Int             @default(60)
   securityDepositMinor BigInt? // refundable caution fee
-  photoKeys     String[]
-  active        Boolean  @default(true)
-  profile       BusinessProfile @relation(fields: [profileId], references: [id])
+  photoKeys            String[]
+  active               Boolean         @default(true)
+  profile              BusinessProfile @relation(fields: [profileId], references: [id])
 
   @@index([profileId])
 }
@@ -746,28 +746,28 @@ enum DaySlot {
 }
 
 model PortfolioItem {
-  id        String  @id @default(uuid(7))
+  id        String    @id @default(uuid(7))
   orgId     String
   kind      MediaKind
   key       String
   thumbKey  String?
   caption   String?
   eventId   String? // verified Tiwa event (if from Moments)
-  sortOrder Int     @default(0)
+  sortOrder Int       @default(0)
 
   @@index([orgId])
 }
 
 model ServicePackage {
-  id          String  @id @default(uuid(7))
+  id          String   @id @default(uuid(7))
   orgId       String
   name        String
   description String?
   priceMinor  BigInt?
   currency    String
   includes    String[]
-  addOns      Json    @default("[]")
-  active      Boolean @default(true)
+  addOns      Json     @default("[]")
+  active      Boolean  @default(true)
 
   @@index([orgId])
 }
@@ -789,14 +789,14 @@ model AvailabilityBlock {
 
 // Named BusinessVerification to avoid clashing with Better Auth's own `verification` table.
 model BusinessVerification {
-  id         String   @id @default(uuid(7))
-  orgId      String
-  status     VerificationStatus @default(PENDING)
-  documents  Json // [{type, storageKey}]
-  decidedBy  String?
-  decidedAt  DateTime?
-  reason     String?
-  createdAt  DateTime @default(now())
+  id        String             @id @default(uuid(7))
+  orgId     String
+  status    VerificationStatus @default(PENDING)
+  documents Json // [{type, storageKey}]
+  decidedBy String?
+  decidedAt DateTime?
+  reason    String?
+  createdAt DateTime           @default(now())
 
   @@index([orgId, status])
 }
@@ -808,4 +808,120 @@ model Shortlist {
 
   @@unique([eventId, orgId])
   @@index([eventId])
+}
+
+// ───────────── Chat (Backend.md §3, §9a; P6-T11) ─────────────
+// One Thread model for every conversation; a participant is a person or a
+// whole business (orgId) so every team member with access can read and reply.
+
+model Thread {
+  id            String              @id @default(uuid(7))
+  kind          ThreadKind
+  context       ChatContext // where the chat was started
+  contextId     String? // profile/quote/booking/lead/site visit/event it came from
+  eventId       String? // null for pre-event profile enquiries
+  bookingId     String? // relation arrives with Booking (P7)
+  createdById   String
+  lastMessageAt DateTime?
+  createdAt     DateTime            @default(now())
+  participants  ThreadParticipant[]
+  messages      Message[]
+
+  @@index([eventId])
+  @@index([bookingId])
+  @@index([lastMessageAt])
+  @@index([kind, context, contextId])
+}
+
+enum ThreadKind {
+  EVENT // the event team: host, co-hosts, planner (and staff)
+  BOOKING // one booking: host side + planner + that vendor
+  DIRECT // two parties (person or business) talking 1:1
+}
+
+enum ChatContext {
+  EVENT_TEAM
+  BOOKING
+  PROFILE
+  QUOTE_REQUEST
+  QUOTE
+  SITE_VISIT
+  PLANNER_CLIENT
+  PLANNER_VENDOR
+  GUEST_ENQUIRY
+}
+
+model ThreadParticipant {
+  id              String    @id @default(uuid(7))
+  threadId        String
+  userId          String? // a person
+  orgId           String? // or a whole business (planner/vendor team)
+  side            ChatSide
+  lastReadAt      DateTime? // messages up to here are "seen"
+  lastDeliveredAt DateTime?
+  mutedUntil      DateTime?
+  archivedAt      DateTime?
+  joinedAt        DateTime  @default(now())
+  leftAt          DateTime?
+  thread          Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([threadId])
+}
+
+enum ChatSide {
+  CLIENT
+  PLANNER
+  VENDOR
+  GUEST
+  TEAM
+}
+
+model Message {
+  id              String      @id @default(uuid(7))
+  threadId        String
+  authorUserId    String
+  authorOrgId     String? // set when sending on behalf of a business
+  clientMessageId String // generated by the sender's device; makes sending idempotent
+  kind            MessageKind @default(TEXT)
+  body            String? // original text (staff and the author always see this)
+  maskedBody      String? // contact details hidden, shown to the other side while sharing is locked
+  hasContactInfo  Boolean     @default(false)
+  attachments     Json        @default("[]") // [{key, mime, sizeBytes, width?, height?, durationSec?, name}]
+  card            Json? // {type: "quote"|"booking"|"site_visit"|"profile"|"payment", id}
+  replyToId       String?
+  mentions        String[]
+  isDecision      Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  editedAt        DateTime? // editable for 15 minutes
+  deletedAt       DateTime? // "This message was deleted"
+  thread          Thread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, clientMessageId])
+  @@index([threadId, createdAt])
+}
+
+enum MessageKind {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+  CARD
+  SYSTEM
+}
+
+model UserBlock {
+  id            String   @id @default(uuid(7))
+  blockerUserId String?
+  blockerOrgId  String?
+  blockedUserId String?
+  blockedOrgId  String?
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  @@index([blockerUserId])
+  @@index([blockerOrgId])
+  @@index([blockedUserId])
+  @@index([blockedOrgId])
 }

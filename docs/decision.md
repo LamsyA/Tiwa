@@ -268,3 +268,10 @@ Template:
 - Decision: `packages/moderation` ships the adapter interface plus `FakeModeration` only. No vendor SDK is wired: CSAM hash-matching (PhotoDNA/NCMEC) needs a partnership and legal sign-off, and every commercial vision API needs a billing key — both are human calls (Q-004).
 - Why: Per AGENTS §5, missing external credentials ship as Fake + `.env.example` entry + a QUESTIONS.md item. Fake approves everything, so it must never reach production unnoticed: `MODERATION_PROVIDER` defaults to `fake` and any other value already throws `unsupported moderation provider` until a real adapter lands.
 - Affects: packages/moderation, docs/QUESTIONS.md (Q-004), P4-T07 send path already renders via templates (unaffected).
+
+### 2026-11-01 — Chat permission rules and protected indexes
+- ID: D-X19
+- Status: AGENT
+- Decision: `canMessage(from, to, facts)` is a pure function over loaded facts (blocks, shared objects, shared event/booking, attendance, …), one branch per row of Backend §9a.1; blocks always win. Rows the spec leaves open: client ↔ client and planner ↔ planner are allowed only inside a shared event or booking thread (same rule as vendor ↔ vendor); host ↔ guest chat is refused (they use invites and Moments). The planner CRM condition is a fact the P10 CRM will supply. Separately: `prisma migrate dev` emits `DROP INDEX` for the hand-written `availability_unique` and `business_search_trgm` indexes on every new migration — a db test now fails if any migration drops them, and they were restored after the P6-T11 migration first dropped them.
+- Why: table-testable rules without a database; the index trap silently removes the double-booking guard (D-D07).
+- Affects: packages/core/src/chat, packages/db (chat models, migrations guard test).

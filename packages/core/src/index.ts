@@ -51,3 +51,4 @@ export * from './marketplace/shortlist.js';
 export * from './marketplace/spaces.js';
 export * from './marketplace/venues.js';
 export * from './marketplace/verification.js';
+export * from './chat/can-message.js';
