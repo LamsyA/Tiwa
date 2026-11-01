@@ -129,7 +129,7 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
         bookingId: booking.id,
         version: 1,
         status: 'ACCEPTED',
-        scope: { items: quote.items, notes: quote.notes, schedule: quote.proposedSchedule, spaceId: quote.spaceId, serviceDate: quote.serviceDate?.toISOString() ?? null, slot: quote.slot, quoteId: quote.id },
+        scope: { items: quote.items, notes: quote.notes, schedule: quote.proposedSchedule, spaceId: quote.spaceId, serviceDate: quote.serviceDate?.toISOString() ?? null, slot: quote.slot, quoteId: quote.id, taxBps: quote.taxBps, serviceBps: quote.serviceBps, travelFeeMinor: quote.travelFeeMinor.toString() },
         totalMinor: quote.totalMinor,
         terms: quote.cancellationTerms,
         proposedById: actor.userId,
