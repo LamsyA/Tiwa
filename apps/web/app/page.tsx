@@ -184,7 +184,7 @@ function Stage({ t }: { t: T }) {
             <span className="size-2.5 rounded-full bg-[#febc2e]" />
             <span className="size-2.5 rounded-full bg-[#28c840]" />
             <span className="bg-bg text-muted ml-3 hidden h-6 flex-1 items-center rounded-md px-3 text-xs sm:flex">
-              tiwa.app/events/ada-30
+              {t('mock.url')}
             </span>
           </div>
           <div className="bg-surface grid gap-3 rounded-b-2xl p-3 sm:grid-cols-[1.4fr_1fr] sm:p-4">
@@ -414,7 +414,7 @@ function Chat({ t }: { t: T }) {
                 {/* Thread header */}
                 <div className="border-border/70 flex items-center gap-3 border-b px-4 pt-8 pb-3">
                   <span className="from-brand to-accent grid size-10 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white">
-                    MP
+                    {t('mockInitials')}
                   </span>
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{t('chat.thread')}</p>

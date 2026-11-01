@@ -46,18 +46,23 @@ export default async function BookingPage({
   const data = await getBooking(ctx.actor, { bookingId }).catch(() => null);
   if (!data || data.booking.eventId !== eventId) notFound();
   const { booking, vendor, event } = data;
+  const pricesHidden = 'pricesHidden' in booking;
 
   const current =
     booking.versions.find((row) => row.status === 'ACCEPTED') ?? booking.versions[booking.versions.length - 1]!;
   const pending = booking.versions.find((row) => row.status === 'PROPOSED');
-  const scope = current.scope as unknown as ScopeView & { totalMinor?: string };
+  const scope = (
+    pricesHidden ? null : (current.scope as unknown as ScopeView & { totalMinor?: string })
+  ) as (ScopeView & { totalMinor?: string }) | null;
   const files = await prisma.document.findMany({
     where: { bookingId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, mime: true, sizeBytes: true },
   });
   const payments = await listBookingPayments(booking.id);
-  const money = bookingMoney(booking.milestones);
+  const money = pricesHidden
+    ? { totalMinor: 0n, securedMinor: 0n, awaitingMinor: 0n, outstandingMinor: 0n }
+    : bookingMoney(booking.milestones);
   const closed = booking.status === 'CANCELLED' || booking.status === 'COMPLETED';
 
   const tabs = [
@@ -83,7 +88,11 @@ export default async function BookingPage({
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <StatusPill tone={booking.status === 'CONFIRMED' ? 'success' : 'neutral'}>{booking.status}</StatusPill>
           <span className="font-medium">
-            <MoneyText value={booking.totalMinor} currency={booking.currency} />
+            {booking.totalMinor == null ? (
+              <span className="text-muted text-sm">{t('hiddenByPlanner')}</span>
+            ) : (
+              <MoneyText value={booking.totalMinor} currency={booking.currency} />
+            )}
           </span>
           <span className="text-muted">{booking.paymentMode}</span>
           {booking.holdExpiresAt && booking.status === 'DEPOSIT_DUE' && (
@@ -105,21 +114,27 @@ export default async function BookingPage({
           <Card>
             <div className="flex flex-col gap-2 p-4 text-sm">
               <h3 className="font-medium">{t('scopeHeading')}</h3>
-              <ul className="text-muted flex flex-col gap-0.5">
-                {scope.items.map((item, i) => (
-                  <li key={i}>
-                    {item.name} × {item.qty}
-                  </li>
-                ))}
-              </ul>
-              {scope.notes && <p className="text-muted">{scope.notes}</p>}
+              {scope == null ? (
+                <p className="text-muted">{t('hiddenByPlanner')}</p>
+              ) : (
+                <>
+                  <ul className="text-muted flex flex-col gap-0.5">
+                    {scope.items.map((item, i) => (
+                      <li key={i}>
+                        {item.name} × {item.qty}
+                      </li>
+                    ))}
+                  </ul>
+                  {scope.notes && <p className="text-muted">{scope.notes}</p>}
+                </>
+              )}
               <h3 className="font-medium">{t('termsHeading')}</h3>
               <p className="text-muted">{current.terms}</p>
               <h3 className="font-medium">{t('scheduleHeading')}</h3>
               <ul className="text-muted flex flex-col gap-0.5">
                 {booking.milestones.map((row) => (
                   <li key={row.id}>
-                    {row.label} · {row.amountMinor} {row.currency} · {row.state}
+                    {row.label} · {row.amountMinor ?? t('hiddenByPlanner')} {row.currency} · {row.state}
                   </li>
                 ))}
               </ul>
@@ -127,12 +142,14 @@ export default async function BookingPage({
                 {event.name} · {event.timezone}
               </p>
               <div className="flex gap-2">
-                <ChangeRequestDialog
-                  bookingId={booking.id}
-                  currency={booking.currency}
-                  current={{ items: scope.items, notes: scope.notes, serviceDate: scope.serviceDate }}
-                  slot={scope.slot}
-                />
+                {!pricesHidden && scope && (
+                  <ChangeRequestDialog
+                    bookingId={booking.id}
+                    currency={booking.currency}
+                    current={{ items: scope.items, notes: scope.notes, serviceDate: scope.serviceDate }}
+                    slot={scope.slot}
+                  />
+                )}
               </div>
             </div>
           </Card>
@@ -150,7 +167,7 @@ export default async function BookingPage({
                   </StatusPill>
                   {row.version === booking.currentVersion && <span className="text-muted">{t('currentBadge')}</span>}
                 </div>
-                {pending && row.id === pending.id && current && (
+                {pending && row.id === pending.id && current && !pricesHidden && scope && (
                   <p className="text-muted mt-1">
                     {t('diffAdded', {
                       amount: (() => {
@@ -170,16 +187,16 @@ export default async function BookingPage({
         {active === 'payments' && (
           <PaymentsPanel
             currency={booking.currency}
-            canRecord={data.viewer === 'host' && booking.paymentMode !== 'HELD' && !closed}
+            canRecord={data.viewer === 'host' && booking.paymentMode !== 'HELD' && !closed && !pricesHidden}
             money={{
-              securedMinor: money.securedMinor.toString(),
-              awaitingMinor: money.awaitingMinor.toString(),
-              outstandingMinor: money.outstandingMinor.toString(),
+              securedMinor: pricesHidden ? null : money.securedMinor.toString(),
+              awaitingMinor: pricesHidden ? null : money.awaitingMinor.toString(),
+              outstandingMinor: pricesHidden ? null : money.outstandingMinor.toString(),
             }}
             milestones={booking.milestones.map((row) => ({
               id: row.id,
               label: row.label,
-              amountMinor: String(row.amountMinor),
+              amountMinor: row.amountMinor == null ? null : String(row.amountMinor),
               currency: row.currency,
               state: row.state,
               dueAt: row.dueAt ? new Date(row.dueAt).toISOString() : null,

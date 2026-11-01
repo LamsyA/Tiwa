@@ -2,6 +2,7 @@ import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize } from '../auth/authorize.js';
 import { loadEventAccess, requireEventAccess } from '../events/access.js';
+import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { NotFoundError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import type { Actor } from '../auth/authorize.js';
@@ -58,7 +59,9 @@ export const compareQuotesSchema = z.object({
 /** Side-by-side compare (QTE-03, UF-16): decided-state quotes with vendor names. */
 export async function compareQuotes(actor: UserActor, raw: z.infer<typeof compareQuotesSchema>) {
   const input = compareQuotesSchema.parse(raw);
-  await requireEventAccess(actor, input.eventId, 'event.view');
+  const access = await requireEventAccess(actor, input.eventId, 'event.view');
+  const [visible] = await Promise.all([priceVisibilityFor(input.eventId)]);
+  const hidden = pricesHiddenFor(access, visible);
   let requestIds: string[] | undefined;
   if (input.category) {
     const requests = await prisma.quoteRequest.findMany({
@@ -81,7 +84,10 @@ export async function compareQuotes(actor: UserActor, raw: z.infer<typeof compar
     select: { id: true, name: true, slug: true, verification: true },
   });
   const byId = new Map(orgs.map((org) => [org.id, org]));
-  return quotes.map((quote) => ({ ...toQuoteRow(quote), vendor: byId.get(quote.vendorOrgId) ?? null }));
+  return quotes.map((quote) => {
+    const row = toQuoteRow(quote);
+    return { ...(hidden ? redactQuote(row) : row), vendor: byId.get(quote.vendorOrgId) ?? null };
+  });
 }
 
 export const requestChangesSchema = z.object({

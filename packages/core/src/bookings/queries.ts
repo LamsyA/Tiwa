@@ -1,8 +1,9 @@
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize } from '../auth/authorize.js';
-import type { Actor } from '../auth/authorize.js';
+import type { Actor, EventAccess } from '../auth/authorize.js';
 import { loadEventAccess } from '../events/access.js';
+import { pricesHiddenFor, priceVisibilityFor, redactBooking } from '../events/prices.js';
 import { NotFoundError } from '../shared/errors.js';
 
 // Booking reads (P7-T07): the host side sees everything on the event; a
@@ -38,6 +39,7 @@ export async function getBooking(actor: UserActor, raw: z.infer<typeof bookingId
     select: { role: true },
   });
   let viewer: 'host' | 'vendor' = 'host';
+  let hostAccess: EventAccess | null = null;
   if (membership) {
     viewer = 'vendor';
   } else {
@@ -45,13 +47,22 @@ export async function getBooking(actor: UserActor, raw: z.infer<typeof bookingId
     if (!access) throw new NotFoundError('Booking not found');
     if (access.role === 'VENDOR' || access.role === 'PHOTOGRAPHER') throw new NotFoundError('Booking not found');
     authorize(actor, 'event.view', { eventId: booking.eventId, access });
+    hostAccess = access;
   }
 
   const [org, event, thread] = await Promise.all([
     prisma.organization.findUnique({ where: { id: booking.vendorOrgId }, select: { name: true, slug: true } }),
     prisma.event.findUniqueOrThrow({
       where: { id: booking.eventId },
-      select: { name: true, type: true, startsAt: true, endsAt: true, timezone: true, currency: true },
+      select: {
+        name: true,
+        type: true,
+        startsAt: true,
+        endsAt: true,
+        timezone: true,
+        currency: true,
+        hostCanSeeVendorPrices: true,
+      },
     }),
     prisma.thread.findFirst({
       where: { kind: 'BOOKING', context: 'BOOKING', contextId: bookingId },
@@ -59,15 +70,23 @@ export async function getBooking(actor: UserActor, raw: z.infer<typeof bookingId
     }),
   ]);
 
+  const full = {
+    ...bigintsToStrings(booking, ['totalMinor']),
+    versions: booking.versions.map((version) => bigintsToStrings(version, ['totalMinor'])),
+    milestones: booking.milestones.map((milestone) => bigintsToStrings(milestone, ['amountMinor'])),
+  };
+  // The vendor team sees its own figures in full; the host side obeys the planner switch (EVT-12).
+  const { hostCanSeeVendorPrices: _flag, ...publicEvent } = event;
+  void _flag;
+  const bookingView =
+    viewer === 'host' && hostAccess && pricesHiddenFor(hostAccess, event.hostCanSeeVendorPrices)
+      ? redactBooking(full)
+      : full;
   return {
     viewer,
-    booking: {
-      ...bigintsToStrings(booking, ['totalMinor']),
-      versions: booking.versions.map((version) => bigintsToStrings(version, ['totalMinor'])),
-      milestones: booking.milestones.map((milestone) => bigintsToStrings(milestone, ['amountMinor'])),
-    },
+    booking: bookingView,
     vendor: org,
-    event,
+    event: publicEvent,
     threadId: thread?.id ?? null,
   };
 }
@@ -81,6 +100,7 @@ export async function listEventBookings(actor: UserActor, raw: z.infer<typeof li
   if (!access) throw new NotFoundError('Event not found');
   if (access.role === 'VENDOR' || access.role === 'PHOTOGRAPHER') throw new NotFoundError('Event not found');
   authorize(actor, 'event.view', { eventId, access });
+  const hidden = pricesHiddenFor(access, await priceVisibilityFor(eventId));
   const bookings = await prisma.booking.findMany({
     where: { eventId },
     orderBy: { createdAt: 'desc' },
@@ -101,8 +121,9 @@ export async function listEventBookings(actor: UserActor, raw: z.infer<typeof li
   const names = new Map(orgs.map((org) => [org.id, org.name]));
   return bookings.map((row) => ({
     ...row,
-    totalMinor: row.totalMinor.toString(),
+    totalMinor: hidden ? null : row.totalMinor.toString(),
     vendorName: names.get(row.vendorOrgId) ?? null,
+    ...(hidden ? { pricesHidden: true as const } : {}),
   }));
 }
 

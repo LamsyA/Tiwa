@@ -1,5 +1,4 @@
 import type { MilestoneState } from '@tiwa/db';
-import type { BudgetSummary } from './summary.js';
 
 // Budget alerts (P9-T05, BUD-07; D-X28): computed on read and shown on the
 // money page and the overview. Sending them as notifications waits for P13
@@ -24,21 +23,29 @@ export type BudgetAlert =
       bookingId: string;
       label: string;
       vendorName: string;
-      amountMinor: bigint;
+      /** Null when the planner hides vendor prices from the host (EVT-12). */
+      amountMinor: bigint | null;
       dueAt: Date;
     };
 
+export interface AlertSummaryInput {
+  totals: { uncommittedMinor: bigint };
+  lines: { key: string; label: string | null; plannedMinor: bigint; uncommittedMinor: bigint }[];
+}
+
+export interface AlertScheduleRow {
+  id: string;
+  bookingId: string;
+  label: string;
+  vendorName: string;
+  amountMinor: bigint | string | null;
+  dueAt: Date | string | null;
+  state: MilestoneState;
+}
+
 export function budgetAlerts(
-  summary: Pick<BudgetSummary, 'totals' | 'lines'>,
-  schedule: {
-    id: string;
-    bookingId: string;
-    label: string;
-    vendorName: string;
-    amountMinor: bigint | string;
-    dueAt: Date | string | null;
-    state: MilestoneState;
-  }[],
+  summary: AlertSummaryInput,
+  schedule: AlertScheduleRow[],
   now: Date = new Date(),
 ): BudgetAlert[] {
   const alerts: BudgetAlert[] = [];
@@ -62,7 +69,7 @@ export function budgetAlerts(
       bookingId: row.bookingId,
       label: row.label,
       vendorName: row.vendorName,
-      amountMinor: BigInt(row.amountMinor),
+      amountMinor: row.amountMinor == null ? null : BigInt(row.amountMinor),
       dueAt,
     });
   }

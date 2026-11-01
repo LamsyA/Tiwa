@@ -26,6 +26,7 @@ import {
   saveEventAppearance,
   saveEventDetails,
   saveEventFeatures,
+  savePriceVisibility,
   startCover,
 } from './actions.js';
 
@@ -37,6 +38,8 @@ export interface SettingsFormsProps {
   isHost: boolean;
   status: string;
   eventName: string;
+  pricesVisible: boolean;
+  canChangePrices: boolean;
   details: {
     name: string;
     description: string;
@@ -111,6 +114,7 @@ export function SettingsForms(props: SettingsFormsProps) {
     <div className="flex flex-col gap-4">
       <DetailsForm {...props} />
       <FeaturesForm {...props} />
+      <PricesForm {...props} />
       <AppearanceForm {...props} />
       {props.isHost && props.status !== 'CANCELLED' && props.status !== 'COMPLETED' && <DangerZone {...props} />}
     </div>
@@ -324,6 +328,46 @@ function FeaturesForm({ eventId, canEdit, features, allowedVisibilities, tickets
               {t('save')}
             </Button>
           </div>
+        )}
+      </form>
+    </Card>
+  );
+}
+
+/** Vendor-price visibility (EVT-12, D-P08): the planner decides; the host side sees a note when hidden. */
+function PricesForm({ eventId, pricesVisible, canChangePrices }: SettingsFormsProps) {
+  const t = useTranslations('events.settingsPage');
+  const { run, saving, error, saved } = useRun();
+  const [visible, setVisible] = React.useState(pricesVisible);
+  if (!canChangePrices && pricesVisible) return null;
+  return (
+    <Card className="p-4">
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void run(() => savePriceVisibility({ eventId, visible }));
+        }}
+      >
+        <h3 className="font-medium">{t('pricesHeading')}</h3>
+        <Feedback error={error} saved={saved} />
+        {canChangePrices ? (
+          <>
+            <FeatureRow
+              label={t('pricesShowLabel')}
+              help={t('pricesBody')}
+              checked={visible}
+              disabled={false}
+              onChange={setVisible}
+            />
+            <div>
+              <Button type="submit" loading={saving}>
+                {t('save')}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p className="text-muted text-sm">{t('pricesHiddenNote')}</p>
         )}
       </form>
     </Card>

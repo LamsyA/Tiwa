@@ -6,6 +6,8 @@ import {
   completeCoverUpload,
   eventIdSchema,
   removeCover,
+  setVendorPriceVisibility,
+  setPriceVisibilitySchema,
   startCoverSchema,
   startCoverUpload,
   updateEventAppearance,
@@ -31,6 +33,13 @@ export const saveEventDetails = userAction(updateEventDetailsSchema, async (inpu
 export const saveEventFeatures = userAction(updateEventFeaturesSchema, async (input, ctx) => {
   await updateEventFeatures(ctx.actor, input);
   revalidate(input.eventId);
+});
+
+/** EVT-12: planner-only (core enforces); revalidates money and vendor pages that show amounts. */
+export const savePriceVisibility = userAction(setPriceVisibilitySchema, async (input, ctx) => {
+  const result = await setVendorPriceVisibility(ctx.actor, input);
+  revalidate(input.eventId);
+  return result;
 });
 
 export const saveEventAppearance = userAction(updateEventAppearanceSchema, async (input, ctx) => {

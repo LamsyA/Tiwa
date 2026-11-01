@@ -1,5 +1,3 @@
-import type { BudgetSummary } from './summary.js';
-
 // Budget CSV export (P9-T06, UF-20 step 4). Pure: the caller passes
 // translated headers and line labels, so no English lives here. Amounts are
 // plain decimals in major units (2 dp, or 0 for zero-decimal currencies) so
@@ -30,13 +28,23 @@ export function csvCell(value: string): string {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-export function budgetCsv(
-  summary: Pick<BudgetSummary, 'lines' | 'income'>,
-  currency: string,
-  text: BudgetCsvText,
-): string {
+export interface BudgetCsvInput {
+  lines: {
+    label: string | null;
+    plannedMinor: bigint;
+    committedMinor: bigint;
+    paidMinor: bigint;
+    outstandingMinor: bigint;
+    bookings: { vendorName: string; committedMinor: bigint | null; paidMinor: bigint | null }[];
+    expenses: { description: string; amountMinor: bigint; paid: boolean }[];
+  }[];
+  income: { kind: string; pledgedMinor: bigint; receivedMinor: bigint }[];
+}
+
+export function budgetCsv(summary: BudgetCsvInput, currency: string, text: BudgetCsvText): string {
   const digits = digitsFor(currency);
-  const amount = (value: bigint) => minorToDecimal(value, digits);
+  // Hidden vendor amounts (EVT-12) export as empty cells; aggregates stay.
+  const amount = (value: bigint | null) => (value == null ? '' : minorToDecimal(value, digits));
   const rows: string[][] = [text.headers];
   for (const line of summary.lines) {
     const label = line.label ?? text.otherLabel;
@@ -50,13 +58,17 @@ export function budgetCsv(
       currency,
     ]);
     for (const booking of line.bookings) {
+      const outstanding =
+        booking.committedMinor == null || booking.paidMinor == null
+          ? null
+          : booking.committedMinor - booking.paidMinor;
       rows.push([
         text.sections.booking,
         `${label}: ${booking.vendorName}`,
         '',
         amount(booking.committedMinor),
         amount(booking.paidMinor),
-        amount(booking.committedMinor - booking.paidMinor),
+        amount(outstanding),
         currency,
       ]);
     }

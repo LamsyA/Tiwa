@@ -67,7 +67,8 @@ export default async function EventMoneyPage({
   const categoryOptions = summary.lines
     .filter((line) => line.label !== null)
     .map((line) => ({ key: line.key, label: line.label as string, plannedMinor: line.plannedMinor.toString() }));
-  const money = (value: bigint | string) => <MoneyText value={value.toString()} currency={currency} />;
+  const money = (value: bigint | string | null) =>
+    value == null ? <span className="text-muted text-sm">{t('hiddenByPlanner')}</span> : <MoneyText value={value.toString()} currency={currency} />;
 
   const [schedule, expenses, contributions] = await Promise.all([
     listPaymentSchedule(ctx.actor, { eventId: id }, access),

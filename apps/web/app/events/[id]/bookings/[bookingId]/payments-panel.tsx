@@ -12,7 +12,8 @@ type Method = (typeof METHODS)[number];
 export interface MilestoneRow {
   id: string;
   label: string;
-  amountMinor: string;
+  /** Null when the planner hides vendor prices from the host (EVT-12). */
+  amountMinor: string | null;
   currency: string;
   state: string;
   dueAt: string | null;
@@ -28,9 +29,9 @@ export interface PaymentRow {
 }
 
 export interface MoneySummary {
-  securedMinor: string;
-  awaitingMinor: string;
-  outstandingMinor: string;
+  securedMinor: string | null;
+  awaitingMinor: string | null;
+  outstandingMinor: string | null;
 }
 
 const SECURED = ['PAID_DIRECT', 'HELD', 'RELEASED', 'CONFIRMED_OFFLINE'];
@@ -77,7 +78,11 @@ export function PaymentsPanel({
             <div className="flex flex-col gap-0.5 p-3 text-sm">
               <span className="text-muted">{t(key)}</span>
               <span className="text-base font-medium">
-                <MoneyText value={value} currency={currency} />
+                {value == null ? (
+                  <span className="text-muted text-sm">{t('hiddenByPlanner')}</span>
+                ) : (
+                  <MoneyText value={value} currency={currency} />
+                )}
               </span>
             </div>
           </Card>
@@ -92,7 +97,11 @@ export function PaymentsPanel({
                 <div className="flex flex-1 flex-col gap-0.5">
                   <span className="font-medium">{row.label}</span>
                   <span className="text-muted">
-                    <MoneyText value={row.amountMinor} currency={row.currency} />
+                    {row.amountMinor == null ? (
+                      t('hiddenByPlanner')
+                    ) : (
+                      <MoneyText value={row.amountMinor} currency={row.currency} />
+                    )}
                     {row.dueAt && ` · ${t('due', { date: new Date(row.dueAt).toLocaleDateString() })}`}
                   </span>
                 </div>
@@ -140,6 +149,10 @@ function RecordDialog({ milestone, onClose }: { milestone: MilestoneRow; onClose
 
   async function onSave() {
     setError(null);
+    if (milestone.amountMinor == null) {
+      setError(t('hiddenByPlanner'));
+      return;
+    }
     setWorking(true);
     let receiptKey: string | undefined;
     if (file) {
@@ -184,7 +197,12 @@ function RecordDialog({ milestone, onClose }: { milestone: MilestoneRow; onClose
       <div className="flex flex-col gap-3 p-4 text-sm">
         {error && <Banner tone="danger">{error}</Banner>}
         <p>
-          {milestone.label} · <MoneyText value={milestone.amountMinor} currency={milestone.currency} />
+          {milestone.label} ·{' '}
+          {milestone.amountMinor == null ? (
+            t('hiddenByPlanner')
+          ) : (
+            <MoneyText value={milestone.amountMinor} currency={milestone.currency} />
+          )}
         </p>
         <label className="flex flex-col gap-1">
           {t('paidOnLabel')}

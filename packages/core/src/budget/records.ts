@@ -2,6 +2,7 @@ import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor, EventAccess } from '../auth/authorize.js';
 import { resolveEventAccess } from '../events/access.js';
+import { pricesHiddenFor, priceVisibilityFor } from '../events/prices.js';
 
 // Money page lists (UF-20 tabs): the payment schedule across bookings,
 // expenses and contributions. All need `money.view`.
@@ -17,7 +18,8 @@ export async function listPaymentSchedule(
   preloaded?: EventAccess,
 ) {
   const { eventId } = moneyListSchema.parse(raw);
-  await resolveEventAccess(actor, eventId, 'money.view', preloaded);
+  const access = await resolveEventAccess(actor, eventId, 'money.view', preloaded);
+  const hidden = pricesHiddenFor(access, await priceVisibilityFor(eventId));
   const rows = await prisma.paymentMilestone.findMany({
     where: { booking: { eventId, status: { not: 'CANCELLED' } } },
     orderBy: [{ dueAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }],
@@ -39,13 +41,14 @@ export async function listPaymentSchedule(
   return rows.map((row) => ({
     id: row.id,
     label: row.label,
-    amountMinor: row.amountMinor.toString(),
+    amountMinor: hidden ? null : row.amountMinor.toString(),
     currency: row.currency,
     dueAt: row.dueAt?.toISOString() ?? null,
     state: row.state,
     bookingId: row.booking.id,
     category: row.booking.category,
     vendorName: names.get(row.booking.vendorOrgId) ?? '',
+    ...(hidden ? { pricesHidden: true as const } : {}),
   }));
 }
 

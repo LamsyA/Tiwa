@@ -2,7 +2,8 @@
   "app": {
     "name": "Tiwa",
     "tagline": "Plan any event, together.",
-    "description": "Hosts, planners, vendors and guests plan any event together."
+    "description": "Hosts, planners, vendors and guests plan any event together.",
+    "mockInitials": "MP"
   },
   "home": {
     "title": "Home",
@@ -353,7 +354,11 @@
         "INVALID_TRANSITION": "This event can no longer be changed, or bookings and payments block cancelling.",
         "FORBIDDEN": "You don't have permission to do that.",
         "generic": "We couldn't save that. Please try again."
-      }
+      },
+      "pricesHeading": "Vendor prices",
+      "pricesBody": "When off, the host side sees no vendor amounts — quotes, bookings, milestones and per-vendor budget rows show as hidden. Totals stay visible.",
+      "pricesShowLabel": "Host can see vendor prices",
+      "pricesHiddenNote": "The planner hides vendor prices on this event. Amounts show as hidden."
     },
     "members": {
       "title": "Members and permissions",
@@ -502,7 +507,8 @@
         "currency": "Currency",
         "booking": "Booking",
         "expense": "Expense"
-      }
+      },
+      "hiddenByPlanner": "Hidden by planner"
     },
     "plan": {
       "heading": "Plan",
@@ -1567,7 +1573,8 @@
     "confirmVisit": "Confirm",
     "confirmLabel": "Confirmed time",
     "completeVisit": "Mark done",
-    "cancelVisit": "Cancel visit"
+    "cancelVisit": "Cancel visit",
+    "hiddenByPlanner": "Hidden by planner"
   },
   "bookings": {
     "title": "Booking",
@@ -1610,7 +1617,8 @@
     },
     "serviceDateLabel": "Service date",
     "waitingBody": "Version {version} is with the vendor for a decision.",
-    "notesLabel": "Notes"
+    "notesLabel": "Notes",
+    "hiddenByPlanner": "Hidden by planner"
   },
   "payments": {
     "secured": "Paid",
@@ -1668,7 +1676,8 @@
       "emptyFile": "That file is empty.",
       "uploadFailed": "The receipt didn't upload. Try again."
     },
-    "bookingsHeading": "Your bookings"
+    "bookingsHeading": "Your bookings",
+    "hiddenByPlanner": "Hidden by planner"
   },
   "planner": {
     "title": "Planner workspace",
@@ -1797,7 +1806,8 @@
       "chat": "Your cake is booked for Saturday!",
       "chatFrom": "Sweet Crumbs",
       "moments": "Moments",
-      "newPhotos": "+48 new photos"
+      "newPhotos": "+48 new photos",
+      "url": "tiwa.app/events/ada-30"
     },
     "types": {
       "title": "Made for every occasion"

@@ -3,6 +3,7 @@ import { prisma, type MilestoneState } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor, EventAccess } from '../auth/authorize.js';
 import { resolveEventAccess } from '../events/access.js';
+import { pricesHiddenFor, priceVisibilityFor } from '../events/prices.js';
 import { bookingMoney } from '../payments/status.js';
 
 // Budget figures (BUD-01–BUD-08, UF-20; D-X28). Read straight from bookings,
@@ -150,9 +151,20 @@ export const budgetEventSchema = z.object({ eventId: z.string().uuid() });
 /** Loads everything `computeBudget` needs; `money.view` (UF-20-3: others get FORBIDDEN). */
 export async function budgetSummary(actor: UserActor, raw: z.input<typeof budgetEventSchema>, preloaded?: EventAccess) {
   const { eventId } = budgetEventSchema.parse(raw);
-  await resolveEventAccess(actor, eventId, 'money.view', preloaded);
-  const input = await loadBudgetInput(eventId);
-  return { currency: input.currency, ...computeBudget(input) };
+  const access = await resolveEventAccess(actor, eventId, 'money.view', preloaded);
+  const [input, visible] = await Promise.all([loadBudgetInput(eventId), priceVisibilityFor(eventId)]);
+  const summary = { currency: input.currency, ...computeBudget(input) };
+  // Vendor-level rows are hidden from the host side when the planner hides
+  // them (EVT-12); category and event totals stay visible as the host's spend.
+  if (!pricesHiddenFor(access, visible)) return summary;
+  return {
+    ...summary,
+    pricesHidden: true as const,
+    lines: summary.lines.map((line) => ({
+      ...line,
+      bookings: line.bookings.map((booking) => ({ ...booking, committedMinor: null, paidMinor: null })),
+    })),
+  };
 }
 
 /** Raw inputs for one event (also used by the consistency check and exports). */

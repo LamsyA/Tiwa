@@ -22,12 +22,12 @@ interface QuoteView {
   vendorName: string;
   status: string;
   items: { name: string; qty: number; unitMinor: string }[];
-  subtotalMinor: string;
-  totalMinor: string;
+  subtotalMinor: string | null;
+  totalMinor: string | null;
   currency: string;
   notes: string | null;
   cancellationTerms: string;
-  schedule: { label: string; percentBps?: number; amountMinor?: string; due: string }[];
+  schedule: { label: string; percentBps?: number; amountMinor?: string | null; due: string }[];
   expiresAt: string;
 }
 
@@ -124,23 +124,33 @@ function QuoteCard({
             {expired && actionable ? t('expired') : quote.status}
           </StatusPill>
         </div>
-        <ul className="text-muted flex flex-col gap-0.5">
-          {quote.items.map((item, i) => (
-            <li key={i}>
-              {item.name} × {item.qty}
-            </li>
-          ))}
-        </ul>
+        {quote.items.length > 0 && (
+          <ul className="text-muted flex flex-col gap-0.5">
+            {quote.items.map((item, i) => (
+              <li key={i}>
+                {item.name} × {item.qty}
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="font-medium">
-          {t('total')}: <MoneyText value={quote.totalMinor} currency={quote.currency} />
+          {t('total')}:{' '}
+          {quote.totalMinor == null ? (
+            <span className="text-muted font-normal">{t('hiddenByPlanner')}</span>
+          ) : (
+            <MoneyText value={quote.totalMinor} currency={quote.currency} />
+          )}
         </p>
         <p className="text-muted">{t('expiresLabel', { date: new Date(quote.expiresAt).toLocaleDateString() })}</p>
         <h4 className="font-medium">{t('scheduleHeading')}</h4>
         <ul className="text-muted flex flex-col gap-0.5">
           {quote.schedule.map((entry, i) => (
             <li key={i}>
-              {entry.label} · {entry.percentBps !== undefined ? `${entry.percentBps / 100}%` : entry.amountMinor} ·{' '}
-              {entry.due}
+              {entry.label} ·{' '}
+              {entry.percentBps !== undefined
+                ? `${entry.percentBps / 100}%`
+                : (entry.amountMinor ?? t('hiddenByPlanner'))}{' '}
+              · {entry.due}
             </li>
           ))}
         </ul>
