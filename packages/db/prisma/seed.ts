@@ -90,6 +90,12 @@ async function wipeDemoEvents(userId: string) {
   await prisma.document.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.expense.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.contribution.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.checkIn.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.ticket.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.ticketOrder.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.waitlistEntry.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.promoCode.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.ticketType.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: ids } } });
   // P5-T13: gallery universe (media, guestbook, sessions, zips + media outbox rows).
   const galleryIds = (await prisma.gallery.findMany({ where: { eventId: { in: ids } }, select: { id: true } })).map(
@@ -237,6 +243,45 @@ async function seedEvent(userId: string, spec: SeedEvent, now: Date) {
       sortOrder: index,
     })),
   });
+
+  // P11: the public concert sells tickets — one free type, one paid type with
+  // a promo, published so e2e and the Lighthouse seed hit a live page.
+  const full = await prisma.event.findUniqueOrThrow({ where: { id: event.id }, select: { ticketsEnabled: true } });
+  if (full.ticketsEnabled) {
+    await prisma.event.update({
+      where: { id: event.id },
+      data: {
+        ticketsPublished: true,
+        registrationQuestions: [{ key: 'diet', label: 'Dietary needs', required: false }],
+      },
+    });
+    await prisma.ticketType.createMany({
+      data: [
+        {
+          eventId: event.id,
+          name: 'General',
+          priceMinor: 0n,
+          currency: 'NGN',
+          quantity: 100,
+          maxPerOrder: 10,
+          sortOrder: 0,
+        },
+        {
+          eventId: event.id,
+          name: 'VIP',
+          description: 'Front seats + backstage',
+          priceMinor: 5000_00n,
+          currency: 'NGN',
+          quantity: 20,
+          maxPerOrder: 4,
+          sortOrder: 1,
+        },
+      ],
+    });
+    await prisma.promoCode.create({
+      data: { eventId: event.id, code: 'SEED10', percentOff: 10, maxUses: 50 },
+    });
+  }
 
   return event.id;
 }
@@ -920,7 +965,6 @@ const SEED_CATEGORIES: { key: string; label: string; cities: string[]; baseMinor
   { key: 'printing', label: 'Printing and stationery', cities: ['Lagos'], baseMinor: 50_000_00n },
   { key: 'souvenirs', label: 'Souvenirs and gifts', cities: ['Lagos', 'Ibadan'], baseMinor: 65_000_00n },
   { key: 'entertainment', label: 'Kids entertainment', cities: ['Lagos'], baseMinor: 110_000_00n },
-  { key: 'cleaning', label: 'Cleaning', cities: ['Lagos'], baseMinor: 45_000_00n },
   { key: 'fashion', label: 'Outfits and tailoring', cities: ['Lagos'], baseMinor: 130_000_00n },
 ];
 

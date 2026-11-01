@@ -109,7 +109,7 @@ export const EVENT_TYPES: EventTypeTemplate[] = [
       { key: 'rehearsal', title: 'Hold the rehearsal', timeframe: '1w' },
     ]),
     budget: WEDDING_BUDGET,
-    vendorCategories: [...PARTY_VENDORS, 'makeup', 'fashion', 'videography', 'clergy', 'printing', 'souvenirs'],
+    vendorCategories: [...PARTY_VENDORS, 'makeup', 'fashion', 'videography', 'printing', 'souvenirs'],
     programme: [
       { key: 'ceremony', title: 'Ceremony', offsetMinutes: 0, durationMinutes: 90 },
       { key: 'photos', title: 'Photos', offsetMinutes: 90, durationMinutes: 60 },
@@ -153,7 +153,7 @@ export const EVENT_TYPES: EventTypeTemplate[] = [
     features: PRIVATE_FEATURES,
     checklist: party(),
     budget: PARTY_BUDGET,
-    vendorCategories: ['venue', 'catering', 'small_chops', 'decor', 'photography', 'clergy'],
+    vendorCategories: ['venue', 'catering', 'small_chops', 'decor', 'photography'],
     programme: [
       { key: 'naming_rites', title: 'Naming', offsetMinutes: 0, durationMinutes: 60 },
       { key: 'reception', title: 'Reception', offsetMinutes: 60 },
@@ -206,8 +206,6 @@ export const EVENT_TYPES: EventTypeTemplate[] = [
       { key: 'misc', label: 'Other', percent: 10 },
     ],
     vendorCategories: [
-      'funeral_services',
-      'clergy',
       'venue',
       'rentals',
       'catering',
@@ -234,7 +232,7 @@ export const EVENT_TYPES: EventTypeTemplate[] = [
     features: PRIVATE_FEATURES,
     checklist: [...PLANNING_BASICS, ...CATERING, ...GUESTS, ...DAY_OF, ...AFTER],
     budget: COMMUNITY_BUDGET,
-    vendorCategories: ['venue', 'catering', 'printing', 'photography', 'clergy'],
+    vendorCategories: ['venue', 'catering', 'printing', 'photography'],
     programme: [
       { key: 'tributes', title: 'Tributes', offsetMinutes: 0, durationMinutes: 90 },
       { key: 'reception', title: 'Reception', offsetMinutes: 90 },

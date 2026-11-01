@@ -1401,7 +1401,13 @@
     "vendorsSubtitle": "Venues, caterers, photographers, DJs and more — compare and book with clear terms.",
     "plannersSubtitle": "Experienced planners who can run the whole day for you.",
     "noResultsBody": "Try a different city, category or price range.",
-    "from": "from"
+    "from": "from",
+    "searchLabel": "Search the marketplace",
+    "cityPlaceholder": "Any city",
+    "filters": "Filters",
+    "anyRating": "Any rating",
+    "showResults": "Show results",
+    "plannerLabel": "Event planner"
   },
   "inbox": {
     "title": "Inbox",

@@ -7,7 +7,9 @@ import type * as React from 'react';
 // self-hosted. IDs: venue 12688995 30311728 36028895 · catering 28736731 13915043 17952748 ·
 // small chops 37648029 29037265 · decor 37190288 11450796 · makeup 34049570 33951059 ·
 // sound 29261518 12787862 · cake 30445121 31243081 · security 34585117 13602781 ·
-// dj 9719248 13137879 · photo 40230686 30517381 · video 30820659 · band 33565506 · default 36808366.
+// dj 9719248 13137879 · photo 40230686 30517381 · video 30820659 · band 33565506 · default 36808366 ·
+// drinks 18817906 29093620 · transport 37828108 37828107 36377051 1467591 · gifts 3873488 17575750 ·
+// planners 14581440 6170652 4101413 38635223.
 import venue1Img from '../../public/marketplace/venue-1.jpg';
 import venue2Img from '../../public/marketplace/venue-2.jpg';
 import venue3Img from '../../public/marketplace/venue-3.jpg';
@@ -32,6 +34,18 @@ import photo1Img from '../../public/marketplace/photo-1.jpg';
 import photo2Img from '../../public/marketplace/photo-2.jpg';
 import video1Img from '../../public/marketplace/video-1.jpg';
 import band1Img from '../../public/marketplace/band-1.jpg';
+import drinks1Img from '../../public/marketplace/drinks-1.jpg';
+import drinks2Img from '../../public/marketplace/drinks-2.jpg';
+import transport1Img from '../../public/marketplace/transport-1.jpg';
+import transport2Img from '../../public/marketplace/transport-2.jpg';
+import transport3Img from '../../public/marketplace/transport-3.jpg';
+import transport4Img from '../../public/marketplace/transport-4.jpg';
+import gifts1Img from '../../public/marketplace/gifts-1.jpg';
+import gifts2Img from '../../public/marketplace/gifts-2.jpg';
+import planner1Img from '../../public/marketplace/planner-1.jpg';
+import planner2Img from '../../public/marketplace/planner-2.jpg';
+import planner3Img from '../../public/marketplace/planner-3.jpg';
+import planner4Img from '../../public/marketplace/planner-4.jpg';
 import heroImg from '../../public/landing/hero.jpg';
 
 export type MarketplaceSection = 'vendors' | 'planners' | 'venues';
@@ -42,7 +56,10 @@ const MUSIC = [dj1Img, dj2Img, band1Img];
 const COVERS: Record<string, StaticImageData[]> = {
   venue: VENUES,
   catering: FOOD,
-  drinks: FOOD,
+  drinks: [drinks1Img, drinks2Img],
+  transport: [transport1Img, transport3Img, transport2Img, transport4Img],
+  souvenirs: [gifts1Img, gifts2Img],
+  printing: [gifts2Img, gifts1Img],
   small_chops: [chops1Img, chops2Img],
   cake: [cake1Img, cake2Img],
   decor: [decor1Img, decor2Img],
@@ -60,18 +77,24 @@ const COVERS: Record<string, StaticImageData[]> = {
   ushers: [security2Img, security1Img],
 };
 
-/** Stable small hash so a business always gets the same photo, and neighbours usually differ. */
-function pick<T>(list: T[], seed: string): T {
+/** A string seed hashes (stable per business); a number seed rotates (position in a result list, so neighbours differ). */
+function pick<T>(list: T[], seed: string | number): T {
+  if (typeof seed === 'number') return list[seed % list.length]!;
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   return list[Math.abs(hash) % list.length]!;
 }
 
+/** Planner cards: planning and styled-event photos, stable per planner. */
+export function plannerCover(seed: string | number): StaticImageData {
+  return pick([planner1Img, planner2Img, planner3Img, planner4Img, decor1Img], seed);
+}
+
 /** A cover for a business card: a photo from its first category that has one; a celebration otherwise. */
-export function coverFor(categories: readonly string[], seed = ''): StaticImageData {
+export function coverFor(categories: readonly string[], seed: string | number = ''): StaticImageData {
   for (const key of categories) {
     const list = COVERS[key];
-    if (list) return pick(list, seed || key);
+    if (list) return pick(list, seed === '' ? key : seed);
   }
   return heroImg;
 }

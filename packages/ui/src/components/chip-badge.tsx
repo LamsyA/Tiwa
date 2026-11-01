@@ -15,8 +15,10 @@ export function Chip({ selected = false, onRemove, removeLabel = 'Remove', class
   return (
     <span
       className={cn(
-        'inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium',
-        selected ? 'border-brand-strong bg-brand-soft text-text' : 'border-border bg-surface text-muted',
+        'inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors',
+        selected
+          ? 'border-text bg-text text-bg'
+          : 'border-border/80 bg-bg text-text/75 hover:border-text/25 hover:text-text',
         className,
       )}
     >

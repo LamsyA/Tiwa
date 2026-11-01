@@ -22,10 +22,7 @@ export const VENDOR_CATEGORIES = {
   transport: 'Transport',
   av_production: 'AV and stage production',
   speakers: 'Speakers and talent',
-  funeral_services: 'Funeral services',
-  clergy: 'Officiant or clergy',
   entertainment: 'Kids entertainment',
-  cleaning: 'Cleaning',
 } as const;
 
 export type VendorCategory = keyof typeof VENDOR_CATEGORIES;
