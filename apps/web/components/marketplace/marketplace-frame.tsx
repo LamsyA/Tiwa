@@ -3,33 +3,76 @@ import { getTranslations } from 'next-intl/server';
 import type { StaticImageData } from 'next/image';
 import Link from 'next/link';
 import type * as React from 'react';
-// Sample cover photos (Pexels, free licence, self-hosted) until businesses upload their own.
-import cateringImg from '../../public/landing/catering.jpg';
-import djImg from '../../public/landing/dj.jpg';
+// Sample cover photos until businesses upload their own: Pexels (free licence, commercial use),
+// self-hosted. IDs: venue 12688995 30311728 36028895 · catering 28736731 13915043 17952748 ·
+// small chops 37648029 29037265 · decor 37190288 11450796 · makeup 34049570 33951059 ·
+// sound 29261518 12787862 · cake 30445121 31243081 · security 34585117 13602781 ·
+// dj 9719248 13137879 · photo 40230686 30517381 · video 30820659 · band 33565506 · default 36808366.
+import venue1Img from '../../public/marketplace/venue-1.jpg';
+import venue2Img from '../../public/marketplace/venue-2.jpg';
+import venue3Img from '../../public/marketplace/venue-3.jpg';
+import catering1Img from '../../public/marketplace/catering-1.jpg';
+import catering2Img from '../../public/marketplace/catering-2.jpg';
+import catering3Img from '../../public/marketplace/catering-3.jpg';
+import chops1Img from '../../public/marketplace/chops-1.jpg';
+import chops2Img from '../../public/marketplace/chops-2.jpg';
+import decor1Img from '../../public/marketplace/decor-1.jpg';
+import decor2Img from '../../public/marketplace/decor-2.jpg';
+import makeup1Img from '../../public/marketplace/makeup-1.jpg';
+import makeup2Img from '../../public/marketplace/makeup-2.jpg';
+import sound1Img from '../../public/marketplace/sound-1.jpg';
+import sound2Img from '../../public/marketplace/sound-2.jpg';
+import cake1Img from '../../public/marketplace/cake-1.jpg';
+import cake2Img from '../../public/marketplace/cake-2.jpg';
+import security1Img from '../../public/marketplace/security-1.jpg';
+import security2Img from '../../public/marketplace/security-2.jpg';
+import dj1Img from '../../public/marketplace/dj-1.jpg';
+import dj2Img from '../../public/marketplace/dj-2.jpg';
+import photo1Img from '../../public/marketplace/photo-1.jpg';
+import photo2Img from '../../public/marketplace/photo-2.jpg';
+import video1Img from '../../public/marketplace/video-1.jpg';
+import band1Img from '../../public/marketplace/band-1.jpg';
 import heroImg from '../../public/landing/hero.jpg';
-import photographyImg from '../../public/landing/photography.jpg';
-import venueImg from '../../public/landing/venue.jpg';
 
 export type MarketplaceSection = 'vendors' | 'planners' | 'venues';
 
-const COVERS: Record<string, StaticImageData> = {
-  venue: venueImg,
-  catering: cateringImg,
-  small_chops: cateringImg,
-  drinks: cateringImg,
-  cake: cateringImg,
-  photography: photographyImg,
-  videography: photographyImg,
-  dj: djImg,
-  live_band: djImg,
-  mc: djImg,
-  sound_lighting: djImg,
-  av_production: djImg,
+const VENUES = [venue1Img, venue2Img, venue3Img];
+const FOOD = [catering1Img, catering2Img, catering3Img];
+const MUSIC = [dj1Img, dj2Img, band1Img];
+const COVERS: Record<string, StaticImageData[]> = {
+  venue: VENUES,
+  catering: FOOD,
+  drinks: FOOD,
+  small_chops: [chops1Img, chops2Img],
+  cake: [cake1Img, cake2Img],
+  decor: [decor1Img, decor2Img],
+  rentals: [decor2Img, decor1Img],
+  makeup: [makeup1Img, makeup2Img],
+  fashion: [makeup2Img, makeup1Img],
+  photography: [photo1Img, photo2Img],
+  videography: [video1Img, photo2Img],
+  dj: MUSIC,
+  live_band: [band1Img, dj2Img],
+  mc: [band1Img, dj1Img],
+  sound_lighting: [sound1Img, sound2Img],
+  av_production: [sound2Img, sound1Img],
+  security: [security1Img, security2Img],
+  ushers: [security2Img, security1Img],
 };
 
-/** A cover for a business card from its first matching category; a celebration photo otherwise. */
-export function coverFor(categories: readonly string[]): StaticImageData {
-  for (const key of categories) if (COVERS[key]) return COVERS[key];
+/** Stable small hash so a business always gets the same photo, and neighbours usually differ. */
+function pick<T>(list: T[], seed: string): T {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  return list[Math.abs(hash) % list.length]!;
+}
+
+/** A cover for a business card: a photo from its first category that has one; a celebration otherwise. */
+export function coverFor(categories: readonly string[], seed = ''): StaticImageData {
+  for (const key of categories) {
+    const list = COVERS[key];
+    if (list) return pick(list, seed || key);
+  }
   return heroImg;
 }
 

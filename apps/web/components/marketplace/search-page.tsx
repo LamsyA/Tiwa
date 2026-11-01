@@ -123,7 +123,7 @@ export async function SearchPageBody({
                 >
                   <div className="bg-surface-2 relative aspect-[4/3] overflow-hidden">
                     <Image
-                      src={coverFor(hit.categories)}
+                      src={coverFor(hit.categories, hit.orgId)}
                       alt=""
                       placeholder="blur"
                       sizes="(min-width: 1280px) 300px, (min-width: 640px) 45vw, 100vw"
