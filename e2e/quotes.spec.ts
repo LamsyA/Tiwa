@@ -209,28 +209,16 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
 
   // UF-30-6: the booking thread carries the quote + booking cards.
   await gotoSettled(host, '/inbox?filter=bookings');
-  await host.getByRole('link', { name: new RegExp(vendorName) }).first().click();
+  await host
+    .getByRole('link', { name: new RegExp(vendorName) })
+    .first()
+    .click();
   await expect(host.getByText(new RegExp(`Quote from ${vendorName}`))).toBeVisible({ timeout: 30_000 });
   await expect(host.getByText(/150,000/).first()).toBeVisible();
 
   await vendorCtx.close();
   await hostCtx.close();
 });
-
-/** Sign in via magic link (deterministic, no OTP rate-pressure). */
-async function signInEmail(page: Page, email: string): Promise<void> {
-  await isolateIp(page);
-  await page.goto('/login?next=%2Fhome');
-  await page.getByRole('tab', { name: 'Continue with email' }).click();
-  await page.getByLabel('Email address').fill(email);
-  await page.getByRole('button', { name: 'Send link' }).click();
-  await expect(page.getByText('Check your email')).toBeVisible();
-  const body = await latestMessage(page.request, email);
-  const link = body.match(/href="([^"]+)"/)?.[1]?.replace(/&amp;/g, '&');
-  if (!link) throw new Error('no magic link in outbox');
-  await page.goto(link);
-  await expect(page).not.toHaveURL(/\/login/);
-}
 
 test('UF-29-7: site visit request reaches the venue; confirmed time shows for both', async ({ browser }) => {
   const vendorCtx = await browser.newContext();
@@ -246,7 +234,7 @@ test('UF-29-7: site visit request reaches the venue; confirmed time shows for bo
   await host.getByLabel('Proposed time 2').fill('2031-07-02T10:00');
   await host.getByRole('button', { name: 'Send request' }).click();
 
-  await signInEmail(vendor, '/login?next=%2Fquotes', 'venue-e2e@tiwa.test');
+  await signInWithEmail(vendor, '/login?next=%2Fquotes', 'venue-e2e@tiwa.test');
   await expect(vendor).toHaveURL(/\/quotes/);
   await gotoSettled(vendor, '/quotes');
   await vendor.getByLabel('Confirmed time').fill('2031-07-01T10:00');
