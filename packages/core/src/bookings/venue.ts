@@ -1,4 +1,4 @@
-import { prisma } from '@tiwa/db';
+import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { requireEventAccess } from '../events/access.js';
 import type { Actor } from '../auth/authorize.js';
@@ -171,15 +171,22 @@ export async function instantBook(actor: UserActor, raw: z.infer<typeof instantB
           releaseRule: 'ON_PAYMENT',
         },
       });
-      await tx.availabilityBlock.create({
-        data: {
-          orgId: input.vendorOrgId,
-          spaceId: input.spaceId ?? null,
-          date,
-          slot: input.slot,
-          bookingId: booking.id,
-        },
-      });
+      try {
+        await tx.availabilityBlock.create({
+          data: {
+            orgId: input.vendorOrgId,
+            spaceId: input.spaceId ?? null,
+            date,
+            slot: input.slot,
+            bookingId: booking.id,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new ConflictError('That date was just booked', { key: 'slotTaken' });
+        }
+        throw error;
+      }
       await audit(tx, {
         actor,
         action: 'booking.instant',
@@ -198,7 +205,16 @@ export async function instantBook(actor: UserActor, raw: z.infer<typeof instantB
     .then(async (result) => {
       try {
         const threadId = await ensureBookingThread(result.bookingId);
-        await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
+        await postCard(actor, {
+          threadId,
+          type: 'booking',
+          refId: result.bookingId,
+          snapshot: {
+            category: 'venue',
+            totalMinor: totalMinor.toString(),
+            currency: event.currency,
+          },
+        });
         await mirrorToEventTeam(actor, input.eventId, 'booking', result.bookingId);
       } catch (error) {
         log.warn(

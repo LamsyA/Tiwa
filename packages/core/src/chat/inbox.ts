@@ -183,6 +183,9 @@ export interface MessageView {
   authorOrgId: string | null;
   mine: boolean;
   body: string | null;
+  kind: string;
+  /** Card payload for kind CARD: { type, id, ...snapshot } (P7-T12). */
+  card: unknown;
   masked: boolean;
   deleted: boolean;
   edited: boolean;
@@ -227,6 +230,8 @@ export async function listMessages(actor: UserActor, threadId: string, before?: 
       authorOrgId: m.authorOrgId,
       mine: m.authorUserId === actor.userId,
       body: visibleBody(m, actor.userId),
+      kind: m.kind,
+      card: m.kind === 'CARD' ? m.card : null,
       masked: m.authorUserId !== actor.userId && m.maskedBody !== null,
       deleted: m.deletedAt !== null,
       edited: m.editedAt !== null,

@@ -7,7 +7,8 @@ import { expect, freshPhone, isolateIp, signInWithPhone } from './support/auth.j
 // unique names. Requires `pnpm db:seed` and S3Mock on :9090.
 // Money: the vendor prices in major units; the booking total asserts the
 // server-computed minor total (UF-15-1 parity is pinned by
-// quote-totals.test.ts).
+// quote-totals.test.ts). P8-T17 adds UF-17 step 5 (offline payment) to the
+// booking flow.
 test.describe.configure({ mode: 'serial', timeout: 420_000 });
 test.use({ actionTimeout: 20_000, navigationTimeout: 30_000 });
 
@@ -180,6 +181,81 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
 
   await gotoSettled(host, (host.url().split('?')[0] as string).split('#')[0] as string);
   await expect(host.getByText(/300,000/)).toBeVisible();
+
+  // UF-17 step 5 (lean P8, D-X27): host records an offline payment with a receipt; vendor confirms; booking CONFIRMED.
+  const bookingUrl = (host.url().split('?')[0] as string).split('#')[0] as string;
+  await gotoSettled(host, `${bookingUrl}?tab=payments`);
+  await host.getByRole('button', { name: 'I paid outside Tiwa' }).first().click();
+  const record = host.getByRole('dialog');
+  await record.getByLabel('Cash').check();
+  await record.getByLabel(/Receipt or transfer screenshot/).setInputFiles({
+    name: 'receipt.png',
+    mimeType: 'image/png',
+    buffer: pngBuffer(7, 5),
+  });
+  await record.getByLabel(/Note for the vendor/).fill(`Paid at the office ${RUN}`);
+  await record.getByRole('button', { name: 'Record payment' }).click();
+  await expect(host.getByText('Awaiting vendor confirmation').first()).toBeVisible({ timeout: 30_000 });
+
+  await gotoSettled(vendor, '/quotes');
+  await expect(vendor.getByRole('heading', { name: 'Payments to confirm' })).toBeVisible();
+  await expect(vendor.getByText(`Paid at the office ${RUN}`)).toBeVisible();
+  await vendor.getByRole('button', { name: 'Confirm received' }).first().click();
+  await expect(vendor.getByText(`Paid at the office ${RUN}`)).toHaveCount(0, { timeout: 30_000 });
+
+  await gotoSettled(host, `${bookingUrl}?tab=payments`);
+  await expect(host.getByText('Paid (confirmed)').first()).toBeVisible();
+  await expect(host.getByText('CONFIRMED', { exact: true })).toBeVisible();
+
+  // UF-30-6: the booking thread carries the quote + booking cards.
+  await gotoSettled(host, '/inbox?filter=bookings');
+  await host.getByRole('link', { name: new RegExp(vendorName) }).first().click();
+  await expect(host.getByText(new RegExp(`Quote from ${vendorName}`))).toBeVisible({ timeout: 30_000 });
+  await expect(host.getByText(/150,000/).first()).toBeVisible();
+
+  await vendorCtx.close();
+  await hostCtx.close();
+});
+
+/** Sign in via magic link (deterministic, no OTP rate-pressure). */
+async function signInEmail(page: Page, email: string): Promise<void> {
+  await isolateIp(page);
+  await page.goto('/login?next=%2Fhome');
+  await page.getByRole('tab', { name: 'Continue with email' }).click();
+  await page.getByLabel('Email address').fill(email);
+  await page.getByRole('button', { name: 'Send link' }).click();
+  await expect(page.getByText('Check your email')).toBeVisible();
+  const body = await latestMessage(page.request, email);
+  const link = body.match(/href="([^"]+)"/)?.[1]?.replace(/&amp;/g, '&');
+  if (!link) throw new Error('no magic link in outbox');
+  await page.goto(link);
+  await expect(page).not.toHaveURL(/\/login/);
+}
+
+test('UF-29-7: site visit request reaches the venue; confirmed time shows for both', async ({ browser }) => {
+  const vendorCtx = await browser.newContext();
+  const hostCtx = await browser.newContext();
+  const vendor = await vendorCtx.newPage();
+  const host = await hostCtx.newPage();
+
+  const eventId = await newHostWithEvent(host, `Visit Party ${RUN}`);
+  await gotoSettled(host, `/vendors/seed-venue-e2e?eventId=${eventId}`);
+  await host.getByRole('button', { name: 'Request site visit' }).click();
+  await host.getByLabel('Proposed time 1').fill('2031-07-01T10:00');
+  await host.getByRole('button', { name: 'Add another time' }).click();
+  await host.getByLabel('Proposed time 2').fill('2031-07-02T10:00');
+  await host.getByRole('button', { name: 'Send request' }).click();
+
+  await signInEmail(vendor, '/login?next=%2Fquotes', 'venue-e2e@tiwa.test');
+  await expect(vendor).toHaveURL(/\/quotes/);
+  await gotoSettled(vendor, '/quotes');
+  await vendor.getByLabel('Confirmed time').fill('2031-07-01T10:00');
+  await vendor.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(vendor.getByText('CONFIRMED')).toBeVisible({ timeout: 30_000 });
+
+  await gotoSettled(host, `/events/${eventId}/vendors`);
+  await expect(host.getByText('CONFIRMED')).toBeVisible();
+  await expect(host.getByText('2031')).toBeVisible();
 
   await vendorCtx.close();
   await hostCtx.close();

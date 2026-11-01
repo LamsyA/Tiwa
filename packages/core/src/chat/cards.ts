@@ -52,9 +52,19 @@ export async function findEventTeamThread(eventId: string): Promise<string | nul
   return thread?.id ?? null;
 }
 
+export type CardSnapshot = {
+  vendorName?: string;
+  category?: string;
+  totalMinor?: string;
+  currency?: string;
+  version?: number;
+  diffMinor?: string;
+  date?: string;
+};
+
 export async function postCard(
   actor: UserActor,
-  input: { threadId: string; type: CardType; refId: string },
+  input: { threadId: string; type: CardType; refId: string; snapshot?: CardSnapshot },
 ): Promise<{ messageId: string }> {
   const message = await prisma.message.create({
     data: {
@@ -62,7 +72,7 @@ export async function postCard(
       authorUserId: actor.userId,
       clientMessageId: uuidv7(),
       kind: 'CARD',
-      card: { type: input.type, id: input.refId },
+      card: { type: input.type, id: input.refId, ...(input.snapshot ?? {}) },
     },
     select: { id: true },
   });
@@ -83,8 +93,9 @@ export async function mirrorToEventTeam(
   eventId: string,
   type: CardType,
   refId: string,
+  snapshot?: CardSnapshot,
 ): Promise<void> {
   const threadId = await findEventTeamThread(eventId);
   if (!threadId) return;
-  await postCard(actor, { threadId, type, refId });
+  await postCard(actor, snapshot ? { threadId, type, refId, snapshot } : { threadId, type, refId });
 }

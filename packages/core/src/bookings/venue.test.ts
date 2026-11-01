@@ -195,6 +195,33 @@ describe('venue bookings', () => {
     expect(await prisma.availabilityBlock.findFirst({ where: { bookingId: booking.id } })).toBeNull();
   });
 
+  it('creates exactly one booking under 50 parallel attempts (UF-29-2)', async () => {
+    const attempts = await Promise.allSettled(
+      Array.from({ length: 50 }, () =>
+        instantBook(host, {
+          eventId,
+          vendorOrgId: orgId,
+          spaceId,
+          serviceDate: '2027-04-01',
+          slot: 'FULL_DAY',
+          paymentMode: 'DIRECT',
+          terms: 'Concurrency race terms and conditions apply here',
+        }),
+      ),
+    );
+    const won = attempts.filter((result) => result.status === 'fulfilled');
+    const lost = attempts.filter((result) => result.status === 'rejected');
+    expect(won).toHaveLength(1);
+    expect(lost).toHaveLength(49);
+    for (const result of lost) {
+      expect((result as PromiseRejectedResult).reason).toBeInstanceOf(ConflictError);
+    }
+    const blocks = await prisma.availabilityBlock.findMany({
+      where: { orgId, date: new Date('2027-04-01') },
+    });
+    expect(blocks).toHaveLength(1);
+  });
+
   it('vendor can edit an unsent quote; slot moves re-check availability', async () => {
     const draft = await prisma.quote.create({
       data: {

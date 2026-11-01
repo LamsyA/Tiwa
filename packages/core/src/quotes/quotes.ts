@@ -142,7 +142,12 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
     })
     .then(async (result) => {
       try {
-        await mirrorToEventTeam(actor, quote.eventId, 'quote', quoteId);
+        const vendor = await prisma.organization.findUnique({ where: { id: quote.vendorOrgId }, select: { name: true } });
+        await mirrorToEventTeam(actor, quote.eventId, 'quote', quoteId, {
+          vendorName: vendor?.name ?? '',
+          totalMinor: quote.totalMinor.toString(),
+          currency: quote.currency,
+        });
       } catch {
         // Best-effort mirror; the send already succeeded.
       }

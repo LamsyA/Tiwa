@@ -117,7 +117,9 @@ export async function confirmSiteVisit(actor: UserActor, raw: z.infer<typeof con
   });
   if (visit.eventId) {
     try {
-      await mirrorToEventTeam(actor, visit.eventId, 'site_visit', visit.id);
+      await mirrorToEventTeam(actor, visit.eventId, 'site_visit', visit.id, {
+        date: confirmedAt.toISOString(),
+      });
     } catch {
       // Best-effort mirror; the confirmation already succeeded.
     }

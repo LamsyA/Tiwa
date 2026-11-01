@@ -1,4 +1,5 @@
-import { getEventVendorCategories } from '@tiwa/core';
+import { getEventVendorCategories, listSiteVisits } from '@tiwa/core';
+import { prisma } from '@tiwa/db';
 import { Card, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -25,6 +26,15 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
     );
   }
   const categories = await getEventVendorCategories(ctx.actor, { eventId });
+  const visits = await listSiteVisits(ctx.actor, { eventId }).catch(() => []);
+  const visitOrgs =
+    visits.length > 0
+      ? await prisma.organization.findMany({
+          where: { id: { in: [...new Set(visits.map((row) => row.vendorOrgId))] } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const visitNames = new Map(visitOrgs.map((org) => [org.id, org.name]));
   return (
     <EventFrame
       eventId={eventId}
@@ -63,6 +73,26 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
             </li>
           ))}
         </ul>
+        {visits.length > 0 && (
+          <>
+            <h2 className="pt-2 font-medium">{t('visitsHeading')}</h2>
+            <ul className="flex flex-col gap-2">
+              {visits.map((visit) => (
+                <li key={visit.id} className="border-border rounded-lg border p-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 font-medium">{visitNames.get(visit.vendorOrgId) ?? ''}</span>
+                    <StatusPill tone={visit.status === 'CONFIRMED' ? 'success' : 'neutral'}>{visit.status}</StatusPill>
+                  </div>
+                  <p className="text-muted">
+                    {visit.confirmedAt
+                      ? new Date(visit.confirmedAt).toLocaleString()
+                      : visit.proposedTimes.map((time) => new Date(time).toLocaleString()).join(' · ')}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </EventFrame>
   );

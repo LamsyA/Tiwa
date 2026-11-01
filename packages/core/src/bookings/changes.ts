@@ -116,26 +116,34 @@ export async function requestBookingChange(actor: UserActor, raw: z.infer<typeof
     );
   }
 
-  const version = await prisma.bookingVersion.create({
-    data: {
-      bookingId: booking.id,
-      version: booking.currentVersion + 1,
-      status: 'PROPOSED',
-      scope: {
-        ...input.scope,
-        schedule: currentScope.schedule,
-        quoteId: currentScope.quoteId,
-        taxBps: currentScope.taxBps ?? 0,
-        serviceBps: currentScope.serviceBps ?? 0,
-        travelFeeMinor: currentScope.travelFeeMinor ?? '0',
-      } as unknown as Prisma.InputJsonValue,
-      totalMinor: totals.totalMinor,
-      terms: current.terms,
-      proposedById: actor.userId,
-      reason: input.reason,
-    },
-    select: { id: true, version: true, totalMinor: true },
-  });
+  let version;
+  try {
+    version = await prisma.bookingVersion.create({
+      data: {
+        bookingId: booking.id,
+        version: booking.currentVersion + 1,
+        status: 'PROPOSED',
+        scope: {
+          ...input.scope,
+          schedule: currentScope.schedule,
+          quoteId: currentScope.quoteId,
+          taxBps: currentScope.taxBps ?? 0,
+          serviceBps: currentScope.serviceBps ?? 0,
+          travelFeeMinor: currentScope.travelFeeMinor ?? '0',
+        } as unknown as Prisma.InputJsonValue,
+        totalMinor: totals.totalMinor,
+        terms: current.terms,
+        proposedById: actor.userId,
+        reason: input.reason,
+      },
+      select: { id: true, version: true, totalMinor: true },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictError('A change request is already waiting for a decision');
+    }
+    throw error;
+  }
   await audit(prisma, {
     actor,
     action: 'booking.requestChange',
@@ -196,6 +204,7 @@ export async function respondBookingChange(
         threadId: await ensureBookingThread(version.bookingId),
         type: 'change',
         refId: version.id,
+        snapshot: { version: version.version },
       });
     } catch (error) {
       log.warn(
@@ -330,6 +339,11 @@ export async function respondBookingChange(
             threadId: await ensureBookingThread(version.bookingId),
             type: 'change',
             refId: version.id,
+            snapshot: {
+              version: version.version,
+              diffMinor: (version.totalMinor - version.booking.totalMinor).toString(),
+              currency: version.booking.currency,
+            },
           });
           await mirrorToEventTeam(actor, version.booking.eventId, 'change', version.id);
         } catch (error) {

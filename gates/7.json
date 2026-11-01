@@ -1,0 +1,19 @@
+{
+  "$comment": "P7 gate — automated checks (BUILD_PLAN.md GATE P7). e2e covers UF-14/15/16/19 + UF-29-7 + card rendering at 390 + 1280 px (quotes.spec); 1000-quote totals parity and vendor isolation are unit tests; UF-29-2 concurrency is a 50-way unit test. `pnpm perf` asserts home budgets; size is warn-only until P17 (D-X05).",
+  "phase": 7,
+  "name": "Quotes and bookings",
+  "checks": [
+    { "id": "lint", "run": "pnpm lint" },
+    { "id": "typecheck", "run": "pnpm typecheck" },
+    { "id": "unit", "run": "pnpm test" },
+    { "id": "seed", "run": "pnpm db:seed" },
+    { "id": "build", "run": "pnpm build" },
+    { "id": "e2e", "run": "pnpm e2e" },
+    {
+      "id": "no-hardcoded-words",
+      "run": "! rg -n -i \"wedding|bride|groom|burial|aso-ebi|asoebi\" apps/web/app --glob '*.tsx' --glob '!**/dev/**'"
+    },
+    { "id": "lighthouse-home", "run": "pnpm perf" },
+    { "id": "size", "run": "pnpm size" }
+  ]
+}

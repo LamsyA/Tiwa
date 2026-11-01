@@ -168,4 +168,19 @@ describe('acceptQuote', () => {
     const result = await acceptQuote(host, { quoteId, paymentMode: 'DIRECT', declineOthers: true });
     expect(result.bookingId).toBeTruthy();
   });
+
+  it('a planner can book for the client event (UF-29-6)', async () => {
+    const planner = await makeUser('AcceptPlanner');
+    await prisma.eventParticipant.create({
+      data: {
+        eventId,
+        userId: planner.userId,
+        role: 'PLANNER',
+        permissions: toStoredPermissions(permissionsFor('PLANNER', 'full')),
+      },
+    });
+    const quoteId = await makeSentQuote();
+    const result = await acceptQuote(planner, { quoteId, paymentMode: 'OFFLINE', declineOthers: false });
+    expect(result.bookingId).toBeTruthy();
+  });
 });

@@ -23,6 +23,7 @@ import {
 import { useChatSender, useInboxStream } from '@/hooks/use-chat.js';
 import type { PendingAttachment } from '@/lib/chat-outbox.js';
 import { Composer } from './composer.js';
+import { ChatCard, type ChatCardData } from './chat-card.js';
 import { MessageBubble, type BubbleMessage, type BubbleStatus } from './message-bubble.js';
 
 type Wire = Omit<MessageView, 'createdAt'> & { createdAt: string };
@@ -276,6 +277,13 @@ export function ChatThread({
           {ordered.map((m, index) => {
             const previous = ordered[index - 1];
             const canEdit = m.mine && !m.deleted && now - new Date(m.createdAt).getTime() < EDIT_WINDOW_MS;
+            if (m.kind === 'CARD' && !m.deleted) {
+              return (
+                <li key={m.id}>
+                  <ChatCard card={m.card as ChatCardData} />
+                </li>
+              );
+            }
             return (
               <li key={m.id}>
                 <MessageBubble
