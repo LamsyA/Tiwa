@@ -997,6 +997,7 @@ model PaymentMilestone {
   releasedAt            DateTime?
   createdAt             DateTime      @default(now())
   booking               Booking       @relation(fields: [bookingId], references: [id])
+  payments              Payment[]
 
   @@index([state, releaseAt])
   @@index([bookingId])
@@ -1025,6 +1026,56 @@ enum MilestoneState {
   DISPUTED
   RECORDED_OFFLINE
   CONFIRMED_OFFLINE
+}
+
+// ───────────── Payments (Backend.md §3, §7.7; lean P8, D-X27) ─────────────
+// One row per payment attempt. Lean P8 records only offline payments
+// (provider "offline"): PENDING when the host records it, SUCCEEDED when the
+// vendor confirms. Online checkout (providerTxnId, fees, expiry) arrives
+// with the deferred provider tasks.
+model Payment {
+  id             String         @id @default(uuid(7))
+  purpose        PaymentPurpose
+  milestoneId    String?
+  payerUserId    String?
+  amountMinor    BigInt
+  feeMinor       BigInt         @default(0)
+  currency       String
+  provider       String
+  providerRef    String         @unique
+  providerTxnId  String?
+  status         PaymentStatus  @default(PENDING)
+  mode           PaymentMode
+  expiresAt      DateTime?
+  paidAt         DateTime?
+  offlineMethod  String? // bank_transfer | cash | pos | other
+  receiptKey     String? // private bucket
+  note           String?
+  recordedById   String?
+  confirmedById  String?
+  confirmedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  milestone      PaymentMilestone? @relation(fields: [milestoneId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([milestoneId])
+}
+
+enum PaymentPurpose {
+  BOOKING_MILESTONE
+  TICKET_ORDER
+  CONTRIBUTION
+  SUBSCRIPTION
+  MOMENTS_PLUS
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  EXPIRED
+  REFUNDED
+  PARTLY_REFUNDED
 }
 
 // ───────────── Chat (Backend.md §3, §9a; P6-T11) ─────────────

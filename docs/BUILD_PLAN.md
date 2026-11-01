@@ -287,34 +287,34 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** money moves correctly in all three modes; every movement is in a balanced ledger; held payments and payouts work behind flags. → part of **Milestone M2**
 **Read first:** `PRD.md PAY-*`, `UF-17`, `UF-18`, `UF-26 (freeze part)`, `arc.md §6`, `Backend.md §5.3–§5.5, §7, §8`.
 
-- [ ] P8-T01 Prisma: Payment, ProviderEvent, BankAccount, Payout, Refund, LedgerTransaction, LedgerEntry, PaymentException, Subscription, Dispute, DisputeEvidence; raw SQL: ledger sum-zero deferred trigger, no UPDATE/DELETE trigger on ledger tables.
-- [ ] P8-T02 `packages/payments` interfaces + **Fake** provider (with `/dev/fake-checkout` and signed fake webhooks).
-- [ ] P8-T03 Ledger module: `post()`, balances, trial balance; tests (sum zero, duplicate reference, immutability).
-- [ ] P8-T04 Paystack adapter (checkout with split, verify, refund, webhook signature, banks, resolve account, subaccount, transfer recipient, transfers).
-- [ ] P8-T05 Flutterwave adapter (same capabilities); provider chosen by config; run the payment test suite against both adapters' sandbox in a separate CI job (skipped when keys missing).
-- [ ] P8-T06 Bank account setup (list banks, resolve name, confirm, create subaccount + recipient job); OTP + 24 h payout pause on change.
-- [ ] P8-T07 Checkout: `startCheckout`, inline provider UI, "Confirming…" screen via SSE `payment:{id}`, webhook route → `process-webhook` job → transitions + ledger + receipt; `verify-pending` safety job.
+**Lean scope (D-X27, owner 2026-11-01):** for the $0 test deployment Tiwa takes no real money. Hosts pay vendors outside Tiwa and record it; vendors confirm; the booking confirms. Build T01 (Payment only), T08, T16, T17, T18. Online checkout, providers, ledger, held payments, payouts, refunds, disputes, receipts, subscriptions and security deposits are deferred (`[-]`) until before public launch.
+
+- [x] P8-T01 Prisma: Payment, ProviderEvent, BankAccount, Payout, Refund, LedgerTransaction, LedgerEntry, PaymentException, Subscription, Dispute, DisputeEvidence; raw SQL: ledger sum-zero deferred trigger, no UPDATE/DELETE trigger on ledger tables. *(Lean P8, D-X27: only `Payment` now, with offline fields; the other models arrive with the deferred tasks.)*
+- [-] P8-T02 `packages/payments` interfaces + **Fake** provider (with `/dev/fake-checkout` and signed fake webhooks). *(Deferred — lean P8, D-X27.)*
+- [-] P8-T03 Ledger module: `post()`, balances, trial balance; tests (sum zero, duplicate reference, immutability). *(Deferred — lean P8, D-X27.)*
+- [-] P8-T04 Paystack adapter (checkout with split, verify, refund, webhook signature, banks, resolve account, subaccount, transfer recipient, transfers). *(Deferred — lean P8, D-X27.)*
+- [-] P8-T05 Flutterwave adapter (same capabilities); provider chosen by config; run the payment test suite against both adapters' sandbox in a separate CI job (skipped when keys missing). *(Deferred — lean P8, D-X27.)*
+- [-] P8-T06 Bank account setup (list banks, resolve name, confirm, create subaccount + recipient job); OTP + 24 h payout pause on change. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T07 Checkout: `startCheckout`, inline provider UI, "Confirming…" screen via SSE `payment:{id}`, webhook route → `process-webhook` job → transitions + ledger + receipt; `verify-pending` safety job. *(Deferred — lean P8, D-X27.)*
 - [ ] P8-T08 Offline payments: record with receipt, vendor confirm.
-- [ ] P8-T09 Refunds per cancellation terms (full/partial) in DIRECT and HELD.
-- [ ] P8-T10 HELD mode (flag `payments.held`): `EscrowProvider` interface + Fake; hold on success; release engine job (rules + auto-release + dispute check); host delivery sign-off action.
-- [ ] P8-T11 Payouts (flag `payments.payouts`): payout job, transfer, status via webhook/poll, retries, exceptions.
-- [ ] P8-T12 Disputes (opening and freezing money here; admin decision UI in P16): open, evidence, respond-by deadline, DISPUTED transitions.
-- [ ] P8-T13 Daily reconciliation job and `PaymentException` creation; pause payouts on mismatch.
-- [ ] P8-T14 Receipts (PDF + email) for every successful payment.
-- [ ] P8-T15 Subscriptions (Planner Pro, Vendor Pro) and Moments Plus purchase → entitlements (unlocks P5 limits).
-- [ ] P8-T16a Security deposits: SECURITY_DEPOSIT milestones (no platform fee), refund 72 h after the event without a damage claim (held), host confirmation of refunds (direct/offline), damage claim opens a dispute; `bookings/security-deposits` job; e2e UF-29-4, UF-29-5.
-- [ ] P8-T16 Vendor payment status views (secured, released, paid out, outstanding) on bookings and dashboard.
-- [ ] P8-T17 e2e UF-17, UF-18 (with time travel), dispute freeze part of UF-26.
+- [-] P8-T09 Refunds per cancellation terms (full/partial) in DIRECT and HELD. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T10 HELD mode (flag `payments.held`): `EscrowProvider` interface + Fake; hold on success; release engine job (rules + auto-release + dispute check); host delivery sign-off action. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T11 Payouts (flag `payments.payouts`): payout job, transfer, status via webhook/poll, retries, exceptions. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T12 Disputes (opening and freezing money here; admin decision UI in P16): open, evidence, respond-by deadline, DISPUTED transitions. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T13 Daily reconciliation job and `PaymentException` creation; pause payouts on mismatch. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T14 Receipts (PDF + email) for every successful payment. *(Deferred — lean P8, D-X27.)*
+- [-] P8-T15 Subscriptions (Planner Pro, Vendor Pro) and Moments Plus purchase → entitlements (unlocks P5 limits). *(Deferred — lean P8, D-X27.)*
+- [-] P8-T16a Security deposits: SECURITY_DEPOSIT milestones (no platform fee), refund 72 h after the event without a damage claim (held), host confirmation of refunds (direct/offline), damage claim opens a dispute; `bookings/security-deposits` job; e2e UF-29-4, UF-29-5. *(Deferred — lean P8, D-X27.)*
+- [ ] P8-T16 Vendor payment status views (secured, released, paid out, outstanding) on bookings and dashboard. *(Lean: secured/outstanding from milestone states; released/paid-out arrive with payouts.)*
+- [ ] P8-T17 e2e UF-17, UF-18 (with time travel), dispute freeze part of UF-26. *(Lean: UF-17 step 5 offline flow only; UF-18 and disputes deferred.)*
 - [ ] P8-T18 Write `docs/QUESTIONS.md` entry: licensed escrow partner + legal sign-off required before enabling `payments.held` / `payments.payouts` in production.
 
 **GATE P8**
 
-- [ ] UF-17, UF-18, UF-29-4 and UF-29-5 checks pass with the Fake provider at both widths; sandbox suite passes for Paystack and Flutterwave when keys are present.
-- [ ] Ledger: trial balance = 0 after the full e2e suite; no UPDATE/DELETE possible on ledger tables.
-- [ ] Duplicate and out-of-order webhook tests pass; booking never confirmed from browser callback alone.
-- [ ] Release engine: disputed milestones never release (property test over random schedules).
-- [ ] Flags OFF: Held option and payouts UI are invisible; DIRECT and OFFLINE flows unaffected.
-- [ ] Security review of payment code (checklist in `Backend.md §12`) recorded in `docs/PROGRESS.md`.
+- [ ] Lean (D-X27): UF-17 step 5 passes at both widths — host records an offline payment, vendor confirms, deposit milestone → CONFIRMED_OFFLINE, booking DEPOSIT_DUE → CONFIRMED and its hold cleared.
+- [ ] Only the host side can record and only the booking's vendor team can confirm (integration tests); a stranger gets NOT_FOUND.
+- [ ] Online payment options are hidden while no real provider is configured; Held stays behind its flag.
+- [ ] Deferred P8 gate items (webhooks, ledger trial balance, release engine, payment security review) move to the gate of the phase that builds them.
 
 ---
 

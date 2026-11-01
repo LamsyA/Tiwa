@@ -15,6 +15,8 @@ export type {
   OrgKind,
   OrgRole,
   PaymentMode,
+  PaymentPurpose,
+  PaymentStatus,
   Priority,
   QuoteRequestStatus,
   QuoteStatus,
