@@ -349,7 +349,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P10-T01 Prisma: Client, Proposal, Invoice, VendorBookEntry.
 - [x] P10-T02 Planner home dashboard ("Needs you today", week's events, pipeline, quick actions) with efficient aggregate queries.
 - [x] P10-T03 Clients CRM and pipeline (Kanban desktop, grouped list mobile).
-- [ ] P10-T04 Proposal templates with branding → PDF; send to client.
+- [x] P10-T04 Proposal templates with branding → PDF; send to client.
 - [ ] P10-T05 Planner team: staff members, assignment across events; calendar across events.
 - [ ] P10-T06 Private vendor book; add to event from vendor book (no marketplace fee).
 - [ ] P10-T07 Planner invoices to clients with payment link (provider) and reminders.

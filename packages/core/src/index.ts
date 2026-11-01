@@ -79,3 +79,7 @@ export * from './budget/records.js';
 export * from './budget/edit.js';
 export * from './budget/alerts.js';
 export * from './budget/export.js';
+export * from './planner/clients.js';
+export * from './planner/dashboard.js';
+export * from './planner/proposals.js';
+export * from './planner/vendor-book.js';

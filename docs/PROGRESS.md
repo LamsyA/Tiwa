@@ -157,3 +157,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 ## 2026-11-01
 - P10-T02 done: `plannerDashboard` (5 parallel queries, no N+1) + `/home` planner sections (Needs today, week events, pipeline, quick actions).
 - P10-T03 done: CRM `createClient/listClients/getClient/moveLead/updateClient` (PLANNER-only, vendor orgs get NOT_FOUND) + `/clients` list/pipeline + `/clients/[id]` + stage buttons; 5 planner unit tests green.
+- P10-T04 done: proposals `create/list/get/send/decide` (BigInt totals, DRAFT→SENT→ACCEPTED/DECLINED closes lead WON/LOST) + `/clients/[id]/proposals/[proposalId]` branded doc with print-ready PDF (D-X28 pattern, no worker).
