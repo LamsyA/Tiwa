@@ -83,3 +83,7 @@ export * from './planner/clients.js';
 export * from './planner/dashboard.js';
 export * from './planner/proposals.js';
 export * from './planner/vendor-book.js';
+export * from './planner/vendor-book-events.js';
+export * from './planner/team.js';
+export * from './planner/invoices.js';
+export * from './planner/vendor-dashboard.js';

@@ -161,3 +161,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - P10-T05 done: `listTeamAssignments/assignStaffToEvent` (PLANNER_STAFF + orgId, audit) + `plannerCalendar` + `/team` (members, assignments, assign form) + `/calendar` (planner events).
 - P10-T06 done: `addBookEntryToEvent` (VENDOR participant, no QuoteRequest → no fee; external entries refused) + `/vendor-book` (add/list/remove/message/add-to-event) + planner→client chat now matches CRM contacts (`inPlannerCrm` fact).
 - P10-T07 done (lean): invoices `create/list/get/send/markPaid/void` with sequential numbers, `invoiceReminders` computed on read (overdue + 7d); no provider payment link — offline receipt only (D-X27); `/invoices` + `/invoices/[id]` print-ready.
+- P10-T08 done: `vendorDashboard` (enquiries, upcoming bookings + payment splits, blocked dates, double-booking warnings) + `/home` vendor view + `/bookings` + `/calendar` vendor section; staff via existing `/settings/team`.

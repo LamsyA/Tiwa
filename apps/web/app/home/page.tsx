@@ -1,4 +1,4 @@
-import { listClients, listMyOrgs, plannerDashboard } from '@tiwa/core';
+import { listClients, listMyOrgs, plannerDashboard, vendorDashboard } from '@tiwa/core';
 import { Badge, Card, EmptyState, StatCard, buttonClasses } from '@tiwa/ui';
 import { CalendarPlus, Plus, Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -6,13 +6,77 @@ import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 
-/** Planner home (PLN-01, UF-21): needs-today, week events, pipeline, quick actions. */
+/** Role home (PLN-01 planner, VND vendor, UF-21): needs-today, lists, quick actions. */
 export default async function HomePage() {
   const ctx = await requirePageUser('/home');
   const t = await getTranslations('home');
   const tp = await getTranslations('planner');
+  const tv = await getTranslations('vendor');
   const orgs = await listMyOrgs(ctx.actor.userId);
   const plannerOrg = orgs.find((r) => r.org.kind === 'PLANNER')?.org;
+  const vendorOrg = !plannerOrg ? orgs.find((r) => r.org.kind === 'VENDOR')?.org : undefined;
+
+  if (vendorOrg) {
+    const dash = await vendorDashboard(ctx.actor, { orgId: vendorOrg.id });
+    return (
+      <AppFrame userId={ctx.actor.userId} active="home" title={tv('title')}>
+        <div className="flex flex-col gap-4 py-2">
+          <section aria-label={tv('title')} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard
+              label={tv('enquiriesHeading')}
+              value={String(dash.needsToday.openEnquiries)}
+              help={tv('viewQuotes')}
+            />
+            <StatCard
+              label={tv('upcomingHeading')}
+              value={String(dash.needsToday.upcomingBookings)}
+              help={tv('viewBookings')}
+            />
+            <StatCard
+              label={tv('paymentsHeading')}
+              value={String(dash.needsToday.awaitingPayment)}
+              help={tv('viewBookings')}
+            />
+          </section>
+          <Card className="p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="font-semibold">{tv('upcomingHeading')}</h2>
+              <Link href="/bookings" className={buttonClasses({ variant: 'ghost' })}>
+                {tp('viewAll')}
+              </Link>
+            </div>
+            {dash.upcomingBookings.length === 0 ? (
+              <p className="text-muted text-sm">{tv('noBookings')}</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {dash.upcomingBookings.map((b) => (
+                  <li key={b.id} className="text-sm">
+                    <Link href="/quotes" className="text-brand-strong font-medium">
+                      {b.eventName}
+                    </Link>
+                    <span className="text-muted"> · {b.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {dash.doubleBookingWarnings.length > 0 && (
+              <p className="text-warning mt-2 text-sm">
+                {tv('warningsHeading')}: {dash.doubleBookingWarnings.map((w) => w.date).join(', ')}
+              </p>
+            )}
+          </Card>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/quotes" className={buttonClasses()}>
+              {tv('viewQuotes')}
+            </Link>
+            <Link href="/calendar" className={buttonClasses({ variant: 'secondary' })}>
+              {tv('viewCalendar')}
+            </Link>
+          </div>
+        </div>
+      </AppFrame>
+    );
+  }
 
   if (!plannerOrg) {
     return (

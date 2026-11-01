@@ -353,7 +353,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P10-T05 Planner team: staff members, assignment across events; calendar across events.
 - [x] P10-T06 Private vendor book; add to event from vendor book (no marketplace fee).
 - [x] P10-T07 Planner invoices to clients with payment link (provider) and reminders.
-- [ ] P10-T08 Vendor home: enquiries, upcoming bookings, payment status; bookings list; calendar with availability blocks and double-booking warning; staff accounts.
+- [x] P10-T08 Vendor home: enquiries, upcoming bookings, payment status; bookings list; calendar with availability blocks and double-booking warning; staff accounts.
 - [ ] P10-T09 Command palette (Cmd/Ctrl+K) for planners on desktop.
 - [ ] P10-T10 Planner setting: hide vendor prices from host (EVT-12) enforced in queries.
 - [ ] P10-T11 e2e UF-21; seeded planner with 10 events.
