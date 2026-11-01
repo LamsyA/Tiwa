@@ -6,6 +6,7 @@ import { authorizeOrg } from '../auth/org.js';
 import { loadEventAccess, requireEventAccess } from '../events/access.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { mirrorToEventTeam } from '../chat/cards.js';
 
 // Site visits (QTE-08, P7-T11): the host team proposes up to 3 times to tour
 // a venue; the venue confirms one, declines, or either side completes or
@@ -107,6 +108,13 @@ export async function confirmSiteVisit(actor: UserActor, raw: z.infer<typeof con
   await prisma.siteVisit.update({ where: { id: visit.id }, data: { status: 'CONFIRMED', confirmedAt } });
   await audit(prisma, { actor, action: 'siteVisit.confirm', targetType: 'SiteVisit', targetId: visit.id, data: {} });
   await enqueue(prisma, 'site_visit.confirmed', { visitId: visit.id, eventId: visit.eventId, vendorOrgId: visit.vendorOrgId });
+  if (visit.eventId) {
+    try {
+      await mirrorToEventTeam(actor, visit.eventId, 'site_visit', visit.id);
+    } catch {
+      // Best-effort mirror; the confirmation already succeeded.
+    }
+  }
   return { status: 'CONFIRMED' as const };
 }
 

@@ -47,11 +47,15 @@ export async function getBooking(actor: UserActor, raw: z.infer<typeof bookingId
     authorize(actor, 'event.view', { eventId: booking.eventId, access });
   }
 
-  const [org, event] = await Promise.all([
+  const [org, event, thread] = await Promise.all([
     prisma.organization.findUnique({ where: { id: booking.vendorOrgId }, select: { name: true, slug: true } }),
     prisma.event.findUniqueOrThrow({
       where: { id: booking.eventId },
       select: { name: true, type: true, startsAt: true, endsAt: true, timezone: true, currency: true },
+    }),
+    prisma.thread.findFirst({
+      where: { kind: 'BOOKING', context: 'BOOKING', contextId: bookingId },
+      select: { id: true },
     }),
   ]);
 
@@ -64,6 +68,7 @@ export async function getBooking(actor: UserActor, raw: z.infer<typeof bookingId
     },
     vendor: org,
     event,
+    threadId: thread?.id ?? null,
   };
 }
 

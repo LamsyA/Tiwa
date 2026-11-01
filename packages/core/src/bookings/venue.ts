@@ -4,6 +4,10 @@ import { requireEventAccess } from '../events/access.js';
 import type { Actor } from '../auth/authorize.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { ensureBookingThread, postCard, mirrorToEventTeam } from '../chat/cards.js';
+import { createLogger } from '../shared/logger.js';
+
+const log = createLogger('bookings');
 
 // Venue bookings (QTE-06, P7-T10): a venue quote accepted — or an instant
 // booking — creates the Booking AND the AvailabilityBlock in one
@@ -189,6 +193,15 @@ export async function instantBook(actor: UserActor, raw: z.infer<typeof instantB
       paymentMode: input.paymentMode,
     });
     return { bookingId: booking.id };
+  }).then(async (result) => {
+    try {
+      const threadId = await ensureBookingThread(result.bookingId);
+      await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
+      await mirrorToEventTeam(actor, input.eventId, 'booking', result.bookingId);
+    } catch (error) {
+      log.warn({ err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId }, 'booking cards failed');
+    }
+    return result;
   });
 }
 

@@ -7,6 +7,10 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '.
 import { audit, enqueue } from '../shared/outbox.js';
 import { calcQuoteTotals, quoteItemSchema } from '../quotes/totals.js';
 import { checkVenueAvailability } from './venue.js';
+import { ensureBookingThread, mirrorToEventTeam, postCard } from '../chat/cards.js';
+import { createLogger } from '../shared/logger.js';
+
+const log = createLogger('bookings');
 
 // Booking change requests (QTE-07, UF-19): a change request is a PROPOSED
 // BookingVersion (D-D03). Accepting makes it the ACCEPTED version (N+1) and
@@ -175,6 +179,11 @@ export async function respondBookingChange(actor: UserActor, raw: z.infer<typeof
       bookingId: version.bookingId,
       eventId: version.booking.eventId,
     });
+    try {
+      await postCard(actor, { threadId: await ensureBookingThread(version.bookingId), type: 'change', refId: version.id });
+    } catch (error) {
+      log.warn({ err: error instanceof Error ? error.message : String(error), versionId: version.id }, 'change card failed');
+    }
     return { status: 'DECLINED' as const };
   }
 
@@ -291,6 +300,16 @@ export async function respondBookingChange(actor: UserActor, raw: z.infer<typeof
       vendorOrgId: version.booking.vendorOrgId,
     });
     return { status: 'ACCEPTED' as const, version: version.version };
+  }).then(async (result) => {
+    if (result.status === 'ACCEPTED') {
+      try {
+        await postCard(actor, { threadId: await ensureBookingThread(version.bookingId), type: 'change', refId: version.id });
+        await mirrorToEventTeam(actor, version.booking.eventId, 'change', version.id);
+      } catch (error) {
+        log.warn({ err: error instanceof Error ? error.message : String(error), versionId: version.id }, 'change card failed');
+      }
+    }
+    return result;
   });
 }
 

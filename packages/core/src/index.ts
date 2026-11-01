@@ -58,6 +58,7 @@ export * from './chat/inbox.js';
 export * from './chat/attachments.js';
 export * from './chat/masking.js';
 export * from './chat/safety.js';
+export * from './chat/cards.js';
 export * from './shared/schemas.js';
 export * from './quotes/totals.js';
 export * from './quotes/state.js';

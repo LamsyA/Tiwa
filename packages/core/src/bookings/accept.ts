@@ -7,6 +7,10 @@ import { ConflictError, FeatureDisabledError, NotFoundError, ValidationError } f
 import { mulBps } from '../shared/money.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { checkVenueAvailability } from './venue.js';
+import { ensureBookingThread, mirrorToEventTeam, postCard } from '../chat/cards.js';
+import { createLogger } from '../shared/logger.js';
+
+const log = createLogger('bookings');
 
 // Accepting a quote (QTE-05, UF-16): host-side, approval-capped, creates
 // Booking v1 (ACCEPTED) + PaymentMilestones from the vendor's proposed
@@ -228,5 +232,16 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
       paymentMode: input.paymentMode,
     });
     return { bookingId: booking.id, status: depositDue ? ('DEPOSIT_DUE' as const) : ('ACCEPTED' as const) };
+  }).then(async (result) => {
+    // Chat cards (P7-T12): best-effort — a card failure must never undo the booking.
+    try {
+      const threadId = await ensureBookingThread(result.bookingId);
+      await postCard(actor, { threadId, type: 'quote', refId: quote.id });
+      await postCard(actor, { threadId, type: 'booking', refId: result.bookingId });
+      await mirrorToEventTeam(actor, quote.eventId, 'booking', result.bookingId);
+    } catch (error) {
+      log.warn({ err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId }, 'booking cards failed');
+    }
+    return result;
   });
 }

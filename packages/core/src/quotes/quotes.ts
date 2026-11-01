@@ -7,6 +7,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors
 import { audit, enqueue } from '../shared/outbox.js';
 import { authorize } from '../auth/authorize.js';
 import { checkVenueAvailability } from '../bookings/venue.js';
+import { mirrorToEventTeam } from '../chat/cards.js';
 import { assertQuoteTransition } from './state.js';
 import { calcQuoteTotals, quoteItemSchema } from './totals.js';
 
@@ -119,6 +120,13 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
     await audit(tx, { actor, action: 'quote.send', targetType: 'Quote', targetId: quoteId, data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId } });
     await enqueue(tx, 'quote.sent', { quoteId, eventId: quote.eventId, vendorOrgId: quote.vendorOrgId });
     return { status: updated.status };
+  }).then(async (result) => {
+    try {
+      await mirrorToEventTeam(actor, quote.eventId, 'quote', quoteId);
+    } catch {
+      // Best-effort mirror; the send already succeeded.
+    }
+    return result;
   });
 }
 
