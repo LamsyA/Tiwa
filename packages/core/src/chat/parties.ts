@@ -94,15 +94,26 @@ export async function loadMessageFacts(
 
   if (from.kind === 'PLANNER' && to.kind === 'CLIENT' && from.orgId && to.userId) {
     // Planner hired on any event where the target is host or co-host.
-    facts.plannerOnClientEvent =
-      (await db.eventParticipant.count({
+    const [onEvent, target] = await Promise.all([
+      db.eventParticipant.count({
         where: {
           orgId: from.orgId,
           role: 'PLANNER',
           removedAt: null,
           event: { participants: { some: { userId: to.userId, role: { in: ['HOST', 'CO_HOST'] }, removedAt: null } } },
         },
-      })) > 0;
+      }),
+      db.user.findUnique({ where: { id: to.userId }, select: { phone: true, email: true } }),
+    ]);
+    facts.plannerOnClientEvent = onEvent > 0;
+    // The client is in the planner's CRM (P10): match the target's verified
+    // contact against the CRM rows. Leads without contact details never match.
+    if (target && (target.phone || target.email)) {
+      const or: { phone?: string; email?: string }[] = [];
+      if (target.phone) or.push({ phone: target.phone });
+      if (target.email) or.push({ email: target.email });
+      facts.inPlannerCrm = (await db.client.count({ where: { orgId: from.orgId, OR: or } })) > 0;
+    }
   }
 
   if (from.kind === 'GUEST' && to.orgId && from.userId && eventId) {
