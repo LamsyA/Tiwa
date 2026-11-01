@@ -62,4 +62,5 @@ export * from './shared/schemas.js';
 export * from './quotes/totals.js';
 export * from './quotes/state.js';
 export * from './quotes/requests.js';
+export * from './quotes/quotes.js';
 export * from './bookings/state.js';

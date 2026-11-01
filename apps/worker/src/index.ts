@@ -4,6 +4,7 @@ import { env } from '@tiwa/config';
 import { createLogger, scrubSentryEvent } from '@tiwa/core';
 import { Redis } from 'ioredis';
 import { DEADLINE_ALERTS_EVERY_MS, DEADLINE_ALERTS_JOB, handleDeadlineAlerts } from './jobs/deadline-alerts.js';
+import { QUOTE_EXPIRY_EVERY_MS, QUOTE_EXPIRY_JOB, handleQuoteExpiry } from './jobs/quote-expiry.js';
 import { REMINDERS_EVERY_MS, REMINDERS_JOB, handleReminders } from './jobs/reminders.js';
 import { RETENTION_EVERY_MS, RETENTION_JOB, handleRetention } from './jobs/retention.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
@@ -39,6 +40,7 @@ async function main() {
       if (job.name === PUBLISH_OUTBOX_JOB) return handlePublishOutbox(queue);
       if (job.name === DEADLINE_ALERTS_JOB) return handleDeadlineAlerts(log);
       if (job.name === REMINDERS_JOB) return handleReminders(log);
+      if (job.name === QUOTE_EXPIRY_JOB) return handleQuoteExpiry(log);
       if (job.name === RETENTION_JOB) return handleRetention(log);
       if (job.name === SEND_INVITE_JOB) return handleSendInvite(job.data, log);
       if (job.name === MEDIA_MODERATE_JOB) return handleModerate(job.data, log);
@@ -99,6 +101,11 @@ async function main() {
     RETENTION_JOB,
     { every: RETENTION_EVERY_MS },
     { name: RETENTION_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
+  );
+  await queue.upsertJobScheduler(
+    QUOTE_EXPIRY_JOB,
+    { every: QUOTE_EXPIRY_EVERY_MS },
+    { name: QUOTE_EXPIRY_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
   );
   log.info({ queue: QUEUE_NAME }, 'listening');
 }
