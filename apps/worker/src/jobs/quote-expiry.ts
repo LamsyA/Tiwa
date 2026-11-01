@@ -12,8 +12,8 @@ export async function handleQuoteExpiry(log: Log, now = new Date()): Promise<{ e
   return result;
 }
 
-/** P7-T10 `holds/expire` (hourly): unpaid deposit holds free their dates. */
-export const HOLD_EXPIRY_JOB = 'holds/expire' as const;
+/** P7-T10 `bookings/expire-holds` (hourly): unpaid deposit holds free their dates. */
+export const HOLD_EXPIRY_JOB = 'bookings/expire-holds' as const;
 export const HOLD_EXPIRY_EVERY_MS = 60 * 60 * 1000;
 
 export async function handleHoldExpiry(log: Log, now = new Date()): Promise<{ expired: number }> {

@@ -13,7 +13,7 @@ const log = createLogger('bookings');
 // booking — creates the Booking AND the AvailabilityBlock in one
 // transaction, so the date can never be double-booked. Changing a venue
 // date/space/slot re-checks availability first (UF-29 edge); an expired
-// deposit hold frees the date again (holds/expire job).
+// deposit hold frees the date again (bookings/expire-holds job).
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 

@@ -269,10 +269,10 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P7-T07 Booking page: details, versions, payments tab (read-only until P8), files.
 - [x] P7-T08 Change requests with diff view and acceptance creating version N+1.
 - [x] P7-T09 Booking brief for vendors (no guest contacts).
-- [ ] P7-T10 Venue booking: instant book and venue quotes create the booking and the AvailabilityBlock in one transaction (unique index → friendly "just booked" message); provisional hold with `holdExpiresAt` and the `bookings/expire-holds` job.
-- [ ] P7-T11 Site visits: request (up to 3 times), venue confirm/decline, calendar entries, reminder job.
-- [ ] P7-T12 Chat cards: share quote, booking and site-visit cards in chat (live status); booking confirmation turns the existing thread into the booking thread and unmasks contact details; booking threads created automatically (`chat/sync-participants`).
-- [ ] P7-T13 e2e UF-14 (request), UF-15, UF-16, UF-19, UF-29-2, UF-29-3, UF-29-6, UF-29-7, UF-30-4 (after booking), UF-30-6.
+- [x] P7-T10 Venue booking: instant book and venue quotes create the booking and the AvailabilityBlock in one transaction (unique index → friendly "just booked" message); provisional hold with `holdExpiresAt` and the `bookings/expire-holds` job.
+- [x] P7-T11 Site visits: request (up to 3 times), venue confirm/decline, calendar entries, reminder job.
+- [x] P7-T12 Chat cards: share quote, booking and site-visit cards in chat (live status); booking confirmation turns the existing thread into the booking thread and unmasks contact details; booking threads created automatically (`chat/sync-participants`).
+- [x] P7-T13 e2e UF-14 (request), UF-15, UF-16, UF-19, UF-29-2, UF-29-3, UF-29-6, UF-29-7, UF-30-4 (after booking), UF-30-6.
 
 **GATE P7**
 
