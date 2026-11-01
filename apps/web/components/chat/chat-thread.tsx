@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import {
+  blockChatParty,
+  reportChatMessage,
   startChatAttachment,
   archiveChat,
   deleteChatMessage,
@@ -32,6 +34,10 @@ export interface ThreadHeader {
   isTeam: boolean;
   muted: boolean;
   archived: boolean;
+  /** The other party of a 1:1 thread (null for team threads). */
+  blockTarget: { userId: string } | { orgId: string } | null;
+  /** Speaking for this business in the thread, if not myself. */
+  asOrgId: string | null;
 }
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -68,8 +74,12 @@ export function ChatThread({
   }, []);
   const threadId = header.threadId;
 
-  const { send, pending } = useChatSender(React.useCallback(() => setError(t('rejected')), [t]));
+  const { send, pending, acknowledge, discard } = useChatSender(React.useCallback(() => setError(t('rejected')), [t]));
   const mine = pending.filter((p) => p.threadId === threadId);
+  const held = mine.find((p) => p.needsContactAck && !p.acknowledgeContactWarning);
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const [reporting, setReporting] = React.useState<{ id: string; reason: string } | null>(null);
+  const [confirmBlock, setConfirmBlock] = React.useState(false);
 
   /** Re-read the newest page and merge (keeps older pages already loaded). */
   const refetch = React.useCallback(async () => {
@@ -239,6 +249,7 @@ export function ChatThread({
                   until: header.muted ? null : new Date(Date.now() + 365 * 86_400_000).toISOString(),
                 }).then(() => router.refresh()),
             },
+            ...(header.blockTarget ? [{ label: t('block'), onSelect: () => setConfirmBlock(true) }] : []),
             {
               label: header.archived ? t('unarchive') : t('archive'),
               onSelect: () =>
@@ -272,6 +283,7 @@ export function ChatThread({
                   onEdit={() => setEditing({ id: m.id, body: m.body ?? '' })}
                   onDelete={() => setDeleting(m.id)}
                   onDecision={() => void markChatDecision({ messageId: m.id }).then(() => void refetch())}
+                  {...(!m.mine && !m.deleted ? { onReport: () => setReporting({ id: m.id, reason: '' }) } : {})}
                   attachmentHref={(index, download) =>
                     `/api/chat/attachments/${m.id}/${index}${download ? '?download=1' : ''}`
                   }
@@ -288,6 +300,11 @@ export function ChatThread({
         <div ref={bottom} />
       </div>
 
+      {notice && (
+        <div className="px-3 pb-2">
+          <Banner tone="info">{notice}</Banner>
+        </div>
+      )}
       {uploading > 0 && (
         <p role="status" className="text-muted px-3 pb-1 text-sm">
           {t('uploadingFiles', { count: uploading })}
@@ -364,6 +381,90 @@ export function ChatThread({
           }
         >
           <span />
+        </ResponsiveDialog>
+      )}
+      {held && (
+        <ResponsiveDialog
+          open
+          onOpenChange={(open) => !open && void discard(held.clientMessageId)}
+          title={t('contactWarningTitle')}
+          description={t('contactWarningBody')}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => void discard(held.clientMessageId)}>
+                {t('editMessage')}
+              </Button>
+              <Button onClick={() => void acknowledge(held.clientMessageId).then(() => void refetch())}>
+                {t('sendAnyway')}
+              </Button>
+            </div>
+          }
+        >
+          <p className="bg-surface-2 rounded-md p-3 text-sm">{held.body}</p>
+        </ResponsiveDialog>
+      )}
+      {confirmBlock && header.blockTarget && (
+        <ResponsiveDialog
+          open
+          onOpenChange={setConfirmBlock}
+          title={t('blockTitle')}
+          description={t('blockBody')}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setConfirmBlock(false)}>
+                {t('cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setConfirmBlock(false);
+                  void blockChatParty({
+                    ...header.blockTarget!,
+                    ...(header.asOrgId ? { asOrgId: header.asOrgId } : {}),
+                  }).then((result) => setNotice(result.ok ? t('blocked') : t('errors.generic')));
+                }}
+              >
+                {t('block')}
+              </Button>
+            </div>
+          }
+        >
+          <span />
+        </ResponsiveDialog>
+      )}
+      {reporting && (
+        <ResponsiveDialog
+          open
+          onOpenChange={(open) => !open && setReporting(null)}
+          title={t('reportTitle')}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setReporting(null)}>
+                {t('cancel')}
+              </Button>
+              <Button
+                onClick={() => {
+                  const { id, reason } = reporting;
+                  void reportChatMessage({ messageId: id, reason }).then((result) => {
+                    if (result.ok) {
+                      setReporting(null);
+                      setNotice(t('reportSent'));
+                    } else setError(result.fieldErrors?.reason ? t('errors.reasonTooShort') : t('errors.generic'));
+                  });
+                }}
+              >
+                {t('report')}
+              </Button>
+            </div>
+          }
+        >
+          <Textarea
+            aria-label={t('reportReason')}
+            placeholder={t('reportReason')}
+            rows={3}
+            value={reporting.reason}
+            onChange={(event) => setReporting({ ...reporting, reason: event.target.value })}
+          />
         </ResponsiveDialog>
       )}
     </section>

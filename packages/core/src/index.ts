@@ -56,3 +56,5 @@ export * from './chat/parties.js';
 export * from './chat/threads.js';
 export * from './chat/inbox.js';
 export * from './chat/attachments.js';
+export * from './chat/masking.js';
+export * from './chat/safety.js';

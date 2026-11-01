@@ -10,7 +10,9 @@ import {
   type AttachmentDeps,
   type StoredAttachment,
 } from './attachments.js';
+import { audit } from '../shared/outbox.js';
 import { canMessage, type PartyKind } from './can-message.js';
+import { MASKED_CONTEXTS, containsLink, scanContactInfo } from './masking.js';
 import { isBlocked, loadMessageFacts, orgParty, type Party } from './parties.js';
 
 // Chat core (Backend.md §6, §9a; P6-T12). Threads hold participants (a person
@@ -48,7 +50,12 @@ export const startThreadSchema = z
     /** Speak for one of my businesses instead of myself. */
     asOrgId: z.string().uuid().optional(),
     eventId: z.string().uuid().optional(),
-    firstMessage: z.object({ clientMessageId: CLIENT_ID, body: BODY }),
+    firstMessage: z.object({
+      clientMessageId: CLIENT_ID,
+      body: BODY,
+      /** The sender saw the "contact details" warning and chose to send anyway (§9a.3). */
+      acknowledgeContactWarning: z.boolean().optional(),
+    }),
   })
   .refine((value) => Boolean(value.toUserId) !== Boolean(value.toOrgId), {
     message: 'oneRecipient',
@@ -63,6 +70,7 @@ export const sendMessageSchema = z
     attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS, 'tooManyAttachments').optional(),
     replyToId: z.string().uuid().optional(),
     mentions: z.array(z.string().uuid()).max(20).optional(),
+    acknowledgeContactWarning: z.boolean().optional(),
   })
   .refine((value) => Boolean(value.body) || Boolean(value.attachments?.length), {
     message: 'emptyMessage',
@@ -113,6 +121,44 @@ const participantWhere = (party: Party): Prisma.ThreadParticipantWhereInput =>
   party.orgId ? { orgId: party.orgId } : { userId: party.userId ?? null, orgId: null };
 
 /**
+ * A confirmed booking between the two parties lifts masking (§9a.3). Bookings
+ * arrive in P7; until then no pair has one, so pre-booking threads stay masked.
+ */
+async function hasConfirmedBooking(_threadId: string): Promise<boolean> {
+  return false;
+}
+
+/**
+ * Contact-detail handling for one outgoing body. Throws `contactWarning` the
+ * first time (the client shows the warning sheet); once acknowledged, stores
+ * a masked copy for the other side and counts the attempt for trust & safety.
+ */
+async function contactFields(
+  actor: UserActor,
+  context: ChatContext,
+  threadId: string | null,
+  body: string | null | undefined,
+  acknowledged: boolean | undefined,
+): Promise<{ maskedBody: string | null; hasContactInfo: boolean }> {
+  if (!body || !MASKED_CONTEXTS.has(context)) return { maskedBody: null, hasContactInfo: false };
+  if (threadId && (await hasConfirmedBooking(threadId))) return { maskedBody: null, hasContactInfo: false };
+  const user = await prisma.user.findUnique({ where: { id: actor.userId }, select: { countryCode: true } });
+  const scan = scanContactInfo(body, user?.countryCode ?? 'NG');
+  if (!scan.found) return { maskedBody: null, hasContactInfo: false };
+  if (!acknowledged) throw new ValidationError('Contact details in message', { field: 'body', key: 'contactWarning' });
+  await audit(prisma, { actor, action: 'chat.contact_shared', targetType: 'Thread', targetId: threadId ?? 'new' });
+  return { maskedBody: scan.masked, hasContactInfo: true };
+}
+
+const NEW_ACCOUNT_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Accounts younger than 7 days with no completed booking (bookings: P7) — §9a.6. */
+export async function isNewAccount(userId: string, now = new Date()): Promise<boolean> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } });
+  return !user || now.getTime() - user.createdAt.getTime() < NEW_ACCOUNT_MS;
+}
+
+/**
  * Open a conversation (UF-30 steps 1–2). Reuses an existing DIRECT thread
  * between the same two parties about the same event instead of duplicating it.
  */
@@ -145,9 +191,25 @@ export async function startThread(actor: UserActor, input: z.infer<typeof startT
       threadId: existing.id,
       clientMessageId: input.firstMessage.clientMessageId,
       body: input.firstMessage.body,
+      ...(input.firstMessage.acknowledgeContactWarning ? { acknowledgeContactWarning: true } : {}),
     });
     return { threadId: existing.id, messageId: message.messageId, reused: true };
   }
+
+  // §9a.6: a new account's first message may not carry links (a review queue arrives in P16).
+  if (containsLink(input.firstMessage.body) && (await isNewAccount(actor.userId))) {
+    throw new ValidationError('Links are not allowed in a first message yet', {
+      field: 'body',
+      key: 'linkInFirstMessage',
+    });
+  }
+  const contact = await contactFields(
+    actor,
+    input.context,
+    null,
+    input.firstMessage.body,
+    input.firstMessage.acknowledgeContactWarning,
+  );
 
   return prisma.$transaction(async (tx) => {
     const thread = await tx.thread.create({
@@ -178,6 +240,7 @@ export async function startThread(actor: UserActor, input: z.infer<typeof startT
         authorOrgId: from.orgId ?? null,
         clientMessageId: input.firstMessage.clientMessageId,
         body: input.firstMessage.body,
+        ...contact,
       },
       select: { id: true },
     });
@@ -211,7 +274,7 @@ export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMe
   }
   const thread = await prisma.thread.findUniqueOrThrow({
     where: { id: input.threadId },
-    select: { kind: true, eventId: true },
+    select: { kind: true, eventId: true, context: true },
   });
   if (thread.kind === 'DIRECT') await assertNotBlocked(input.threadId, row);
 
@@ -237,6 +300,13 @@ export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMe
     attachments = await verifyAttachments(deps, input.threadId, input.attachments);
   }
   const kind = attachments.length === 0 ? 'TEXT' : attachments.every((a) => isImage(a.mime)) ? 'IMAGE' : 'FILE';
+  const contact = await contactFields(
+    actor,
+    thread.context,
+    input.threadId,
+    input.body,
+    input.acknowledgeContactWarning,
+  );
 
   try {
     const message = await prisma.$transaction(async (tx) => {
@@ -248,6 +318,7 @@ export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMe
           clientMessageId: input.clientMessageId,
           kind,
           body: input.body ?? null,
+          ...contact,
           attachments: attachments.map((a) => ({ ...a })),
           replyToId: input.replyToId ?? null,
           mentions,

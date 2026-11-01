@@ -16,6 +16,10 @@ export interface PendingMessage {
   body: string;
   /** Already uploaded to storage; sent with the message (lean chat files, D-X20). */
   attachments?: PendingAttachment[];
+  /** The server asked for the contact-details warning (§9a.3); waits for the user's answer. */
+  needsContactAck?: boolean;
+  /** The user chose "Send anyway". */
+  acknowledgeContactWarning?: boolean;
   createdAt: number;
   attempts: number;
 }
@@ -89,8 +93,8 @@ export function newClientMessageId(): string {
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
-/** Result of one send attempt: delivered, retry later (network/server), or give up (refused). */
-export type SendOutcome = 'sent' | 'retry' | 'rejected';
+/** Result of one send attempt: delivered, retry later, give up (refused), or hold for the user's answer. */
+export type SendOutcome = 'sent' | 'retry' | 'rejected' | 'hold';
 
 /**
  * Flush pending messages in order, per thread. A retryable failure stops that
@@ -114,6 +118,10 @@ export async function flushOutbox(
     } else if (outcome === 'rejected') {
       await store.remove(message.clientMessageId);
       onRejected(message);
+    } else if (outcome === 'hold') {
+      // Waiting for the user (contact warning): keep it, keep the thread's order.
+      await store.put({ ...message, needsContactAck: true });
+      stalled.add(message.threadId);
     } else {
       await store.put({ ...message, attempts: message.attempts + 1 });
       stalled.add(message.threadId);

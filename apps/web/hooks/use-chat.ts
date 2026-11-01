@@ -67,13 +67,17 @@ export function useChatSender(onRejected: (message: PendingMessage) => void) {
     await flushOutbox(
       store.current,
       async (message) => {
+        // Waiting for the user's answer to the contact warning: don't ask the server again.
+        if (message.needsContactAck && !message.acknowledgeContactWarning) return 'hold';
         const result = await sendChatMessage({
           threadId: message.threadId,
           clientMessageId: message.clientMessageId,
           ...(message.body ? { body: message.body } : {}),
           ...(message.attachments?.length ? { attachments: message.attachments } : {}),
+          ...(message.acknowledgeContactWarning ? { acknowledgeContactWarning: true } : {}),
         });
         if (result.ok) return 'sent';
+        if (result.fieldErrors?.body?.includes('contactWarning')) return 'hold';
         return REFUSED.has(result.code) ? 'rejected' : 'retry';
       },
       (message) => rejectRef.current(message),
@@ -113,5 +117,24 @@ export function useChatSender(onRejected: (message: PendingMessage) => void) {
     [flush],
   );
 
-  return { send, pending, flush };
+  /** "Send anyway" for a held message (§9a.3). */
+  const acknowledge = React.useCallback(
+    async (clientMessageId: string) => {
+      store.current ??= defaultOutboxStore();
+      const message = (await store.current.all()).find((m) => m.clientMessageId === clientMessageId);
+      if (!message) return;
+      await store.current.put({ ...message, acknowledgeContactWarning: true });
+      await flush();
+    },
+    [flush],
+  );
+
+  /** Drop a held message instead of sending it. */
+  const discard = React.useCallback(async (clientMessageId: string) => {
+    store.current ??= defaultOutboxStore();
+    await store.current.remove(clientMessageId);
+    setPending(await store.current.all());
+  }, []);
+
+  return { send, pending, flush, acknowledge, discard };
 }

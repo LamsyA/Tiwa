@@ -33,6 +33,7 @@ export function MessageBubble({
   onEdit,
   onDelete,
   onDecision,
+  onReport,
   /** Pending (not yet stored) messages show names only; stored ones link to the participant-checked route. */
   attachmentHref,
 }: {
@@ -45,12 +46,14 @@ export function MessageBubble({
   onEdit?: () => void;
   onDelete?: () => void;
   onDecision?: () => void;
+  onReport?: () => void;
 }) {
   const t = useTranslations('inbox');
   const items = [
     ...(canEdit && onEdit ? [{ label: t('edit'), onSelect: onEdit }] : []),
     ...(canEdit && onDelete ? [{ label: t('delete'), onSelect: onDelete }] : []),
     ...(canDecide && onDecision && !message.deleted ? [{ label: t('markDecision'), onSelect: onDecision }] : []),
+    ...(onReport ? [{ label: t('report'), onSelect: onReport }] : []),
   ];
   const tick =
     status === 'pending' ? (
@@ -139,6 +142,7 @@ export function MessageBubble({
         ) : (
           message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>
         )}
+        {message.masked && !message.deleted && <p className="mt-0.5 text-xs opacity-75">{t('maskedHint')}</p>}
         <p className="mt-0.5 flex items-center justify-end gap-1 text-[11px] opacity-75">
           {message.edited && !message.deleted && <span>{t('edited')}</span>}
           <time dateTime={message.createdAt}>{time(message.createdAt)}</time>

@@ -55,4 +55,21 @@ describe('chat outbox (optimistic send + offline retry)', () => {
     expect(rejected).toEqual(['y']);
     expect((await store.all()).map((m) => m.clientMessageId)).toEqual(['x']);
   });
+
+  it('holds a message waiting for the contact warning answer, keeping later messages behind it', async () => {
+    const store = new MemoryOutboxStore();
+    await store.put(msg('a', 'T', 1));
+    await store.put(msg('b', 'T', 2));
+    const tried: string[] = [];
+    await flushOutbox(store, async (m) => {
+      tried.push(m.clientMessageId);
+      return m.clientMessageId === 'a' ? 'hold' : 'sent';
+    });
+    expect(tried).toEqual(['a']);
+    const rows = await store.all();
+    expect(rows.map((m) => [m.clientMessageId, m.needsContactAck ?? false])).toEqual([
+      ['a', true],
+      ['b', false],
+    ]);
+  });
 });

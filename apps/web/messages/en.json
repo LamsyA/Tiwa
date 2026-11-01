@@ -1327,7 +1327,12 @@
     "errors": {
       "emptyMessage": "Write a message first",
       "messageTooLong": "That message is too long",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "linkInFirstMessage": "For safety, new accounts can't include links in a first message.",
+      "rateLimited": "You're sending messages too fast. Wait a moment and try again.",
+      "reasonTooShort": "Tell us a little more",
+      "attachmentMismatch": "A file didn't match its type and wasn't sent.",
+      "attachmentBlocked": "A photo was blocked by our safety check."
     },
     "attach": "Attach photos or files",
     "uploadingFiles": "Uploading {count, plural, one {# file} other {# files}}…",
@@ -1341,6 +1346,20 @@
       "attachmentMismatch": "A file didn't match its type and wasn't sent.",
       "attachmentBlocked": "A photo was blocked by our safety check.",
       "generic": "{name}: something went wrong."
-    }
+    },
+    "maskedHint": "Contact details are shared automatically once you book.",
+    "contactWarningTitle": "Keep payments on Tiwa",
+    "contactWarningBody": "Payments made outside Tiwa aren't protected. Contact details are shared automatically once you book. If you send this, the other person will see •••• instead.",
+    "sendAnyway": "Send anyway",
+    "editMessage": "Edit message",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blockTitle": "Block this conversation?",
+    "blockBody": "They won't be able to message you. You can unblock later.",
+    "blocked": "Blocked. They can't message you any more.",
+    "report": "Report",
+    "reportTitle": "Report this message",
+    "reportReason": "What's wrong?",
+    "reportSent": "Thanks. Our team will review it."
   }
 }

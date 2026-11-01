@@ -68,6 +68,10 @@ export const RATE_LIMITS = {
   uploadCreatePerUser: { limit: 100, windowSec: 3600 },
   /** 200 MB video = 40 parts; generous so chunked uploads never stall. */
   uploadPartPerIp: { limit: 120, windowSec: 60 },
+  /** Backend.md §9a.6: everyone ≤ 30 chat messages a minute. */
+  chatMessagesPerUser: { limit: 30, windowSec: 60 },
+  /** Backend.md §9a.6: new accounts ≤ 10 new threads a day. */
+  chatNewThreadsPerNewAccount: { limit: 10, windowSec: 86_400 },
 } as const satisfies Record<string, RateLimit>;
 
 /** Wrong-OTP lockout: 5 failures within 15 min locks the phone for up to 15 min (UF-01-4). Enforced as a sliding window: the 6th attempt inside the window is denied until the oldest failure ages out. */
