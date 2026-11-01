@@ -154,3 +154,5 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - P9-T07 done (D-X28): overview money card shows Committed / Paid / Outstanding, planned budget, an alert count and an Open budget link (money.view only); `LiveRefresh` re-renders the money page every 5 s while visible (UF-20-2) instead of SSE, so it works without Redis.
 - P8-T17 written, not ticked: UF-17 step 5 steps appended to `e2e/quotes.spec.ts` (record with receipt → vendor confirms → booking CONFIRMED). Not run green yet: a stale e2e server from an earlier run holds the Next build lock and stopping it needs owner permission.
 - P9-T08 written, not ticked: `e2e/money.spec.ts` (UF-20 cards, expense, pledge + received, income, CSV download, second-tab update within 5 s). Same blocker; also the shared folder has uncommitted P10 schema edits from another agent that currently break the web build.
+## 2026-11-01
+- P10-T02 done: `plannerDashboard` (5 parallel queries, no N+1) + `/home` planner sections (Needs today, week events, pipeline, quick actions).

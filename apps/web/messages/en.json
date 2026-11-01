@@ -1670,5 +1670,44 @@
       "uploadFailed": "The receipt didn't upload. Try again."
     },
     "bookingsHeading": "Your bookings"
+  },
+  "planner": {
+    "title": "Planner workspace",
+    "needsToday": "Needs you today",
+    "weekEvents": "This week",
+    "pipeline": "Pipeline",
+    "quickActions": "Quick actions",
+    "overdueTasks": "{count} overdue tasks",
+    "paymentsDue": "{count} payments due",
+    "openEnquiries": "{count} open enquiries",
+    "noNeeds": "Nothing needs you right now.",
+    "newEvent": "New event",
+    "newProposal": "New proposal",
+    "addClient": "Add client",
+    "viewAll": "View all",
+    "clientsTitle": "Clients",
+    "addClientTitle": "Add client",
+    "nameLabel": "Name",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "notesLabel": "Notes",
+    "create": "Create",
+    "stages": {
+      "ENQUIRY": "New",
+      "PROPOSAL_SENT": "Proposal sent",
+      "WON": "Won",
+      "LOST": "Lost"
+    },
+    "proposals": "Proposals",
+    "newProposalTitle": "New proposal",
+    "titleLabel": "Title",
+    "totalLabel": "Total",
+    "send": "Send",
+    "accept": "Won",
+    "decline": "Lost",
+    "print": "Print / PDF",
+    "emptyClients": "No clients yet.",
+    "emptyProposals": "No proposals yet.",
+    "qtyLabel": "Qty"
   }
 }
