@@ -1738,7 +1738,23 @@
     "statusSENT": "Sent",
     "statusPAID": "Paid",
     "statusVOID": "Void",
-    "entryLabel": "Entry ID"
+    "entryLabel": "Entry ID",
+    "commandTitle": "Commands",
+    "commandTrigger": "Commands",
+    "commandPlaceholder": "Type a command or search…",
+    "commandEmpty": "No matching commands.",
+    "commands": {
+      "goHome": "Go to Home",
+      "goEvents": "Go to Events",
+      "newEvent": "Create event",
+      "goClients": "Go to Clients",
+      "goPipeline": "Go to Pipeline",
+      "goCalendar": "Go to Calendar",
+      "goTeam": "Go to Team",
+      "goVendorBook": "Go to Vendor book",
+      "goInvoices": "Go to Invoices",
+      "goInbox": "Go to Inbox"
+    }
   },
   "vendor": {
     "title": "Vendor workspace",
@@ -1756,25 +1772,17 @@
     "bookingsTitle": "Bookings"
   },
   "landing": {
-    "nav": {
-      "how": "How it works",
-      "features": "Features",
-      "vendors": "For vendors",
-      "login": "Log in",
-      "start": "Start planning",
-      "menu": "Main navigation"
-    },
     "theme": {
       "light": "Switch to light mode",
       "dark": "Switch to dark mode"
     },
     "hero": {
-      "badge": "For every kind of celebration and gathering",
+      "badge": "The event platform for planners, vendors and guests",
       "titleA": "Plan any event,",
       "titleB": "together.",
       "body": "One place for hosts, planners, vendors and guests to plan, book, pay, run and remember the day — from a small birthday to a thousand-person conference.",
-      "primary": "Start planning — it's free",
-      "secondary": "Find vendors",
+      "primary": "Start planning free",
+      "secondary": "Browse vendors",
       "note": "No app to install. Guests never need an account."
     },
     "mock": {
@@ -1884,6 +1892,69 @@
       "privacy": "Privacy",
       "product": "Product",
       "company": "Company"
+    },
+    "top": {
+      "login": "Log in",
+      "start": "Get started"
+    },
+    "market": {
+      "eyebrow": "The marketplace",
+      "title": "Every vendor your event needs, in one place.",
+      "body": "Browse verified venues, caterers, photographers, DJs and more. Compare quotes side by side and book with clear terms.",
+      "cta": "Explore the marketplace",
+      "from": "from",
+      "verified": "Verified",
+      "reviews": "{count} reviews",
+      "instant": "Instant book",
+      "vendors": {
+        "one": {
+          "name": "The Glasshouse",
+          "area": "Waterfront",
+          "tag": "Seats 300"
+        },
+        "two": {
+          "name": "Mama's Pot Kitchen",
+          "area": "Citywide",
+          "tag": "Party trays"
+        },
+        "three": {
+          "name": "Lumen Studios",
+          "area": "Mainland",
+          "tag": "Photo + film"
+        },
+        "four": {
+          "name": "DJ Spinx",
+          "area": "Island",
+          "tag": "Sound included"
+        }
+      }
+    },
+    "chat": {
+      "eyebrow": "Chat built for events",
+      "title": "Every conversation, right where the event lives.",
+      "body": "Message vendors, your co-hosts and your planner in threads tied to the event and each booking. Quotes, bookings and payments show up as live cards — no lost screenshots.",
+      "points": {
+        "one": "Read receipts and typing, in real time",
+        "two": "Quote and booking cards that stay up to date",
+        "three": "Contact details protected until you book"
+      },
+      "thread": "Mama's Pot Kitchen",
+      "online": "Online",
+      "msg1": "Hi! Can you cater for 120 guests on the 14th?",
+      "msg2": "Yes, we're free on the 14th 🎉 I've sent a quote with two menu options.",
+      "quoteTitle": "Quote · Party package",
+      "quoteItems": "120 guests · 2 menus · service staff",
+      "accept": "Accept",
+      "view": "View",
+      "msg3": "Perfect — booking the first one now!",
+      "seen": "Seen",
+      "booked": "Booking confirmed",
+      "composer": "Message…"
+    },
+    "stats": {
+      "events": "event types",
+      "roles": "roles, one workspace",
+      "install": "apps to install"
     }
   }
 }
