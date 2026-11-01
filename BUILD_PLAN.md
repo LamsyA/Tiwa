@@ -266,9 +266,9 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P7-T04 Vendor enquiries inbox and quote builder (templates, line items, totals, terms, proposed schedule, expiry) + quote expiry job.
 - [x] P7-T05 Quote view + compare (desktop columns, mobile swipe cards); accept / request changes / decline.
 - [x] P7-T06 Accept flow: payment-mode choice (Held hidden unless flag), terms agreement, creates Booking v1 + milestones from schedule; records user/time/IP.
-- [ ] P7-T07 Booking page: details, versions, payments tab (read-only until P8), files.
-- [ ] P7-T08 Change requests with diff view and acceptance creating version N+1.
-- [ ] P7-T09 Booking brief for vendors (no guest contacts).
+- [x] P7-T07 Booking page: details, versions, payments tab (read-only until P8), files.
+- [x] P7-T08 Change requests with diff view and acceptance creating version N+1.
+- [x] P7-T09 Booking brief for vendors (no guest contacts).
 - [ ] P7-T10 Venue booking: instant book and venue quotes create the booking and the AvailabilityBlock in one transaction (unique index → friendly "just booked" message); provisional hold with `holdExpiresAt` and the `bookings/expire-holds` job.
 - [ ] P7-T11 Site visits: request (up to 3 times), venue confirm/decline, calendar entries, reminder job.
 - [ ] P7-T12 Chat cards: share quote, booking and site-visit cards in chat (live status); booking confirmation turns the existing thread into the booking thread and unmasks contact details; booking threads created automatically (`chat/sync-participants`).

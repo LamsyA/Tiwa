@@ -172,3 +172,10 @@ Template:
 - Decision: `/vendors/[slug]` and `/planners/[slug]` cache profile data with `unstable_cache` tagged `vendor:{orgId}` (instant invalidation via `updateTag` on edit); portfolio photos resolve through `/api/profile-photo/[itemId]` (fresh signed redirect) so no expiring URLs sit in HTML. Route-level ISR is not claimed: the root layout reads the theme cookie, so every page (including `/`) renders dynamically.
 - Why: Full-route static caching would need public pages moved out of the themed root layout; the expensive reads are cached and edits invalidate instantly, which is the behaviour UF-13-3 needs. Revisit in P17 if profile-page budgets demand it.
 - Affects: apps/web (vendors, planners, profile-photo route, business actions), packages/core/src/marketplace/public.ts, P6-T04.
+
+### 2026-11-01 — Milestone createdAt + migration checksum repair
+- ID: D-X26
+- Status: AGENT
+- Decision: Added `PaymentMilestone.createdAt` (Backend.md §3 omits it) for stable payments-timeline ordering; backfilled `NOT NULL DEFAULT CURRENT_TIMESTAMP`. Repaired `migrate dev` drift detection (caused by removing applied DROP INDEX lines in P7-T01) via `_prisma_migrations` checksum update + manual index restore instead of `migrate reset`, which would have wiped the shared dev database.
+- Why: Timelines need deterministic order; a reset would destroy another agent's in-flight P5 work in this checkout.
+- Affects: packages/db (schema, migrations 20261101132729, 20261101141148), packages/core/src/bookings.
