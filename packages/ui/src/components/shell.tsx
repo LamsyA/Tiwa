@@ -119,6 +119,8 @@ export interface AppShellProps {
   sidePanel?: React.ReactNode;
   search?: React.ReactNode;
   roleSwitcher?: React.ReactNode;
+  /** Counts shown on navigation items by key (e.g. `{ inbox: 3 }` for unread chats). */
+  badges?: Partial<Record<string, number>>;
   children: React.ReactNode;
 }
 
@@ -138,9 +140,14 @@ export function AppShell({
   sidePanel,
   search,
   roleSwitcher,
+  badges = {},
   children,
 }: AppShellProps) {
-  const { tabs, sidebar } = navigationForRole(role);
+  const withBadges = (items: NavItem[]) =>
+    items.map((item) => (badges[item.key] ? { ...item, badge: badges[item.key] as number } : item));
+  const nav = navigationForRole(role);
+  const tabs = withBadges(nav.tabs);
+  const sidebar = withBadges(nav.sidebar);
   const [collapsed, setCollapsed] = React.useState(false);
 
   return (
@@ -194,7 +201,17 @@ export function AppShell({
                 )}
               >
                 {link.icon}
-                {!collapsed && <span className="truncate">{link.label}</span>}
+                {!collapsed && <span className="flex-1 truncate">{link.label}</span>}
+                {link.badge !== undefined && link.badge > 0 && (
+                  <span
+                    className={cn(
+                      'bg-danger text-on-danger rounded-full px-1.5 text-xs font-medium',
+                      collapsed && 'absolute ml-6 -mt-5',
+                    )}
+                  >
+                    {link.badge > 9 ? '9+' : link.badge}
+                  </span>
+                )}
               </a>
             </li>
           ))}

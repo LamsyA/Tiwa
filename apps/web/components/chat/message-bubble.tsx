@@ -1,0 +1,120 @@
+'use client';
+
+import { DropdownMenu, cn } from '@tiwa/ui';
+import { Check, CheckCheck, Clock, MoreVertical, Pin } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+
+export type BubbleStatus = 'pending' | 'sent' | 'delivered' | 'seen';
+
+export interface BubbleMessage {
+  id: string;
+  body: string | null;
+  mine: boolean;
+  authorName: string | null;
+  deleted: boolean;
+  edited: boolean;
+  masked: boolean;
+  isDecision: boolean;
+  createdAt: string;
+}
+
+function time(iso: string): string {
+  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
+}
+
+/** One message: my messages right-aligned with clock/tick receipts (§9a.2), others left with the author's name. */
+export function MessageBubble({
+  message,
+  status,
+  showAuthor,
+  canEdit,
+  canDecide,
+  onEdit,
+  onDelete,
+  onDecision,
+}: {
+  message: BubbleMessage;
+  status?: BubbleStatus;
+  showAuthor: boolean;
+  canEdit: boolean;
+  canDecide: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onDecision?: () => void;
+}) {
+  const t = useTranslations('inbox');
+  const items = [
+    ...(canEdit && onEdit ? [{ label: t('edit'), onSelect: onEdit }] : []),
+    ...(canEdit && onDelete ? [{ label: t('delete'), onSelect: onDelete }] : []),
+    ...(canDecide && onDecision && !message.deleted ? [{ label: t('markDecision'), onSelect: onDecision }] : []),
+  ];
+  const tick =
+    status === 'pending' ? (
+      <Clock aria-label={t('sending')} className="size-3.5" />
+    ) : status === 'seen' ? (
+      <CheckCheck aria-label={t('seen')} className="text-brand-strong size-3.5" />
+    ) : status === 'delivered' ? (
+      <CheckCheck aria-label={t('delivered')} className="size-3.5" />
+    ) : status === 'sent' ? (
+      <Check aria-label={t('sent')} className="size-3.5" />
+    ) : null;
+
+  return (
+    <div className={cn('group flex items-end gap-1', message.mine ? 'justify-end' : 'justify-start')}>
+      {message.mine && items.length > 0 && (
+        <DropdownMenu
+          trigger={
+            <button
+              type="button"
+              aria-label={t('messageMenu')}
+              className="text-muted hover:text-text focus-visible:outline-focus flex size-9 items-center justify-center rounded-full opacity-100 focus-visible:outline-2 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+            >
+              <MoreVertical aria-hidden className="size-4" />
+            </button>
+          }
+          items={items}
+        />
+      )}
+      <div
+        className={cn(
+          'max-w-[80%] rounded-2xl px-3 py-2 text-[15px] leading-snug',
+          message.mine ? 'bg-brand-strong text-on-brand rounded-br-md' : 'bg-surface-2 text-text rounded-bl-md',
+          message.isDecision && 'ring-accent ring-2',
+        )}
+      >
+        {showAuthor && !message.mine && message.authorName && (
+          <p className="mb-0.5 text-xs font-semibold opacity-80">{message.authorName}</p>
+        )}
+        {message.isDecision && (
+          <p className="mb-0.5 flex items-center gap-1 text-xs font-semibold">
+            <Pin aria-hidden className="size-3" /> {t('decision')}
+          </p>
+        )}
+        {message.deleted ? (
+          <p className="italic opacity-80">{t('deleted')}</p>
+        ) : (
+          <p className="whitespace-pre-wrap break-words">{message.body}</p>
+        )}
+        <p className="mt-0.5 flex items-center justify-end gap-1 text-[11px] opacity-75">
+          {message.edited && !message.deleted && <span>{t('edited')}</span>}
+          <time dateTime={message.createdAt}>{time(message.createdAt)}</time>
+          {message.mine && tick}
+        </p>
+      </div>
+      {!message.mine && items.length > 0 && (
+        <DropdownMenu
+          trigger={
+            <button
+              type="button"
+              aria-label={t('messageMenu')}
+              className="text-muted hover:text-text focus-visible:outline-focus flex size-9 items-center justify-center rounded-full opacity-100 focus-visible:outline-2 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+            >
+              <MoreVertical aria-hidden className="size-4" />
+            </button>
+          }
+          items={items}
+        />
+      )}
+    </div>
+  );
+}

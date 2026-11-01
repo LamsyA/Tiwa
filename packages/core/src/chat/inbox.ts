@@ -153,10 +153,24 @@ export async function listInbox(
   );
 }
 
-/** Total unread across the inbox, for the navigation badge. */
+/**
+ * Unread messages across the inbox, for the navigation badge (every page):
+ * one SQL count over my participant rows, skipping muted and archived threads.
+ */
 export async function unreadTotal(actor: UserActor): Promise<number> {
-  const rows = await listInbox(actor);
-  return rows.reduce((sum, row) => sum + (row.muted ? 0 : row.unread), 0);
+  const orgIds = await myOrgIds(actor.userId);
+  const rows = await prisma.$queryRaw<{ total: bigint }[]>`
+    SELECT COUNT(m.id)::bigint AS total
+    FROM "ThreadParticipant" p
+    JOIN "Message" m ON m."threadId" = p."threadId"
+    WHERE p."leftAt" IS NULL
+      AND p."archivedAt" IS NULL
+      AND (p."mutedUntil" IS NULL OR p."mutedUntil" < now())
+      AND ((p."userId" = ${actor.userId} AND p."orgId" IS NULL) OR p."orgId" = ANY(${orgIds}::text[]))
+      AND m."deletedAt" IS NULL
+      AND m."authorUserId" <> ${actor.userId}
+      AND (p."lastReadAt" IS NULL OR m."createdAt" > p."lastReadAt")`;
+  return Number(rows[0]?.total ?? 0n);
 }
 
 export interface MessageView {

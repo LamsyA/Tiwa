@@ -62,6 +62,15 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'New booking' })).toBeInTheDocument();
   });
 
+  it('shows navigation badges on tabs and the sidebar', () => {
+    render(
+      <AppShell role="host" active="home" title="Home" badges={{ inbox: 12 }}>
+        <p>Body</p>
+      </AppShell>,
+    );
+    expect(screen.getAllByText('9+')).toHaveLength(2);
+  });
+
   it('collapses and expands the desktop sidebar', async () => {
     const user = userEvent.setup();
     render(

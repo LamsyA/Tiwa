@@ -237,7 +237,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P6-T11 Chat data: Thread, ThreadParticipant, Message, UserBlock (`Backend.md §3`); `canMessage()` with a table-driven test of every row in `Backend.md §9a.1`.
 - [x] P6-T12 Chat core: `startThread` (reuses existing threads), `sendMessage` (idempotent `clientMessageId`), edit/delete, mark delivered/read, mute/archive; business team inboxes (reply on behalf of the business); event-team threads created automatically for every event (host, co-hosts, planner, staff) with @mentions and mark-as-decision.
 - [x] P6-T13 Real time: `/api/sse/inbox` (one stream per user), Redis channels per user/org, typing endpoint, receipts; client store with optimistic sending and offline retry queue (IndexedDB).
-- [ ] P6-T14 Inbox UI: `ChatList`, `ChatThread`, `MessageBubble`, `Composer`, filters, search, desktop two/three panes, mobile full-screen thread; unread badges in navigation.
+- [x] P6-T14 Inbox UI: `ChatList`, `ChatThread`, `MessageBubble`, `Composer`, filters, search, desktop two/three panes, mobile full-screen thread; unread badges in navigation.
 - [ ] P6-T15 Attachments and voice notes: photos/files via upload endpoints (`purpose: chat`), voice recorder/player, `media/process-voice` job (AAC + waveform).
 - [ ] P6-T16 Contact masking and warning sheet (`Backend.md §9a.3`); block and report (creates `Report`); chat rate limits.
 - [ ] P6-T17 Entry points: `[Message]` on profiles (vendor, venue, planner), quote requests, planner clients, vendor book; Moments footer chips and pass page after the event (guest enquiries with phone OTP, `allowGuestEnquiries` setting).

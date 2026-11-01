@@ -4,7 +4,7 @@ import type { Actor } from '../auth/authorize.js';
 import { PRESETS } from '../auth/presets.js';
 import { toStoredPermissions } from '../events/access.js';
 import { ForbiddenError, NotFoundError } from '../shared/errors.js';
-import { listInbox, listMessages } from './inbox.js';
+import { listInbox, listMessages, unreadTotal } from './inbox.js';
 import {
   archiveThread,
   deleteMessage,
@@ -191,8 +191,10 @@ describe('sendMessage, receipts, edit and delete', () => {
     await prisma.membership.create({ data: { orgId: vendor.orgId, userId: teammate.userId, role: 'STAFF' } });
     const { messages } = await listMessages(teammate, threadId);
     expect((await listInbox(vendor.owner)).find((r) => r.threadId === threadId)?.unread).toBe(1);
+    expect(await unreadTotal(teammate)).toBeGreaterThanOrEqual(1);
     await markRead(teammate, { threadId, upToMessageId: messages[0]!.id });
     expect((await listInbox(vendor.owner)).find((r) => r.threadId === threadId)?.unread).toBe(0);
+    expect(await unreadTotal(teammate)).toBe(0);
   });
 
   it('authors edit within 15 minutes and delete softly; others cannot', async () => {
