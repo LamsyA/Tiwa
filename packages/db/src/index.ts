@@ -2,14 +2,18 @@ import { PrismaClient } from '@prisma/client';
 
 export type {
   AdminRole,
+  ChatContext,
+  ChatSide,
   DaySlot,
   EventFormat,
   EventRole,
   EventStatus,
+  MessageKind,
   OrgKind,
   OrgRole,
   Priority,
   TaskStatus,
+  ThreadKind,
   VerificationStatus,
   Visibility,
 } from '@prisma/client';

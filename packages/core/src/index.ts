@@ -52,3 +52,6 @@ export * from './marketplace/spaces.js';
 export * from './marketplace/venues.js';
 export * from './marketplace/verification.js';
 export * from './chat/can-message.js';
+export * from './chat/parties.js';
+export * from './chat/threads.js';
+export * from './chat/inbox.js';
