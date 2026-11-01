@@ -23,7 +23,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | P3    | Events and planning                      | DONE        | 2026-10-30     |
 | P4    | Guests and one-click invitations         | GATE FAILED |                |
 | P5    | Moments                                  | TODO        |                |
-| P6    | Marketplace and chat                     | TODO        |                |
+| P6    | Marketplace and chat                     | IN PROGRESS |                |
 | P7    | Quotes and bookings                      | TODO        |                |
 | P8    | Payments, ledger, held payments, payouts | TODO        |                |
 | P9    | Budget and finance                       | TODO        |                |
@@ -224,16 +224,16 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** vendors, venues and planners publish profiles; hosts search, shortlist and compare; **everyone can chat** (client ↔ vendor/planner, planner ↔ vendor, guests ↔ vendors after events).
 **Read first:** `PRD.md MKT-*, VEN-*, MSG-*`, `UF-13`, `UF-14 (search part)`, `UF-29`, `UF-30`, `UF-31`, `Backend.md §3 (marketplace, chat), §9a`, `Frontend.md §4 (chat components), §6.1, §6.3 (/inbox)`.
 
-- [ ] P6-T01 Prisma: BusinessProfile, VenueSpace, PortfolioItem, ServicePackage, AvailabilityBlock, BusinessVerification, Shortlist; trigram index and availability unique-index migrations.
-- [ ] P6-T02 Business profile pages with completeness checklist; portfolio uploader (reuse upload stack); packages editor; availability calendar ("confirm availability" updates `availabilityConfirmedAt`).
-- [ ] P6-T03 Publish rules (profile + ≥ 6 portfolio items + ≥ 1 package); verification submission (documents) → PENDING.
-- [ ] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
-- [ ] P6-T05 Search `/vendors` with filters (category, city/radius via PostGIS, date availability, price, rating, verified), cursor pagination, sort; `/planners` search.
-- [ ] P6-T06 Shortlist (per event) and compare view (up to 4).
-- [ ] P6-T07 Event vendors page `/events/[id]/vendors` (categories from template with status).
-- [ ] P6-T08 Venue spaces: `/business/spaces` editor (capacities, amenities, rules, slot prices, setup/teardown, security deposit, instant-book switch, hold length); per-space availability calendar with slot blocks; venue section on the public profile.
-- [ ] P6-T09 Venue search `/venues` (date + slot availability, capacity by layout ≥ guests, area, price, indoor/outdoor, amenities); "Find a venue" link from the event wizard and the event vendors page.
-- [ ] P6-T10 Seed 40 vendors + 8 venues with spaces (and `db:seed:load` 5,000); e2e UF-13, UF-14 search part, UF-29-1.
+- [x] P6-T01 Prisma: BusinessProfile, VenueSpace, PortfolioItem, ServicePackage, AvailabilityBlock, BusinessVerification, Shortlist; trigram index and availability unique-index migrations.
+- [x] P6-T02 Business profile pages with completeness checklist; portfolio uploader (reuse upload stack); packages editor; availability calendar ("confirm availability" updates `availabilityConfirmedAt`).
+- [x] P6-T03 Publish rules (profile + ≥ 6 portfolio items + ≥ 1 package); verification submission (documents) → PENDING.
+- [x] P6-T04 Public profile `/vendors/[slug]` and `/planners/[slug]` (ISR + tag revalidation, OG image).
+- [x] P6-T05 Search `/vendors` with filters (category, city/radius via PostGIS, date availability, price, rating, verified), cursor pagination, sort; `/planners` search.
+- [x] P6-T06 Shortlist (per event) and compare view (up to 4).
+- [x] P6-T07 Event vendors page `/events/[id]/vendors` (categories from template with status).
+- [x] P6-T08 Venue spaces: `/business/spaces` editor (capacities, amenities, rules, slot prices, setup/teardown, security deposit, instant-book switch, hold length); per-space availability calendar with slot blocks; venue section on the public profile.
+- [x] P6-T09 Venue search `/venues` (date + slot availability, capacity by layout ≥ guests, area, price, indoor/outdoor, amenities); "Find a venue" link from the event wizard and the event vendors page.
+- [x] P6-T10 Seed 40 vendors + 8 venues with spaces (and `db:seed:load` 5,000); e2e UF-13, UF-14 search part, UF-29-1.
 - [ ] P6-T11 Chat data: Thread, ThreadParticipant, Message, UserBlock (`Backend.md §3`); `canMessage()` with a table-driven test of every row in `Backend.md §9a.1`.
 - [ ] P6-T12 Chat core: `startThread` (reuses existing threads), `sendMessage` (idempotent `clientMessageId`), edit/delete, mark delivered/read, mute/archive; business team inboxes (reply on behalf of the business); event-team threads created automatically for every event (host, co-hosts, planner, staff) with @mentions and mark-as-decision.
 - [ ] P6-T13 Real time: `/api/sse/inbox` (one stream per user), Redis channels per user/org, typing endpoint, receipts; client store with optimistic sending and offline retry queue (IndexedDB).

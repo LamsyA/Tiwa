@@ -303,6 +303,9 @@ importers:
       '@tiwa/config':
         specifier: workspace:*
         version: link:../config
+      '@tiwa/storage':
+        specifier: workspace:^
+        version: link:../storage
     devDependencies:
       '@types/node':
         specifier: ^22.9.0

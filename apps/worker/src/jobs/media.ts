@@ -531,13 +531,11 @@ export async function handleWatermark(data: unknown, log: Log, tools: MediaTools
       log.info({ topic: MEDIA_WATERMARK_JOB, mediaItemId, key: target }, 'derivative stamped');
     }
     if (stamped.size === 0) return { status: 'skipped' };
+    const thumbKey = item.thumbKey ? stamped.get(item.thumbKey) : undefined;
+    const largeKey = stamped.get(item.largeKey);
     await prisma.mediaItem.update({
       where: { id: item.id },
-      data: {
-        ...(item.thumbKey && stamped.get(item.thumbKey) ? { thumbKey: stamped.get(item.thumbKey) } : {}),
-        ...(stamped.get(item.largeKey) ? { largeKey: stamped.get(item.largeKey) } : {}),
-        watermarked: true,
-      },
+      data: { ...(thumbKey ? { thumbKey } : {}), ...(largeKey ? { largeKey } : {}), watermarked: true },
     });
     await auditSystem('MediaItem', item.id, 'media.watermarked', { gallery: item.galleryId });
     await publishGallery(item.galleryId);

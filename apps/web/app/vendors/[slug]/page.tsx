@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function VendorProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { profile, photos, blockedDays } = await loadPublicProfile(slug, 'VENDOR');
+  const { profile, photos, availabilityRows } = await loadPublicProfile(slug, 'VENDOR');
   const t = await getTranslations('marketplace');
   return (
     <main>
@@ -32,7 +32,7 @@ export default async function VendorProfilePage({ params }: { params: Promise<{ 
           </Link>
         </div>
       </header>
-      <PublicProfileView profile={profile} photos={photos} blockedDays={blockedDays} />
+      <PublicProfileView profile={profile} photos={photos} availabilityRows={availabilityRows} />
     </main>
   );
 }
