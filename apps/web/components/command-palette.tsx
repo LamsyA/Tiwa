@@ -35,25 +35,30 @@ export function CommandPalette() {
   const [active, setActive] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
+  function openPalette() {
+    setQuery('');
+    setActive(0);
+    setOpen(true);
+  }
+
   React.useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setOpen((was) => !was);
+        if (open) setOpen(false);
+        else openPalette();
       } else if (event.key === 'Escape') {
         setOpen(false);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [open ]);
 
   React.useEffect(() => {
-    if (open) {
-      setQuery('');
-      setActive(0);
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
+    if (!open) return;
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
   }, [open ]);
 
   const labels = React.useMemo(() => COMMANDS.map((cmd) => ({ ...cmd, label: t(`commands.${cmd.key}`) })), [t]);
@@ -69,7 +74,7 @@ export function CommandPalette() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openPalette}
         aria-keyshortcuts="meta+k control+k"
         className="border-border text-muted hidden items-center gap-2 rounded-md border px-3 py-1.5 text-sm md:inline-flex"
       >
