@@ -159,6 +159,13 @@ Template:
 - Why: latest-stable rule (arc.md §2). Turbopack can't resolve our authoring convention; webpack stays fully supported in 16.
 - Affects: apps/web (config, scripts, layout imports), scripts/check-bundle.mjs, arc.md §2.
 
+### 2026-11-01 — Vendor inbox lives at /quotes
+- ID: D-X25
+- Status: AGENT
+- Decision: The vendor quote inbox (open enquiries + quote builder) lives at `/quotes`, matching the vendor sidebar nav that already points there; Frontend.md §6.3 names it `/enquiries`.
+- Why: The shipped P1/P2 navigation config already routes vendor Quotes → `/quotes`; a second `/enquiries` route would split one inbox in two. Revisit if Frontend is revised.
+- Affects: BUILD_PLAN P7-T04, apps/web/app/quotes, packages/ui shell nav.
+
 ### 2026-10-31 — Public profiles: data cache, not route ISR
 - ID: D-X18
 - Status: AGENT
