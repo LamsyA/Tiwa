@@ -5,7 +5,12 @@ import { DateText, MoneyText, RelativeTime } from './format.js';
 describe('MoneyText', () => {
   it('formats minor units with the Intl narrow symbol', () => {
     render(<MoneyText value="2500000" currency="NGN" locale="en-NG" />);
-    expect(screen.getByText('₦25,000.00')).toBeInTheDocument();
+    expect(screen.getByText('₦25,000')).toBeInTheDocument();
+  });
+
+  it('keeps minor units only when they are non-zero', () => {
+    render(<MoneyText value="2500050" currency="NGN" locale="en-NG" />);
+    expect(screen.getByText('₦25,000.50')).toBeInTheDocument();
   });
 
   it('accepts bigint and zero-decimal currencies', () => {

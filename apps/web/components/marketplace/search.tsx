@@ -49,8 +49,8 @@ export function SearchFilters({ base, initial }: { base: '/vendors' | '/planners
 
   return (
     <Card>
-      <div className="flex flex-col gap-3 p-4">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-4 p-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
           <FieldShell id={`${uid}-q`} label={t('qLabel')}>
             {(describedBy) => (
               <Input

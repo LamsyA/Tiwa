@@ -203,8 +203,8 @@ function Picker({
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(
-            'border-border bg-bg text-text flex h-11 w-full items-center justify-between gap-2 rounded-md border px-3 text-base',
-            'focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus',
+            'border-border bg-bg text-text hover:border-text/25 flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-3 text-base shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow]',
+            'focus:border-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-strong/15',
             'disabled:cursor-not-allowed disabled:opacity-50',
             !selected && 'text-muted',
             className,

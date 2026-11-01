@@ -47,13 +47,13 @@ export function ResponsiveDialog({
     <DialogPrimitive.Root {...rest} open={controlled} onOpenChange={handleOpenChange}>
       {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
         <DialogPrimitive.Content
           onOpenAutoFocus={(event) => event.preventDefault()}
           style={dragY !== undefined ? { transform: `translate(-50%, ${dragY}px)` } : undefined}
           className={cn(
-            'bg-bg fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-2xl border-t shadow-2',
-            'md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg md:border',
+            'bg-bg border-border/80 fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl border-t shadow-2',
+            'md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl md:border',
             className,
           )}
         >

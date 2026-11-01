@@ -38,7 +38,7 @@ export function Tabs({ items, ariaLabel, className, children, ...rest }: TabsPro
     >
       <TabsPrimitive.List
         aria-label={ariaLabel}
-        className="scrollbar-none border-border -mx-4 flex gap-1 overflow-x-auto border-b px-4 md:mx-0 md:px-0"
+        className="scrollbar-none border-border/80 -mx-4 flex gap-1 overflow-x-auto border-b px-4 md:mx-0 md:px-0"
       >
         {items.map((item) => (
           <TabsPrimitive.Trigger
@@ -46,10 +46,10 @@ export function Tabs({ items, ariaLabel, className, children, ...rest }: TabsPro
             value={item.value}
             disabled={item.disabled}
             className={cn(
-              'text-muted relative shrink-0 px-3 py-3 text-base font-medium',
+              'text-muted relative shrink-0 px-3 py-3 text-[15px] font-medium transition-colors',
               'hover:text-text focus-visible:outline-2 focus-visible:outline-focus',
               'data-[state=active]:text-text data-[state=active]:after:bg-brand-strong',
-              'after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:content-[""]',
+              'after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:content-[""]',
               'disabled:cursor-not-allowed disabled:opacity-50',
             )}
           >

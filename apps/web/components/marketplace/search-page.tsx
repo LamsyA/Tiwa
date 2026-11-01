@@ -1,10 +1,12 @@
 import { listShortlist, loadEventAccess, searchMarketplace } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Badge, Card, Chip, ChipGroup, MoneyText, StatusPill } from '@tiwa/ui';
+import { EmptyState, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
+import { BadgeCheck, MapPin, SearchX, Star } from 'lucide-react';
+import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AppFrame } from '@/components/app-frame.js';
+import { MarketplaceFrame, coverFor } from './marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { SearchFilters, ShortlistButton, type SearchFilterValues } from './search.js';
 
@@ -69,11 +71,6 @@ export async function SearchPageBody({
     take: 20,
     ...(first(sp.cursor) ? { cursor: first(sp.cursor)! } : {}),
   });
-  const fs = await import('node:fs');
-  fs.appendFileSync(
-    '/tmp/search-debug.log',
-    `${new Date().toISOString()} q=${filters.q} sort=${sort} hits=${result.hits.length}\n`,
-  );
 
   const kept = new URLSearchParams();
   for (const [key, value] of Object.entries({
@@ -94,71 +91,108 @@ export async function SearchPageBody({
   if (result.nextCursor) moreParams.set('cursor', result.nextCursor);
 
   return (
-    <AppFrame userId={ctx.actor.userId} active="more" title={t(titleKey)}>
-      <div className="flex flex-col gap-4 py-4">
-        {eventName && (
-          <p className="text-muted text-sm">
-            {t('shortlistFor', { event: eventName })} ·{' '}
-            <Link className="underline" href={`${base}/compare?eventId=${eventId}`}>
-              {t('compare')}
-            </Link>
-          </p>
-        )}
-        <SearchFilters base={base} initial={filters} />
-        {result.hits.length === 0 ? (
-          <p className="text-muted text-sm">{t('noResults')}</p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {result.hits.map((hit) => (
-              <li key={hit.orgId}>
-                <Card>
-                  <div className="flex flex-col gap-2 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <Link
-                          href={`${base}/${hit.slug}`}
-                          className="font-medium underline decoration-transparent hover:decoration-inherit"
-                        >
-                          {hit.name}
-                        </Link>
-                        <p className="text-muted text-sm">{hit.city}</p>
-                      </div>
-                      {hit.verified && <Badge tone="brand">{t('verified')}</Badge>}
+    <MarketplaceFrame
+      active={kind === 'PLANNER' ? 'planners' : 'vendors'}
+      title={t(titleKey)}
+      subtitle={t(kind === 'PLANNER' ? 'plannersSubtitle' : 'vendorsSubtitle')}
+    >
+      {eventName && (
+        <div className="border-border/80 bg-surface mb-6 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm">
+          <span className="text-muted">{t('shortlistFor', { event: eventName })}</span>
+          <Link
+            className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'ml-auto rounded-full' })}
+            href={`${base}/compare?eventId=${eventId}`}
+          >
+            {t('compare')}
+          </Link>
+        </div>
+      )}
+      <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <SearchFilters base={base} initial={filters} />
+        </aside>
+        <div>
+          {result.hits.length === 0 ? (
+            <EmptyState icon={<SearchX className="size-6" />} title={t('noResults')} body={t('noResultsBody')} />
+          ) : (
+            <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {result.hits.map((hit) => (
+                <li
+                  key={hit.orgId}
+                  className="group border-border/80 bg-bg relative flex flex-col overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2"
+                >
+                  <div className="bg-surface-2 relative aspect-[4/3] overflow-hidden">
+                    <Image
+                      src={coverFor(hit.categories)}
+                      alt=""
+                      placeholder="blur"
+                      sizes="(min-width: 1280px) 300px, (min-width: 640px) 45vw, 100vw"
+                      className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+                    {hit.categoryLabels[0] && (
+                      <span className="absolute top-3 left-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+                        {hit.categoryLabels[0]}
+                      </span>
+                    )}
+                    <div className="absolute top-2 right-2 z-10">
+                      <ShortlistButton eventId={eventId} orgId={hit.orgId} initial={shortlisted.has(hit.orgId)} />
                     </div>
-                    <ChipGroup label={hit.name}>
-                      {hit.categoryLabels.map((label) => (
-                        <Chip key={label}>{label}</Chip>
-                      ))}
-                    </ChipGroup>
-                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                      {hit.startingPriceMinor && <MoneyText value={hit.startingPriceMinor} currency={hit.currency} />}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-2 p-4">
+                    <div className="flex items-center gap-1.5">
+                      <Link
+                        href={`${base}/${hit.slug}${eventId ? `?eventId=${eventId}` : ''}`}
+                        className="font-display truncate text-lg font-bold tracking-tight after:absolute after:inset-0"
+                      >
+                        {hit.name}
+                      </Link>
+                      {hit.verified && (
+                        <BadgeCheck className="text-brand-strong size-4 shrink-0" aria-label={t('verified')} />
+                      )}
+                    </div>
+                    <p className="text-muted flex items-center gap-1 text-sm">
+                      <MapPin className="size-3.5" aria-hidden />
+                      {hit.city}
+                      {hit.categoryLabels.length > 1 && <span> · {hit.categoryLabels.slice(1, 3).join(', ')}</span>}
+                    </p>
+                    <div className="border-border/70 mt-auto flex items-end justify-between gap-2 border-t pt-3 text-sm">
                       {hit.ratingAvg !== null && hit.ratingCount >= 5 ? (
-                        <span>
-                          ★ {hit.ratingAvg.toFixed(1)} · {t('reviewsCount', { count: hit.ratingCount })}
+                        <span className="flex items-center gap-1">
+                          <Star className="fill-accent text-accent size-4" aria-hidden />
+                          <span className="font-semibold">{hit.ratingAvg.toFixed(1)}</span>
+                          <span className="text-muted">({hit.ratingCount})</span>
                         </span>
                       ) : (
                         <StatusPill tone="neutral">{t('newOnTiwa')}</StatusPill>
                       )}
-                      {!hit.availabilityFresh && <StatusPill tone="warning">{t('calendarUnconfirmed')}</StatusPill>}
+                      {hit.startingPriceMinor && (
+                        <span className="flex flex-col items-end">
+                          <span className="text-muted text-xs">{t('from')}</span>
+                          <span className="font-semibold">
+                            <MoneyText value={hit.startingPriceMinor} currency={hit.currency} />
+                          </span>
+                        </span>
+                      )}
                     </div>
-                    <div className="flex gap-2">
-                      <ShortlistButton eventId={eventId} orgId={hit.orgId} initial={shortlisted.has(hit.orgId)} />
-                      <Link href={`${base}/${hit.slug}`} className="text-sm underline">
-                        {t('viewProfile')}
-                      </Link>
-                    </div>
+                    {!hit.availabilityFresh && <p className="text-warning text-xs">{t('calendarUnconfirmed')}</p>}
                   </div>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        )}
-        {result.nextCursor && (
-          <Link href={`${base}?${moreParams.toString()}`} className="text-center text-sm underline">
-            {t('showMore')}
-          </Link>
-        )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {result.nextCursor && (
+            <div className="mt-8 flex justify-center">
+              <Link
+                href={`${base}?${moreParams.toString()}`}
+                className={buttonClasses({ variant: 'secondary', className: 'rounded-full px-6' })}
+              >
+                {t('showMore')}
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </AppFrame>
+    </MarketplaceFrame>
   );
 }

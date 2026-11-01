@@ -1,6 +1,8 @@
 'use client';
 
-import { Button, FieldShell, GuestShell, Input } from '@tiwa/ui';
+import { Button, FieldShell, Input, cn } from '@tiwa/ui';
+import { ArrowRight, Mail, Smartphone } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
@@ -109,28 +111,38 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     }
   }
 
+  const primary =
+    step === 'method' ? (
+      method === 'phone' ? (
+        <Button fullWidth size="lg" loading={sending} onClick={() => void sendCode()} className="rounded-xl">
+          {t('sendCode')}
+          <ArrowRight className="size-4" aria-hidden />
+        </Button>
+      ) : method === 'email' ? (
+        <Button fullWidth size="lg" loading={sending} onClick={() => void sendLink()} className="rounded-xl">
+          {t('sendLink')}
+          <ArrowRight className="size-4" aria-hidden />
+        </Button>
+      ) : undefined
+    ) : step === 'code' ? (
+      <Button
+        fullWidth
+        size="lg"
+        loading={verifying}
+        disabled={locked}
+        onClick={() => void verify()}
+        className="rounded-xl"
+      >
+        {t('verify')}
+      </Button>
+    ) : undefined;
+
   return (
-    <GuestShell
-      title={mode === 'signup' ? t('signupTitle') : t('loginTitle')}
-      action={
-        step === 'method' ? (
-          method === 'phone' ? (
-            <Button fullWidth loading={sending} onClick={() => void sendCode()}>
-              {t('sendCode')}
-            </Button>
-          ) : method === 'email' ? (
-            <Button fullWidth loading={sending} onClick={() => void sendLink()}>
-              {t('sendLink')}
-            </Button>
-          ) : undefined
-        ) : step === 'code' ? (
-          <Button fullWidth loading={verifying} disabled={locked} onClick={() => void verify()}>
-            {t('verify')}
-          </Button>
-        ) : undefined
-      }
-    >
-      <p className="text-muted -mt-1 mb-4 text-base">{mode === 'signup' ? t('signupSubtitle') : t('loginSubtitle')}</p>
+    <div data-frame="guest" className="flex flex-col">
+      <h1 className="font-display text-3xl font-bold tracking-[-0.02em] sm:text-4xl">
+        {mode === 'signup' ? t('signupTitle') : t('loginTitle')}
+      </h1>
+      <p className="text-muted mt-2 mb-8 text-base">{mode === 'signup' ? t('signupSubtitle') : t('loginSubtitle')}</p>
 
       {step === 'method' && (
         <div className="flex flex-col gap-4" role="tablist" aria-label="Sign-in method">
@@ -144,8 +156,25 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
                 setMethod(m);
                 setFormError(undefined);
               }}
-              className="border-border bg-surface rounded-lg border p-4 text-left aria-selected:border-brand-strong"
+              className={cn(
+                'border-border bg-bg flex items-center gap-3 rounded-xl border p-4 text-left transition-colors',
+                'hover:border-text/25 aria-selected:border-brand-strong aria-selected:bg-brand-soft/40 aria-selected:ring-brand-strong/20 aria-selected:ring-4',
+              )}
             >
+              <span className="bg-surface-2 text-text grid size-9 shrink-0 place-items-center rounded-lg">
+                {m === 'phone' ? (
+                  <Smartphone className="size-4" aria-hidden />
+                ) : m === 'email' ? (
+                  <Mail className="size-4" aria-hidden />
+                ) : (
+                  <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+                    <path
+                      fill="#EA4335"
+                      d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.8-5.4 3.8-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.4l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"
+                    />
+                  </svg>
+                )}
+              </span>
               <span className="font-medium">
                 {m === 'phone'
                   ? t('continueWithPhone')
@@ -243,6 +272,17 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
           <p className="text-muted text-base">{t('checkEmailBody', { email })}</p>
         </div>
       )}
-    </GuestShell>
+      {primary && <div className="mt-6">{primary}</div>}
+
+      <p className="text-muted mt-8 text-center text-sm">
+        {mode === 'signup' ? t('haveAccount') : t('noAccount')}{' '}
+        <Link
+          href={`${mode === 'signup' ? '/login' : '/signup'}${next ? `?next=${encodeURIComponent(next)}` : ''}`}
+          className="text-text font-medium underline-offset-4 hover:underline"
+        >
+          {mode === 'signup' ? t('loginLink') : t('signupLink')}
+        </Link>
+      </p>
+    </div>
   );
 }

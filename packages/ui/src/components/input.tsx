@@ -19,7 +19,7 @@ export function FieldShell({ id, label, hint, error, children, className }: Fiel
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-text">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-text">
         {label}
       </label>
       {children(describedBy)}
@@ -38,7 +38,7 @@ export function FieldShell({ id, label, hint, error, children, className }: Fiel
 }
 
 const inputBase =
-  'w-full rounded-md border border-border bg-bg text-text placeholder:text-muted focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-xl border border-border bg-bg text-text shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] placeholder:text-muted/80 hover:border-text/25 focus:border-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-strong/15 disabled:cursor-not-allowed disabled:opacity-50';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
   size?: 'sm' | 'md' | undefined;

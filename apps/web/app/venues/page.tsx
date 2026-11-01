@@ -4,7 +4,7 @@ import { Badge, Card, Chip, ChipGroup, MoneyText, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AppFrame } from '@/components/app-frame.js';
+import { MarketplaceFrame } from '@/components/marketplace/marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { ShortlistButton } from '@/components/marketplace/search.js';
 import { VenueFilters, type VenueFilterValues } from '@/components/marketplace/venues.js';
@@ -51,7 +51,7 @@ export default async function VenuesPage({
   });
 
   return (
-    <AppFrame userId={ctx.actor.userId} active="more" title={t('searchVenuesTitle')}>
+    <MarketplaceFrame active={'venues'} title={t('searchVenuesTitle')}>
       <div className="flex flex-col gap-4 py-4">
         {eventName && (
           <p className="text-muted text-sm">
@@ -128,6 +128,6 @@ export default async function VenuesPage({
           </ul>
         )}
       </div>
-    </AppFrame>
+    </MarketplaceFrame>
   );
 }

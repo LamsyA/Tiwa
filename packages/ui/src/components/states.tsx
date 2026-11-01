@@ -17,13 +17,16 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-col items-center gap-2 px-6 py-12 text-center', className)}>
+    <div className={cn('flex flex-col items-center gap-3 px-6 py-14 text-center', className)}>
       {icon && (
-        <span aria-hidden className="text-muted bg-surface flex size-12 items-center justify-center rounded-full">
+        <span
+          aria-hidden
+          className="text-brand-strong bg-brand-soft ring-bg flex size-14 items-center justify-center rounded-2xl ring-8"
+        >
           {icon}
         </span>
       )}
-      <p className="text-lg font-medium">{title}</p>
+      <p className="font-display text-xl font-bold tracking-tight">{title}</p>
       {body && <p className="text-muted max-w-sm text-base">{body}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
@@ -90,7 +93,7 @@ export function Banner({
   return (
     <div
       role={tone === 'info' ? 'status' : 'alert'}
-      className={cn('rounded-lg border p-3 text-base', tones[tone], className)}
+      className={cn('rounded-xl border px-4 py-3 text-[15px]', tones[tone], className)}
     >
       {title && <p className="font-medium">{title}</p>}
       <div className={tone === 'info' ? 'text-text' : ''}>{children}</div>

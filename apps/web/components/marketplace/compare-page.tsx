@@ -4,7 +4,7 @@ import { Card } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AppFrame } from '@/components/app-frame.js';
+import { MarketplaceFrame } from '@/components/marketplace/marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 
 /** Side-by-side compare of up to 4 shortlisted businesses (MKT-05, P6-T06). */
@@ -30,7 +30,7 @@ export async function ComparePageBody({
     keys.map((key) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key).join(', ');
 
   return (
-    <AppFrame userId={ctx.actor.userId} active="more" title={t('compareTitle')}>
+    <MarketplaceFrame active={kind === 'VENDOR' ? 'vendors' : 'planners'} title={t('compareTitle')}>
       <div className="flex flex-col gap-4 py-4">
         <Link href={`${base}?eventId=${eventId}`} className="text-sm underline">
           ← {t(kind === 'VENDOR' ? 'searchVendors' : 'searchPlanners')}
@@ -65,6 +65,6 @@ export async function ComparePageBody({
           </>
         )}
       </div>
-    </AppFrame>
+    </MarketplaceFrame>
   );
 }

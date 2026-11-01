@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '../lib/cn.js';
+import { ThemeToggle } from './theme-toggle.js';
 
 export type AppRole = 'host' | 'planner' | 'vendor';
 
@@ -30,16 +31,16 @@ function item(key: string, label: string, href: string, icon: React.ReactNode): 
 }
 
 const ICON = {
-  home: <Home className="size-6" aria-hidden />,
-  events: <CalendarDays className="size-6" aria-hidden />,
-  inbox: <Inbox className="size-6" aria-hidden />,
-  money: <Wallet className="size-6" aria-hidden />,
-  more: <MoreHorizontal className="size-6" aria-hidden />,
-  clients: <Users className="size-6" aria-hidden />,
-  pipeline: <Layers className="size-6" aria-hidden />,
-  bookings: <Briefcase className="size-6" aria-hidden />,
-  settings: <Settings className="size-6" aria-hidden />,
-  overview: <LayoutGrid className="size-6" aria-hidden />,
+  home: <Home className="size-5" aria-hidden />,
+  events: <CalendarDays className="size-5" aria-hidden />,
+  inbox: <Inbox className="size-5" aria-hidden />,
+  money: <Wallet className="size-5" aria-hidden />,
+  more: <MoreHorizontal className="size-5" aria-hidden />,
+  clients: <Users className="size-5" aria-hidden />,
+  pipeline: <Layers className="size-5" aria-hidden />,
+  bookings: <Briefcase className="size-5" aria-hidden />,
+  settings: <Settings className="size-5" aria-hidden />,
+  overview: <LayoutGrid className="size-5" aria-hidden />,
 };
 
 /** Navigation config by role (Frontend.md §5.4). Single source of truth. */
@@ -159,12 +160,16 @@ export function AppShell({
         data-frame="desktop"
         aria-label="Sidebar"
         className={cn(
-          'border-border bg-surface sticky top-0 hidden h-dvh shrink-0 flex-col border-r transition-[width] duration-fast ease-out lg:flex',
-          collapsed ? 'w-[72px]' : 'w-60',
+          'border-border/70 bg-bg sticky top-0 hidden h-dvh shrink-0 flex-col border-r transition-[width] duration-fast ease-out lg:flex',
+          collapsed ? 'w-[76px]' : 'w-64',
         )}
       >
-        <div className="flex h-14 items-center gap-2 px-3">
-          {!collapsed && <span className="font-display flex-1 text-lg font-bold">Tiwa</span>}
+        <div className="flex h-16 items-center gap-2 px-4">
+          {!collapsed && (
+            <a href="/home" className="font-display flex-1 text-xl font-bold tracking-tight">
+              Tiwa
+            </a>
+          )}
           {roleSwitcher}
           <button
             type="button"
@@ -185,7 +190,7 @@ export function AppShell({
             </svg>
           </button>
         </div>
-        <ul className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+        <ul className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
           {sidebar.map((link) => (
             <li key={link.key}>
               <a
@@ -193,10 +198,10 @@ export function AppShell({
                 aria-current={active === link.key ? 'page' : undefined}
                 title={collapsed ? link.label : undefined}
                 className={cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2.5 text-base',
+                  'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] transition-colors',
                   active === link.key
-                    ? 'bg-brand-soft text-text font-medium'
-                    : 'text-muted hover:text-text hover:bg-surface-2',
+                    ? 'bg-surface-2 text-text font-semibold [&>svg]:text-brand-strong'
+                    : 'text-muted hover:text-text hover:bg-surface',
                   collapsed && 'justify-center px-0',
                 )}
               >
@@ -216,14 +221,26 @@ export function AppShell({
             </li>
           ))}
         </ul>
+        <div
+          className={cn(
+            'border-border/70 flex items-center border-t p-3',
+            collapsed ? 'justify-center' : 'justify-between',
+          )}
+        >
+          {!collapsed && <span className="text-muted px-2 text-xs">Appearance</span>}
+          <ThemeToggle labels={{ light: 'Switch to light mode', dark: 'Switch to dark mode' }} />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="bg-bg/95 sticky top-0 z-40 border-b border-border backdrop-blur"
+          className={cn(
+            'bg-bg/80 border-border/70 sticky top-0 z-40 border-b backdrop-blur-xl',
+            !search && !actions && !sectionTabs && 'lg:hidden',
+          )}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div className="flex h-14 items-center gap-1 px-2 lg:gap-3 lg:px-6">
+          <div className="flex h-14 items-center gap-1 px-3 lg:h-16 lg:gap-3 lg:px-8">
             {onBack && (
               <button
                 type="button"
@@ -244,23 +261,29 @@ export function AppShell({
               </button>
             )}
             {/* Mobile title lives in the bar; desktop shows it above the content. */}
-            <p aria-hidden className="min-w-0 flex-1 truncate text-lg font-semibold lg:hidden">
+            <p aria-hidden className="font-display min-w-0 flex-1 truncate text-lg font-bold tracking-tight lg:hidden">
               {title}
             </p>
             {search && <div className="hidden max-w-md flex-1 lg:block">{search}</div>}
-            <div className="ml-auto flex items-center gap-1 lg:gap-2">{actions}</div>
+            <div className="ml-auto flex items-center gap-1 lg:gap-2">
+              {actions}
+              <ThemeToggle
+                labels={{ light: 'Switch to light mode', dark: 'Switch to dark mode' }}
+                className="lg:hidden"
+              />
+            </div>
           </div>
           {sectionTabs && (
-            <nav aria-label="Sections" className="scrollbar-none flex gap-1 overflow-x-auto px-4 pb-2 lg:px-6">
+            <nav aria-label="Sections" className="scrollbar-none flex gap-1 overflow-x-auto px-4 pb-2.5 lg:px-8">
               {sectionTabs}
             </nav>
           )}
         </header>
 
         <div className="flex min-w-0 flex-1">
-          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-4 pb-4 lg:px-8 lg:py-6">
-            <div className="mb-4 flex items-start justify-between gap-4 pt-4 lg:pt-0">
-              <h1 className="font-display sr-only text-2xl font-bold lg:not-sr-only">{title}</h1>
+          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-4 pb-8 lg:px-10 lg:py-10">
+            <div className="mb-4 flex items-end justify-between gap-4 pt-4 lg:mb-8 lg:pt-0">
+              <h1 className="font-display sr-only text-3xl font-bold tracking-[-0.02em] lg:not-sr-only">{title}</h1>
               {headerAction && <div className="hidden shrink-0 lg:block">{headerAction}</div>}
             </div>
             {children}
@@ -283,7 +306,7 @@ export function AppShell({
         <nav
           data-frame="mobile"
           aria-label="Primary"
-          className="bg-bg sticky bottom-0 z-40 border-t border-border lg:hidden"
+          className="bg-bg/90 border-border/70 sticky bottom-0 z-40 border-t backdrop-blur-xl lg:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <ul className="flex h-16">
@@ -293,8 +316,10 @@ export function AppShell({
                   href={tab.href}
                   aria-current={active === tab.key ? 'page' : undefined}
                   className={cn(
-                    'relative flex h-full flex-col items-center justify-center gap-0.5 text-xs',
-                    active === tab.key ? 'text-brand-strong' : 'text-muted',
+                    'relative flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium',
+                    active === tab.key
+                      ? 'text-brand-strong before:bg-brand-strong before:absolute before:top-0 before:h-0.5 before:w-8 before:rounded-full'
+                      : 'text-muted',
                   )}
                 >
                   {tab.icon}

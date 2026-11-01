@@ -18,21 +18,22 @@ export function Card({ interactive = false, href, linkLabel, onNavigate, classNa
   return (
     <div
       className={cn(
-        'border-border bg-surface rounded-lg border shadow-1',
-        interactive && 'transition-transform duration-fast ease-out active:scale-[0.99]',
+        'border-border/80 bg-bg rounded-2xl border shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.08)]',
+        interactive &&
+          'hover:border-text/15 transition-all duration-fast ease-out hover:-translate-y-0.5 hover:shadow-2 active:scale-[0.99]',
         className,
       )}
       {...rest}
     >
-      <div className="relative p-4">
+      <div className="relative p-5">
         {href ? (
-          <a href={href} aria-label={stretchedLabel} className="after:absolute after:inset-0 after:rounded-lg" />
+          <a href={href} aria-label={stretchedLabel} className="after:absolute after:inset-0 after:rounded-2xl" />
         ) : onNavigate ? (
           <button
             type="button"
             onClick={onNavigate}
             aria-label={stretchedLabel ?? 'Open'}
-            className="after:absolute after:inset-0 after:rounded-lg"
+            className="after:absolute after:inset-0 after:rounded-2xl"
           />
         ) : null}
         {children}
@@ -60,9 +61,14 @@ const deltaTones = {
 export function StatCard({ label, value, delta, help, className }: StatCardProps) {
   const helpId = help ? React.useId() : undefined;
   return (
-    <div className={cn('border-border bg-surface rounded-lg border p-4 shadow-1', className)}>
-      <p className="text-muted text-sm">{label}</p>
-      <p className="font-display mt-1 text-2xl font-bold" aria-describedby={helpId}>
+    <div
+      className={cn(
+        'border-border/80 bg-bg rounded-2xl border p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.08)]',
+        className,
+      )}
+    >
+      <p className="text-muted text-xs font-medium tracking-wide uppercase">{label}</p>
+      <p className="font-display mt-2 text-[1.75rem] leading-none font-bold tracking-tight" aria-describedby={helpId}>
         {value}
       </p>
       {delta && <p className={cn('mt-1 text-sm', deltaTones[delta.tone])}>{delta.text}</p>}

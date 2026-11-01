@@ -44,7 +44,11 @@
     "lockedBody": "This number is locked for a few minutes. Try again shortly.",
     "invalidPhone": "Enter a valid phone number",
     "invalidEmail": "Enter a valid email address",
-    "invalidCode": "Enter the 6-digit code"
+    "invalidCode": "Enter the 6-digit code",
+    "haveAccount": "Already have an account?",
+    "noAccount": "New to Tiwa?",
+    "loginLink": "Sign in",
+    "signupLink": "Create an account"
   },
   "onboarding": {
     "roleTitle": "What brings you to Tiwa?",
@@ -1393,7 +1397,11 @@
     "addTime": "Add another time",
     "sendVisit": "Send request",
     "visitNotesLabel": "Notes",
-    "visitsHeading": "Site visits"
+    "visitsHeading": "Site visits",
+    "vendorsSubtitle": "Venues, caterers, photographers, DJs and more — compare and book with clear terms.",
+    "plannersSubtitle": "Experienced planners who can run the whole day for you.",
+    "noResultsBody": "Try a different city, category or price range.",
+    "from": "from"
   },
   "inbox": {
     "title": "Inbox",
@@ -1969,5 +1977,24 @@
       "install": "apps to install"
     },
     "mockInitials": "MP"
+  },
+  "authLayout": {
+    "quote": "Every great event starts with a plan.",
+    "body": "Bring your people, vendors and budget together — and enjoy the day.",
+    "legal": "By continuing you agree to Tiwa's terms and privacy policy.",
+    "chips": {
+      "plan": "Plan together",
+      "book": "Book vendors",
+      "chat": "Chat in one place",
+      "moments": "Share Moments"
+    }
+  },
+  "marketplaceFrame": {
+    "nav": "Marketplace",
+    "vendors": "Vendors",
+    "venues": "Venues",
+    "planners": "Planners",
+    "myEvents": "My events",
+    "eyebrow": "Marketplace"
   }
 }

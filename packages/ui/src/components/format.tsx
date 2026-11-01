@@ -32,7 +32,14 @@ export function MoneyText({ value, currency, locale = 'en', className }: MoneyTe
     const digits = fractionDigits(currency, locale);
     const amount = Number(minorToMajor(value, digits));
     try {
-      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount);
+      // Frontend.md §10: narrow symbol (₦, not NGN); no minor units unless they are non-zero.
+      const whole = Number.isInteger(amount);
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        currencyDisplay: 'narrowSymbol',
+        ...(whole ? { maximumFractionDigits: 0, minimumFractionDigits: 0 } : {}),
+      }).format(amount);
     } catch {
       return `${currency} ${minorToMajor(value, digits)}`;
     }
