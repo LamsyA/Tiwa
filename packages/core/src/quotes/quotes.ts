@@ -214,6 +214,28 @@ export async function listEnquiries(actor: UserActor) {
   return requests.map((row) => ({ ...row, draftQuotes: row.id ? (counts.get(row.id) ?? 0) : 0 }));
 }
 
+/** One enquiry with its brief and the vendor's drafts (quote builder page). */
+export async function getEnquiry(actor: UserActor, raw: unknown) {
+  const { requestId } = z.object({ requestId: z.string().uuid() }).parse(raw);
+  const request = await prisma.quoteRequest.findUnique({ where: { id: requestId } });
+  if (!request) throw new NotFoundError('Quote request not found');
+  await loadOrgAccess(actor, request.vendorOrgId, 'org.manage');
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: request.eventId },
+    select: { name: true, type: true, startsAt: true, endsAt: true, timezone: true, expectedGuests: true, currency: true },
+  });
+  const quotes = await prisma.quote.findMany({
+    where: { requestId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, status: true, totalMinor: true, currency: true, expiresAt: true },
+  });
+  return {
+    request: { id: request.id, eventId: request.eventId, category: request.category, vendorOrgId: request.vendorOrgId, brief: request.brief, status: request.status },
+    event,
+    quotes: quotes.map((quote) => ({ ...quote, totalMinor: quote.totalMinor.toString() })),
+  };
+}
+
 /** Quotes past expiry in a sendable state (job flips them to EXPIRED). */
 export async function findExpiredQuotes(now = new Date()) {
   return prisma.quote.findMany({
