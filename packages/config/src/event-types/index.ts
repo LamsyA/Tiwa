@@ -2,7 +2,7 @@ import { EVENT_TYPES } from './templates.js';
 import type { EventFormat, EventTypeTemplate, FormatRules } from './types.js';
 
 export * from './types.js';
-export { VENDOR_CATEGORIES, type VendorCategory } from './vendor-categories.js';
+export { VENDOR_CATEGORIES, VENDOR_BUDGET_KEYS, budgetKeyFor, type VendorCategory } from './vendor-categories.js';
 export { EVENT_TYPES };
 
 export const FORMAT_RULES: Record<EventFormat, FormatRules> = {

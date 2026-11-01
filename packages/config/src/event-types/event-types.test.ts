@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  budgetKeyFor,
   EVENT_FORMATS,
   EVENT_TYPES,
   FORMAT_RULES,
@@ -44,6 +45,10 @@ describe('event-type templates (P3-T01)', () => {
       expect(new Set(budgetKeys).size).toBe(budgetKeys.length);
       expect(template.budget.reduce((sum, split) => sum + split.percent, 0)).toBe(100);
       for (const split of template.budget) expect(Number.isInteger(split.percent) && split.percent > 0).toBe(true);
+      // Every vendor category books against a budget line (P9, D-X28).
+      for (const category of template.vendorCategories) {
+        expect(budgetKeyFor(category, budgetKeys), `${template.key}: ${category} has no budget line`).not.toBeNull();
+      }
 
       // Vendor categories exist in the marketplace list.
       for (const category of template.vendorCategories) expect(Object.keys(VENDOR_CATEGORIES)).toContain(category);

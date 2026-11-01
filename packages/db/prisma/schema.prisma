@@ -154,6 +154,8 @@ model Event {
   tasks                  Task[]
   documents              Document[]
   budgetCategories       BudgetCategory[]
+  expenses               Expense[]
+  contributions          Contribution[]
   guests                 Guest[]
   gallery                Gallery?
   quoteRequests          QuoteRequest[]
@@ -455,7 +457,7 @@ model Report {
   @@index([status])
 }
 
-// ───────────── Budget (categories now; expenses, contributions in P9) ─────────────
+// ───────────── Budget (Backend.md §3; P3 categories, P9 expenses + contributions) ─────────────
 
 model BudgetCategory {
   id           String @id @default(uuid(7))
@@ -467,6 +469,42 @@ model BudgetCategory {
   event        Event  @relation(fields: [eventId], references: [id])
 
   @@unique([eventId, key])
+}
+
+// Money spent outside bookings (receipts optional). Paid when `paidAt` is set.
+model Expense {
+  id          String    @id @default(uuid(7))
+  eventId     String
+  categoryKey String
+  description String
+  amountMinor BigInt
+  currency    String
+  paidAt      DateTime?
+  receiptKey  String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  event       Event     @relation(fields: [eventId], references: [id])
+
+  @@index([eventId])
+}
+
+// Money coming in: family/committee/member pledges, sponsors and other income
+// (kind). Ticket income is computed from ticket orders (P11). Offline only (D-X28).
+model Contribution {
+  id               String   @id @default(uuid(7))
+  eventId          String
+  contributorName  String
+  contributorPhone String?
+  kind             String   @default("family") // family | committee | member | sponsor | other_income
+  pledgedMinor     BigInt   @default(0)
+  receivedMinor    BigInt   @default(0)
+  currency         String
+  notes            String?
+  createdById      String?
+  createdAt        DateTime @default(now())
+  event            Event    @relation(fields: [eventId], references: [id])
+
+  @@index([eventId])
 }
 
 // ───────────── Audit & outbox (Backend.md §3) ─────────────

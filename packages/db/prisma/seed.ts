@@ -197,6 +197,29 @@ async function seedEvent(userId: string, spec: SeedEvent, now: Date) {
       sortOrder: index,
     })),
   });
+  // P9 demo money: one paid expense and one part-received pledge per event.
+  await prisma.expense.create({
+    data: {
+      eventId: event.id,
+      categoryKey: template.budget[template.budget.length - 1]!.key,
+      description: 'Invitation printing',
+      amountMinor: spec.budgetMinor / 100n,
+      currency: 'NGN',
+      paidAt: now,
+      createdById: userId,
+    },
+  });
+  await prisma.contribution.create({
+    data: {
+      eventId: event.id,
+      contributorName: 'Family pledge',
+      kind: 'family',
+      pledgedMinor: spec.budgetMinor / 10n,
+      receivedMinor: spec.budgetMinor / 20n,
+      currency: 'NGN',
+      createdById: userId,
+    },
+  });
 
   await prisma.programmeItem.createMany({
     data: template.programme.map((item, index) => ({

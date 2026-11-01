@@ -323,21 +323,21 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** the honest money view for every event. → completes **Milestone M2**
 **Read first:** `PRD.md BUD-*`, `UF-20`, `Backend.md §3 (budget)`, `Frontend.md §6.3 (money)`.
 
-- [ ] P9-T01 Prisma: BudgetCategory, Expense, Contribution (kinds include sponsor and other_income); budget history via AuditLog; categories created from template at finalize (backfill seeds).
+- [x] P9-T01 Prisma: BudgetCategory, Expense, Contribution (kinds include sponsor and other_income); budget history via AuditLog; categories created from template at finalize (backfill seeds).
 - [ ] P9-T02 Core `budgetSummary` (Planned, Committed, Paid, Outstanding, Uncommitted; per category; includes offline confirmed; income lines) with property tests.
 - [ ] P9-T03 Money page with stat cards, chart (lazy), tabs Budget / Payments / Contributions / Expenses / Income.
 - [ ] P9-T04 Allocations editor, expenses with receipt photo, contributions (pledged/received, kinds), income lines (tickets auto-filled later in P11).
-- [ ] P9-T05 Alerts job (over budget; payment due 7 d / 1 d).
-- [ ] P9-T06 Exports (PDF via worker, CSV direct).
-- [ ] P9-T07 Overview money card wired; live update via SSE when payments land.
+- [ ] P9-T05 Alerts job (over budget; payment due 7 d / 1 d). *(D-X28: computed on read and shown in-app; notification delivery with P13.)*
+- [ ] P9-T06 Exports (PDF via worker, CSV direct). *(D-X28: PDF = print-ready page, no worker.)*
+- [ ] P9-T07 Overview money card wired; live update via SSE when payments land. *(D-X28: 5 s refresh while visible, no Redis needed.)*
 - [ ] P9-T08 e2e UF-20.
 
 **GATE P9 (Milestone M2 demo on staging)**
 
 - [ ] UF-20 checks pass at both widths.
-- [ ] Figures reconcile with ledger and bookings for all seeded events (automated consistency check).
+- [ ] Figures reconcile with bookings, milestones and expenses for all seeded events (automated consistency check; ledger arrives with deferred P8-T03, D-X28).
 - [ ] `/events/[id]/money` Lighthouse ≥ 90 mobile.
-- [ ] Staging demo: book two vendors (one direct, one offline), pay deposit, see budget update.
+- [ ] Staging demo: book two vendors (both paid offline under D-X27), record and confirm a deposit, see budget update.
 
 ---
 

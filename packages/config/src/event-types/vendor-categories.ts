@@ -29,3 +29,35 @@ export const VENDOR_CATEGORIES = {
 } as const;
 
 export type VendorCategory = keyof typeof VENDOR_CATEGORIES;
+
+/**
+ * Budget line a booking in this vendor category counts against (P9, D-X28)
+ * when the template has no budget category with the same key. Keys are tried
+ * in order; the first one the event has wins, otherwise `misc`.
+ */
+export const VENDOR_BUDGET_KEYS: Partial<Record<VendorCategory, string[]>> = {
+  small_chops: ['catering'],
+  drinks: ['catering'],
+  cake: ['catering'],
+  photography: ['media'],
+  videography: ['media'],
+  dj: ['entertainment', 'music'],
+  live_band: ['entertainment', 'music'],
+  mc: ['entertainment'],
+  sound_lighting: ['entertainment', 'production'],
+  av_production: ['production', 'entertainment'],
+  speakers: ['speakers', 'entertainment'],
+  entertainment: ['entertainment'],
+  makeup: ['attire'],
+  fashion: ['attire'],
+  rentals: ['decor', 'venue'],
+  printing: ['printing', 'misc'],
+};
+
+/** The event's budget key for a booking category, or null when nothing fits (shown as "Other"). */
+export function budgetKeyFor(vendorCategory: string, eventBudgetKeys: readonly string[]): string | null {
+  const keys = new Set(eventBudgetKeys);
+  if (keys.has(vendorCategory)) return vendorCategory;
+  for (const key of VENDOR_BUDGET_KEYS[vendorCategory as VendorCategory] ?? []) if (keys.has(key)) return key;
+  return keys.has('misc') ? 'misc' : null;
+}
