@@ -4,6 +4,13 @@ import { Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
+import {
+  AddContributionDialog,
+  AddExpenseDialog,
+  AllocationsDialog,
+  ContributionActions,
+  ExpenseActions,
+} from './money-editors.js';
 import { MoneyTabbar } from './money-tabbar.js';
 
 const TABS = ['budget', 'payments', 'contributions', 'expenses', 'income'] as const;
@@ -49,6 +56,9 @@ export default async function EventMoneyPage({
   const canEdit = can(access, ctx.actor.userId, 'money.edit');
   const max = [totals.plannedMinor, totals.committedMinor, totals.paidMinor].reduce((a, b) => (b > a ? b : a), 1n);
   const pct = (value: bigint) => Number((value * 1000n) / max) / 10;
+  const categoryOptions = summary.lines
+    .filter((line) => line.label !== null)
+    .map((line) => ({ key: line.key, label: line.label as string, plannedMinor: line.plannedMinor.toString() }));
   const money = (value: bigint | string) => <MoneyText value={value.toString()} currency={currency} />;
 
   const [schedule, expenses, contributions] = await Promise.all([
@@ -93,6 +103,16 @@ export default async function EventMoneyPage({
 
       <MoneyTabbar eventId={id} active={active} items={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))} />
 
+      {active === 'budget' && canEdit && (
+        <div className="flex justify-end">
+          <AllocationsDialog
+            eventId={id}
+            currency={currency}
+            plannedTotalMinor={totals.plannedMinor.toString()}
+            categories={categoryOptions}
+          />
+        </div>
+      )}
       {active === 'budget' && (
         <Card className="p-2 sm:p-4">
           {summary.lines.length === 0 ? (
@@ -184,6 +204,11 @@ export default async function EventMoneyPage({
         </Card>
       )}
 
+      {active === 'contributions' && canEdit && (
+        <div className="flex justify-end">
+          <AddContributionDialog eventId={id} currency={currency} />
+        </div>
+      )}
       {active === 'contributions' && (
         <Card className="p-2 sm:p-4">
           {contributions.filter((row) => !['sponsor', 'other_income'].includes(row.kind)).length === 0 ? (
@@ -199,6 +224,7 @@ export default async function EventMoneyPage({
                     <span>
                       {money(row.receivedMinor)} / {money(row.pledgedMinor)}
                     </span>
+                    {canEdit && <ContributionActions contributionId={row.id} currency={currency} />}
                   </li>
                 ))}
             </ul>
@@ -206,6 +232,11 @@ export default async function EventMoneyPage({
         </Card>
       )}
 
+      {active === 'expenses' && canEdit && (
+        <div className="flex justify-end">
+          <AddExpenseDialog eventId={id} currency={currency} categories={categoryOptions} />
+        </div>
+      )}
       {active === 'expenses' && (
         <Card className="p-2 sm:p-4">
           {expenses.length === 0 ? (
@@ -222,6 +253,7 @@ export default async function EventMoneyPage({
                   <StatusPill tone={row.paidAt ? 'success' : 'neutral'}>
                     {row.paidAt ? t('state.paid') : t('state.due')}
                   </StatusPill>
+                  {canEdit && <ExpenseActions expenseId={row.id} paid={!!row.paidAt} />}
                 </li>
               ))}
             </ul>
@@ -229,6 +261,11 @@ export default async function EventMoneyPage({
         </Card>
       )}
 
+      {active === 'income' && canEdit && (
+        <div className="flex justify-end">
+          <AddContributionDialog eventId={id} currency={currency} income />
+        </div>
+      )}
       {active === 'income' && (
         <Card className="flex flex-col gap-3 p-4 text-sm">
           <div className="grid grid-cols-2 gap-3">
@@ -242,6 +279,15 @@ export default async function EventMoneyPage({
                 {money(row.receivedMinor)} / {money(row.pledgedMinor)}
               </li>
             ))}
+            {contributions
+              .filter((row) => row.kind === 'sponsor' || row.kind === 'other_income')
+              .map((row) => (
+                <li key={row.id} className="flex flex-wrap items-center gap-2 py-2 pl-4">
+                  <span className="text-muted flex-1">{row.contributorName}</span>
+                  {money(row.receivedMinor)} / {money(row.pledgedMinor)}
+                  {canEdit && <ContributionActions contributionId={row.id} currency={currency} />}
+                </li>
+              ))}
             <li className="text-muted flex items-center gap-2 py-2">
               <span className="flex-1">{t('kinds.tickets')}</span>
               {t('ticketsLater')}
