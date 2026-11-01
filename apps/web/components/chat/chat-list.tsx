@@ -138,7 +138,7 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
                         {row.lastMessage
                           ? row.lastMessage.deleted
                             ? t('deleted')
-                            : `${row.lastMessage.mine ? `${t('you')}: ` : ''}${row.lastMessage.body ?? ''}`
+                            : `${row.lastMessage.mine ? `${t('you')}: ` : ''}${row.lastMessage.body || (row.lastMessage.kind === 'IMAGE' ? t('photo') : row.lastMessage.kind === 'FILE' ? t('file') : '')}`
                           : ''}
                       </span>
                       {row.unread > 0 && (

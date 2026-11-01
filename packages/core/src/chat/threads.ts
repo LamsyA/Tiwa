@@ -2,6 +2,14 @@ import { prisma, type ChatContext, type ChatSide, type Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
+import {
+  MAX_ATTACHMENTS,
+  attachmentSchema,
+  isImage,
+  verifyAttachments,
+  type AttachmentDeps,
+  type StoredAttachment,
+} from './attachments.js';
 import { canMessage, type PartyKind } from './can-message.js';
 import { isBlocked, loadMessageFacts, orgParty, type Party } from './parties.js';
 
@@ -47,13 +55,19 @@ export const startThreadSchema = z
     path: ['toUserId'],
   });
 
-export const sendMessageSchema = z.object({
-  threadId: z.string().uuid(),
-  clientMessageId: CLIENT_ID,
-  body: BODY,
-  replyToId: z.string().uuid().optional(),
-  mentions: z.array(z.string().uuid()).max(20).optional(),
-});
+export const sendMessageSchema = z
+  .object({
+    threadId: z.string().uuid(),
+    clientMessageId: CLIENT_ID,
+    body: BODY.optional(),
+    attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS, 'tooManyAttachments').optional(),
+    replyToId: z.string().uuid().optional(),
+    mentions: z.array(z.string().uuid()).max(20).optional(),
+  })
+  .refine((value) => Boolean(value.body) || Boolean(value.attachments?.length), {
+    message: 'emptyMessage',
+    path: ['body'],
+  });
 
 export const editMessageSchema = z.object({ messageId: z.string().uuid(), body: BODY });
 export const messageIdSchema = z.object({ messageId: z.string().uuid() });
@@ -184,7 +198,7 @@ async function assertNotBlocked(threadId: string, mine: { id: string; userId: st
 }
 
 /** Idempotent on `clientMessageId`: a retry returns the message already stored (§9a.2). */
-export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMessageSchema>) {
+export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMessageSchema>, deps?: AttachmentDeps) {
   const row = await requireParticipant(actor, input.threadId);
   const already = await prisma.message.findUnique({
     where: { threadId_clientMessageId: { threadId: input.threadId, clientMessageId: input.clientMessageId } },
@@ -216,6 +230,14 @@ export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMe
       throw new ValidationError('Reply target not in this conversation', { field: 'replyToId', key: 'badReply' });
   }
 
+  let attachments: StoredAttachment[] = [];
+  if (input.attachments?.length) {
+    if (!deps)
+      throw new ValidationError('Attachments need storage', { field: 'attachments', key: 'attachmentMismatch' });
+    attachments = await verifyAttachments(deps, input.threadId, input.attachments);
+  }
+  const kind = attachments.length === 0 ? 'TEXT' : attachments.every((a) => isImage(a.mime)) ? 'IMAGE' : 'FILE';
+
   try {
     const message = await prisma.$transaction(async (tx) => {
       const created = await tx.message.create({
@@ -224,7 +246,9 @@ export async function sendMessage(actor: UserActor, input: z.infer<typeof sendMe
           authorUserId: actor.userId,
           authorOrgId: row.orgId,
           clientMessageId: input.clientMessageId,
-          body: input.body,
+          kind,
+          body: input.body ?? null,
+          attachments: attachments.map((a) => ({ ...a })),
           replyToId: input.replyToId ?? null,
           mentions,
         },
@@ -336,7 +360,10 @@ export async function archiveThread(actor: UserActor, input: z.infer<typeof arch
 }
 
 /** Event-team members pin a message as a decision; it shows on the event overview (§6). */
-export async function markDecision(actor: UserActor, input: z.infer<typeof messageIdSchema> & { decision?: boolean | undefined }) {
+export async function markDecision(
+  actor: UserActor,
+  input: z.infer<typeof messageIdSchema> & { decision?: boolean | undefined },
+) {
   const message = await prisma.message.findUnique({ where: { id: input.messageId }, include: { thread: true } });
   if (!message || message.deletedAt) throw new NotFoundError('Message not found');
   if (message.thread.kind !== 'EVENT') throw new ValidationError('Only in event-team chats', { key: 'notEventThread' });

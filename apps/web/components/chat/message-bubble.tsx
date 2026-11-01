@@ -1,7 +1,7 @@
 'use client';
 
 import { DropdownMenu, cn } from '@tiwa/ui';
-import { Check, CheckCheck, Clock, MoreVertical, Pin } from 'lucide-react';
+import { Check, CheckCheck, Clock, FileText, MoreVertical, Pin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export type BubbleStatus = 'pending' | 'sent' | 'delivered' | 'seen';
@@ -16,6 +16,7 @@ export interface BubbleMessage {
   masked: boolean;
   isDecision: boolean;
   createdAt: string;
+  attachments?: { name: string; mime: string; sizeBytes: number }[];
 }
 
 function time(iso: string): string {
@@ -32,8 +33,11 @@ export function MessageBubble({
   onEdit,
   onDelete,
   onDecision,
+  /** Pending (not yet stored) messages show names only; stored ones link to the participant-checked route. */
+  attachmentHref,
 }: {
   message: BubbleMessage;
+  attachmentHref?: (index: number, download?: boolean) => string;
   status?: BubbleStatus;
   showAuthor: boolean;
   canEdit: boolean;
@@ -90,10 +94,50 @@ export function MessageBubble({
             <Pin aria-hidden className="size-3" /> {t('decision')}
           </p>
         )}
+        {!message.deleted && message.attachments && message.attachments.length > 0 && (
+          <ul className="mb-1 flex flex-col gap-1">
+            {message.attachments.map((file, index) =>
+              file.mime.startsWith('image/') && attachmentHref ? (
+                <li key={index}>
+                  <a
+                    href={attachmentHref(index)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t('openFile', { name: file.name })}
+                  >
+                    <img
+                      src={attachmentHref(index)}
+                      alt={file.name}
+                      loading="lazy"
+                      className="max-h-64 w-full rounded-lg object-cover"
+                    />
+                  </a>
+                </li>
+              ) : (
+                <li key={index}>
+                  {attachmentHref ? (
+                    <a
+                      href={attachmentHref(index, true)}
+                      className="flex items-center gap-2 rounded-lg bg-black/10 px-2 py-1.5 underline-offset-2 hover:underline"
+                    >
+                      <FileText aria-hidden className="size-4 shrink-0" />
+                      <span className="truncate">{file.name}</span>
+                    </a>
+                  ) : (
+                    <span className="flex items-center gap-2 rounded-lg bg-black/10 px-2 py-1.5">
+                      <FileText aria-hidden className="size-4 shrink-0" />
+                      <span className="truncate">{file.name}</span>
+                    </span>
+                  )}
+                </li>
+              ),
+            )}
+          </ul>
+        )}
         {message.deleted ? (
           <p className="italic opacity-80">{t('deleted')}</p>
         ) : (
-          <p className="whitespace-pre-wrap break-words">{message.body}</p>
+          message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>
         )}
         <p className="mt-0.5 flex items-center justify-end gap-1 text-[11px] opacity-75">
           {message.edited && !message.deleted && <span>{t('edited')}</span>}

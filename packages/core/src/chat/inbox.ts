@@ -21,7 +21,7 @@ export interface InboxRow {
   title: string;
   /** Speaking for this business in the thread, if not myself. */
   asOrgId: string | null;
-  lastMessage: { body: string | null; deleted: boolean; mine: boolean; at: Date } | null;
+  lastMessage: { body: string | null; kind: string; deleted: boolean; mine: boolean; at: Date } | null;
   unread: number;
   muted: boolean;
   archived: boolean;
@@ -131,6 +131,7 @@ export async function listInbox(
       lastMessage: last
         ? {
             body: visibleBody(last, actor.userId),
+            kind: last.kind,
             deleted: last.deletedAt !== null,
             mine: last.authorUserId === actor.userId,
             at: last.createdAt,
@@ -187,6 +188,8 @@ export interface MessageView {
   isDecision: boolean;
   replyToId: string | null;
   mentions: string[];
+  /** Files on the message; fetched through the participant-checked attachment route. */
+  attachments: { name: string; mime: string; sizeBytes: number }[];
   createdAt: Date;
 }
 
@@ -229,6 +232,14 @@ export async function listMessages(actor: UserActor, threadId: string, before?: 
       isDecision: m.isDecision,
       replyToId: m.replyToId,
       mentions: m.mentions,
+      // Keys stay server-side; the client asks for file N of a message.
+      attachments: m.deletedAt
+        ? []
+        : (m.attachments as { name: string; mime: string; sizeBytes: number }[]).map(({ name, mime, sizeBytes }) => ({
+            name,
+            mime,
+            sizeBytes,
+          })),
       createdAt: m.createdAt,
     })),
     hasMore: messages.length > PAGE_SIZE,

@@ -1328,6 +1328,19 @@
       "emptyMessage": "Write a message first",
       "messageTooLong": "That message is too long",
       "generic": "Something went wrong. Please try again."
+    },
+    "attach": "Attach photos or files",
+    "uploadingFiles": "Uploading {count, plural, one {# file} other {# files}}…",
+    "openFile": "Open {name}",
+    "photo": "Photo",
+    "file": "File",
+    "attachmentErrors": {
+      "typeNotAllowed": "{name}: this file type isn't supported.",
+      "tooLarge": "{name}: files must be 25 MB or smaller.",
+      "uploadFailed": "{name}: the upload didn't finish.",
+      "attachmentMismatch": "A file didn't match its type and wasn't sent.",
+      "attachmentBlocked": "A photo was blocked by our safety check.",
+      "generic": "{name}: something went wrong."
     }
   }
 }

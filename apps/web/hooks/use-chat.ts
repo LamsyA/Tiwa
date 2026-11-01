@@ -8,6 +8,7 @@ import {
   flushOutbox,
   newClientMessageId,
   type OutboxStore,
+  type PendingAttachment,
   type PendingMessage,
 } from '@/lib/chat-outbox.js';
 
@@ -69,7 +70,8 @@ export function useChatSender(onRejected: (message: PendingMessage) => void) {
         const result = await sendChatMessage({
           threadId: message.threadId,
           clientMessageId: message.clientMessageId,
-          body: message.body,
+          ...(message.body ? { body: message.body } : {}),
+          ...(message.attachments?.length ? { attachments: message.attachments } : {}),
         });
         if (result.ok) return 'sent';
         return REFUSED.has(result.code) ? 'rejected' : 'retry';
@@ -93,12 +95,13 @@ export function useChatSender(onRejected: (message: PendingMessage) => void) {
   }, [pending.length, flush]);
 
   const send = React.useCallback(
-    async (threadId: string, body: string) => {
+    async (threadId: string, body: string, attachments: PendingAttachment[] = []) => {
       store.current ??= defaultOutboxStore();
       const message: PendingMessage = {
         clientMessageId: newClientMessageId(),
         threadId,
         body,
+        ...(attachments.length ? { attachments } : {}),
         createdAt: Date.now(),
         attempts: 0,
       };

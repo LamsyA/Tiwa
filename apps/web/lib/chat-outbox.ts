@@ -3,10 +3,19 @@
 // the server accepts it, and retried with the same clientMessageId — the
 // server's idempotency makes retries safe.
 
+export interface PendingAttachment {
+  key: string;
+  name: string;
+  mime: string;
+  sizeBytes: number;
+}
+
 export interface PendingMessage {
   clientMessageId: string;
   threadId: string;
   body: string;
+  /** Already uploaded to storage; sent with the message (lean chat files, D-X20). */
+  attachments?: PendingAttachment[];
   createdAt: number;
   attempts: number;
 }

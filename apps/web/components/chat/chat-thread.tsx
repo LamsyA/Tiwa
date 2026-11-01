@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import {
+  startChatAttachment,
   archiveChat,
   deleteChatMessage,
   editChatMessage,
@@ -18,6 +19,7 @@ import {
   muteChat,
 } from '@/app/inbox/actions.js';
 import { useChatSender, useInboxStream } from '@/hooks/use-chat.js';
+import type { PendingAttachment } from '@/lib/chat-outbox.js';
 import { Composer } from './composer.js';
 import { MessageBubble, type BubbleMessage, type BubbleStatus } from './message-bubble.js';
 
@@ -136,6 +138,42 @@ export function ChatThread({
     void refetch();
   }
 
+  /** Upload each file straight to storage (D-A05), then send them as one message. */
+  const [uploading, setUploading] = React.useState(0);
+  const tFiles = useTranslations('inbox.attachmentErrors');
+  async function onAttach(files: File[]) {
+    setError(null);
+    setUploading(files.length);
+    const done: PendingAttachment[] = [];
+    try {
+      for (const file of files) {
+        const mime = file.type || 'application/octet-stream';
+        const started = await startChatAttachment({ threadId, mime, sizeBytes: file.size });
+        if (!started.ok) {
+          const key = Object.values(started.fieldErrors ?? {}).flat()[0];
+          setError(tFiles(key && tFiles.has(key) ? key : 'generic', { name: file.name }));
+          continue;
+        }
+        const put = await fetch(started.data.uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': mime },
+        }).catch(() => null);
+        if (!put?.ok) {
+          setError(tFiles('uploadFailed', { name: file.name }));
+          continue;
+        }
+        done.push({ key: started.data.key, name: file.name, mime, sizeBytes: file.size });
+      }
+      if (done.length) {
+        await send(threadId, '', done);
+        void refetch();
+      }
+    } finally {
+      setUploading(0);
+    }
+  }
+
   function statusOf(m: Wire): BubbleStatus {
     if (seenUpTo && m.createdAt <= seenUpTo) return 'seen';
     if (deliveredUpTo && m.createdAt <= deliveredUpTo) return 'delivered';
@@ -155,6 +193,7 @@ export function ChatThread({
       masked: false,
       isDecision: false,
       createdAt: new Date(p.createdAt).toISOString(),
+      ...(p.attachments ? { attachments: p.attachments } : {}),
       status: 'pending',
     }));
   const ordered = [...messages].reverse();
@@ -233,6 +272,9 @@ export function ChatThread({
                   onEdit={() => setEditing({ id: m.id, body: m.body ?? '' })}
                   onDelete={() => setDeleting(m.id)}
                   onDecision={() => void markChatDecision({ messageId: m.id }).then(() => void refetch())}
+                  attachmentHref={(index, download) =>
+                    `/api/chat/attachments/${m.id}/${index}${download ? '?download=1' : ''}`
+                  }
                 />
               </li>
             );
@@ -246,6 +288,11 @@ export function ChatThread({
         <div ref={bottom} />
       </div>
 
+      {uploading > 0 && (
+        <p role="status" className="text-muted px-3 pb-1 text-sm">
+          {t('uploadingFiles', { count: uploading })}
+        </p>
+      )}
       {error && (
         <div className="px-3 pb-2">
           <Banner tone="danger">{error}</Banner>
@@ -281,6 +328,8 @@ export function ChatThread({
       ) : (
         <Composer
           onSend={(body) => void onSend(body)}
+          onAttach={(files) => void onAttach(files)}
+          disabled={uploading > 0}
           onTyping={() =>
             void fetch('/api/chat/typing', {
               method: 'POST',

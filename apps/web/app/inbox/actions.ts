@@ -15,6 +15,8 @@ import {
   muteThreadSchema,
   sendMessage,
   sendMessageSchema,
+  startAttachment,
+  startAttachmentSchema,
   startThread,
   startThreadSchema,
   threadReceiptSchema,
@@ -22,6 +24,8 @@ import {
 import { z } from 'zod';
 import { publishToThread } from '@/lib/chat-live.js';
 import { userAction } from '@/lib/ctx.js';
+import { moderation } from '@/lib/moderation.js';
+import { privateStorage } from '@/lib/storage.js';
 
 // Chat actions (Backend.md §6). Each write publishes a small event to the
 // thread's channels (§9a.2); clients refetch through these permission-checked reads.
@@ -39,8 +43,13 @@ export const startChat = userAction(startThreadSchema, async (input, ctx) => {
   return result;
 });
 
+/** Signed PUT for one chat file; the browser uploads directly (D-A05), then sends the message. */
+export const startChatAttachment = userAction(startAttachmentSchema, (input, ctx) =>
+  startAttachment(privateStorage(), ctx.actor, input),
+);
+
 export const sendChatMessage = userAction(sendMessageSchema, async (input, ctx) => {
-  const result = await sendMessage(ctx.actor, input);
+  const result = await sendMessage(ctx.actor, input, { storage: privateStorage(), moderation: moderation() });
   if (!result.duplicate) {
     await publishToThread(input.threadId, {
       type: 'message',
