@@ -156,3 +156,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - P9-T08 written, not ticked: `e2e/money.spec.ts` (UF-20 cards, expense, pledge + received, income, CSV download, second-tab update within 5 s). Same blocker; also the shared folder has uncommitted P10 schema edits from another agent that currently break the web build.
 ## 2026-11-01
 - P10-T02 done: `plannerDashboard` (5 parallel queries, no N+1) + `/home` planner sections (Needs today, week events, pipeline, quick actions).
+- P10-T03 done: CRM `createClient/listClients/getClient/moveLead/updateClient` (PLANNER-only, vendor orgs get NOT_FOUND) + `/clients` list/pipeline + `/clients/[id]` + stage buttons; 5 planner unit tests green.
