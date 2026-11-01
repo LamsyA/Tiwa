@@ -491,6 +491,17 @@
         "overLine": "{line} is over its budget by",
         "dueWeek": "{vendor} · {label} due {date}:",
         "dueDay": "Due now — {vendor} · {label} ({date}):"
+      },
+      "exportCsv": "Export CSV",
+      "exportPdf": "Print or save as PDF",
+      "backToMoney": "Back to money",
+      "savePdf": "Print / Save as PDF",
+      "csv": {
+        "section": "Section",
+        "item": "Item",
+        "currency": "Currency",
+        "booking": "Booking",
+        "expense": "Expense"
       }
     },
     "plan": {

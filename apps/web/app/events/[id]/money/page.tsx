@@ -133,6 +133,14 @@ export default async function EventMoneyPage({
         ))}
       </Card>
 
+      <div className="flex flex-wrap justify-end gap-2 text-sm">
+        <a href={`/events/${id}/money/export`} className="underline">
+          {t('exportCsv')}
+        </a>
+        <Link href={`/events/${id}/money/print`} className="underline">
+          {t('exportPdf')}
+        </Link>
+      </div>
       <MoneyTabbar eventId={id} active={active} items={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))} />
 
       {active === 'budget' && canEdit && (
