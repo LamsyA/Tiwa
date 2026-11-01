@@ -36,9 +36,7 @@ export function ChatCard({ card }: { card: ChatCardData }) {
       </p>
       {total && <p className="text-muted">{total}</p>}
       {diff && card.type === 'change' && <p className="text-muted">±{diff}</p>}
-      {card.type === 'site_visit' && card.date && (
-        <p className="text-muted">{new Date(card.date).toLocaleString()}</p>
-      )}
+      {card.type === 'site_visit' && card.date && <p className="text-muted">{new Date(card.date).toLocaleString()}</p>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { expect, freshPhone, isolateIp, signInWithPhone } from './support/auth.js';
+import { expect, freshPhone, isolateIp, signInWithEmail, signInWithPhone } from './support/auth.js';
 
 // P7-T13: UF-14 (request) → UF-15 (vendor quote) → UF-16 (compare + accept
 // → booking) → UF-19 (change request → v2). Fresh vendor (catering, published
@@ -239,7 +239,7 @@ test('UF-29-7: site visit request reaches the venue; confirmed time shows for bo
   await gotoSettled(vendor, '/quotes');
   await vendor.getByLabel('Confirmed time').fill('2031-07-01T10:00');
   await vendor.getByRole('button', { name: 'Confirm', exact: true }).click();
-  await expect(vendor.getByText('CONFIRMED')).toBeVisible({ timeout: 30_000 });
+  await expect(vendor.getByText('CONFIRMED').first()).toBeVisible({ timeout: 30_000 });
 
   await gotoSettled(host, `/events/${eventId}/vendors`);
   await expect(host.getByText('CONFIRMED')).toBeVisible();
