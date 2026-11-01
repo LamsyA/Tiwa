@@ -1,3 +1,5 @@
+import * as React from 'react';
+import { MessageBusiness } from '@/components/chat/message-business.js';
 import type { PublicProfile } from '@tiwa/core';
 import { Avatar, Badge, Card, Chip, ChipGroup, MoneyText, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -256,6 +258,9 @@ export async function PublicProfileView({
                   <MoneyText value={profile.profile.startingPriceMinor} currency={profile.profile.currency} />
                 </p>
               )}
+              <React.Suspense fallback={null}>
+                <MessageBusiness orgId={profile.org.id} orgName={profile.org.name} />
+              </React.Suspense>
               <p className="text-muted text-sm">{t('requestQuoteSoon')}</p>
             </div>
           </Card>

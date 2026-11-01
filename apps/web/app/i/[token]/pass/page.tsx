@@ -1,3 +1,4 @@
+import { GuestEnquiries } from '@/components/chat/guest-enquiries.js';
 import { env } from '@tiwa/config';
 import { checkinQrValue, galleryCodeForEvent, invitePage } from '@tiwa/core';
 import { GuestShell, QRCode } from '@tiwa/ui';
@@ -57,6 +58,7 @@ export default async function InvitePassPage({ params }: { params: Promise<{ tok
           )}
         </div>
       </div>
+      <GuestEnquiries eventId={page.event.id} />
     </GuestShell>
   );
 }

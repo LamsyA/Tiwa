@@ -276,7 +276,8 @@
       "continueSetup": "Continue setup",
       "cancelledBanner": "This event was cancelled.",
       "momentsManage": "Manage gallery",
-      "momentsView": "View gallery"
+      "momentsView": "View gallery",
+      "teamChat": "Team chat"
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
@@ -1360,6 +1361,19 @@
     "report": "Report",
     "reportTitle": "Report this message",
     "reportReason": "What's wrong?",
-    "reportSent": "Thanks. Our team will review it."
+    "reportSent": "Thanks. Our team will review it.",
+    "messageBusiness": "Message {name}",
+    "messageCta": "Message",
+    "aboutEvent": "About",
+    "noEvent": "No event",
+    "suggestion": "Hi, are you available on {date} for about {guests} guests?",
+    "suggestionNoGuests": "Hi, are you available on {date}?",
+    "suggestionPlain": "Hi, I'd like to know more about your services.",
+    "signInToMessage": "Sign in to message",
+    "ownBusiness": "This is your business.",
+    "openingChat": "Opening chat…",
+    "guestEnquiryHeading": "Message the team behind this event",
+    "guestEnquiryHint": "Loved the food, music or photos? Ask them directly. You'll verify your phone number first.",
+    "verifyPhoneToMessage": "Verify your phone to message"
   }
 }

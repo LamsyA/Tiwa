@@ -240,7 +240,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P6-T14 Inbox UI: `ChatList`, `ChatThread`, `MessageBubble`, `Composer`, filters, search, desktop two/three panes, mobile full-screen thread; unread badges in navigation.
 - [x] P6-T15 (lean, D-X20: photos and files only; voice notes deferred to P13) Attachments and voice notes: photos/files via upload endpoints (`purpose: chat`), voice recorder/player, `media/process-voice` job (AAC + waveform).
 - [x] P6-T16 Contact masking and warning sheet (`Backend.md §9a.3`); block and report (creates `Report`); chat rate limits.
-- [ ] P6-T17 Entry points: `[Message]` on profiles (vendor, venue, planner), quote requests, planner clients, vendor book; Moments footer chips and pass page after the event (guest enquiries with phone OTP, `allowGuestEnquiries` setting).
+- [x] P6-T17 Entry points: `[Message]` on profiles (vendor, venue, planner), quote requests, planner clients, vendor book; Moments footer chips and pass page after the event (guest enquiries with phone OTP, `allowGuestEnquiries` setting).
 - [-] P6-T18 (deferred to P13 by owner, D-X20) Chat notifications: web push subscription + VAPID, `chat/unread-nudges` job (push after 2 min, email/WhatsApp summary after 15 min, quiet hours).
 - [ ] P6-T20 Inline-jobs mode (D-X20): with `INLINE_JOBS=1` the web app runs critical outbox topics (event-team chat sync) right after the action, so a deployment can run without the worker; chat polling fallback when the inbox stream is unavailable.
 - [ ] P6-T19 e2e UF-30 (except quote cards, done in P7) and UF-31; k6: 1,000 connected inbox streams, 50 messages/s.

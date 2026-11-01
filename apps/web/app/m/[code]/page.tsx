@@ -1,3 +1,4 @@
+import { GuestEnquiries } from '@/components/chat/guest-enquiries.js';
 import { getTranslations } from 'next-intl/server';
 import { GuestShell, buttonClasses } from '@tiwa/ui';
 import Link from 'next/link';
@@ -162,6 +163,7 @@ export default async function GalleryPage({
           />
         )}
       </div>
+      <GuestEnquiries galleryId={page.gallery.id} />
     </GuestShell>
   );
 }

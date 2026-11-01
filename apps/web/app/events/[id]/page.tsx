@@ -216,9 +216,19 @@ export default async function EventOverviewPage({
           <Card className="flex flex-col gap-3 p-4 lg:col-span-8">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-medium">{t('overview.teamHeading')}</h2>
-              <Link href={`/events/${id}/settings/members`} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-                {t('overview.manageTeam')}
-              </Link>
+              <div className="flex gap-1">
+                {['HOST', 'CO_HOST', 'PLANNER', 'PLANNER_STAFF'].includes(overview.myRole) && (
+                  <Link href={`/events/${id}/chat`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
+                    {t('overview.teamChat')}
+                  </Link>
+                )}
+                <Link
+                  href={`/events/${id}/settings/members`}
+                  className={buttonClasses({ variant: 'ghost', size: 'sm' })}
+                >
+                  {t('overview.manageTeam')}
+                </Link>
+              </div>
             </div>
             <ul className="flex flex-wrap gap-3">
               {team.map((member) => (
