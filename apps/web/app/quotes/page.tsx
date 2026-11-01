@@ -1,21 +1,43 @@
-import { listEnquiries } from '@tiwa/core';
+import { listEnquiries, listMyOrgs, listSiteVisits } from '@tiwa/core';
 import { Button, Card, EmptyState, StatusPill } from '@tiwa/ui';
 import { Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
+import { VisitCards } from './visit-cards.js';
 
 /** Vendor quote inbox (VND-01, P7-T04): open briefs with status. Full quotes arrive with P7-T05. */
 export default async function QuotesInboxPage() {
   const ctx = await requirePageUser('/quotes');
   const t = await getTranslations('quotes');
   const enquiries = await listEnquiries(ctx.actor).catch(() => null);
+  const orgs = enquiries === null ? [] : await listMyOrgs(ctx.actor.userId).catch(() => []);
+  const vendorOrgIds = (orgs ?? []).filter((row) => row.org.kind === 'VENDOR').map((row) => row.org.id);
+  const visits = (
+    await Promise.all(vendorOrgIds.map((orgId) => listSiteVisits(ctx.actor, { vendorOrgId: orgId }).catch(() => [])))
+  )
+    .flat()
+    .map((row) => ({
+      id: row.id,
+      eventId: 'eventId' in row ? (row.eventId as string | null) : null,
+      proposedTimes: row.proposedTimes.map((time) => (time instanceof Date ? time.toISOString() : String(time))),
+      confirmedAt: row.confirmedAt ? row.confirmedAt.toISOString() : null,
+      status: row.status,
+      notes: row.notes,
+      event: (() => {
+        const withEvent = row as unknown as { event?: { name: string; startsAt: Date | null } | null };
+        return withEvent.event
+          ? { name: withEvent.event.name, startsAt: withEvent.event.startsAt?.toISOString() ?? null }
+          : null;
+      })(),
+    }));
 
   return (
     <AppFrame userId={ctx.actor.userId} active="quotes" title={t('inboxTitle')}>
       <div className="flex flex-col gap-4 py-4">
         <p className="text-muted text-sm">{t('inboxBody')}</p>
+        <VisitCards visits={visits} />
         {enquiries === null ? (
           <EmptyState icon={<Inbox className="size-8" aria-hidden />} title={t('noEnquiries')} body="" />
         ) : enquiries.length === 0 ? (

@@ -1283,7 +1283,12 @@
     "instantBookTitle": "Book this venue",
     "spaceLabel": "Space",
     "termsLabel": "Cancellation terms",
-    "termsPlaceholder": "e.g. 50% refund if cancelled 7+ days before"
+    "termsPlaceholder": "e.g. 50% refund if cancelled 7+ days before",
+    "visitTitle": "Request site visit",
+    "proposeLabel": "Proposed time",
+    "addTime": "Add another time",
+    "sendVisit": "Send request",
+    "visitNotesLabel": "Notes"
   },
   "inbox": {
     "title": "Inbox",
@@ -1454,7 +1459,12 @@
       "FEATURE_DISABLED": "Held payments are not enabled."
     },
     "percentLabel": "Share %",
-    "dueLabel": "Due"
+    "dueLabel": "Due",
+    "visitsHeading": "Site visits",
+    "confirmVisit": "Confirm",
+    "confirmLabel": "Confirmed time",
+    "completeVisit": "Mark done",
+    "cancelVisit": "Cancel visit"
   },
   "bookings": {
     "title": "Booking",

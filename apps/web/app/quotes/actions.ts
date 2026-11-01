@@ -1,13 +1,19 @@
 'use server';
 
 import {
+  cancelSiteVisit,
+  completeSiteVisit,
+  confirmSiteVisit,
+  confirmSiteVisitSchema,
   createQuote,
   createQuoteSchema,
   declineEnquiry,
+  declineSiteVisit,
   quoteIdSchema,
   sendQuote,
   updateQuote,
   updateQuoteSchema,
+  visitIdSchema,
   withdrawQuote,
 } from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
@@ -42,6 +48,31 @@ export const updateQuoteAction = userAction(updateQuoteSchema, async (input, ctx
 
 export const declineEnquiryAction = userAction(z.object({ requestId: z.string().uuid() }), async (input, ctx) => {
   const result = await declineEnquiry(ctx.actor, input);
+  revalidatePath('/quotes');
+  return result;
+});
+
+/** Venue site visit decisions (P7-T11). */
+export const confirmSiteVisitAction = userAction(confirmSiteVisitSchema, async (input, ctx) => {
+  const result = await confirmSiteVisit(ctx.actor, input);
+  revalidatePath('/quotes');
+  return result;
+});
+
+export const declineSiteVisitAction = userAction(visitIdSchema, async (input, ctx) => {
+  const result = await declineSiteVisit(ctx.actor, input);
+  revalidatePath('/quotes');
+  return result;
+});
+
+export const completeSiteVisitAction = userAction(visitIdSchema, async (input, ctx) => {
+  const result = await completeSiteVisit(ctx.actor, input);
+  revalidatePath('/quotes');
+  return result;
+});
+
+export const cancelSiteVisitAction = userAction(visitIdSchema, async (input, ctx) => {
+  const result = await cancelSiteVisit(ctx.actor, input);
   revalidatePath('/quotes');
   return result;
 });
