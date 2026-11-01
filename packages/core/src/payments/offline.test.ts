@@ -11,7 +11,7 @@ import {
   listPendingOfflinePayments,
   recordOfflinePayment,
 } from './offline.js';
-import { bookingMoney } from './status.js';
+import { bookingMoney, listVendorBookingMoney } from './status.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
@@ -148,6 +148,12 @@ describe('offline payments (UF-17 step 5)', () => {
     expect(money.securedMinor).toBe(300_000n);
     expect(money.outstandingMinor).toBe(700_000n);
     expect((await listBookingPayments(bookingId))[0]?.status).toBe('SUCCEEDED');
+
+    const vendorView = (await listVendorBookingMoney(vendor, { vendorOrgId: orgId })).find(
+      (row) => row.id === bookingId,
+    );
+    expect(vendorView).toMatchObject({ status: 'CONFIRMED', securedMinor: '300000', outstandingMinor: '700000' });
+    await expect(listVendorBookingMoney(stranger, { vendorOrgId: orgId })).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('a later milestone confirms without changing booking status; a DIRECT booking can be paid offline', async () => {

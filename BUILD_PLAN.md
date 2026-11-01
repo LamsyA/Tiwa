@@ -305,7 +305,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [-] P8-T14 Receipts (PDF + email) for every successful payment. *(Deferred — lean P8, D-X27.)*
 - [-] P8-T15 Subscriptions (Planner Pro, Vendor Pro) and Moments Plus purchase → entitlements (unlocks P5 limits). *(Deferred — lean P8, D-X27.)*
 - [-] P8-T16a Security deposits: SECURITY_DEPOSIT milestones (no platform fee), refund 72 h after the event without a damage claim (held), host confirmation of refunds (direct/offline), damage claim opens a dispute; `bookings/security-deposits` job; e2e UF-29-4, UF-29-5. *(Deferred — lean P8, D-X27.)*
-- [ ] P8-T16 Vendor payment status views (secured, released, paid out, outstanding) on bookings and dashboard. *(Lean: secured/outstanding from milestone states; released/paid-out arrive with payouts.)*
+- [x] P8-T16 Vendor payment status views (secured, released, paid out, outstanding) on bookings and dashboard. *(Lean: secured/outstanding from milestone states; released/paid-out arrive with payouts.)*
 - [ ] P8-T17 e2e UF-17, UF-18 (with time travel), dispute freeze part of UF-26. *(Lean: UF-17 step 5 offline flow only; UF-18 and disputes deferred.)*
 - [ ] P8-T18 Write `docs/QUESTIONS.md` entry: licensed escrow partner + legal sign-off required before enabling `payments.held` / `payments.payouts` in production.
 

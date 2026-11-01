@@ -1569,6 +1569,7 @@
       "tooLarge": "That file is too large (10 MB max).",
       "emptyFile": "That file is empty.",
       "uploadFailed": "The receipt didn't upload. Try again."
-    }
+    },
+    "bookingsHeading": "Your bookings"
   }
 }
