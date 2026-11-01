@@ -48,16 +48,16 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
                       <StatusPill tone="brand">{t('shortlistedCount', { count: row.shortlisted })}</StatusPill>
                     )}
                   </div>
-                  <Link
-                    href={
-                      row.category === 'venue'
-                        ? `/venues?eventId=${eventId}`
-                        : `/vendors?category=${encodeURIComponent(row.category)}&eventId=${eventId}`
-                    }
-                    className="text-sm font-medium underline"
-                  >
-                    {t('findButton')}
-                  </Link>
+                    <Link
+                      href={
+                        row.category === 'venue'
+                          ? `/venues?eventId=${eventId}`
+                          : `/events/${eventId}/vendors/${encodeURIComponent(row.category)}`
+                      }
+                      className="text-sm font-medium underline"
+                    >
+                      {row.category === 'venue' ? t('findButton') : t('viewButton')}
+                    </Link>
                 </div>
               </Card>
             </li>
