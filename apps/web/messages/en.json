@@ -1965,6 +1965,7 @@
       "events": "event types",
       "roles": "roles, one workspace",
       "install": "apps to install"
-    }
+    },
+    "mockInitials": "MP"
   }
 }

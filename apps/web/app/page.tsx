@@ -18,7 +18,14 @@ import {
   Zap,
 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import Image from 'next/image';
 import Link from 'next/link';
+// Marketplace sample photos: Pexels (free licence, commercial use allowed), self-hosted.
+// venue #12688995, catering #28736731, photography #40230686, dj #9719248.
+import cateringImg from '../public/landing/catering.jpg';
+import djImg from '../public/landing/dj.jpg';
+import photographyImg from '../public/landing/photography.jpg';
+import venueImg from '../public/landing/venue.jpg';
 import type * as React from 'react';
 
 export const dynamic = 'force-static';
@@ -275,7 +282,7 @@ function Marketplace({ t }: { t: T }) {
       rating: '4.9',
       reviews: 128,
       fromMinor: '150000000',
-      tone: GRADIENTS[7]!,
+      image: venueImg,
       instant: true,
     },
     {
@@ -284,7 +291,7 @@ function Marketplace({ t }: { t: T }) {
       rating: '4.8',
       reviews: 342,
       fromMinor: '45000000',
-      tone: GRADIENTS[0]!,
+      image: cateringImg,
       instant: false,
     },
     {
@@ -293,7 +300,7 @@ function Marketplace({ t }: { t: T }) {
       rating: '5.0',
       reviews: 87,
       fromMinor: '35000000',
-      tone: GRADIENTS[6]!,
+      image: photographyImg,
       instant: false,
     },
     {
@@ -302,7 +309,7 @@ function Marketplace({ t }: { t: T }) {
       rating: '4.9',
       reviews: 211,
       fromMinor: '20000000',
-      tone: GRADIENTS[2]!,
+      image: djImg,
       instant: true,
     },
   ] as const;
@@ -332,9 +339,15 @@ function Marketplace({ t }: { t: T }) {
                 index % 2 === 1 && 'lg:translate-y-8',
               )}
             >
-              <div className={cn('relative h-44 overflow-hidden bg-gradient-to-br', vendor.tone)}>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgb(255_255_255/0.35),transparent_55%)]" />
-                <div className="absolute -right-6 -bottom-6 size-32 rounded-full bg-white/15 blur-xl" />
+              <div className="bg-surface-2 relative h-48 overflow-hidden">
+                <Image
+                  src={vendor.image}
+                  alt=""
+                  placeholder="blur"
+                  sizes="(min-width: 1024px) 280px, (min-width: 640px) 50vw, 100vw"
+                  className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/0 to-black/25" />
                 <span className="absolute top-3 left-3 rounded-full bg-black/35 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
                   {vendor.category}
                 </span>
