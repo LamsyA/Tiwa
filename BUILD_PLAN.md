@@ -324,7 +324,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Read first:** `PRD.md BUD-*`, `UF-20`, `Backend.md §3 (budget)`, `Frontend.md §6.3 (money)`.
 
 - [x] P9-T01 Prisma: BudgetCategory, Expense, Contribution (kinds include sponsor and other_income); budget history via AuditLog; categories created from template at finalize (backfill seeds).
-- [ ] P9-T02 Core `budgetSummary` (Planned, Committed, Paid, Outstanding, Uncommitted; per category; includes offline confirmed; income lines) with property tests.
+- [x] P9-T02 Core `budgetSummary` (Planned, Committed, Paid, Outstanding, Uncommitted; per category; includes offline confirmed; income lines) with property tests.
 - [ ] P9-T03 Money page with stat cards, chart (lazy), tabs Budget / Payments / Contributions / Expenses / Income.
 - [ ] P9-T04 Allocations editor, expenses with receipt photo, contributions (pledged/received, kinds), income lines (tickets auto-filled later in P11).
 - [ ] P9-T05 Alerts job (over budget; payment due 7 d / 1 d). *(D-X28: computed on read and shown in-app; notification delivery with P13.)*
