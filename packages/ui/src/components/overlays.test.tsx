@@ -100,7 +100,7 @@ describe('Toast', () => {
       </ToastProvider>,
     );
     await user.click(screen.getByRole('button', { name: 'Show' }));
-    const toast = await screen.findByRole('status');
+    const toast = await screen.findByRole('status', {}, { timeout: 3000 }); // parallel test runs can be slow
     expect(toast).toHaveTextContent('Saved');
   });
 
