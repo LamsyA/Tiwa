@@ -83,10 +83,12 @@ export default async function Home() {
                     <li
                       key={`${label}-${i}`}
                       aria-hidden={i >= row.length}
-                      className="font-display text-text/80 flex items-center gap-4 text-2xl font-bold whitespace-nowrap sm:text-4xl"
+                      className="font-display text-text/70 flex items-center gap-6 text-2xl font-bold whitespace-nowrap sm:text-4xl"
                     >
                       {label}
-                      <span className="from-brand to-accent size-2 rounded-full bg-gradient-to-r" aria-hidden />
+                      <span className="text-muted/50 font-normal" aria-hidden>
+                        /
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -119,33 +121,14 @@ export default async function Home() {
 function Hero({ t, name }: { t: T; name: string }) {
   return (
     <section className="relative isolate overflow-hidden">
-      <div aria-hidden className="tiwa-grid-bg absolute inset-0 -z-10" />
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            'radial-gradient(45% 50% at 78% 40%, color-mix(in oklab, var(--brand) 26%, transparent), transparent 70%),' +
-            'radial-gradient(35% 40% at 95% 85%, color-mix(in oklab, var(--accent) 18%, transparent), transparent 70%),' +
-            'radial-gradient(35% 40% at 5% 10%, color-mix(in oklab, var(--brand-strong) 12%, transparent), transparent 70%)',
-        }}
-      />
       <div className="mx-auto grid min-h-[100svh] max-w-7xl items-center gap-14 px-5 pt-24 pb-20 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-8 lg:pt-20">
         <div className="flex flex-col items-start">
           <p className="font-display text-text mb-8 text-xl font-bold tracking-tight">{name}</p>
-          <span className="border-border/70 bg-bg/60 text-muted mb-7 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md sm:text-sm">
-            <span className="relative flex size-2">
-              <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-60" />
-              <span className="bg-brand relative inline-flex size-2 rounded-full" />
-            </span>
-            {t('hero.badge')}
-          </span>
+          <span className="text-muted mb-6 text-sm font-medium">{t('hero.badge')}</span>
           <h1 className="font-display text-[2.9rem] leading-[0.98] font-bold tracking-[-0.04em] text-balance sm:text-7xl xl:text-[5.75rem]">
             {t('hero.titleA')}
             <br />
-            <span className="from-brand via-brand to-accent bg-gradient-to-r bg-clip-text text-transparent">
-              {t('hero.titleB')}
-            </span>
+            <span className="text-brand-strong">{t('hero.titleB')}</span>
           </h1>
           <p className="text-muted mt-7 max-w-xl text-lg leading-relaxed text-pretty sm:text-xl">{t('hero.body')}</p>
           <div className="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -153,8 +136,7 @@ function Hero({ t, name }: { t: T; name: string }) {
               href="/signup"
               className={buttonClasses({
                 size: 'lg',
-                className:
-                  'group rounded-full px-7 shadow-[0_10px_40px_-10px_var(--brand)] transition-shadow hover:shadow-[0_14px_50px_-8px_var(--brand)]',
+                className: 'group rounded-full px-7',
               })}
             >
               {t('hero.primary')}
@@ -200,9 +182,9 @@ function Hero({ t, name }: { t: T; name: string }) {
 function EventCard3D({ t }: { t: T }) {
   return (
     <div aria-hidden className="relative mx-auto w-full max-w-[560px] [perspective:1800px] lg:max-w-none">
-      <div className="relative [transform-style:preserve-3d] [transform:rotateY(-10deg)_rotateX(6deg)] lg:[transform:rotateY(-18deg)_rotateX(8deg)_rotateZ(1deg)]">
+      <div className="relative [transform-style:preserve-3d] [transform:rotateY(-6deg)_rotateX(3deg)] lg:[transform:rotateY(-12deg)_rotateX(4deg)]">
         {/* Card */}
-        <div className="border-border/70 bg-bg overflow-hidden rounded-[32px] border shadow-[40px_60px_120px_-40px_rgb(0_0_0/0.55)]">
+        <div className="border-border/70 bg-bg overflow-hidden rounded-[32px] border shadow-[0_30px_80px_-30px_rgb(0_0_0/0.35)]">
           <div className="relative aspect-[4/3.1] overflow-hidden">
             <Image
               src={heroImg}
@@ -230,8 +212,8 @@ function EventCard3D({ t }: { t: T }) {
         </div>
 
         {/* Floating: chat (front-left, closest) */}
-        <div className="tiwa-float absolute top-[16%] -left-3 sm:top-[42%] w-[15.5rem] [transform:translateZ(110px)] sm:-left-14">
-          <div className="border-border/70 bg-bg/85 flex items-start gap-3 rounded-2xl border p-3.5 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
+        <div className="absolute top-[16%] -left-3 sm:top-[42%] w-[15.5rem] [transform:translateZ(110px)] sm:-left-14">
+          <div className="border-border/70 bg-bg/85 flex items-start gap-3 rounded-2xl border p-3.5 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] backdrop-blur-xl">
             <Image src={cateringImg} alt="" sizes="40px" className="size-10 shrink-0 rounded-full object-cover" />
             <div className="text-left text-sm">
               <p className="flex items-center gap-1 font-semibold">
@@ -244,8 +226,8 @@ function EventCard3D({ t }: { t: T }) {
         </div>
 
         {/* Floating: booking confirmed (top-right) */}
-        <div className="tiwa-float-slow absolute -top-6 -right-2 [transform:translateZ(80px)] sm:-right-10">
-          <div className="border-border/70 bg-bg/85 flex items-center gap-3 rounded-2xl border p-3 pr-4 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
+        <div className="absolute -top-6 -right-2 [transform:translateZ(80px)] sm:-right-10">
+          <div className="border-border/70 bg-bg/85 flex items-center gap-3 rounded-2xl border p-3 pr-4 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] backdrop-blur-xl">
             <span className="bg-success-soft text-success grid size-9 place-items-center rounded-full">
               <Check className="size-4" />
             </span>
@@ -257,8 +239,8 @@ function EventCard3D({ t }: { t: T }) {
         </div>
 
         {/* Floating: moments strip (right, mid depth) */}
-        <div className="tiwa-float absolute -right-3 bottom-24 hidden [transform:translateZ(60px)] sm:block lg:-right-14">
-          <div className="border-border/70 bg-bg/85 rounded-2xl border p-2.5 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
+        <div className="absolute -right-3 bottom-24 hidden [transform:translateZ(60px)] sm:block lg:-right-14">
+          <div className="border-border/70 bg-bg/85 rounded-2xl border p-2.5 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] backdrop-blur-xl">
             <p className="mb-2 flex items-center gap-1.5 px-1 text-left text-xs font-semibold">
               <Camera className="text-brand size-3.5" />
               {t('mock.moments')}
@@ -271,10 +253,6 @@ function EventCard3D({ t }: { t: T }) {
           </div>
         </div>
       </div>
-      <div
-        className="absolute inset-x-12 -bottom-14 h-24 rounded-full blur-3xl"
-        style={{ background: 'color-mix(in oklab, var(--brand) 35%, transparent)' }}
-      />
     </div>
   );
 }
@@ -285,7 +263,7 @@ function MockStat({ label, value, sub, pct }: { label: string; value: string; su
       <p className="text-muted text-[11px] font-medium tracking-wide uppercase">{label}</p>
       <p className="font-display text-lg font-bold sm:text-2xl">{value}</p>
       <div className="bg-surface-2 mt-2 h-1.5 overflow-hidden rounded-full">
-        <div className="from-brand to-accent h-full rounded-full bg-gradient-to-r" style={{ width: `${pct}%` }} />
+        <div className="bg-brand h-full rounded-full" style={{ width: `${pct}%` }} />
       </div>
       <p className="text-muted mt-1 hidden text-xs sm:block">{sub}</p>
     </div>
@@ -356,7 +334,7 @@ function Marketplace({ t }: { t: T }) {
               className={cn(
                 'group border-border/80 bg-bg relative overflow-hidden rounded-3xl border shadow-1',
                 'transition-all duration-500 [transform-style:preserve-3d]',
-                'hover:shadow-[0_30px_60px_-20px_rgb(0_0_0/0.35)] hover:[transform:rotateX(6deg)_rotateY(-6deg)_translateY(-6px)]',
+                'hover:-translate-y-1 hover:shadow-2',
                 index % 2 === 1 && 'lg:translate-y-8',
               )}
             >
@@ -417,14 +395,6 @@ function Chat({ t }: { t: T }) {
   const currency = currencyForCountry();
   return (
     <section className="relative overflow-hidden py-20 sm:py-28">
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            'radial-gradient(40% 50% at 75% 50%, color-mix(in oklab, var(--brand) 14%, transparent), transparent 70%)',
-        }}
-      />
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 sm:px-6 lg:grid-cols-2">
         <div>
           <SectionHead eyebrow={t('chat.eyebrow')} title={t('chat.title')} body={t('chat.body')} align="left" />
@@ -442,12 +412,12 @@ function Chat({ t }: { t: T }) {
 
         {/* Phone in 3D */}
         <div aria-hidden className="relative mx-auto w-full max-w-[340px] [perspective:1400px]">
-          <div className="tiwa-float-slow relative [transform:rotateY(-14deg)_rotateX(6deg)] [transform-style:preserve-3d]">
+          <div className="relative [transform:rotateY(-10deg)_rotateX(3deg)] [transform-style:preserve-3d]">
             <div className="rounded-[44px] bg-gradient-to-b from-[#2a2a33] to-[#0b0b0f] p-2.5 shadow-[30px_40px_80px_-20px_rgb(0_0_0/0.5)]">
               <div className="bg-bg flex h-[600px] flex-col overflow-hidden rounded-[36px]">
                 {/* Thread header */}
                 <div className="border-border/70 flex items-center gap-3 border-b px-4 pt-8 pb-3">
-                  <span className="from-brand to-accent grid size-10 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white">
+                  <span className="bg-brand-strong text-on-brand grid size-10 place-items-center rounded-full text-sm font-bold">
                     {t('mockInitials')}
                   </span>
                   <div className="flex-1">
@@ -465,7 +435,7 @@ function Chat({ t }: { t: T }) {
                   <Bubble mine>{t('chat.msg1')}</Bubble>
                   <Bubble>{t('chat.msg2')}</Bubble>
                   <div className="border-border/80 bg-bg w-[85%] overflow-hidden rounded-2xl rounded-bl-md border shadow-1">
-                    <div className="from-brand to-accent h-1.5 bg-gradient-to-r" />
+                    <div className="bg-brand h-1" />
                     <div className="p-3">
                       <p className="text-muted text-[11px] font-semibold tracking-wide uppercase">
                         {t('chat.quoteTitle')}
@@ -515,10 +485,6 @@ function Chat({ t }: { t: T }) {
               </div>
             </div>
           </div>
-          <div
-            className="absolute inset-x-6 -bottom-8 h-16 rounded-full blur-3xl"
-            style={{ background: 'color-mix(in oklab, var(--brand) 35%, transparent)' }}
-          />
         </div>
       </div>
     </section>
@@ -567,16 +533,11 @@ function Features({ t }: { t: T }) {
               key={key}
               className={cn(
                 'group border-border/80 bg-surface relative overflow-hidden rounded-3xl border p-7 transition-colors duration-300',
-                'hover:border-brand/40',
+                'hover:border-text/20',
                 span,
               )}
             >
-              <div
-                aria-hidden
-                className="absolute -top-16 -right-16 size-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
-                style={{ background: 'color-mix(in oklab, var(--brand) 25%, transparent)' }}
-              />
-              <span className="from-brand to-accent relative mb-6 grid size-12 place-items-center rounded-2xl bg-gradient-to-br text-white shadow-[0_8px_24px_-8px_var(--brand)]">
+              <span className="border-border text-text mb-6 grid size-11 place-items-center rounded-xl border">
                 <Icon className="size-5" aria-hidden />
               </span>
               <h3 className="font-display relative mb-2 text-xl font-bold">{t(`features.items.${key}.title`)}</h3>
@@ -607,16 +568,7 @@ function Features({ t }: { t: T }) {
 function FinalCta({ t }: { t: T }) {
   return (
     <section className="px-5 pb-20 sm:px-6 sm:pb-28">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] border border-white/10 bg-[#0b0b0f] px-6 py-16 text-center text-white sm:px-12 sm:py-24">
-        <div aria-hidden className="tiwa-grid-bg absolute inset-0 opacity-40" />
-        <div
-          aria-hidden
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(50% 70% at 50% 0%, color-mix(in oklab, var(--brand) 55%, transparent), transparent 70%)',
-          }}
-        />
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] border border-white/10 bg-[#111118] [[data-theme=dark]_&]:bg-surface px-6 py-16 text-center text-white sm:px-12 sm:py-24">
         <div className="relative flex flex-col items-center gap-6">
           <h2 className="font-display max-w-3xl text-4xl font-bold tracking-[-0.02em] text-balance sm:text-6xl">
             {t('cta.title')}

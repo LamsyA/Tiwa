@@ -30,15 +30,6 @@ body {
     transform: translateX(-50%);
   }
 }
-@keyframes tiwa-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
 @keyframes tiwa-typing {
   0%,
   80%,
@@ -60,20 +51,6 @@ body {
 .tiwa-marquee-mask {
   mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
 }
-.tiwa-float {
-  animation: tiwa-float 6s ease-in-out infinite;
-}
-.tiwa-float-slow {
-  animation: tiwa-float 8s ease-in-out infinite;
-  animation-delay: -2s;
-}
 .tiwa-dot {
   animation: tiwa-typing 1.2s ease-in-out infinite;
-}
-.tiwa-grid-bg {
-  background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--text) 6%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--text) 6%, transparent) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
 }
