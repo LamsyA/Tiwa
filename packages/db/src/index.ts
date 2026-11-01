@@ -8,6 +8,7 @@ export type {
   EventFormat,
   EventRole,
   EventStatus,
+  LeadStage,
   MessageKind,
   MilestoneKind,
   MilestoneState,

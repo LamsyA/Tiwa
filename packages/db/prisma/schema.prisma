@@ -78,6 +78,10 @@ model Organization {
   deletedAt     DateTime?
   members       Membership[]
   profile       BusinessProfile?
+  clients       Client[]         @relation("OrgClients")
+  proposals     Proposal[]       @relation("OrgProposals")
+  invoices      Invoice[]        @relation("OrgInvoices")
+  vendorBook    VendorBookEntry[] @relation("OrgVendorBook")
   // bankAccounts BankAccount[] — arrives with P8 (BankAccount model)
 }
 
@@ -1114,6 +1118,87 @@ enum PaymentStatus {
   EXPIRED
   REFUNDED
   PARTLY_REFUNDED
+}
+
+// ───────────── Planner workspace (Backend.md §3; P10-T01) ─────────────
+
+model Client {
+  id        String    @id @default(uuid(7))
+  orgId     String
+  name      String
+  phone     String?
+  email     String?   @db.Citext
+  notes     String?
+  stage     LeadStage @default(ENQUIRY)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  org       Organization @relation("OrgClients", fields: [orgId], references: [id], onDelete: Cascade)
+  proposals Proposal[]
+  invoices  Invoice[]
+
+  @@index([orgId, stage])
+}
+
+enum LeadStage {
+  ENQUIRY
+  PROPOSAL_SENT
+  WON
+  LOST
+}
+
+model Proposal {
+  id         String   @id @default(uuid(7))
+  orgId      String
+  clientId   String
+  eventId    String?
+  title      String
+  body       Json
+  totalMinor BigInt
+  currency   String
+  status     String   @default("DRAFT") // DRAFT | SENT | ACCEPTED | DECLINED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  org        Organization @relation("OrgProposals", fields: [orgId], references: [id], onDelete: Cascade)
+  client     Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@index([clientId])
+}
+
+model Invoice {
+  id         String   @id @default(uuid(7))
+  orgId      String
+  clientId   String?
+  eventId    String?
+  number     String
+  items      Json
+  totalMinor BigInt
+  currency   String
+  dueAt      DateTime
+  status     String   @default("DRAFT") // DRAFT | SENT | PAID | VOID
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  org        Organization @relation("OrgInvoices", fields: [orgId], references: [id], onDelete: Cascade)
+  client     Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@unique([orgId, number])
+  @@index([orgId, status])
+}
+
+model VendorBookEntry {
+  id           String  @id @default(uuid(7))
+  plannerOrgId String
+  vendorOrgId  String?
+  name         String
+  phone        String?
+  category     String
+  notes        String?
+  rateNote     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  org          Organization @relation("OrgVendorBook", fields: [plannerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([plannerOrgId, category])
 }
 
 // ───────────── Chat (Backend.md §3, §9a; P6-T11) ─────────────
