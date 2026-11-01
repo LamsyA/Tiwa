@@ -7,7 +7,6 @@ import {
   Check,
   CheckCheck,
   ClipboardList,
-  MessageCircle,
   Paperclip,
   SendHorizontal,
   ShieldCheck,
@@ -26,6 +25,8 @@ import cateringImg from '../public/landing/catering.jpg';
 import djImg from '../public/landing/dj.jpg';
 import photographyImg from '../public/landing/photography.jpg';
 import venueImg from '../public/landing/venue.jpg';
+// Hero cover: Pexels #36808366 (free licence).
+import heroImg from '../public/landing/hero.jpg';
 import type * as React from 'react';
 
 export const dynamic = 'force-static';
@@ -34,9 +35,9 @@ type T = Awaited<ReturnType<typeof getTranslations<'landing'>>>;
 
 /**
  * Public home (Frontend.md §6 "/ Home", static). No navbar: a floating
- * corner holds the theme switch and sign-in. Everything visual is HTML/CSS
- * (3D via perspective transforms, no images, no WebGL), so the LCP stays the
- * headline and the only JavaScript is the theme switch. Event types and
+ * corner holds the theme switch and sign-in. 3D is CSS perspective (no
+ * WebGL); photos are self-hosted Pexels images through next/image (hero cover
+ * is priority-loaded). The only JavaScript is the theme switch. Event types and
  * vendor categories come from config; prices use the configured currency.
  */
 export default async function Home() {
@@ -113,154 +114,174 @@ export default async function Home() {
   );
 }
 
-/* ───────────── Hero with a 3D stage ───────────── */
+/* ───────────── Hero: copy beside a 3D event card ───────────── */
 
 function Hero({ t, name }: { t: T; name: string }) {
   return (
-    <section className="relative isolate overflow-hidden pt-24 pb-10 sm:pt-32">
+    <section className="relative isolate overflow-hidden">
       <div aria-hidden className="tiwa-grid-bg absolute inset-0 -z-10" />
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
           background:
-            'radial-gradient(40% 35% at 50% 8%, color-mix(in oklab, var(--brand) 30%, transparent), transparent 70%),' +
-            'radial-gradient(30% 30% at 85% 35%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 70%),' +
-            'radial-gradient(30% 30% at 10% 45%, color-mix(in oklab, var(--brand-strong) 16%, transparent), transparent 70%)',
+            'radial-gradient(45% 50% at 78% 40%, color-mix(in oklab, var(--brand) 26%, transparent), transparent 70%),' +
+            'radial-gradient(35% 40% at 95% 85%, color-mix(in oklab, var(--accent) 18%, transparent), transparent 70%),' +
+            'radial-gradient(35% 40% at 5% 10%, color-mix(in oklab, var(--brand-strong) 12%, transparent), transparent 70%)',
         }}
       />
-      <div className="mx-auto flex max-w-5xl flex-col items-center px-5 text-center sm:px-6">
-        <p className="font-display text-text/90 mb-6 text-lg font-bold tracking-tight">{name}</p>
-        <span className="border-border/70 bg-bg/60 text-muted mb-7 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md sm:text-sm">
-          <span className="relative flex size-2">
-            <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-60" />
-            <span className="bg-brand relative inline-flex size-2 rounded-full" />
+      <div className="mx-auto grid min-h-[100svh] max-w-7xl items-center gap-14 px-5 pt-24 pb-20 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-8 lg:pt-20">
+        <div className="flex flex-col items-start">
+          <p className="font-display text-text mb-8 text-xl font-bold tracking-tight">{name}</p>
+          <span className="border-border/70 bg-bg/60 text-muted mb-7 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md sm:text-sm">
+            <span className="relative flex size-2">
+              <span className="bg-brand absolute inline-flex size-full animate-ping rounded-full opacity-60" />
+              <span className="bg-brand relative inline-flex size-2 rounded-full" />
+            </span>
+            {t('hero.badge')}
           </span>
-          {t('hero.badge')}
-        </span>
-        <h1 className="font-display max-w-4xl text-[2.75rem] leading-[1.02] font-bold tracking-[-0.03em] text-balance sm:text-7xl lg:text-[5.5rem]">
-          {t('hero.titleA')}{' '}
-          <span className="from-brand via-brand to-accent bg-gradient-to-r bg-clip-text text-transparent">
-            {t('hero.titleB')}
-          </span>
-        </h1>
-        <p className="text-muted mt-6 max-w-2xl text-lg leading-relaxed text-pretty sm:text-xl">{t('hero.body')}</p>
-        <div className="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <Link
-            href="/signup"
-            className={buttonClasses({
-              size: 'lg',
-              className:
-                'group rounded-full px-7 shadow-[0_10px_40px_-10px_var(--brand)] transition-shadow hover:shadow-[0_14px_50px_-8px_var(--brand)]',
-            })}
-          >
-            {t('hero.primary')}
-            <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden />
-          </Link>
-          <Link
-            href="/vendors"
-            className={buttonClasses({
-              variant: 'secondary',
-              size: 'lg',
-              className: 'bg-bg/60 rounded-full px-7 backdrop-blur-md',
-            })}
-          >
-            {t('hero.secondary')}
-          </Link>
+          <h1 className="font-display text-[2.9rem] leading-[0.98] font-bold tracking-[-0.04em] text-balance sm:text-7xl xl:text-[5.75rem]">
+            {t('hero.titleA')}
+            <br />
+            <span className="from-brand via-brand to-accent bg-gradient-to-r bg-clip-text text-transparent">
+              {t('hero.titleB')}
+            </span>
+          </h1>
+          <p className="text-muted mt-7 max-w-xl text-lg leading-relaxed text-pretty sm:text-xl">{t('hero.body')}</p>
+          <div className="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link
+              href="/signup"
+              className={buttonClasses({
+                size: 'lg',
+                className:
+                  'group rounded-full px-7 shadow-[0_10px_40px_-10px_var(--brand)] transition-shadow hover:shadow-[0_14px_50px_-8px_var(--brand)]',
+              })}
+            >
+              {t('hero.primary')}
+              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden />
+            </Link>
+            <Link
+              href="/vendors"
+              className={buttonClasses({
+                variant: 'secondary',
+                size: 'lg',
+                className: 'bg-bg/60 rounded-full px-7 backdrop-blur-md',
+              })}
+            >
+              {t('hero.secondary')}
+            </Link>
+          </div>
+          <div className="text-muted mt-10 flex items-center gap-4 text-sm">
+            <div className="flex -space-x-2.5">
+              {[venueImg, cateringImg, photographyImg, djImg].map((img, index) => (
+                <Image
+                  key={index}
+                  src={img}
+                  alt=""
+                  sizes="36px"
+                  className="border-bg size-9 rounded-full border-2 object-cover"
+                />
+              ))}
+            </div>
+            <p className="flex items-center gap-2">
+              <ShieldCheck className="text-success size-4 shrink-0" aria-hidden />
+              {t('hero.note')}
+            </p>
+          </div>
         </div>
-        <p className="text-muted mt-5 flex items-center gap-2 text-sm">
-          <ShieldCheck className="text-success size-4" aria-hidden />
-          {t('hero.note')}
-        </p>
-      </div>
 
-      <Stage t={t} />
+        <EventCard3D t={t} />
+      </div>
     </section>
   );
 }
 
-/** Tilted dashboard with floating layers at different depths. Decorative. */
-function Stage({ t }: { t: T }) {
+/** Tilted event card with a photo cover and glass layers at different depths. Decorative. */
+function EventCard3D({ t }: { t: T }) {
   return (
-    <div aria-hidden className="relative mx-auto mt-14 max-w-5xl px-5 sm:mt-20 sm:px-6 [perspective:1600px]">
-      <div className="relative [transform-style:preserve-3d] [transform:rotateX(22deg)] sm:[transform:rotateX(26deg)_scale(0.98)]">
-        {/* Base dashboard */}
-        <div className="border-border/80 bg-bg/90 rounded-[28px] border p-3 shadow-[0_40px_120px_-30px_rgb(0_0_0/0.45)] backdrop-blur-xl sm:p-4">
-          <div className="bg-surface flex items-center gap-1.5 rounded-t-2xl px-4 py-3">
-            <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="size-2.5 rounded-full bg-[#febc2e]" />
-            <span className="size-2.5 rounded-full bg-[#28c840]" />
-            <span className="bg-bg text-muted ml-3 hidden h-6 flex-1 items-center rounded-md px-3 text-xs sm:flex">
-              {t('mock.url')}
-            </span>
+    <div aria-hidden className="relative mx-auto w-full max-w-[560px] [perspective:1800px] lg:max-w-none">
+      <div className="relative [transform-style:preserve-3d] [transform:rotateY(-10deg)_rotateX(6deg)] lg:[transform:rotateY(-18deg)_rotateX(8deg)_rotateZ(1deg)]">
+        {/* Card */}
+        <div className="border-border/70 bg-bg overflow-hidden rounded-[32px] border shadow-[40px_60px_120px_-40px_rgb(0_0_0/0.55)]">
+          <div className="relative aspect-[4/3.1] overflow-hidden">
+            <Image
+              src={heroImg}
+              alt=""
+              priority
+              placeholder="blur"
+              sizes="(min-width: 1024px) 600px, 100vw"
+              className="size-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30" />
+            <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white ring-1 ring-white/25 backdrop-blur-md">
+              <span className="size-1.5 rounded-full bg-[#28c840]" />
+              {t('mock.live')}
+            </div>
+            <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+              <p className="text-xs font-medium tracking-[0.2em] uppercase opacity-80">{t('mock.eventMeta')}</p>
+              <p className="font-display mt-1 text-3xl font-bold tracking-tight sm:text-4xl">{t('mock.eventName')}</p>
+            </div>
           </div>
-          <div className="bg-surface grid gap-3 rounded-b-2xl p-3 sm:grid-cols-[1.4fr_1fr] sm:p-4">
-            <div className="from-brand to-accent relative h-40 overflow-hidden rounded-2xl bg-gradient-to-br p-5 sm:h-56">
-              <div className="absolute -top-10 -right-10 size-40 rounded-full bg-white/20 blur-2xl" />
-              <div className="relative flex h-full flex-col justify-end text-white">
-                <p className="text-xs font-medium tracking-wider uppercase opacity-80">{t('mock.eventMeta')}</p>
-                <p className="font-display text-2xl font-bold sm:text-4xl">{t('mock.eventName')}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-1">
-              <MockStat label={t('mock.rsvp')} value="86" sub={t('mock.coming')} pct={72} />
-              <MockStat label={t('mock.budget')} value="62%" sub={t('mock.paid')} pct={62} />
-              <MockStat label={t('mock.tasks')} value="18/24" sub={t('mock.done')} pct={75} />
-            </div>
+          <div className="grid grid-cols-3 gap-px bg-[color-mix(in_oklab,var(--border)_70%,transparent)]">
+            <MockStat label={t('mock.rsvp')} value="86" sub={t('mock.coming')} pct={72} />
+            <MockStat label={t('mock.budget')} value="62%" sub={t('mock.paid')} pct={62} />
+            <MockStat label={t('mock.tasks')} value="18/24" sub={t('mock.done')} pct={75} />
           </div>
         </div>
 
-        {/* Floating: chat bubble (front-left) */}
-        <div className="tiwa-float absolute -bottom-6 left-0 hidden w-64 [transform:translateZ(80px)] sm:-left-6 sm:block">
-          <div className="border-border/80 bg-bg/95 flex items-start gap-3 rounded-2xl border p-3.5 shadow-2 backdrop-blur-xl">
-            <span className="from-brand to-accent grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br text-white">
-              <MessageCircle className="size-4" />
-            </span>
+        {/* Floating: chat (front-left, closest) */}
+        <div className="tiwa-float absolute top-[16%] -left-3 sm:top-[42%] w-[15.5rem] [transform:translateZ(110px)] sm:-left-14">
+          <div className="border-border/70 bg-bg/85 flex items-start gap-3 rounded-2xl border p-3.5 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
+            <Image src={cateringImg} alt="" sizes="40px" className="size-10 shrink-0 rounded-full object-cover" />
             <div className="text-left text-sm">
-              <p className="font-semibold">{t('mock.chatFrom')}</p>
-              <p className="text-muted">{t('mock.chat')}</p>
+              <p className="flex items-center gap-1 font-semibold">
+                {t('mock.chatFrom')}
+                <BadgeCheck className="text-brand size-3.5" />
+              </p>
+              <p className="text-muted leading-snug">{t('mock.chat')}</p>
             </div>
           </div>
         </div>
 
-        {/* Floating: moments (back-right) */}
-        <div className="tiwa-float-slow absolute -top-8 right-2 hidden [transform:translateZ(60px)] sm:block lg:-right-8">
-          <div className="border-border/80 bg-bg/95 rounded-2xl border p-3 shadow-2 backdrop-blur-xl">
-            <p className="mb-2 flex items-center gap-1.5 text-left text-sm font-semibold">
-              <Camera className="text-brand size-4" />
+        {/* Floating: booking confirmed (top-right) */}
+        <div className="tiwa-float-slow absolute -top-6 -right-2 [transform:translateZ(80px)] sm:-right-10">
+          <div className="border-border/70 bg-bg/85 flex items-center gap-3 rounded-2xl border p-3 pr-4 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
+            <span className="bg-success-soft text-success grid size-9 place-items-center rounded-full">
+              <Check className="size-4" />
+            </span>
+            <div className="text-left">
+              <p className="text-sm font-semibold">{t('chat.booked')}</p>
+              <p className="text-muted text-xs">{t('mock.venueBooked')}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating: moments strip (right, mid depth) */}
+        <div className="tiwa-float absolute -right-3 bottom-24 hidden [transform:translateZ(60px)] sm:block lg:-right-14">
+          <div className="border-border/70 bg-bg/85 rounded-2xl border p-2.5 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
+            <p className="mb-2 flex items-center gap-1.5 px-1 text-left text-xs font-semibold">
+              <Camera className="text-brand size-3.5" />
               {t('mock.moments')}
             </p>
-            <div className="grid grid-cols-3 gap-1.5">
-              {GRADIENTS.slice(0, 6).map((tone, index) => (
-                <span key={index} className={cn('size-10 rounded-lg bg-gradient-to-br', tone)} />
+            <div className="grid grid-cols-2 gap-1.5">
+              {[venueImg, photographyImg, djImg, heroImg].map((img, index) => (
+                <Image key={index} src={img} alt="" sizes="56px" className="size-14 rounded-lg object-cover" />
               ))}
             </div>
-            <p className="text-muted mt-2 text-left text-xs">{t('mock.newPhotos')}</p>
           </div>
         </div>
       </div>
       <div
-        className="absolute inset-x-10 -bottom-10 h-24 rounded-full blur-3xl"
-        style={{ background: 'color-mix(in oklab, var(--brand) 30%, transparent)' }}
+        className="absolute inset-x-12 -bottom-14 h-24 rounded-full blur-3xl"
+        style={{ background: 'color-mix(in oklab, var(--brand) 35%, transparent)' }}
       />
     </div>
   );
 }
 
-const GRADIENTS = [
-  'from-brand to-accent',
-  'from-accent to-brand-soft',
-  'from-brand-strong to-brand',
-  'from-brand-soft to-brand',
-  'from-accent to-brand',
-  'from-brand to-brand-strong',
-  'from-[#7c3aed] to-[#ec4899]',
-  'from-[#0ea5e9] to-[#6366f1]',
-];
-
 function MockStat({ label, value, sub, pct }: { label: string; value: string; sub: string; pct: number }) {
   return (
-    <div className="bg-bg rounded-2xl p-3 text-left sm:p-4">
+    <div className="bg-bg p-4 text-left">
       <p className="text-muted text-[11px] font-medium tracking-wide uppercase">{label}</p>
       <p className="font-display text-lg font-bold sm:text-2xl">{value}</p>
       <div className="bg-surface-2 mt-2 h-1.5 overflow-hidden rounded-full">

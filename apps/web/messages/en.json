@@ -1807,7 +1807,9 @@
       "chatFrom": "Sweet Crumbs",
       "moments": "Moments",
       "newPhotos": "+48 new photos",
-      "url": "tiwa.app/events/ada-30"
+      "url": "tiwa.app/events/ada-30",
+      "live": "Planning live",
+      "venueBooked": "Venue · deposit paid"
     },
     "types": {
       "title": "Made for every occasion"
