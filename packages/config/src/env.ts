@@ -16,6 +16,8 @@ const envSchema = z
     APP_URL: z.string().url().default('http://localhost:3000'),
     APP_ENV: appEnv,
     DEFAULT_COUNTRY: z.string().length(2).default('NG'),
+    /** D-X20: run critical outbox topics inline (deployments without the worker). */
+    INLINE_JOBS: emptyToUndefined(z.enum(['0', '1']).default('0')),
 
     // Database & cache
     DATABASE_URL: z.string().regex(/^postgresql:\/\//, 'DATABASE_URL must be a postgresql:// URL'),

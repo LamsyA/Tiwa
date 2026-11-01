@@ -14,10 +14,14 @@ import {
 
 const EVENT_TYPES: ChatEvent['type'][] = ['message', 'updated', 'receipt', 'typing'];
 
+const POLL_MS = 10_000;
+
 /**
  * One inbox stream per tab (`/api/sse/inbox`). `onEvent` gets every chat
  * event; `onReconnect` fires after the stream recovers so callers refetch
- * whatever they may have missed.
+ * whatever they may have missed. If the stream can't be held open (no
+ * EventSource, Redis asleep or down, a proxy), `onReconnect` runs every 10 s
+ * instead, so chat keeps working by polling (D-X20).
  */
 export function useInboxStream(onEvent: (event: ChatEvent) => void, onReconnect: () => void): void {
   const handlers = React.useRef({ onEvent, onReconnect });
@@ -26,13 +30,29 @@ export function useInboxStream(onEvent: (event: ChatEvent) => void, onReconnect:
   }, [onEvent, onReconnect]);
 
   React.useEffect(() => {
-    if (typeof EventSource === 'undefined') return;
+    let poll: ReturnType<typeof setInterval> | null = null;
+    const startPolling = () => {
+      poll ??= setInterval(() => {
+        if (document.visibilityState === 'visible') handlers.current.onReconnect();
+      }, POLL_MS);
+    };
+    const stopPolling = () => {
+      if (poll) clearInterval(poll);
+      poll = null;
+    };
+    if (typeof EventSource === 'undefined') {
+      startPolling();
+      return stopPolling;
+    }
     const source = new EventSource('/api/sse/inbox', { withCredentials: true });
     let readyOnce = false;
     source.addEventListener('ready', () => {
+      stopPolling();
       if (readyOnce) handlers.current.onReconnect();
       readyOnce = true;
     });
+    // EventSource retries by itself; poll until it reports ready again.
+    source.onerror = () => startPolling();
     for (const type of EVENT_TYPES) {
       source.addEventListener(type, (raw) => {
         try {
@@ -42,7 +62,10 @@ export function useInboxStream(onEvent: (event: ChatEvent) => void, onReconnect:
         }
       });
     }
-    return () => source.close();
+    return () => {
+      source.close();
+      stopPolling();
+    };
   }, []);
 }
 

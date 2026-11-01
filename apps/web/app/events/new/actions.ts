@@ -10,6 +10,7 @@ import {
 } from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
 import { userAction } from '@/lib/ctx.js';
+import { runInline } from '@/lib/inline-jobs.js';
 
 export const startEventDraft = userAction(createEventDraftSchema, (input, ctx) => createEventDraft(ctx.actor, input));
 
@@ -18,6 +19,7 @@ export const saveWizardStep = userAction(saveEventStepSchema, (input, ctx) => sa
 
 export const createEvent = userAction(eventIdSchema, async (input, ctx) => {
   const result = await finalizeEvent(ctx.actor, input);
+  await runInline('event.finalized', { eventId: input.eventId });
   revalidatePath('/events');
   return result;
 });

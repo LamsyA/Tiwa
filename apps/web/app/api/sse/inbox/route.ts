@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const HEARTBEAT_MS = 25_000;
+const SUBSCRIBE_TIMEOUT_MS = 3_000;
 
 /**
  * One SSE stream per signed-in user with every chat event for them and their
@@ -32,11 +33,22 @@ export async function GET(request: NextRequest) {
           void close();
         }
       };
-      const unsubscribe = await subscribeChat(channels, (event) => {
+      const subscribed = subscribeChat(channels, (event) => {
         // Don't echo my own typing back to me.
         if (event.type === 'typing' && event.userId === userId) return;
         send(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
       });
+      // Redis down or asleep: don't hang. Close, so the client falls back to polling (D-X20).
+      const unsubscribe = await Promise.race([
+        subscribed,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), SUBSCRIBE_TIMEOUT_MS)),
+      ]);
+      if (!unsubscribe) {
+        void subscribed.then((late) => late()).catch(() => undefined);
+        closed = true;
+        controller.close();
+        return;
+      }
       const heartbeat = setInterval(() => send(': ping\n\n'), HEARTBEAT_MS);
       close = async () => {
         if (closed) return;
