@@ -4,6 +4,7 @@ import { Banner, Button, Card, Input, MoneyInput, StatusPill, Textarea } from '@
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
+import { totalsOf } from '@/components/marketplace/quote-totals.js';
 import { createQuoteAction, sendQuoteAction, withdrawQuoteAction } from '../actions.js';
 
 interface DraftQuote {
@@ -12,14 +13,6 @@ interface DraftQuote {
   totalMinor: string;
   currency: string;
   expiresAt: string | Date;
-}
-
-/** Integer totals mirror the server exactly (UF-15-1): floor on bps, BigInt throughout. */
-function totalsOf(items: { qty: number; unitMinor: string }[], taxBps: number, serviceBps: number, travelMinor: string) {
-  const subtotal = items.reduce((sum, item) => sum + BigInt(item.qty || 0) * BigInt(item.unitMinor || '0'), 0n);
-  const tax = (subtotal * BigInt(taxBps)) / 10_000n;
-  const service = (subtotal * BigInt(serviceBps)) / 10_000n;
-  return { subtotal, total: subtotal + tax + service + BigInt(travelMinor || '0') };
 }
 
 const DUE_OPTIONS = ['on_accept', 'days_before:7', 'days_before:1'] as const;

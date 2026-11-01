@@ -1,10 +1,11 @@
-import { listEnquiries, listMyOrgs, listSiteVisits } from '@tiwa/core';
+import { listEnquiries, listMyOrgs, listPendingChanges, listSiteVisits } from '@tiwa/core';
 import { Button, Card, EmptyState, StatusPill } from '@tiwa/ui';
 import { Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
+import { ChangeCards } from './change-cards.js';
 import { VisitCards } from './visit-cards.js';
 
 /** Vendor quote inbox (VND-01, P7-T04): open briefs with status. Full quotes arrive with P7-T05. */
@@ -20,7 +21,7 @@ export default async function QuotesInboxPage() {
     .flat()
     .map((row) => ({
       id: row.id,
-      eventId: 'eventId' in row ? (row.eventId as string | null) : null,
+      eventId: 'eventId' in row ? ((row as { eventId?: string | null }).eventId ?? null) : null,
       proposedTimes: row.proposedTimes.map((time) => (time instanceof Date ? time.toISOString() : String(time))),
       confirmedAt: row.confirmedAt ? row.confirmedAt.toISOString() : null,
       status: row.status,
@@ -32,12 +33,16 @@ export default async function QuotesInboxPage() {
           : null;
       })(),
     }));
+  const changes = (
+    await Promise.all(vendorOrgIds.map((orgId) => listPendingChanges(ctx.actor, { vendorOrgId: orgId }).catch(() => [])))
+  ).flat();
 
   return (
     <AppFrame userId={ctx.actor.userId} active="quotes" title={t('inboxTitle')}>
       <div className="flex flex-col gap-4 py-4">
         <p className="text-muted text-sm">{t('inboxBody')}</p>
         <VisitCards visits={visits} />
+        <ChangeCards changes={changes} />
         {enquiries === null ? (
           <EmptyState icon={<Inbox className="size-8" aria-hidden />} title={t('noEnquiries')} body="" />
         ) : enquiries.length === 0 ? (

@@ -321,6 +321,31 @@ export interface ScopeDiff {
   slotChanged: boolean;
 }
 
+export const listPendingChangesSchema = z.object({ vendorOrgId: z.string().uuid() });
+
+/** Vendor's incoming change requests (their bookings' PROPOSED versions). */
+export async function listPendingChanges(actor: UserActor, raw: z.infer<typeof listPendingChangesSchema>) {
+  const { vendorOrgId } = listPendingChangesSchema.parse(raw);
+  const membership = await prisma.membership.findFirst({
+    where: { userId: actor.userId, orgId: vendorOrgId },
+    select: { role: true },
+  });
+  if (!membership) throw new ForbiddenError('Only the vendor team lists change requests');
+  const versions = await prisma.bookingVersion.findMany({
+    where: { status: 'PROPOSED', booking: { vendorOrgId } },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      version: true,
+      totalMinor: true,
+      reason: true,
+      scope: true,
+      booking: { select: { id: true, eventId: true, event: { select: { name: true } } } },
+    },
+  });
+  return versions.map((row) => ({ ...row, totalMinor: row.totalMinor.toString() }));
+}
+
 /** Old vs new for the diff view (UF-19): price difference plus what moved. */
 export function diffScopes(
   oldScope: { items: unknown; notes: string | null; serviceDate: string | null; slot: string | null; totalMinor: string },
