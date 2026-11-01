@@ -1,5 +1,6 @@
 import { prisma, type OrgRole } from '@tiwa/db';
 import { z } from 'zod';
+import { userIdSchema } from '../shared/schemas.js';
 import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg, type OrgAction } from '../auth/org.js';
 import { findOrCreateContactUser, normaliseEmail, toE164 } from '../shared/contact.js';
@@ -27,11 +28,11 @@ export const inviteMemberSchema = z
 
 export const updateMemberRoleSchema = z.object({
   orgId: z.string().uuid(),
-  userId: z.string().uuid(),
+  userId: userIdSchema,
   role: z.enum(['ADMIN', 'STAFF']),
 });
 
-export const removeMemberSchema = z.object({ orgId: z.string().uuid(), userId: z.string().uuid() });
+export const removeMemberSchema = z.object({ orgId: z.string().uuid(), userId: userIdSchema });
 
 async function loadAccess(actor: UserActor, orgId: string, action: OrgAction) {
   const membership = await prisma.membership.findUnique({ where: { orgId_userId: { orgId, userId: actor.userId } } });

@@ -1,6 +1,7 @@
 import { TIMEFRAMES } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
+import { userIdSchema } from '../shared/schemas.js';
 import { authorize, type Actor, type EventAccess } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
@@ -30,7 +31,7 @@ export const updateTaskSchema = z.object({
   status: STATUS.optional(),
   priority: PRIORITY.optional(),
   dueAt: DUE.optional(),
-  ownerUserId: z.string().uuid().nullable().optional(),
+  ownerUserId: userIdSchema.nullable().optional(),
 });
 
 /** Fields a task owner without `event.edit` may change on their own task. */

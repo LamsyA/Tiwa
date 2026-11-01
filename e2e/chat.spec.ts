@@ -14,6 +14,9 @@ const ENQUIRY_GUEST_PHONE = '+2348030009999';
 const ENQUIRY_INVITE = 'seed-enquiry-invite-token-0001';
 const RUN = Date.now().toString(36);
 
+/** The open conversation (the section holding the composer), so list previews and sheets don't match. */
+const thread = (page: Page) => page.locator('section:has(form textarea)');
+
 async function newPage(browser: Browser, baseURL: string | undefined): Promise<Page> {
   const context = await browser.newContext({ baseURL: baseURL as string });
   const page = await context.newPage();
@@ -61,22 +64,26 @@ test('UF-30-1/2/4: host messages a venue from its profile; live delivery, receip
   const row = vendor.getByRole('link', { name: new RegExp(hostName) });
   await expect(row).toBeVisible();
   await row.click();
-  await expect(vendor.getByText(`Hello from ${RUN}`)).toBeVisible();
+  await expect(thread(vendor).getByText(`Hello from ${RUN}`)).toBeVisible();
 
   // UF-30-1: a new message reaches the open thread live (< 2 s).
   const start = Date.now();
   await host.getByLabel('Message', { exact: true }).fill(`Are you free in June? ${RUN}`);
   await host.getByLabel('Message', { exact: true }).press('Enter');
-  await expect(vendor.getByText(`Are you free in June? ${RUN}`)).toBeVisible({ timeout: 2_000 });
+  await expect(thread(vendor).getByText(`Are you free in June? ${RUN}`)).toBeVisible({ timeout: 2_000 });
   expect(Date.now() - start).toBeLessThan(4_000); // includes the send round-trip
 
   // UF-30-2: the vendor has the thread open → the host's last message shows "Seen"; typing shows live.
-  await expect(host.getByLabel('Seen').last()).toBeVisible({ timeout: 10_000 });
+  await expect(thread(host).getByLabel('Seen').last()).toBeVisible({ timeout: 10_000 });
   await vendor.getByLabel('Message', { exact: true }).pressSequentially('Yes we', { delay: 50 });
-  await expect(host.getByRole('status').filter({ hasText: /typing/ })).toBeVisible({ timeout: 5_000 });
+  await expect(
+    thread(host)
+      .getByRole('status')
+      .filter({ hasText: /typing/ }),
+  ).toBeVisible({ timeout: 5_000 });
   await vendor.getByLabel('Message', { exact: true }).fill('Yes we are free.');
   await vendor.getByLabel('Message', { exact: true }).press('Enter');
-  await expect(host.getByText('Yes we are free.')).toBeVisible();
+  await expect(thread(host).getByText('Yes we are free.')).toBeVisible();
 
   // UF-30-4 / §9a.3: a phone number before booking → warning → masked for the venue, visible to the host.
   await host.getByLabel('Message', { exact: true }).fill(`Call me on 08031234567 ${RUN}`);
@@ -84,10 +91,12 @@ test('UF-30-1/2/4: host messages a venue from its profile; live delivery, receip
   const warning = host.getByRole('dialog');
   await expect(warning.getByText('Keep payments on Tiwa')).toBeVisible();
   await warning.getByRole('button', { name: 'Send anyway' }).click();
-  await expect(host.getByText(`Call me on 08031234567 ${RUN}`)).toBeVisible();
-  await expect(vendor.getByText(`Call me on •••• ${RUN}`)).toBeVisible();
-  await expect(vendor.getByText('Contact details are shared automatically once you book.').first()).toBeVisible();
-  await expect(vendor.getByText('08031234567')).toHaveCount(0);
+  await expect(thread(host).getByText(`Call me on 08031234567 ${RUN}`)).toBeVisible();
+  await expect(thread(vendor).getByText(`Call me on •••• ${RUN}`)).toBeVisible();
+  await expect(
+    thread(vendor).getByText('Contact details are shared automatically once you book.').first(),
+  ).toBeVisible();
+  await expect(thread(vendor).getByText('08031234567')).toHaveCount(0);
 
   // Step 2 again: [Message] for the same parties reopens the same thread.
   const again = await openComposerFromProfile(host);
@@ -115,25 +124,25 @@ test('UF-30-7: report creates a moderation item; blocking stops the other side f
   await expect(host).toHaveURL(/\/inbox\/[0-9a-f-]+/);
 
   await vendor.getByRole('link', { name: new RegExp(hostName) }).click();
-  await expect(vendor.getByText(`Block test ${RUN}`)).toBeVisible();
+  await expect(thread(vendor).getByText(`Block test ${RUN}`)).toBeVisible();
 
   // Report the host's message.
   await vendor.getByRole('button', { name: 'Message options' }).last().click();
   await vendor.getByRole('menuitem', { name: 'Report' }).click();
   await vendor.getByRole('dialog').getByLabel("What's wrong?").fill('Spam for the e2e test');
   await vendor.getByRole('dialog').getByRole('button', { name: 'Report' }).click();
-  await expect(vendor.getByText('Thanks. Our team will review it.')).toBeVisible();
+  await expect(thread(vendor).getByText('Thanks. Our team will review it.')).toBeVisible();
 
   // Block from the thread menu → the host can no longer send.
   await vendor.getByRole('button', { name: 'Conversation options' }).click();
   await vendor.getByRole('menuitem', { name: 'Block' }).click();
   await vendor.getByRole('dialog').getByRole('button', { name: 'Block' }).click();
-  await expect(vendor.getByText("Blocked. They can't message you any more.")).toBeVisible();
+  await expect(thread(vendor).getByText("Blocked. They can't message you any more.")).toBeVisible();
 
   await host.getByLabel('Message', { exact: true }).fill(`After block ${RUN}`);
   await host.getByLabel('Message', { exact: true }).press('Enter');
-  await expect(host.getByText("Your message couldn't be sent.")).toBeVisible({ timeout: 15_000 });
-  await expect(vendor.getByText(`After block ${RUN}`)).toHaveCount(0);
+  await expect(thread(host).getByText("Your message couldn't be sent.")).toBeVisible({ timeout: 15_000 });
+  await expect(thread(vendor).getByText(`After block ${RUN}`)).toHaveCount(0);
 
   await host.context().close();
   await vendor.context().close();
@@ -174,10 +183,10 @@ test('UF-31: after the event, an attending guest messages the venue; the venue s
   const row = vendor.getByRole('link', { name: /Met at: Tolu's 30th/ }).first();
   await expect(row).toBeVisible();
   await row.click();
-  await expect(vendor.getByText(`Loved the venue! ${RUN}`)).toBeVisible();
+  await expect(thread(vendor).getByText(`Loved the venue! ${RUN}`)).toBeVisible();
   await vendor.getByLabel('Message', { exact: true }).fill('Thank you! Happy to help.');
   await vendor.getByLabel('Message', { exact: true }).press('Enter');
-  await expect(guest.getByText('Thank you! Happy to help.')).toBeVisible();
+  await expect(thread(guest).getByText('Thank you! Happy to help.')).toBeVisible();
 
   await guest.context().close();
   await vendor.context().close();

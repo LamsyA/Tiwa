@@ -1,5 +1,6 @@
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
+import { userIdSchema } from '../shared/schemas.js';
 import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg } from '../auth/org.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
@@ -14,7 +15,7 @@ type UserActor = Extract<Actor, { kind: 'user' }>;
 
 export const blockPartySchema = z
   .object({
-    userId: z.string().uuid().optional(),
+    userId: userIdSchema.optional(),
     orgId: z.string().uuid().optional(),
     /** Block on behalf of one of my businesses (owners and admins). */
     asOrgId: z.string().uuid().optional(),

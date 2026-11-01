@@ -1,5 +1,6 @@
 import { prisma } from '@tiwa/db';
 import { env } from '@tiwa/config';
+import { uuidv7 } from '@tiwa/core';
 import { betterAuth, type Auth, type BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { magicLink } from 'better-auth/plugins/magic-link';
@@ -25,6 +26,9 @@ const options = {
   baseURL: env.APP_URL,
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   emailAndPassword: { enabled: false },
+  // D-A11: new users, sessions and accounts get UUID v7 ids like every other table.
+  // (Accounts created before this keep Better Auth's 32-char ids; see core userIdSchema.)
+  advanced: { database: { generateId: () => uuidv7() } },
   socialProviders: googleConfigured
     ? {
         google: {

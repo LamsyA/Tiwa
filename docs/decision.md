@@ -296,3 +296,10 @@ Template:
 - Decision: Chat has no message or new-thread rate limits (replaces the "30 messages/min" and "new accounts ≤ 10 new threads/day" rules in Backend.md §9a.6 and D-X21). Spam is handled by blocking, reporting, `canMessage` (vendors can't cold-message clients or guests), masking, and refusing links in a new account's first message.
 - Why: owner — chat must feel like WhatsApp, where people never hit a visible limit.
 - Affects: apps/web/app/inbox/actions.ts, packages/core/src/auth/rate-limit.ts, Backend.md §9a.6 (superseded on this point).
+
+### 2026-11-01 — Better Auth ids follow D-A11; user-id validation
+- ID: D-X23
+- Status: AGENT
+- Decision: Better Auth now generates UUID v7 ids (`advanced.database.generateId`), restoring LOCKED D-A11 for users, sessions and accounts. Accounts created earlier keep Better Auth's 32-character ids, so user ids are validated with a shared `userIdSchema` (opaque 8–64 char id) instead of `.uuid()`. Other entity ids stay `.uuid()`.
+- Why: found by the chat e2e — `.uuid()` on user ids rejected every real signed-up user: changing or removing an org member (P2), assigning a task owner (P3), and chat block/mentions/direct messages (P6). Unit tests had only used database-created users, which do get UUIDs.
+- Affects: apps/web/lib/auth.ts, packages/core (orgs/members, events/tasks, chat/threads, chat/safety, shared/schemas).

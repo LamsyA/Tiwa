@@ -36,6 +36,8 @@ describe('phone OTP flow', () => {
 
     const result = await verifyOtp(phone, code as string, ip('1'));
     expect(typeof result.userId).toBe('string');
+    // D-A11: new accounts get UUID v7 ids (Better Auth generateId).
+    expect(result.userId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     // The browser only gets a session if the cookie comes back (regression: it was dropped).
     const sessionCookie = result.setCookies.find((cookie) => cookie.includes('session_token='));
     expect(sessionCookie).toMatch(/HttpOnly/i);

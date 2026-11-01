@@ -1,5 +1,6 @@
 import { prisma, type ChatContext, type ChatSide, type Prisma } from '@tiwa/db';
 import { z } from 'zod';
+import { userIdSchema } from '../shared/schemas.js';
 import type { Actor } from '../auth/authorize.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import {
@@ -46,7 +47,7 @@ export const startThreadSchema = z
   .object({
     context: z.enum(DIRECT_CONTEXTS),
     contextId: z.string().max(64).optional(),
-    toUserId: z.string().uuid().optional(),
+    toUserId: userIdSchema.optional(),
     toOrgId: z.string().uuid().optional(),
     /** Speak for one of my businesses instead of myself. */
     asOrgId: z.string().uuid().optional(),
@@ -70,7 +71,7 @@ export const sendMessageSchema = z
     body: BODY.optional(),
     attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS, 'tooManyAttachments').optional(),
     replyToId: z.string().uuid().optional(),
-    mentions: z.array(z.string().uuid()).max(20).optional(),
+    mentions: z.array(userIdSchema).max(20).optional(),
     acknowledgeContactWarning: z.boolean().optional(),
   })
   .refine((value) => Boolean(value.body) || Boolean(value.attachments?.length), {
