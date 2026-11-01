@@ -234,21 +234,22 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P6-T08 Venue spaces: `/business/spaces` editor (capacities, amenities, rules, slot prices, setup/teardown, security deposit, instant-book switch, hold length); per-space availability calendar with slot blocks; venue section on the public profile.
 - [x] P6-T09 Venue search `/venues` (date + slot availability, capacity by layout ≥ guests, area, price, indoor/outdoor, amenities); "Find a venue" link from the event wizard and the event vendors page.
 - [x] P6-T10 Seed 40 vendors + 8 venues with spaces (and `db:seed:load` 5,000); e2e UF-13, UF-14 search part, UF-29-1.
-- [ ] P6-T11 Chat data: Thread, ThreadParticipant, Message, UserBlock (`Backend.md §3`); `canMessage()` with a table-driven test of every row in `Backend.md §9a.1`.
-- [ ] P6-T12 Chat core: `startThread` (reuses existing threads), `sendMessage` (idempotent `clientMessageId`), edit/delete, mark delivered/read, mute/archive; business team inboxes (reply on behalf of the business); event-team threads created automatically for every event (host, co-hosts, planner, staff) with @mentions and mark-as-decision.
-- [ ] P6-T13 Real time: `/api/sse/inbox` (one stream per user), Redis channels per user/org, typing endpoint, receipts; client store with optimistic sending and offline retry queue (IndexedDB).
-- [ ] P6-T14 Inbox UI: `ChatList`, `ChatThread`, `MessageBubble`, `Composer`, filters, search, desktop two/three panes, mobile full-screen thread; unread badges in navigation.
-- [ ] P6-T15 Attachments and voice notes: photos/files via upload endpoints (`purpose: chat`), voice recorder/player, `media/process-voice` job (AAC + waveform).
-- [ ] P6-T16 Contact masking and warning sheet (`Backend.md §9a.3`); block and report (creates `Report`); chat rate limits.
-- [ ] P6-T17 Entry points: `[Message]` on profiles (vendor, venue, planner), quote requests, planner clients, vendor book; Moments footer chips and pass page after the event (guest enquiries with phone OTP, `allowGuestEnquiries` setting).
-- [ ] P6-T18 Chat notifications: web push subscription + VAPID, `chat/unread-nudges` job (push after 2 min, email/WhatsApp summary after 15 min, quiet hours).
-- [ ] P6-T19 e2e UF-30 (except quote cards, done in P7) and UF-31; k6: 1,000 connected inbox streams, 50 messages/s.
+- [x] P6-T11 Chat data: Thread, ThreadParticipant, Message, UserBlock (`Backend.md §3`); `canMessage()` with a table-driven test of every row in `Backend.md §9a.1`.
+- [x] P6-T12 Chat core: `startThread` (reuses existing threads), `sendMessage` (idempotent `clientMessageId`), edit/delete, mark delivered/read, mute/archive; business team inboxes (reply on behalf of the business); event-team threads created automatically for every event (host, co-hosts, planner, staff) with @mentions and mark-as-decision.
+- [x] P6-T13 Real time: `/api/sse/inbox` (one stream per user), Redis channels per user/org, typing endpoint, receipts; client store with optimistic sending and offline retry queue (IndexedDB).
+- [x] P6-T14 Inbox UI: `ChatList`, `ChatThread`, `MessageBubble`, `Composer`, filters, search, desktop two/three panes, mobile full-screen thread; unread badges in navigation.
+- [x] P6-T15 (lean, D-X20: photos and files only; voice notes deferred to P13) Attachments and voice notes: photos/files via upload endpoints (`purpose: chat`), voice recorder/player, `media/process-voice` job (AAC + waveform).
+- [x] P6-T16 Contact masking and warning sheet (`Backend.md §9a.3`); block and report (creates `Report`); chat rate limits (removed by owner, D-X22).
+- [x] P6-T17 Entry points: `[Message]` on profiles (vendor, venue, planner), quote requests, planner clients, vendor book; Moments footer chips and pass page after the event (guest enquiries with phone OTP, `allowGuestEnquiries` setting).
+- [-] P6-T18 (deferred to P13 by owner, D-X20) Chat notifications: web push subscription + VAPID, `chat/unread-nudges` job (push after 2 min, email/WhatsApp summary after 15 min, quiet hours).
+- [x] P6-T20 Inline-jobs mode (D-X20): with `INLINE_JOBS=1` the web app runs critical outbox topics (event-team chat sync) right after the action, so a deployment can run without the worker; chat polling fallback when the inbox stream is unavailable.
+- [x] P6-T19 e2e UF-30 (except quote cards, done in P7) and UF-31; k6: 1,000 connected inbox streams, 50 messages/s.
 
 **GATE P6**
 
 - [ ] UF-13 checks pass; UF-14-1, UF-14-2 and UF-29-1 pass.
 - [ ] UF-30 (1–5, 7–10) and UF-31 checks pass at both widths; voice notes play across iOS Safari, Android Chrome and desktop Firefox.
-- [ ] Message delivery p95 < 2 s with 1,000 connected streams (k6).
+- [x] Message delivery p95 < 2 s with 1,000 connected streams (k6). (2026-11-01: `scripts/load-chat.mjs` 1,000/1,000 streams, 50 msg/s, p95 3 ms, 0 dropped — Node instead of k6, D-X24.)
 - [ ] Search p95 server time < 300 ms with 5,000 vendors.
 - [ ] `/vendors/[slug]` Lighthouse ≥ 95 mobile; served from cache on second request.
 
