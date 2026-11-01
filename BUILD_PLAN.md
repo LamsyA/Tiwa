@@ -260,8 +260,8 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** request quotes, build and send them, accept into versioned bookings, handle change requests.
 **Read first:** `PRD.md QTE-*`, `UF-14 (request)`, `UF-15`, `UF-16`, `UF-19`, `Backend.md §3 (quotes & bookings), §5.1, §5.2`.
 
-- [ ] P7-T01 Prisma: QuoteRequest, Quote, Booking, BookingVersion (with PROPOSED status for change requests), SiteVisit, PaymentMilestone (fields only; payments logic in P8); migration.
-- [ ] P7-T02 Core: quote totals (integer maths, tax/service bps), state machines for Quote and Booking with full transition tests.
+- [x] P7-T01 Prisma: QuoteRequest, Quote, Booking, BookingVersion (with PROPOSED status for change requests), SiteVisit, PaymentMilestone (fields only; payments logic in P8); migration.
+- [x] P7-T02 Core: quote totals (integer maths, tax/service bps), state machines for Quote and Booking with full transition tests.
 - [ ] P7-T03 Request quotes (≤ 5 vendors per category) with brief prefilled from event.
 - [ ] P7-T04 Vendor enquiries inbox and quote builder (templates, line items, totals, terms, proposed schedule, expiry) + quote expiry job.
 - [ ] P7-T05 Quote view + compare (desktop columns, mobile swipe cards); accept / request changes / decline.
