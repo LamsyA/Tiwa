@@ -303,3 +303,10 @@ Template:
 - Decision: Better Auth now generates UUID v7 ids (`advanced.database.generateId`), restoring LOCKED D-A11 for users, sessions and accounts. Accounts created earlier keep Better Auth's 32-character ids, so user ids are validated with a shared `userIdSchema` (opaque 8–64 char id) instead of `.uuid()`. Other entity ids stay `.uuid()`.
 - Why: found by the chat e2e — `.uuid()` on user ids rejected every real signed-up user: changing or removing an org member (P2), assigning a task owner (P3), and chat block/mentions/direct messages (P6). Unit tests had only used database-created users, which do get UUIDs.
 - Affects: apps/web/lib/auth.ts, packages/core (orgs/members, events/tasks, chat/threads, chat/safety, shared/schemas).
+
+### 2026-11-01 — Chat load test in Node, not k6
+- ID: D-X24
+- Status: AGENT
+- Decision: The GATE P6 stream test (`scripts/load-chat.mjs`) is a Node script: it creates 1,000 users with real signed Better Auth sessions, opens 1,000 `GET /api/sse/inbox` streams against a running server, publishes 50 chat events/s on the app's Redis channels, and reports publish → received latency (p50/p95/p99), drops and failures; it cleans up its users. k6 can't hold SSE streams without a custom xk6 extension. The message write itself (`sendMessage`) is covered by integration tests; this measures the fan-out/delivery path the gate is about.
+- Why: a stock tool that can't read SSE would test nothing; Node's fetch streams read real SSE frames.
+- Affects: scripts/load-chat.mjs, gates/6.json.

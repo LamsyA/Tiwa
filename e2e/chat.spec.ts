@@ -9,9 +9,20 @@ test.describe.configure({ timeout: 180_000, mode: 'serial' });
 test.use({ actionTimeout: 15_000, navigationTimeout: 45_000 });
 
 const VENUE_SLUG = 'seed-venue-e2e';
-const VENUE_OWNER = 'venue-e2e@tiwa.test';
-const ENQUIRY_GUEST_PHONE = '+2348030009999';
-const ENQUIRY_INVITE = 'seed-enquiry-invite-token-0001';
+// Per-project identities (see seedChatEnquiry): mobile and desktop run in parallel.
+const FIXTURES = {
+  mobile: {
+    phone: '+2348030009999',
+    token: 'seed-enquiry-invite-mobile'.padEnd(43, 'x'),
+    owner: 'venue-e2e@tiwa.test',
+  },
+  desktop: {
+    phone: '+2348030009998',
+    token: 'seed-enquiry-invite-desktop'.padEnd(43, 'x'),
+    owner: 'venue-e2e-2@tiwa.test',
+  },
+} as const;
+const fixture = () => FIXTURES[test.info().project.name as keyof typeof FIXTURES] ?? FIXTURES.mobile;
 const RUN = Date.now().toString(36);
 
 /** The open conversation (the section holding the composer), so list previews and sheets don't match. */
@@ -35,7 +46,8 @@ async function newHost(page: Page, name: string) {
 }
 
 async function openComposerFromProfile(page: Page) {
-  await page.goto(`/vendors/${VENUE_SLUG}`);
+  // A live refresh from the open thread can interrupt the first navigation; retry once.
+  await page.goto(`/vendors/${VENUE_SLUG}`).catch(() => page.goto(`/vendors/${VENUE_SLUG}`));
   await page.getByRole('button', { name: 'Message', exact: true }).click();
   return page.getByRole('dialog');
 }
@@ -48,7 +60,7 @@ test('UF-30-1/2/4: host messages a venue from its profile; live delivery, receip
   const vendor = await newPage(browser, baseURL);
   const hostName = `Kemi ${RUN}`;
   await newHost(host, hostName);
-  await signInWithEmail(vendor, '/login?next=%2Finbox', VENUE_OWNER);
+  await signInWithEmail(vendor, '/login?next=%2Finbox', fixture().owner);
   await expect(vendor).toHaveURL(/\/inbox/);
 
   // UF-30 steps 1–2: [Message] on the profile, suggested text, send → thread opens.
@@ -116,7 +128,7 @@ test('UF-30-7: report creates a moderation item; blocking stops the other side f
   const vendor = await newPage(browser, baseURL);
   const hostName = `Bola ${RUN}`;
   await newHost(host, hostName);
-  await signInWithEmail(vendor, '/login?next=%2Finbox', VENUE_OWNER);
+  await signInWithEmail(vendor, '/login?next=%2Finbox', fixture().owner);
 
   const sheet = await openComposerFromProfile(host);
   await sheet.getByLabel('Message', { exact: true }).fill(`Block test ${RUN}`);
@@ -156,14 +168,14 @@ test('UF-31: after the event, an attending guest messages the venue; the venue s
   const vendor = await newPage(browser, baseURL);
 
   // UF-31-1: the pass page shows [Message] for the venue once the event has ended.
-  await guest.goto(`/i/${ENQUIRY_INVITE}/pass`);
+  await guest.goto(`/i/${fixture().token}/pass`);
   const section = guest.getByRole('region', { name: 'Message the team behind this event' });
   await expect(section).toBeVisible();
   await section.getByRole('button', { name: 'Message', exact: true }).first().click();
 
   // UF-31-3: phone OTP first (signed out → login → back with the sheet open).
   await expect(guest).toHaveURL(/\/login\?next=/);
-  const code = await requestPhoneCode(guest, guest.url(), ENQUIRY_GUEST_PHONE);
+  const code = await requestPhoneCode(guest, guest.url(), fixture().phone);
   await pasteCode(guest, code);
   // A first-time phone sign-up asks for a first name, then returns to the pass page with the sheet open.
   await expect(guest).toHaveURL(/\/onboarding\/role|\/i\//);
@@ -172,14 +184,14 @@ test('UF-31: after the event, an attending guest messages the venue; the venue s
     await guest.getByLabel('Your name').fill('Enquiry Guest');
     await guest.getByRole('button', { name: 'Continue' }).click();
   }
-  await expect(guest).toHaveURL(new RegExp(`/i/${ENQUIRY_INVITE}/pass`));
+  await expect(guest).toHaveURL(new RegExp(`/i/${fixture().token}/pass`));
   const sheet = guest.getByRole('dialog');
   await sheet.getByLabel('Message', { exact: true }).fill(`Loved the venue! ${RUN}`);
   await sheet.getByRole('button', { name: 'Send' }).click();
   await expect(guest).toHaveURL(/\/inbox\/[0-9a-f-]+/);
 
   // UF-31-4/5: the venue sees it under Enquiries with "Met at: Tolu's 30th", and can reply.
-  await signInWithEmail(vendor, '/login?next=%2Finbox%3Ffilter%3Denquiries', VENUE_OWNER);
+  await signInWithEmail(vendor, '/login?next=%2Finbox%3Ffilter%3Denquiries', fixture().owner);
   const row = vendor.getByRole('link', { name: /Met at: Tolu's 30th/ }).first();
   await expect(row).toBeVisible();
   await row.click();

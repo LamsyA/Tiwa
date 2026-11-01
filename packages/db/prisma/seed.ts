@@ -359,8 +359,13 @@ async function seedGuests(userId: string, eventId: string, now: Date) {
 // ───────────── P6-T19: guest-enquiry fixture (UF-31) ─────────────
 // Fixed values the e2e spec uses: the guest signs in with this phone and opens
 // this invite's pass page after the event, where [Message] appears for the venue.
-export const ENQUIRY_GUEST_PHONE = '+2348030009999';
-export const ENQUIRY_INVITE_TOKEN = 'seed-enquiry-invite-token-0001';
+// One guest + one venue team login per Playwright project (mobile, desktop) so
+// parallel runs never share an OTP phone or a magic-link inbox. Invite tokens
+// must be exactly 43 URL-safe characters, like real 256-bit tokens.
+export const ENQUIRY_FIXTURES = [
+  { phone: '+2348030009999', token: 'seed-enquiry-invite-mobile'.padEnd(43, 'x'), owner: 'venue-e2e@tiwa.test' },
+  { phone: '+2348030009998', token: 'seed-enquiry-invite-desktop'.padEnd(43, 'x'), owner: 'venue-e2e-2@tiwa.test' },
+];
 
 async function seedChatEnquiry(demoUserId: string, now: Date) {
   const venue = await prisma.organization.findUnique({ where: { slug: 'seed-venue-e2e' }, select: { id: true } });
@@ -391,15 +396,29 @@ async function seedChatEnquiry(demoUserId: string, now: Date) {
     },
     select: { id: true },
   });
-  await prisma.guest.create({
-    data: {
-      eventId: event.id,
-      name: 'Enquiry Guest',
-      phone: ENQUIRY_GUEST_PHONE,
-      rsvp: 'YES',
-      respondedAt: startsAt,
-      inviteToken: ENQUIRY_INVITE_TOKEN,
-    },
+  for (const fixture of ENQUIRY_FIXTURES) {
+    await prisma.guest.create({
+      data: {
+        eventId: event.id,
+        name: 'Enquiry Guest',
+        phone: fixture.phone,
+        rsvp: 'YES',
+        respondedAt: startsAt,
+        inviteToken: fixture.token,
+      },
+    });
+  }
+  // A second venue team member, so each e2e project signs in as its own person.
+  const second = await prisma.user.upsert({
+    where: { email: 'venue-e2e-2@tiwa.test' },
+    update: {},
+    create: { email: 'venue-e2e-2@tiwa.test', name: 'E2E Venue Two', countryCode: 'NG', emailVerified: true },
+    select: { id: true },
+  });
+  await prisma.membership.upsert({
+    where: { orgId_userId: { orgId: venue.id, userId: second.id } },
+    update: {},
+    create: { orgId: venue.id, userId: second.id, role: 'ADMIN' },
   });
 }
 

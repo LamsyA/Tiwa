@@ -45,11 +45,11 @@ export function useInboxStream(onEvent: (event: ChatEvent) => void, onReconnect:
       return stopPolling;
     }
     const source = new EventSource('/api/sse/inbox', { withCredentials: true });
-    let readyOnce = false;
+    // Every `ready` (the first one too) refetches: anything published between the
+    // page render and the subscription would otherwise be missed.
     source.addEventListener('ready', () => {
       stopPolling();
-      if (readyOnce) handlers.current.onReconnect();
-      readyOnce = true;
+      handlers.current.onReconnect();
     });
     // EventSource retries by itself; poll until it reports ready again.
     source.onerror = () => startPolling();
