@@ -4,7 +4,7 @@ import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg } from '../auth/org.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
-import { requireParticipant } from './threads.js';
+import { requireParticipant } from './participants.js';
 
 // Chat safety (Backend.md §9a.6): block a person or business, report a
 // message for admin moderation (P16 queue). Blocks are checked by canMessage

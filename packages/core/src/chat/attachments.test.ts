@@ -1,10 +1,19 @@
 import { prisma } from '@tiwa/db';
-import { FakeModeration } from '@tiwa/moderation';
 import { FakeStorage } from '@tiwa/storage';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
-import { attachmentKey, startAttachment } from './attachments.js';
+import { attachmentKey, startAttachment, type ImageScanner } from './attachments.js';
+
+/** Test scanner: records keys; `decide` picks the verdict. */
+class FakeModeration implements ImageScanner {
+  readonly scanned: { key: string; sizeBytes: number }[] = [];
+  constructor(private readonly decide: (input: { sizeBytes: number }) => 'APPROVE' | 'BLOCK' = () => 'APPROVE') {}
+  async scan(input: { key: string; mime: string; sizeBytes: number; kind: 'PHOTO' | 'VIDEO' }) {
+    this.scanned.push({ key: input.key, sizeBytes: input.sizeBytes });
+    return { verdict: this.decide(input) };
+  }
+}
 import { listMessages } from './inbox.js';
 import { sendMessage, sendMessageSchema, startThread } from './threads.js';
 

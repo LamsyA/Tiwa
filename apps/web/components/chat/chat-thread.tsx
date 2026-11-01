@@ -31,6 +31,8 @@ export interface ThreadHeader {
   threadId: string;
   title: string;
   eventName: string | null;
+  /** Guest enquiries read "Met at: event" (UF-31-5). */
+  guestEnquiry?: boolean;
   isTeam: boolean;
   muted: boolean;
   archived: boolean;
@@ -221,7 +223,9 @@ export function ChatThread({
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold">{header.title}</h2>
           {header.eventName && !header.isTeam && (
-            <p className="text-muted truncate text-xs">{t('about', { event: header.eventName })}</p>
+            <p className="text-muted truncate text-xs">
+              {header.guestEnquiry ? t('metAt', { event: header.eventName }) : t('about', { event: header.eventName })}
+            </p>
           )}
           {typing && (
             <p className="text-brand-strong text-xs" role="status">

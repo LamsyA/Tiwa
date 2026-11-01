@@ -1,7 +1,8 @@
 import { prisma, type ChatContext, type ThreadKind } from '@tiwa/db';
 import type { Actor } from '../auth/authorize.js';
 import { NotFoundError } from '../shared/errors.js';
-import { PAGE_SIZE, requireParticipant } from './threads.js';
+import { requireParticipant } from './participants.js';
+import { PAGE_SIZE } from './threads.js';
 
 // Inbox read models (Backend.md §2 chat queries; P6-T12/T14).
 

@@ -1,10 +1,8 @@
 'use server';
 
 import {
-  RateLimitedError,
   blockParty,
   blockPartySchema,
-  isNewAccount,
   reportMessage,
   reportMessageSchema,
   unblockParty,
@@ -30,26 +28,14 @@ import {
 } from '@tiwa/core';
 import { z } from 'zod';
 import { publishToThread } from '@/lib/chat-live.js';
-import { RATE_LIMITS } from '@tiwa/core/auth/rate-limit';
 import { userAction } from '@/lib/ctx.js';
-import { checkRedisRateLimit } from '@/lib/rate-store.js';
 import { moderation } from '@/lib/moderation.js';
 import { privateStorage } from '@/lib/storage.js';
 
 // Chat actions (Backend.md §6). Each write publishes a small event to the
 // thread's channels (§9a.2); clients refetch through these permission-checked reads.
 
-/** §9a.6 rate limits (Redis sliding windows; fail open if Redis is down — see rate-store). */
-async function limit(key: string, rule: { limit: number; windowSec: number }) {
-  const check = await checkRedisRateLimit(key, rule.limit, rule.windowSec).catch(() => ({ allowed: true }));
-  if (!check.allowed) throw new RateLimitedError();
-}
-
 export const startChat = userAction(startThreadSchema, async (input, ctx) => {
-  await limit(`chat:msg:user:${ctx.actor.userId}`, RATE_LIMITS.chatMessagesPerUser);
-  if (await isNewAccount(ctx.actor.userId)) {
-    await limit(`chat:threads:user:${ctx.actor.userId}`, RATE_LIMITS.chatNewThreadsPerNewAccount);
-  }
   const result = await startThread(ctx.actor, input);
   // A 'message' event also tells recipients about a brand-new thread (they refetch the inbox).
   await publishToThread(result.threadId, {
@@ -68,7 +54,6 @@ export const startChatAttachment = userAction(startAttachmentSchema, (input, ctx
 );
 
 export const sendChatMessage = userAction(sendMessageSchema, async (input, ctx) => {
-  await limit(`chat:msg:user:${ctx.actor.userId}`, RATE_LIMITS.chatMessagesPerUser);
   const result = await sendMessage(ctx.actor, input, { storage: privateStorage(), moderation: moderation() });
   if (!result.duplicate) {
     await publishToThread(input.threadId, {

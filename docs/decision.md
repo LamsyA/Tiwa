@@ -289,3 +289,10 @@ Template:
 - Decision: `maskedBody` stores a neutral `••••` token; the UI adds the translated "(shared after booking)" hint, so no English lands in data. Masking applies in PROFILE/QUOTE_REQUEST/QUOTE/SITE_VISIT/GUEST_ENQUIRY threads until a confirmed booking between the parties (`hasConfirmedBooking` returns false until P7 bookings exist); event-team, booking and planner-client threads are never masked. The first send with contact details returns `contactWarning`; the client holds the message in its outbox and asks "Send anyway?"; acknowledged sends are audited (`chat.contact_shared`) for trust & safety. Backend §9a.6 says a new account's first message with a link is "held for a quick automated check": until the P16 review queue exists, such messages are refused with a clear message instead. Chat rate limits (30 messages/min; new accounts 10 new threads/day) live in the web actions on the shared Redis limiter and fail open if Redis is down.
 - Why: keep translations out of stored text; a refuse-now rule is safer than silently passing links with no reviewer.
 - Affects: packages/core/src/chat (masking, threads, safety), apps/web inbox actions + thread UI, P7 (booking lifts masking), P16 (link review queue).
+
+### 2026-11-01 — No rate limits on chat
+- ID: D-X22
+- Status: LOCKED (owner, 2026-11-01)
+- Decision: Chat has no message or new-thread rate limits (replaces the "30 messages/min" and "new accounts ≤ 10 new threads/day" rules in Backend.md §9a.6 and D-X21). Spam is handled by blocking, reporting, `canMessage` (vendors can't cold-message clients or guests), masking, and refusing links in a new account's first message.
+- Why: owner — chat must feel like WhatsApp, where people never hit a visible limit.
+- Affects: apps/web/app/inbox/actions.ts, packages/core/src/auth/rate-limit.ts, Backend.md §9a.6 (superseded on this point).

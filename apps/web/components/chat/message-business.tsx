@@ -101,7 +101,6 @@ export function MessageBusiness({
       const key = Object.values(result.fieldErrors ?? {}).flat()[0];
       if (key === 'contactWarning') setWarning(true);
       else if (key && t.has(`errors.${key}`)) setError(t(`errors.${key}`));
-      else if (result.code === 'RATE_LIMITED') setError(t('errors.rateLimited'));
       else setError(t('errors.generic'));
     } finally {
       setBusy(false);

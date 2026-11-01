@@ -79,3 +79,16 @@ export async function signInWithPhone(page: Page, path: string, phone: string): 
   await pasteCode(page, code);
   await expect(page).not.toHaveURL(/\/(login|signup)/);
 }
+
+/** Email magic-link sign-in from `path` (e.g. a seeded business owner); resolves once signed in. */
+export async function signInWithEmail(page: Page, path: string, email: string): Promise<void> {
+  await page.goto(path);
+  await page.getByRole('tab', { name: 'Continue with email' }).click();
+  await page.getByLabel('Email address').fill(email);
+  await page.getByRole('button', { name: 'Send link' }).click();
+  await expect(page.getByText('Check your email')).toBeVisible();
+  const link = (await latestMessage(page.request, email)).match(/href="([^"]+)"/)?.[1]?.replace(/&amp;/g, '&');
+  if (!link) throw new Error(`no magic link for ${email}`);
+  await page.goto(link);
+  await expect(page).not.toHaveURL(/\/login/);
+}

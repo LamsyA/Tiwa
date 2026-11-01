@@ -1330,7 +1330,6 @@
       "messageTooLong": "That message is too long",
       "generic": "Something went wrong. Please try again.",
       "linkInFirstMessage": "For safety, new accounts can't include links in a first message.",
-      "rateLimited": "You're sending messages too fast. Wait a moment and try again.",
       "reasonTooShort": "Tell us a little more",
       "attachmentMismatch": "A file didn't match its type and wasn't sent.",
       "attachmentBlocked": "A photo was blocked by our safety check."
@@ -1374,6 +1373,7 @@
     "openingChat": "Opening chat…",
     "guestEnquiryHeading": "Message the team behind this event",
     "guestEnquiryHint": "Loved the food, music or photos? Ask them directly. You'll verify your phone number first.",
-    "verifyPhoneToMessage": "Verify your phone to message"
+    "verifyPhoneToMessage": "Verify your phone to message",
+    "metAt": "Met at: {event}"
   }
 }

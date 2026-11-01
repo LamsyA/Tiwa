@@ -27,7 +27,6 @@
   "dependencies": {
     "@tiwa/config": "workspace:*",
     "@tiwa/db": "workspace:*",
-    "@tiwa/moderation": "workspace:^",
     "@tiwa/storage": "workspace:^",
     "libphonenumber-js": "^1.13.15",
     "pino": "^9.6.0",

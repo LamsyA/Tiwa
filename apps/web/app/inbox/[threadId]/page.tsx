@@ -44,6 +44,7 @@ export default async function ThreadPage({
           threadId,
           title: row?.title || (row?.kind === 'EVENT' ? t('team') : '…'),
           eventName: row?.eventName ?? null,
+          guestEnquiry: row?.context === 'GUEST_ENQUIRY',
           isTeam: row?.kind === 'EVENT',
           muted: row?.muted ?? false,
           archived: row?.archived ?? false,

@@ -356,6 +356,53 @@ async function seedGuests(userId: string, eventId: string, now: Date) {
   });
 }
 
+// ───────────── P6-T19: guest-enquiry fixture (UF-31) ─────────────
+// Fixed values the e2e spec uses: the guest signs in with this phone and opens
+// this invite's pass page after the event, where [Message] appears for the venue.
+export const ENQUIRY_GUEST_PHONE = '+2348030009999';
+export const ENQUIRY_INVITE_TOKEN = 'seed-enquiry-invite-token-0001';
+
+async function seedChatEnquiry(demoUserId: string, now: Date) {
+  const venue = await prisma.organization.findUnique({ where: { slug: 'seed-venue-e2e' }, select: { id: true } });
+  if (!venue) return;
+  // Threads from earlier runs point at deleted events; drop them so reuse checks start clean.
+  await prisma.thread.deleteMany({ where: { context: 'GUEST_ENQUIRY', participants: { some: { orgId: venue.id } } } });
+  const startsAt = new Date(now.getTime() - 10 * 86_400_000);
+  const event = await prisma.event.create({
+    data: {
+      slug: 'seed-ended-enquiry',
+      type: 'birthday',
+      format: 'PRIVATE_CELEBRATION',
+      status: 'ACTIVE',
+      name: "Tolu's 30th",
+      countryCode: 'NG',
+      currency: 'NGN',
+      timezone: 'Africa/Lagos',
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 5 * 3_600_000),
+      invitesEnabled: true,
+      createdById: demoUserId,
+      participants: {
+        create: [
+          { userId: demoUserId, role: 'HOST', acceptedAt: now },
+          { orgId: venue.id, role: 'VENDOR', acceptedAt: now },
+        ],
+      },
+    },
+    select: { id: true },
+  });
+  await prisma.guest.create({
+    data: {
+      eventId: event.id,
+      name: 'Enquiry Guest',
+      phone: ENQUIRY_GUEST_PHONE,
+      rsvp: 'YES',
+      respondedAt: startsAt,
+      inviteToken: ENQUIRY_INVITE_TOKEN,
+    },
+  });
+}
+
 async function main() {
   const now = new Date();
   const user = await prisma.user.upsert({
@@ -374,6 +421,8 @@ async function main() {
   await seedGalleryMedia(user.id, ids[0] as string, ids[2] as string, now);
   // P6-T10: marketplace (40 vendors, 8 venues with spaces, 5 planners) + e2e owners.
   await seedMarketplace();
+  // P6-T19: an ended event the e2e venue worked on, with a guest who said yes (UF-31).
+  await seedChatEnquiry(user.id, now);
   console.log(`[seed] demo host ${DEMO_EMAIL} + ${ids.length} events (birthday, end-of-year, concert, church).`);
 }
 

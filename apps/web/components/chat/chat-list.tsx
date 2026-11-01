@@ -131,7 +131,11 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
                       )}
                     </span>
                     {row.eventName && row.kind !== 'EVENT' && (
-                      <span className="text-muted block truncate text-xs">{t('about', { event: row.eventName })}</span>
+                      <span className="text-muted block truncate text-xs">
+                        {row.context === 'GUEST_ENQUIRY'
+                          ? t('metAt', { event: row.eventName })
+                          : t('about', { event: row.eventName })}
+                      </span>
                     )}
                     <span className="flex items-center gap-2">
                       <span className="text-muted block min-w-0 flex-1 truncate text-sm">

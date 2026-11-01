@@ -1,11 +1,10 @@
 import { prisma } from '@tiwa/db';
-import type { ModerationProvider } from '@tiwa/moderation';
 import { sniffMime, type Storage } from '@tiwa/storage';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
-import { requireParticipant } from './threads.js';
+import { requireParticipant } from './participants.js';
 
 // Chat attachments (Backend.md §9a.4, lean per D-X20): photos and files up to
 // 25 MB, uploaded straight to private storage with a signed PUT (D-A05),
@@ -53,9 +52,20 @@ export interface StoredAttachment {
   sizeBytes: number;
 }
 
+/**
+ * The image-safety scan core needs. Structurally matches @tiwa/moderation's
+ * provider; core doesn't import that package (core may depend only on
+ * config, db and storage) — the web app passes the real adapter in.
+ */
+export interface ImageScanner {
+  scan(input: { key: string; mime: string; sizeBytes: number; kind: 'PHOTO' | 'VIDEO' }): Promise<{
+    verdict: 'APPROVE' | 'REVIEW' | 'BLOCK';
+  }>;
+}
+
 export interface AttachmentDeps {
   storage: Storage;
-  moderation: ModerationProvider;
+  moderation: ImageScanner;
 }
 
 const keyPrefix = (threadId: string) => `chat/${threadId}/`;

@@ -272,9 +272,6 @@ importers:
       '@tiwa/db':
         specifier: workspace:*
         version: link:../db
-      '@tiwa/moderation':
-        specifier: workspace:^
-        version: link:../moderation
       '@tiwa/storage':
         specifier: workspace:^
         version: link:../storage
