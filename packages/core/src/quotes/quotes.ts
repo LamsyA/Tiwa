@@ -6,6 +6,7 @@ import { loadEventAccess } from '../events/access.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { authorize } from '../auth/authorize.js';
+import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { checkVenueAvailability } from '../bookings/venue.js';
 import { mirrorToEventTeam } from '../chat/cards.js';
 import { assertQuoteTransition } from './state.js';
@@ -299,7 +300,9 @@ export async function getQuote(actor: UserActor, raw: z.infer<typeof quoteIdSche
   if (!access) throw new NotFoundError('Quote not found');
   if (access.role === 'VENDOR' || access.role === 'PHOTOGRAPHER') throw new NotFoundError('Quote not found');
   authorize(actor, 'event.view', { eventId: quote.eventId, access });
-  return toQuoteView(quote);
+  const row = toQuoteView(quote);
+  if (pricesHiddenFor(access, await priceVisibilityFor(quote.eventId))) return redactQuote(row);
+  return row;
 }
 
 function toQuoteView(quote: {
