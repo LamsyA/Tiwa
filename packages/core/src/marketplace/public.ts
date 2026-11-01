@@ -51,6 +51,8 @@ export async function getPublicProfileForOrg(orgId: string, kind: PublicProfileK
       ratingCount: profile.ratingCount,
       completedBookings: profile.completedBookings,
       availabilityConfirmedAt: profile.availabilityConfirmedAt,
+      instantBook: profile.instantBook,
+      holdHours: profile.holdHours,
     },
     packages: packages.map((row) => ({
       id: row.id,

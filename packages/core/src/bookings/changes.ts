@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@tiwa/db';
+import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize, type Actor } from '../auth/authorize.js';
 import { authorizeOrg } from '../auth/org.js';
@@ -6,6 +6,7 @@ import { loadEventAccess } from '../events/access.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { calcQuoteTotals, quoteItemSchema } from '../quotes/totals.js';
+import { checkVenueAvailability } from './venue.js';
 
 // Booking change requests (QTE-07, UF-19): a change request is a PROPOSED
 // BookingVersion (D-D03). Accepting makes it the ACCEPTED version (N+1) and
@@ -83,6 +84,26 @@ export async function requestBookingChange(actor: UserActor, raw: z.infer<typeof
     currentScope.serviceBps ?? 0,
     currentScope.travelFeeMinor ?? '0',
   );
+
+  // Venue date/space/slot moves re-check availability (UF-29 edge, P7-T10).
+  const isVenue = booking.spaceId !== null || booking.category === 'venue';
+  const currentDate = booking.serviceDate?.toISOString().slice(0, 10) ?? null;
+  const moved =
+    (input.scope.serviceDate ?? null) !== currentDate ||
+    (input.scope.slot ?? null) !== booking.slot ||
+    (input.scope.spaceId ?? null) !== booking.spaceId;
+  if (isVenue && moved) {
+    const date = input.scope.serviceDate ? new Date(input.scope.serviceDate) : booking.serviceDate;
+    if (!date || !input.scope.slot) {
+      throw new ValidationError('Venue bookings need a date and a slot', { key: 'slotRequired' });
+    }
+    await checkVenueAvailability(prisma, {
+      vendorOrgId: booking.vendorOrgId,
+      spaceId: input.scope.spaceId ?? booking.spaceId,
+      date,
+      slot: input.scope.slot,
+    }, { ignoreBookingId: booking.id });
+  }
 
   const version = await prisma.bookingVersion.create({
     data: {
@@ -188,8 +209,47 @@ export async function respondBookingChange(actor: UserActor, raw: z.infer<typeof
         spaceId: scope.spaceId,
       },
     });
-    if (diff !== 0n) {
-      // UF-19: the extra (or reduced) amount lands on the next unpaid
+    {
+      // A venue date/space/slot move carries the availability block with it.
+      const wasVenue = version.booking.spaceId !== null || version.booking.category === 'venue';
+      const newDate = scope.serviceDate ? new Date(scope.serviceDate) : null;
+      const movedVenue =
+        wasVenue &&
+        ((scope.serviceDate ?? null) !== (version.booking.serviceDate?.toISOString().slice(0, 10) ?? null) ||
+          (scope.slot ?? null) !== version.booking.slot ||
+          (scope.spaceId ?? null) !== version.booking.spaceId);
+      if (movedVenue) {
+        if (!newDate || !scope.slot) throw new ValidationError('Venue bookings need a date and a slot', { key: 'slotRequired' });
+        await checkVenueAvailability(
+          tx,
+          {
+            vendorOrgId: version.booking.vendorOrgId,
+            spaceId: scope.spaceId ?? version.booking.spaceId,
+            date: newDate,
+            slot: scope.slot,
+          },
+          { ignoreBookingId: version.bookingId },
+        );
+        await tx.availabilityBlock.deleteMany({ where: { bookingId: version.bookingId } });
+        try {
+          await tx.availabilityBlock.create({
+            data: {
+              orgId: version.booking.vendorOrgId,
+              spaceId: scope.spaceId ?? version.booking.spaceId,
+              date: newDate,
+              slot: scope.slot,
+              bookingId: version.bookingId,
+            },
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            throw new ConflictError('That date was just booked', { key: 'slotTaken' });
+          }
+          throw error;
+        }
+      }
+    }
+    if (diff !== 0n) {      // UF-19: the extra (or reduced) amount lands on the next unpaid
       // milestone, or a new one when everything is already scheduled.
       const next = await tx.paymentMilestone.findFirst({
         where: { bookingId: version.bookingId, state: 'SCHEDULED' },

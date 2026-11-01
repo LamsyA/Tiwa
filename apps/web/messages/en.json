@@ -1277,7 +1277,13 @@
     "done": "Done",
     "pending": "To do",
     "spacePhotoAlt": "Venue space photo",
-    "viewButton": "View quotes"
+    "viewButton": "View quotes",
+    "bookedSlot": "Booked",
+    "bookNow": "Book instantly",
+    "instantBookTitle": "Book this venue",
+    "spaceLabel": "Space",
+    "termsLabel": "Cancellation terms",
+    "termsPlaceholder": "e.g. 50% refund if cancelled 7+ days before"
   },
   "inbox": {
     "title": "Inbox",

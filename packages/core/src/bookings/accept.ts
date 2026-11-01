@@ -1,11 +1,12 @@
-import { prisma } from '@tiwa/db';
+import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize, type Actor } from '../auth/authorize.js';
 import { loadEventAccess } from '../events/access.js';
 import { isEnabled } from '../flags/flags.js';
-import { FeatureDisabledError, NotFoundError, ValidationError } from '../shared/errors.js';
+import { ConflictError, FeatureDisabledError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { mulBps } from '../shared/money.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { checkVenueAvailability } from './venue.js';
 
 // Accepting a quote (QTE-05, UF-16): host-side, approval-capped, creates
 // Booking v1 (ACCEPTED) + PaymentMilestones from the vendor's proposed
@@ -156,6 +157,31 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
     await tx.quote.update({ where: { id: quote.id }, data: { status: 'ACCEPTED' } });
     if (quote.requestId) {
       await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'CLOSED' } });
+    }
+    if (quote.spaceId && quote.serviceDate && quote.slot) {
+      // Venue quotes hold the date the moment they are accepted (P7-T10).
+      await checkVenueAvailability(tx, {
+        vendorOrgId: quote.vendorOrgId,
+        spaceId: quote.spaceId,
+        date: quote.serviceDate,
+        slot: quote.slot,
+      });
+      try {
+        await tx.availabilityBlock.create({
+          data: {
+            orgId: quote.vendorOrgId,
+            spaceId: quote.spaceId,
+            date: quote.serviceDate,
+            slot: quote.slot,
+            bookingId: booking.id,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new ConflictError('That date was just booked', { key: 'slotTaken' });
+        }
+        throw error;
+      }
     }
     if (input.declineOthers) {
       // UF-16: only quotes in the same category are declined, never the whole event.

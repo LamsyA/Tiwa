@@ -1,4 +1,4 @@
-import { createLogger, expireQuotes } from '@tiwa/core';
+import { createLogger, expireHolds, expireQuotes } from '@tiwa/core';
 
 type Log = ReturnType<typeof createLogger>;
 
@@ -9,5 +9,15 @@ export const QUOTE_EXPIRY_EVERY_MS = 60 * 60 * 1000;
 export async function handleQuoteExpiry(log: Log, now = new Date()): Promise<{ expired: number }> {
   const result = await expireQuotes(now);
   if (result.expired > 0) log.info({ topic: QUOTE_EXPIRY_JOB, expired: result.expired }, 'quotes expired');
+  return result;
+}
+
+/** P7-T10 `holds/expire` (hourly): unpaid deposit holds free their dates. */
+export const HOLD_EXPIRY_JOB = 'holds/expire' as const;
+export const HOLD_EXPIRY_EVERY_MS = 60 * 60 * 1000;
+
+export async function handleHoldExpiry(log: Log, now = new Date()): Promise<{ expired: number }> {
+  const result = await expireHolds(now);
+  if (result.expired > 0) log.info({ topic: HOLD_EXPIRY_JOB, expired: result.expired }, 'holds expired');
   return result;
 }

@@ -51,7 +51,7 @@ export interface SpaceRow {
   securityDepositMinor: string | null;
   active: boolean;
   photos: SpacePhoto[];
-  blocks: { id: string; date: string; slot: string; reason: string | null }[];
+  blocks: { id: string; date: string; slot: string; reason: string | null; bookingId: string | null }[];
 }
 
 const ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -574,10 +574,14 @@ function SpaceAvailability({ orgId, space, canManage }: { orgId: string; space: 
               <span>
                 {block.date.slice(0, 10)} · {block.slot}
               </span>
-              {canManage && (
-                <button type="button" className="underline" onClick={() => void onUnblock(block.id)}>
-                  {t('unblock')}
-                </button>
+              {block.bookingId ? (
+                <StatusPill tone="brand">{t('bookedSlot')}</StatusPill>
+              ) : (
+                canManage && (
+                  <button type="button" className="underline" onClick={() => void onUnblock(block.id)}>
+                    {t('unblock')}
+                  </button>
+                )
               )}
             </li>
           ))}

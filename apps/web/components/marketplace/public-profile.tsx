@@ -28,10 +28,12 @@ export async function PublicProfileView({
   profile,
   photos,
   availabilityRows,
+  instantBook,
 }: {
   profile: PublicProfile;
   photos: { id: string; url: string; caption: string | null }[];
   availabilityRows: AvailabilityRow[];
+  instantBook?: React.ReactNode;
 }) {
   const t = await getTranslations('marketplace');
   const now = new Date();
@@ -261,6 +263,7 @@ export async function PublicProfileView({
               <React.Suspense fallback={null}>
                 <MessageBusiness orgId={profile.org.id} orgName={profile.org.name} />
               </React.Suspense>
+              {instantBook}
               <p className="text-muted text-sm">{t('requestQuoteSoon')}</p>
             </div>
           </Card>

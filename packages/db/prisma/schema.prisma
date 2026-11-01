@@ -884,10 +884,10 @@ enum QuoteStatus {
 }
 
 model Booking {
-  id             String             @id @default(uuid(7))
+  id             String        @id @default(uuid(7))
   eventId        String
   vendorOrgId    String
-  quoteId        String             @unique
+  quoteId        String?       @unique // null for instant bookings (no quote step, P7-T10)
   category       String
   spaceId        String? // venue bookings
   serviceDate    DateTime?          @db.Date

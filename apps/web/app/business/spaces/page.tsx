@@ -88,6 +88,7 @@ export default async function BusinessSpacesPage({ searchParams }: { searchParam
           date: block.date.toISOString(),
           reason: block.reason,
           slot: block.slot,
+          bookingId: block.bookingId,
         })),
       };
     }),

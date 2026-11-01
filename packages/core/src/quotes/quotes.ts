@@ -6,6 +6,7 @@ import { loadEventAccess } from '../events/access.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { authorize } from '../auth/authorize.js';
+import { checkVenueAvailability } from '../bookings/venue.js';
 import { assertQuoteTransition } from './state.js';
 import { calcQuoteTotals, quoteItemSchema } from './totals.js';
 
@@ -130,6 +131,79 @@ export async function withdrawQuote(actor: UserActor, raw: z.infer<typeof quoteI
   const updated = await prisma.quote.update({ where: { id: quoteId }, data: { status: 'WITHDRAWN' } });
   await audit(prisma, { actor, action: 'quote.withdraw', targetType: 'Quote', targetId: quoteId, data: { eventId: quote.eventId } });
   return { status: updated.status };
+}
+
+export const updateQuoteSchema = createQuoteSchema
+  .omit({ requestId: true, eventId: true, vendorOrgId: true })
+  .partial()
+  .extend({ quoteId: z.string().uuid() });
+
+/**
+ * Vendor revises a quote that was never decided (DRAFT or CHANGES_REQUESTED):
+ * items re-total on the server, and venue date/space/slot moves re-check
+ * availability. Sent quotes are immutable — request changes first.
+ */
+export async function updateQuote(actor: UserActor, raw: z.infer<typeof updateQuoteSchema>) {
+  const { quoteId, ...patch } = updateQuoteSchema.parse(raw);
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  if (!quote) throw new NotFoundError('Quote not found');
+  await loadOrgAccess(actor, quote.vendorOrgId, 'org.manage');
+  if (quote.status !== 'DRAFT' && quote.status !== 'CHANGES_REQUESTED') {
+    throw new ValidationError('Only an unsent quote can be edited', { key: 'quoteLocked' });
+  }
+
+  const items = patch.items ?? (quote.items as unknown as { name: string; qty: number; unitMinor: string }[]);
+  const totals = calcQuoteTotals(
+    items,
+    patch.taxBps ?? quote.taxBps,
+    patch.serviceBps ?? quote.serviceBps,
+    patch.travelFeeMinor ?? quote.travelFeeMinor.toString(),
+  );
+  let percentSum = 0;
+  const schedule = patch.proposedSchedule ?? (quote.proposedSchedule as unknown as { label: string; percentBps?: number }[]);
+  for (const entry of schedule) percentSum += entry.percentBps ?? 0;
+  if (percentSum > 10_000) throw new ValidationError('Schedule percents exceed 100%', { key: 'scheduleOver100' });
+
+  const spaceId = patch.spaceId ?? quote.spaceId;
+  const serviceDate = patch.serviceDate ? new Date(patch.serviceDate) : quote.serviceDate;
+  const slot = patch.slot ?? quote.slot;
+  if ((spaceId || serviceDate || slot) && (patch.spaceId !== undefined || patch.serviceDate !== undefined || patch.slot !== undefined)) {
+    const space = spaceId
+      ? await prisma.venueSpace.findFirst({ where: { id: spaceId, profile: { orgId: quote.vendorOrgId } }, select: { id: true } })
+      : null;
+    if (spaceId && !space) throw new NotFoundError('Space not found');
+    if (serviceDate && slot) {
+      await checkVenueAvailability(prisma, { vendorOrgId: quote.vendorOrgId, spaceId, date: serviceDate, slot });
+    }
+  }
+  if (patch.expiresAt) {
+    const expiresAt = new Date(patch.expiresAt);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      throw new ValidationError('Expiry must be in the future', { field: 'expiresAt', key: 'expiryPast' });
+    }
+  }
+
+  const updated = await prisma.quote.update({
+    where: { id: quoteId },
+    data: {
+      ...(patch.items ? { items: patch.items } : {}),
+      ...(patch.taxBps !== undefined ? { taxBps: patch.taxBps } : {}),
+      ...(patch.serviceBps !== undefined ? { serviceBps: patch.serviceBps } : {}),
+      ...(patch.travelFeeMinor !== undefined ? { travelFeeMinor: BigInt(patch.travelFeeMinor) } : {}),
+      subtotalMinor: totals.subtotalMinor,
+      totalMinor: totals.totalMinor,
+      ...(patch.notes !== undefined ? { notes: patch.notes ?? null } : {}),
+      ...(patch.cancellationTerms ? { cancellationTerms: patch.cancellationTerms } : {}),
+      ...(patch.proposedSchedule ? { proposedSchedule: patch.proposedSchedule } : {}),
+      ...(patch.expiresAt ? { expiresAt: new Date(patch.expiresAt) } : {}),
+      ...(patch.spaceId !== undefined ? { spaceId: patch.spaceId ?? null } : {}),
+      ...(patch.serviceDate !== undefined ? { serviceDate: patch.serviceDate ? new Date(patch.serviceDate) : null } : {}),
+      ...(patch.slot !== undefined ? { slot: patch.slot ?? null } : {}),
+    },
+    select: { id: true, totalMinor: true },
+  });
+  await audit(prisma, { actor, action: 'quote.update', targetType: 'Quote', targetId: quoteId, data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId } });
+  return { quoteId: updated.id, totalMinor: updated.totalMinor.toString() };
 }
 
 /** Vendor declines the enquiry itself (no quote). */
