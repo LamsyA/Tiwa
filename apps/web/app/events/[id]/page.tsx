@@ -1,5 +1,13 @@
 import { getEventType } from '@tiwa/config';
-import { authorize, galleryCodeForEvent, getEventOverview, utcToZoned } from '@tiwa/core';
+import {
+  authorize,
+  budgetAlerts,
+  budgetSummary,
+  galleryCodeForEvent,
+  getEventOverview,
+  listPaymentSchedule,
+  utcToZoned,
+} from '@tiwa/core';
 import {
   Avatar,
   Badge,
@@ -49,7 +57,16 @@ export default async function EventOverviewPage({
       return false;
     }
   })();
-  const galleryCode = event.momentsEnabled ? await galleryCodeForEvent(id) : null;
+  const [galleryCode, money] = await Promise.all([
+    event.momentsEnabled ? galleryCodeForEvent(id) : Promise.resolve(null),
+    canSeeMoney
+      ? Promise.all([
+          budgetSummary(ctx.actor, { eventId: id }, access),
+          listPaymentSchedule(ctx.actor, { eventId: id }, access),
+        ])
+      : Promise.resolve(null),
+  ]);
+  const moneyAlerts = money ? budgetAlerts(money[0], money[1]).length : 0;
   const now = new Date();
 
   return (
@@ -170,14 +187,31 @@ export default async function EventOverviewPage({
             )}
           </Card>
 
-          {canSeeMoney && (
-            <Card className="flex flex-col gap-2 p-4 lg:col-span-4">
-              <h2 className="font-medium">{t('overview.moneyHeading')}</h2>
-              <p className="text-muted text-sm">{t('overview.moneyBudget')}</p>
-              <p className="font-display text-xl font-bold">
-                <MoneyText value={event.plannedBudgetMinor.toString()} currency={event.currency} />
+          {money && (
+            <Card className="flex flex-col gap-3 p-4 lg:col-span-4">
+              <div className="flex items-center gap-2">
+                <h2 className="flex-1 font-medium">{t('overview.moneyHeading')}</h2>
+                {moneyAlerts > 0 && (
+                  <StatusPill tone="warning">{t('overview.moneyAlerts', { count: moneyAlerts })}</StatusPill>
+                )}
+              </div>
+              <dl className="grid grid-cols-3 gap-2 text-sm">
+                {(['committed', 'paid', 'outstanding'] as const).map((key) => (
+                  <div key={key}>
+                    <dt className="text-muted">{t(`money.${key}`)}</dt>
+                    <dd className="font-display font-bold">
+                      <MoneyText value={money[0].totals[`${key}Minor`].toString()} currency={event.currency} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="text-muted text-sm">
+                {t('overview.moneyBudget')}:{' '}
+                <MoneyText value={money[0].totals.plannedMinor.toString()} currency={event.currency} />
               </p>
-              <p className="text-muted text-sm">{t('overview.moneyComingSoon')}</p>
+              <Link href={`/events/${id}/money`} className="text-sm underline">
+                {t('overview.moneyOpen')}
+              </Link>
             </Card>
           )}
 

@@ -11,6 +11,7 @@ import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
+import { LiveRefresh } from '@/components/live-refresh.js';
 import {
   AddContributionDialog,
   AddExpenseDialog,
@@ -80,6 +81,7 @@ export default async function EventMoneyPage({
 
   return frame(
     <div className="flex flex-col gap-4 py-2">
+      <LiveRefresh />
       {alerts.length > 0 && (
         <div className="flex flex-col gap-2" role="status">
           {alerts.map((alert) =>

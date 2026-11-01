@@ -261,7 +261,6 @@
       "openPlan": "Open the plan",
       "moneyHeading": "Money",
       "moneyBudget": "Planned budget",
-      "moneyComingSoon": "Payments and spending show here once vendors are booked.",
       "vendorsHeading": "Vendors",
       "vendorsComingSoon": "Find and book vendors for this event soon.",
       "guestsHeading": "Guests",
@@ -277,7 +276,9 @@
       "cancelledBanner": "This event was cancelled.",
       "momentsManage": "Manage gallery",
       "momentsView": "View gallery",
-      "teamChat": "Team chat"
+      "teamChat": "Team chat",
+      "moneyAlerts": "{count, plural, one {# alert} other {# alerts}}",
+      "moneyOpen": "Open budget"
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
