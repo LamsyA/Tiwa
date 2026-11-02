@@ -112,6 +112,62 @@ export class ClaudePlanDrafter implements PlanDrafter {
   }
 }
 
+const MUSE_BASE_URL = 'https://api.meta.ai/v1';
+
+/**
+ * Meta Muse Spark via the Meta Model API (OpenAI-compatible chat completions,
+ * JSON mode). Default model `muse-spark-1.3-contributor` (D-X32). The model
+ * reasons before answering, so the token limit leaves room for that and
+ * effort is kept low for a quick checklist.
+ */
+export class MusePlanDrafter implements PlanDrafter {
+  constructor(
+    private readonly apiKey: string,
+    private readonly model = 'muse-spark-1.3-contributor',
+    private readonly baseUrl = MUSE_BASE_URL,
+  ) {}
+
+  async draftTasks(context: PlanDraftContext): Promise<PlanDraftSuggestion[]> {
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
+      signal: AbortSignal.timeout(60_000),
+      body: JSON.stringify({
+        model: this.model,
+        reasoning_effort: 'low',
+        max_tokens: 8000,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `${SYSTEM} Reply with JSON only, exactly this shape: {"tasks":[{"title":string,"daysBefore":integer|null,"why":string}]}. daysBefore = days before the event the task should be done (0 = on the day, null if timing does not matter).`,
+          },
+          { role: 'user', content: describe(context) },
+        ],
+      }),
+    });
+    if (!response.ok) throw new Error(`Muse request failed (${response.status})`);
+    const body = (await response.json()) as {
+      choices?: { message?: { content?: string | null } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    console.info(
+      `[ai] ${PLAN_PROMPT_VERSION} model=${this.model} in=${body.usage?.prompt_tokens ?? 0} out=${body.usage?.completion_tokens ?? 0}`,
+    );
+    const content = body.choices?.[0]?.message?.content;
+    if (!content) return [];
+    let json: unknown;
+    try {
+      json = JSON.parse(content);
+    } catch {
+      const match = /\{[\s\S]*\}/.exec(content);
+      json = match ? JSON.parse(match[0]) : null;
+    }
+    const parsed = suggestionsSchema.safeParse(json);
+    return parsed.success ? parsed.data.tasks : [];
+  }
+}
+
 /** Deterministic drafter: a sensible base list plus tasks keyed off words in the request. */
 export class FakePlanDrafter implements PlanDrafter {
   async draftTasks(context: PlanDraftContext): Promise<PlanDraftSuggestion[]> {
@@ -141,12 +197,20 @@ export class FakePlanDrafter implements PlanDrafter {
   }
 }
 
-/** Picks the drafter from env (`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL_DRAFT`). */
+/**
+ * Picks the drafter from env: Meta Muse when `TIWA_MUSE_API` is set (D-X32),
+ * else Claude when `LLM_PROVIDER=anthropic` with `LLM_API_KEY`, else the Fake.
+ */
 export function planDrafterFromEnv(env: {
   LLM_PROVIDER?: string | undefined;
   LLM_API_KEY?: string | undefined;
   LLM_MODEL_DRAFT?: string | undefined;
+  TIWA_MUSE_API?: string | undefined;
+  TIWA_MUSE_MODEL?: string | undefined;
 }): PlanDrafter {
+  if (env.TIWA_MUSE_API) {
+    return new MusePlanDrafter(env.TIWA_MUSE_API, env.TIWA_MUSE_MODEL || 'muse-spark-1.3-contributor');
+  }
   if (env.LLM_PROVIDER === 'anthropic' && env.LLM_API_KEY) {
     return new ClaudePlanDrafter(env.LLM_API_KEY, env.LLM_MODEL_DRAFT || 'claude-opus-5-5');
   }

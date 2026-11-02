@@ -71,6 +71,9 @@ const envSchema = z
     LLM_API_KEY: optString(),
     LLM_MODEL_DRAFT: optString(),
     LLM_MODEL_FAST: optString(),
+    // Meta Model API (Muse Spark, OpenAI-compatible). When set, AI planning uses Muse (D-X32).
+    TIWA_MUSE_API: optString(),
+    TIWA_MUSE_MODEL: optString(),
 
     // Observability
     SENTRY_DSN: optUrl(),
