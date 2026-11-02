@@ -351,14 +351,13 @@ export async function editMessage(actor: UserActor, input: z.infer<typeof editMe
   return { threadId: message.threadId };
 }
 
-/** Soft delete: the bubble shows "This message was deleted". */
-export async function deleteMessage(actor: UserActor, input: z.infer<typeof messageIdSchema>) {
-  const message = await ownMessage(actor, input.messageId);
-  await prisma.message.update({
-    where: { id: message.id },
-    data: { deletedAt: new Date(), body: null, maskedBody: null, attachments: [] },
-  });
-  return { threadId: message.threadId };
+/**
+ * Messages are a record both sides rely on (quotes, prices, agreements), so
+ * they can't be deleted (D-X37). Authors can still edit within 15 minutes.
+ */
+export async function deleteMessage(actor: UserActor, input: z.infer<typeof messageIdSchema>): Promise<never> {
+  await ownMessage(actor, input.messageId);
+  throw new ForbiddenError('Messages cannot be deleted', { reason: 'no-delete' });
 }
 
 /** Receipts move forward only; a business's row covers the whole team (§9a.2). */

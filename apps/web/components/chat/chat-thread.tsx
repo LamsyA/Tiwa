@@ -2,7 +2,7 @@
 
 import type { MessageView } from '@tiwa/core';
 import { Banner, Button, DropdownMenu, ResponsiveDialog, Textarea } from '@tiwa/ui';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Reply, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,7 +12,6 @@ import {
   reportChatMessage,
   startChatAttachment,
   archiveChat,
-  deleteChatMessage,
   editChatMessage,
   loadChatMessages,
   markChatDecision,
@@ -67,7 +66,13 @@ export function ChatThread({
   const [typing, setTyping] = React.useState<{ name: string | null; until: number } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [editing, setEditing] = React.useState<{ id: string; body: string } | null>(null);
-  const [deleting, setDeleting] = React.useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = React.useState<{
+    id: string;
+    authorName: string | null;
+    mine: boolean;
+    body: string | null;
+  } | null>(null);
+  const [presence, setPresence] = React.useState<{ online: boolean; lastSeenAt: string | null } | null>(null);
   const bottom = React.useRef<HTMLDivElement>(null);
   // "Now" for the 15-minute edit window; refreshed every 30 s.
   const [now, setNow] = React.useState(() => Date.now());
@@ -123,6 +128,25 @@ export function ChatThread({
     return () => clearTimeout(timer);
   }, [typing]);
 
+  // Presence (D-X37): mark me as here and read the other side's online / last seen every 20 s.
+  React.useEffect(() => {
+    let alive = true;
+    const poll = async () => {
+      const response = await fetch(`/api/chat/presence?threadId=${threadId}`, { cache: 'no-store' }).catch(() => null);
+      const body = (await response?.json().catch(() => null)) as {
+        ok: boolean;
+        data?: { online: boolean; lastSeenAt: string | null };
+      } | null;
+      if (alive && body?.ok && body.data) setPresence(body.data);
+    };
+    void poll();
+    const timer = setInterval(() => void poll(), 20_000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [threadId]);
+
   // Newest message from someone else: report delivered + read (the thread is on screen).
   const newestOther = messages.find((m) => m.authorUserId !== me);
   React.useEffect(() => {
@@ -147,7 +171,9 @@ export function ChatThread({
 
   async function onSend(body: string) {
     setError(null);
-    await send(threadId, body);
+    const replyId = replyingTo?.id;
+    setReplyingTo(null);
+    await send(threadId, body, [], replyId);
     void refetch();
   }
 
@@ -228,11 +254,31 @@ export function ChatThread({
               {header.guestEnquiry ? t('metAt', { event: header.eventName }) : t('about', { event: header.eventName })}
             </p>
           )}
-          {typing && (
-            <p className="text-xs text-[var(--chat-accent)]" role="status">
+          {typing ? (
+            <p className="flex items-center gap-1 text-xs font-medium text-[var(--chat-accent)]" role="status">
+              <span aria-hidden className="flex gap-0.5">
+                <span className="tiwa-dot size-1 rounded-full bg-current" />
+                <span className="tiwa-dot size-1 rounded-full bg-current [animation-delay:150ms]" />
+                <span className="tiwa-dot size-1 rounded-full bg-current [animation-delay:300ms]" />
+              </span>
               {typing.name ? t('typing', { name: typing.name }) : t('someoneTyping')}
             </p>
-          )}
+          ) : presence?.online ? (
+            <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--chat-accent)]">
+              <span aria-hidden className="size-2 rounded-full bg-[var(--chat-accent)]" />
+              {t('online')}
+            </p>
+          ) : presence?.lastSeenAt ? (
+            <p className="text-muted text-xs">
+              {t('lastSeen', {
+                when: new Intl.DateTimeFormat(undefined, {
+                  dateStyle:
+                    new Date(presence.lastSeenAt).toDateString() === new Date().toDateString() ? undefined : 'medium',
+                  timeStyle: 'short',
+                }).format(new Date(presence.lastSeenAt)),
+              })}
+            </p>
+          ) : null}
         </div>
         <DropdownMenu
           align="end"
@@ -293,7 +339,17 @@ export function ChatThread({
                   canEdit={canEdit}
                   canDecide={header.isTeam}
                   onEdit={() => setEditing({ id: m.id, body: m.body ?? '' })}
-                  onDelete={() => setDeleting(m.id)}
+                  {...(!m.deleted
+                    ? {
+                        onReply: () =>
+                          setReplyingTo({
+                            id: m.id,
+                            authorName: m.authorName,
+                            mine: m.mine,
+                            body: m.body ?? (m.attachments.length ? t('attachmentShort') : null),
+                          }),
+                      }
+                    : {})}
                   onDecision={() => void markChatDecision({ messageId: m.id }).then(() => void refetch())}
                   {...(!m.mine && !m.deleted ? { onReport: () => setReporting({ id: m.id, reason: '' }) } : {})}
                   attachmentHref={(index, download) =>
@@ -355,45 +411,40 @@ export function ChatThread({
           </div>
         </form>
       ) : (
-        <Composer
-          onSend={(body) => void onSend(body)}
-          onAttach={(files) => void onAttach(files)}
-          disabled={uploading > 0}
-          onTyping={() =>
-            void fetch('/api/chat/typing', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ threadId }),
-            }).catch(() => undefined)
-          }
-        />
-      )}
-      {deleting && (
-        <ResponsiveDialog
-          open
-          onOpenChange={(open) => !open && setDeleting(null)}
-          title={t('deleteTitle')}
-          description={t('deleteBody')}
-          footer={
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setDeleting(null)}>
-                {t('cancel')}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  const id = deleting;
-                  setDeleting(null);
-                  void deleteChatMessage({ messageId: id }).then(() => void refetch());
-                }}
+        <>
+          {replyingTo && (
+            <div className="flex items-center gap-2 bg-[var(--chat-panel)] px-3 pt-2">
+              <div className="min-w-0 flex-1 rounded-xl border-l-4 border-[var(--chat-accent)] bg-[var(--chat-wall)] px-3 py-1.5">
+                <p className="flex items-center gap-1 text-xs font-semibold text-[var(--chat-accent)]">
+                  <Reply aria-hidden className="size-3" />
+                  {replyingTo.mine ? t('you') : (replyingTo.authorName ?? t('them'))}
+                </p>
+                <p className="text-muted truncate text-sm">{replyingTo.body}</p>
+              </div>
+              <button
+                type="button"
+                aria-label={t('cancelReply')}
+                onClick={() => setReplyingTo(null)}
+                className="text-muted hover:text-text flex size-9 items-center justify-center rounded-full"
               >
-                {t('delete')}
-              </Button>
+                <X aria-hidden className="size-4" />
+              </button>
             </div>
-          }
-        >
-          <span />
-        </ResponsiveDialog>
+          )}
+          <Composer
+            focusSignal={replyingTo?.id ?? null}
+            onSend={(body) => void onSend(body)}
+            onAttach={(files) => void onAttach(files)}
+            disabled={uploading > 0}
+            onTyping={() =>
+              void fetch('/api/chat/typing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ threadId }),
+              }).catch(() => undefined)
+            }
+          />
+        </>
       )}
       {held && (
         <ResponsiveDialog

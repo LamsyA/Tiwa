@@ -40,7 +40,12 @@ async function makeTeam(): Promise<{ host: UserActor; cohost: UserActor; eventId
     data: { eventId: event.id, userId: host.userId, role: 'HOST', permissions: toStoredPermissions(PRESETS.full) },
   });
   await prisma.eventParticipant.create({
-    data: { eventId: event.id, userId: cohost.userId, role: 'CO_HOST', permissions: toStoredPermissions(PRESETS.contributor) },
+    data: {
+      eventId: event.id,
+      userId: cohost.userId,
+      role: 'CO_HOST',
+      permissions: toStoredPermissions(PRESETS.contributor),
+    },
   });
   const { threadId } = await syncEventTeamThread(event.id);
   return { host, cohost, eventId: event.id, threadId };

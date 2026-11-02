@@ -8,7 +8,6 @@ import {
   unblockParty,
   archiveThread,
   archiveThreadSchema,
-  deleteMessage,
   editMessage,
   editMessageSchema,
   listMessages,
@@ -18,6 +17,7 @@ import {
   messageIdSchema,
   muteThread,
   muteThreadSchema,
+  notifyNewMessage,
   sendMessage,
   sendMessageSchema,
   startAttachment,
@@ -45,6 +45,7 @@ export const startChat = userAction(startThreadSchema, async (input, ctx) => {
     authorUserId: ctx.actor.userId,
     at: Date.now(),
   });
+  if (result.messageId) await notifyNewMessage(result.messageId).catch(() => undefined);
   return result;
 });
 
@@ -63,17 +64,14 @@ export const sendChatMessage = userAction(sendMessageSchema, async (input, ctx) 
       authorUserId: ctx.actor.userId,
       at: Date.now(),
     });
+    // Bell + push for the other side (D-X37). Never fails the send.
+    await notifyNewMessage(result.messageId).catch(() => undefined);
   }
   return result;
 });
 
 export const editChatMessage = userAction(editMessageSchema, async (input, ctx) => {
   const { threadId } = await editMessage(ctx.actor, input);
-  await publishToThread(threadId, { type: 'updated', threadId, messageId: input.messageId, at: Date.now() });
-});
-
-export const deleteChatMessage = userAction(messageIdSchema, async (input, ctx) => {
-  const { threadId } = await deleteMessage(ctx.actor, input);
   await publishToThread(threadId, { type: 'updated', threadId, messageId: input.messageId, at: Date.now() });
 });
 

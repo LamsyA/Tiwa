@@ -16,6 +16,11 @@ const HANDLE = /(?<![\w.])@[A-Za-z0-9_.]{3,30}\b/g;
 /** Long digit runs, allowing spaces/dots/dashes between digits (e.g. "0803 123 4567", "080-31-23-45-67"). */
 const DIGIT_RUN = /(?:\+?\d[\s.\-()]?){7,}\d/g;
 
+/** Dates and clock times look like digit runs but are never contact details (2026-11-03, 03/11/2026, 14:30). */
+const DATE_OR_TIME = /\b(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}|\d{1,2}:\d{2}(?::\d{2})?)\b/g;
+const SHIELD = (index: number) => `\uE000${index}\uE000`;
+const SHIELDED = /\uE000(\d+)\uE000/g;
+
 export interface ContactScan {
   found: boolean;
   masked: string;
@@ -23,7 +28,9 @@ export interface ContactScan {
 
 /** Find contact details in `text` and return a masked copy. `country` resolves national numbers. */
 export function scanContactInfo(text: string, country: string): ContactScan {
-  let masked = text;
+  // Hide dates and times from the scanners, then put them back unchanged.
+  const kept: string[] = [];
+  let masked = text.replace(DATE_OR_TIME, (value) => SHIELD(kept.push(value) - 1));
   let found = false;
   const replace = (pattern: RegExp) => {
     masked = masked.replace(pattern, () => {
@@ -41,6 +48,7 @@ export function scanContactInfo(text: string, country: string): ContactScan {
   }
   replace(DIGIT_RUN);
   replace(HANDLE);
+  masked = masked.replace(SHIELDED, (_, index: string) => kept[Number(index)] ?? '');
   return { found, masked };
 }
 

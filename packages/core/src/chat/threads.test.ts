@@ -1,4 +1,6 @@
 import { prisma } from '@tiwa/db';
+import { notifyNewMessage } from './notify-message.js';
+import { threadPresence, touchPresence } from './presence.js';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { PRESETS } from '../auth/presets.js';
@@ -197,7 +199,7 @@ describe('sendMessage, receipts, edit and delete', () => {
     expect(await unreadTotal(teammate)).toBe(0);
   });
 
-  it('authors edit within 15 minutes and delete softly; others cannot', async () => {
+  it('authors edit within 15 minutes; nobody can delete (D-X37); others cannot edit', async () => {
     const { host, vendor, threadId } = await thread();
     const { messageId } = await sendMessage(host, { threadId, clientMessageId: cid(), body: 'Typo' });
     await editMessage(host, { messageId, body: 'Fixed' });
@@ -205,9 +207,49 @@ describe('sendMessage, receipts, edit and delete', () => {
     await expect(
       editMessage(host, { messageId, body: 'Late' }, new Date(Date.now() + 16 * 60_000)),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    await deleteMessage(host, { messageId });
+    await expect(deleteMessage(host, { messageId })).rejects.toBeInstanceOf(ForbiddenError);
     const view = (await listMessages(vendor.owner, threadId)).messages.find((m) => m.id === messageId);
-    expect(view).toMatchObject({ deleted: true, body: null });
+    expect(view).toMatchObject({ deleted: false, body: 'Fixed' });
+  });
+
+  it('shows the other side as online, then last seen (D-X37)', async () => {
+    const { host, vendor, threadId } = await thread();
+    const now = new Date();
+    expect((await threadPresence(host, threadId, now)).online).toBe(false);
+    await touchPresence(vendor.owner, now);
+    expect(await threadPresence(host, threadId, now)).toMatchObject({ online: true, lastSeenAt: now.toISOString() });
+    const later = new Date(now.getTime() + 5 * 60_000);
+    expect(await threadPresence(host, threadId, later)).toMatchObject({ online: false, lastSeenAt: now.toISOString() });
+  });
+
+  it('rings the bell for the other side once per unread conversation, masked (D-X37)', async () => {
+    const { host, vendor, threadId } = await thread();
+    const first = await sendMessage(host, {
+      threadId,
+      clientMessageId: cid(),
+      body: 'Call me on 0803 123 4567',
+      acknowledgeContactWarning: true,
+    });
+    expect((await notifyNewMessage(first.messageId)).notified).toBe(1);
+    const second = await sendMessage(host, { threadId, clientMessageId: cid(), body: 'Are you free on 2026-11-03?' });
+    expect((await notifyNewMessage(second.messageId)).notified).toBe(0);
+    const rows = await prisma.notification.findMany({ where: { userId: vendor.owner.userId, type: 'chat.message' } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.body).not.toContain('0803');
+    expect(rows[0]?.url).toBe(`/inbox/${threadId}`);
+  });
+
+  it('replies quote the original message (WhatsApp-style)', async () => {
+    const { host, vendor, threadId } = await thread();
+    const { messageId } = await sendMessage(host, { threadId, clientMessageId: cid(), body: 'Can you do 70 guests?' });
+    const reply = await sendMessage(vendor.owner, {
+      threadId,
+      clientMessageId: cid(),
+      body: 'Yes we can',
+      replyToId: messageId,
+    });
+    const view = (await listMessages(host, threadId)).messages.find((m) => m.id === reply.messageId);
+    expect(view?.replyTo).toMatchObject({ mine: true, body: 'Can you do 70 guests?', attachment: false });
   });
 
   it('strangers get NOT_FOUND; a block stops further messages both ways', async () => {

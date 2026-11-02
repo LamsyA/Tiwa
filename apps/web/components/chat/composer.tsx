@@ -17,6 +17,7 @@ export function Composer({
   onAttach,
   disabled,
   initial = '',
+  focusSignal = null,
 }: {
   onSend: (body: string) => void;
   onTyping?: () => void;
@@ -24,6 +25,8 @@ export function Composer({
   onAttach?: (files: File[]) => void;
   disabled?: boolean;
   initial?: string;
+  /** Changes when the user picks a message to reply to: focus the box (text is kept). */
+  focusSignal?: string | null;
 }) {
   const t = useTranslations('inbox');
   const [body, setBody] = React.useState(initial);
@@ -39,6 +42,10 @@ export function Composer({
     viewport.addEventListener('resize', onResize);
     return () => viewport.removeEventListener('resize', onResize);
   }, []);
+
+  React.useEffect(() => {
+    if (focusSignal) ref.current?.focus();
+  }, [focusSignal]);
 
   function submit() {
     const text = body.trim();

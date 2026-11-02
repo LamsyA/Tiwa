@@ -58,6 +58,7 @@ model User {
   notifications       Notification[]
   notificationPreference NotificationPreference?
   pushSubscriptions   PushSubscription[]
+  lastSeenAt  DateTime? // presence: refreshed while the app is open (chat "online" / "last seen", D-X37)
 }
 
 enum AdminRole {

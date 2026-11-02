@@ -97,6 +97,7 @@ export function useChatSender(onRejected: (message: PendingMessage) => void) {
           clientMessageId: message.clientMessageId,
           ...(message.body ? { body: message.body } : {}),
           ...(message.attachments?.length ? { attachments: message.attachments } : {}),
+          ...(message.replyToId ? { replyToId: message.replyToId } : {}),
           ...(message.acknowledgeContactWarning ? { acknowledgeContactWarning: true } : {}),
         });
         if (result.ok) return 'sent';
@@ -122,13 +123,14 @@ export function useChatSender(onRejected: (message: PendingMessage) => void) {
   }, [pending.length, flush]);
 
   const send = React.useCallback(
-    async (threadId: string, body: string, attachments: PendingAttachment[] = []) => {
+    async (threadId: string, body: string, attachments: PendingAttachment[] = [], replyToId?: string) => {
       store.current ??= defaultOutboxStore();
       const message: PendingMessage = {
         clientMessageId: newClientMessageId(),
         threadId,
         body,
         ...(attachments.length ? { attachments } : {}),
+        ...(replyToId ? { replyToId } : {}),
         createdAt: Date.now(),
         attempts: 0,
       };

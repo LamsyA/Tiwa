@@ -191,6 +191,8 @@ export interface MessageView {
   edited: boolean;
   isDecision: boolean;
   replyToId: string | null;
+  /** Preview of the quoted message for a reply (same masking as the message itself). */
+  replyTo: { authorName: string | null; mine: boolean; body: string | null; attachment: boolean } | null;
   mentions: string[];
   /** Files on the message; fetched through the participant-checked attachment route. */
   attachments: { name: string; mime: string; sizeBytes: number }[];
@@ -212,8 +214,11 @@ export async function listMessages(actor: UserActor, threadId: string, before?: 
     take: PAGE_SIZE + 1,
   });
   const page = messages.slice(0, PAGE_SIZE);
+  const replyIds = [...new Set(page.map((m) => m.replyToId).filter((id): id is string => Boolean(id)))];
+  const quoted = replyIds.length ? await prisma.message.findMany({ where: { id: { in: replyIds }, threadId } }) : [];
+  const quotedById = new Map(quoted.map((m) => [m.id, m]));
   const authors = await prisma.user.findMany({
-    where: { id: { in: [...new Set(page.map((m) => m.authorUserId))] } },
+    where: { id: { in: [...new Set([...page, ...quoted].map((m) => m.authorUserId))] } },
     select: { id: true, name: true, phone: true },
   });
   const nameOf = new Map(authors.map((a) => [a.id, a.name && a.name !== a.phone ? a.name : null]));
@@ -237,6 +242,16 @@ export async function listMessages(actor: UserActor, threadId: string, before?: 
       edited: m.editedAt !== null,
       isDecision: m.isDecision,
       replyToId: m.replyToId,
+      replyTo: (() => {
+        const target = m.replyToId ? quotedById.get(m.replyToId) : undefined;
+        if (!target) return null;
+        return {
+          authorName: nameOf.get(target.authorUserId) ?? null,
+          mine: target.authorUserId === actor.userId,
+          body: visibleBody(target, actor.userId),
+          attachment: (target.attachments as unknown[]).length > 0,
+        };
+      })(),
       mentions: m.mentions,
       // Keys stay server-side; the client asks for file N of a message.
       attachments: m.deletedAt

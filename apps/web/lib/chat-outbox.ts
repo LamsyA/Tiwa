@@ -16,6 +16,8 @@ export interface PendingMessage {
   body: string;
   /** Already uploaded to storage; sent with the message (lean chat files, D-X20). */
   attachments?: PendingAttachment[];
+  /** Quoted message this is a reply to (WhatsApp-style replies). */
+  replyToId?: string;
   /** The server asked for the contact-details warning (§9a.3); waits for the user's answer. */
   needsContactAck?: boolean;
   /** The user chose "Send anyway". */

@@ -1679,7 +1679,13 @@
     "newChatEmpty": "No business called “{q}” yet.",
     "newChatHint": "Type at least 2 letters, e.g. @bisi-chops",
     "kindPlanner": "Planner",
-    "kindVendor": "Vendor"
+    "kindVendor": "Vendor",
+    "online": "online",
+    "lastSeen": "last seen {when}",
+    "reply": "Reply",
+    "them": "Them",
+    "cancelReply": "Cancel reply",
+    "attachmentShort": "📎 Attachment"
   },
   "quotes": {
     "categoryTitle": "{category} quotes",

@@ -31,6 +31,15 @@ describe('scanContactInfo (Backend.md §9a.3)', () => {
     expect(scan.masked).toBe(`Text ${MASK} or ${MASK}, or ${MASK}`);
   });
 
+  it('never masks dates or times, but still masks a phone next to them', () => {
+    const date = scanContactInfo('Hi, are you available on 2026-11-03 for about 70 guests?', 'NG');
+    expect(date).toEqual({ found: false, masked: 'Hi, are you available on 2026-11-03 for about 70 guests?' });
+    expect(scanContactInfo('Party on 03/11/2026 at 14:30, 150 guests', 'NG').found).toBe(false);
+    const mixed = scanContactInfo('On 2026-11-03 call 0803 123 4567', 'NG');
+    expect(mixed.masked).toBe('On 2026-11-03 call ••••');
+    expect(scanContactInfo('0803-123-4567', 'NG').found).toBe(true);
+  });
+
   it('detects links', () => {
     expect(containsLink('see https://example.com/promo')).toBe(true);
     expect(containsLink('see www.example.com')).toBe(true);

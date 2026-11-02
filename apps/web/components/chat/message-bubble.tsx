@@ -17,6 +17,8 @@ export interface BubbleMessage {
   isDecision: boolean;
   createdAt: string;
   attachments?: { name: string; mime: string; sizeBytes: number }[];
+  /** Quoted message this replies to. */
+  replyTo?: { authorName: string | null; mine: boolean; body: string | null; attachment: boolean } | null;
 }
 
 function time(iso: string): string {
@@ -31,7 +33,7 @@ export function MessageBubble({
   canEdit,
   canDecide,
   onEdit,
-  onDelete,
+  onReply,
   onDecision,
   onReport,
   /** Pending (not yet stored) messages show names only; stored ones link to the participant-checked route. */
@@ -44,14 +46,14 @@ export function MessageBubble({
   canEdit: boolean;
   canDecide: boolean;
   onEdit?: () => void;
-  onDelete?: () => void;
+  onReply?: () => void;
   onDecision?: () => void;
   onReport?: () => void;
 }) {
   const t = useTranslations('inbox');
   const items = [
+    ...(onReply ? [{ label: t('reply'), onSelect: onReply }] : []),
     ...(canEdit && onEdit ? [{ label: t('edit'), onSelect: onEdit }] : []),
-    ...(canEdit && onDelete ? [{ label: t('delete'), onSelect: onDelete }] : []),
     ...(canDecide && onDecision && !message.deleted ? [{ label: t('markDecision'), onSelect: onDecision }] : []),
     ...(onReport ? [{ label: t('report'), onSelect: onReport }] : []),
   ];
@@ -93,6 +95,21 @@ export function MessageBubble({
       >
         {showAuthor && !message.mine && message.authorName && (
           <p className="text-brand-strong mb-0.5 text-[13px] font-semibold">{message.authorName}</p>
+        )}
+        {message.replyTo && !message.deleted && (
+          <div
+            className={cn(
+              'mb-1 rounded-md border-l-4 px-2 py-1 text-[13px]',
+              message.mine ? 'border-white/70 bg-black/10' : 'border-[var(--chat-accent)] bg-black/5',
+            )}
+          >
+            <p className="font-semibold text-[var(--chat-accent)]">
+              {message.replyTo.mine ? t('you') : (message.replyTo.authorName ?? t('them'))}
+            </p>
+            <p className="line-clamp-2 opacity-80">
+              {message.replyTo.body ?? (message.replyTo.attachment ? t('attachmentShort') : t('deleted'))}
+            </p>
+          </div>
         )}
         {message.isDecision && (
           <p className="mb-0.5 flex items-center gap-1 text-xs font-semibold">
