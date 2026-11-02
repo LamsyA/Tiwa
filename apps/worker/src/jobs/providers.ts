@@ -2,11 +2,14 @@ import { env } from '@tiwa/config';
 import {
   CloudWhatsApp,
   FakeEmail,
+  FakePush,
   FakeSms,
   FakeWhatsApp,
   ResendEmail,
   TermiiSms,
+  WebPush,
   type EmailProvider,
+  type PushProvider,
   type SmsProvider,
   type WhatsAppProvider,
 } from '@tiwa/messaging';
@@ -18,6 +21,7 @@ export interface Providers {
   email: EmailProvider;
   sms: SmsProvider;
   whatsapp: WhatsAppProvider;
+  push: PushProvider;
 }
 
 const globalProviders = globalThis as unknown as { __tiwaProviders?: Providers };
@@ -36,6 +40,13 @@ export function providers(): Providers {
       env.WHATSAPP_PROVIDER === 'cloud' && env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID
         ? new CloudWhatsApp({ token: env.WHATSAPP_TOKEN, phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID })
         : new FakeWhatsApp(),
+    push:
+      env.WEB_PUSH_VAPID_PUBLIC_KEY && env.WEB_PUSH_VAPID_PRIVATE_KEY
+        ? new WebPush({
+            vapidPublicKey: env.WEB_PUSH_VAPID_PUBLIC_KEY,
+            vapidPrivateKey: env.WEB_PUSH_VAPID_PRIVATE_KEY,
+          })
+        : new FakePush(),
   };
   return globalProviders.__tiwaProviders;
 }

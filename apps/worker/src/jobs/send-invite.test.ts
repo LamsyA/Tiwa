@@ -3,14 +3,14 @@ import { addGuests } from '@tiwa/core';
 import { createInviteBatch, sendInviteBatch } from '@tiwa/core';
 import { enableInvites } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { FakeEmail, FakeSms, FakeWhatsApp } from '@tiwa/messaging';
+import { FakeEmail, FakePush, FakeSms, FakeWhatsApp } from '@tiwa/messaging';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setProvidersForTests } from './providers.js';
 import { handleInviteBatchQueued, handleSendInvite } from './send-invite.js';
 
 const users: string[] = [];
 const events: string[] = [];
-let fakes: { email: FakeEmail; sms: FakeSms; whatsapp: FakeWhatsApp };
+let fakes: { email: FakeEmail; sms: FakeSms; whatsapp: FakeWhatsApp; push: FakePush };
 
 const fakeLog = { info: () => undefined } as unknown as Parameters<typeof handleSendInvite>[1];
 
@@ -58,7 +58,7 @@ async function batchFixture(channels: ('WHATSAPP' | 'EMAIL' | 'SMS' | 'LINK')[] 
 }
 
 beforeEach(() => {
-  fakes = { email: new FakeEmail(), sms: new FakeSms(), whatsapp: new FakeWhatsApp() };
+  fakes = { email: new FakeEmail(), sms: new FakeSms(), whatsapp: new FakeWhatsApp(), push: new FakePush() };
   setProvidersForTests(fakes);
 });
 

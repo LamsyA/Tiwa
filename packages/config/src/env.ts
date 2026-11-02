@@ -61,6 +61,7 @@ const envSchema = z
     WHATSAPP_PHONE_NUMBER_ID: optString(),
     WHATSAPP_VERIFY_TOKEN: optString(),
     WHATSAPP_APP_SECRET: optString(),
+    WHATSAPP_NOTIFY_TEMPLATE: z.string().default('tiwa_notify'),
     WEB_PUSH_VAPID_PUBLIC_KEY: optString(),
     WEB_PUSH_VAPID_PRIVATE_KEY: optString(),
 

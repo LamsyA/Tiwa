@@ -19,3 +19,12 @@ export { ZipEmail, type ZipEmailProps } from './templates/zip.js';
 export { ExpiryEmail, type ExpiryEmailProps } from './templates/expiry.js';
 export { ReminderEmail, type ReminderEmailProps } from './templates/reminder.js';
 export { UpdateEmail, type UpdateEmailProps } from './templates/update.js';
+export { NotifyEmail, type NotifyEmailProps } from './templates/notify.js';
+export type {
+  PushProvider,
+  PushSendInput,
+  PushSendResult,
+  PushSubscriptionJSON,
+  WebPushConfig,
+} from './push.js';
+export { FakePush, WebPush } from './push.js';

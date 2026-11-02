@@ -10,6 +10,7 @@ import {
 } from './media.js';
 import { MEDIA_ZIP_JOB, handleZip } from './zip.js';
 import { INVITE_BATCH_QUEUED_TOPIC, handleInviteBatchQueued, type FanOutSink } from './send-invite.js';
+import { NOTIFY_TOPIC, handleNotify } from './notify.js';
 
 type Log = ReturnType<typeof createLogger>;
 
@@ -30,6 +31,8 @@ async function syncTeam(data: unknown, log: Log, topic: string) {
 export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanOutSink) => Promise<unknown>> = {
   [GUESTS_IMPORT_TOPIC]: async (data, log) => handleGuestCsvImport(data, log),
   [INVITE_BATCH_QUEUED_TOPIC]: async (data, log, sink) => handleInviteBatchQueued(data, log, sink),
+  // One notification pipeline (P13-T03): preferences + quiet hours applied at send time.
+  [NOTIFY_TOPIC]: async (data, log) => handleNotify(data, log),
   [MEDIA_PROCESS_IMAGE_TOPIC]: async (data, log, sink) => handleProcessImage(data, log, sink),
   [MEDIA_PROCESS_VIDEO_TOPIC]: async (data, log, sink) => handleProcessVideo(data, log, sink),
   [MEDIA_WATERMARK_JOB]: async (data, log) => handleWatermark(data, log),
