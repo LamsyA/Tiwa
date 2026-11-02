@@ -94,4 +94,5 @@ export * from './tickets/orders.js';
 export * from './tickets/queries.js';
 export * from './checkin/checkin.js';
 export * from './day/day.js';
+export * from './day/progress.js';
 export * from './events/ai-plan.js';
