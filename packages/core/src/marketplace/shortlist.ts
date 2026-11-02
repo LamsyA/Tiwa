@@ -39,6 +39,7 @@ export async function listShortlist(actor: UserActor, input: z.infer<typeof list
       name: true,
       slug: true,
       kind: true,
+      verification: true,
       profile: {
         select: {
           categories: true,
@@ -48,6 +49,8 @@ export async function listShortlist(actor: UserActor, input: z.infer<typeof list
           ratingAvg: true,
           ratingCount: true,
           published: true,
+          bio: true,
+          availabilityConfirmedAt: true,
         },
       },
     },

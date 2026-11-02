@@ -3,6 +3,7 @@ import { prisma, type BookingStatus, type QuoteStatus } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg } from '../auth/org.js';
+import { requireEventAccess } from '../events/access.js';
 import { NotFoundError } from '../shared/errors.js';
 
 // Order tracking (D-X35): one view of every enquiry → quote → booking, for
@@ -250,5 +251,15 @@ export async function myEventOrders(actor: UserActor, now = new Date()) {
   const rows = events.length
     ? await buildOrders({ eventId: { in: events.map((row) => row.eventId) } }, 'client', now)
     : [];
+  return { rows, counts: countByStage(rows) };
+}
+
+export const eventOrdersSchema = z.object({ eventId: z.string().uuid() });
+
+/** One event's vendor orders (event vendors page). */
+export async function eventOrders(actor: UserActor, raw: z.input<typeof eventOrdersSchema>, now = new Date()) {
+  const input = eventOrdersSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'event.view');
+  const rows = await buildOrders({ eventId: { in: [input.eventId] } }, 'client', now);
   return { rows, counts: countByStage(rows) };
 }

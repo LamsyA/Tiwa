@@ -1,7 +1,7 @@
 import { prisma } from '@tiwa/db';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
-import { myEventOrders, stageForBooking, vendorOrders } from './tracker.js';
+import { eventOrders, myEventOrders, stageForBooking, vendorOrders } from './tracker.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 const RUN = String(Date.now()).slice(-7);
@@ -116,6 +116,11 @@ describe('order tracker (D-X35)', () => {
     expect(mine).toHaveLength(3);
     expect(mine[0]?.counterparty).toBe(`Track Foods ${RUN}`);
     expect(counts.booked).toBeGreaterThanOrEqual(1);
+  });
+
+  it('lists one event for its team and refuses outsiders', async () => {
+    expect((await eventOrders(host, { eventId })).rows).toHaveLength(3);
+    await expect(eventOrders(outsider, { eventId })).rejects.toThrow();
   });
 
   it('refuses vendors that are not mine', async () => {
