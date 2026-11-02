@@ -13,6 +13,8 @@ export type {
   MilestoneKind,
   MilestoneState,
   BookingStatus,
+  CheckInResult,
+  TicketOrderStatus,
   OrgKind,
   OrgRole,
   PaymentMode,

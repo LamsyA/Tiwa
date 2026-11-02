@@ -78,10 +78,10 @@ model Organization {
   deletedAt     DateTime?
   members       Membership[]
   profile       BusinessProfile?
-  clients       Client[]         @relation("OrgClients")
-  proposals     Proposal[]       @relation("OrgProposals")
-  invoices      Invoice[]        @relation("OrgInvoices")
-  vendorBook    VendorBookEntry[] @relation("OrgVendorBook")
+  clients       Client[]           @relation("OrgClients")
+  proposals     Proposal[]         @relation("OrgProposals")
+  invoices      Invoice[]          @relation("OrgInvoices")
+  vendorBook    VendorBookEntry[]  @relation("OrgVendorBook")
   // bankAccounts BankAccount[] — arrives with P8 (BankAccount model)
 }
 
@@ -139,6 +139,8 @@ model Event {
   plannedBudgetMinor     BigInt             @default(0) // total budget; "unallocated" = this − sum(BudgetCategory.plannedMinor)
   invitesEnabled         Boolean            @default(false)
   ticketsEnabled         Boolean            @default(false)
+  ticketsPublished       Boolean            @default(false)
+  registrationQuestions  Json               @default("[]")
   momentsEnabled         Boolean            @default(true)
   sharedLinkEnabled      Boolean            @default(false)
   allowForwarding        Boolean            @default(true)
@@ -166,6 +168,11 @@ model Event {
   quotes                 Quote[]
   bookings               Booking[]
   siteVisits             SiteVisit[]
+  ticketTypes            TicketType[]
+  promoCodes             PromoCode[]
+  ticketOrders           TicketOrder[]
+  checkIns               CheckIn[]
+  waitlist               WaitlistEntry[]
 
   @@index([status, startsAt])
   @@index([createdById])
@@ -730,6 +737,126 @@ enum DeliveryStatus {
   SENT_MANUALLY
 }
 
+// ───────────── Tickets & check-in (Backend.md §3, P11-T01) ─────────────
+// Public agenda is ProgrammeItem (isPublic = true); no separate agenda model (D-D04).
+
+model TicketType {
+  id          String    @id @default(uuid(7))
+  eventId     String
+  name        String
+  description String?
+  priceMinor  BigInt    @default(0)
+  currency    String
+  quantity    Int
+  sold        Int       @default(0) // cache: PAID tickets
+  reserved    Int       @default(0) // cache: live RESERVED holds
+  maxPerOrder Int       @default(10)
+  salesStart  DateTime?
+  salesEnd    DateTime?
+  sortOrder   Int       @default(0)
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, sortOrder])
+}
+
+model PromoCode {
+  id             String    @id @default(uuid(7))
+  eventId        String
+  code           String
+  percentOff     Int? // 0–100
+  amountOffMinor BigInt?
+  maxUses        Int?
+  used           Int       @default(0)
+  expiresAt      DateTime?
+  event          Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, code])
+  @@index([eventId])
+}
+
+model TicketOrder {
+  id            String            @id @default(uuid(7))
+  eventId       String
+  buyerName     String
+  buyerEmail    String            @db.Citext
+  buyerPhone    String?
+  items         Json // [{ticketTypeId, qty, unitMinor: string}]
+  subtotalMinor BigInt
+  discountMinor BigInt            @default(0)
+  feeMinor      BigInt            @default(0)
+  totalMinor    BigInt
+  currency      String
+  status        TicketOrderStatus @default(RESERVED)
+  reservedUntil DateTime
+  promoCodeId   String?
+  answers       Json              @default("{}")
+  createdAt     DateTime          @default(now())
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets       Ticket[]
+
+  @@index([eventId, status])
+  @@index([status, reservedUntil])
+  @@index([eventId, createdAt])
+}
+
+enum TicketOrderStatus {
+  RESERVED
+  PAID
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+model Ticket {
+  id           String      @id @default(uuid(7))
+  orderId      String
+  ticketTypeId String
+  eventId      String // denormalised for fast check-in stats (source: order.eventId)
+  holderName   String
+  holderEmail  String?     @db.Citext
+  qrToken      String      @unique
+  checkedInAt  DateTime? // cache of the first OK CheckIn row (CheckIn keeps the log)
+  order        TicketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([ticketTypeId])
+  @@index([eventId, checkedInAt])
+}
+
+model CheckIn {
+  id        String        @id @default(uuid(7))
+  eventId   String
+  ticketId  String?
+  guestId   String?
+  deviceId  String
+  scannedAt DateTime
+  byUserId  String
+  result    CheckInResult
+  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, scannedAt])
+  @@index([ticketId])
+  @@index([guestId])
+}
+
+enum CheckInResult {
+  OK
+  DUPLICATE
+  INVALID
+}
+
+model WaitlistEntry {
+  id        String   @id @default(uuid(7))
+  eventId   String
+  email     String   @db.Citext
+  name      String?
+  qty       Int      @default(1)
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+}
+
 // ───────────── Marketplace (Backend.md §3, P6-T01) ─────────────
 // One public profile per business. Organization.kind (PLANNER | VENDOR) says which kind it is.
 
@@ -926,10 +1053,10 @@ enum QuoteStatus {
 }
 
 model Booking {
-  id             String        @id @default(uuid(7))
+  id             String             @id @default(uuid(7))
   eventId        String
   vendorOrgId    String
-  quoteId        String?       @unique // null for instant bookings (no quote step, P7-T10)
+  quoteId        String?            @unique // null for instant bookings (no quote step, P7-T10)
   category       String
   spaceId        String? // venue bookings
   serviceDate    DateTime?          @db.Date
@@ -1037,8 +1164,8 @@ model PaymentMilestone {
   state                 MilestoneState @default(SCHEDULED)
   paidAt                DateTime?
   releasedAt            DateTime?
-  createdAt             DateTime      @default(now())
-  booking               Booking       @relation(fields: [bookingId], references: [id])
+  createdAt             DateTime       @default(now())
+  booking               Booking        @relation(fields: [bookingId], references: [id])
   payments              Payment[]
 
   @@index([state, releaseAt])
@@ -1076,28 +1203,28 @@ enum MilestoneState {
 // vendor confirms. Online checkout (providerTxnId, fees, expiry) arrives
 // with the deferred provider tasks.
 model Payment {
-  id             String         @id @default(uuid(7))
-  purpose        PaymentPurpose
-  milestoneId    String?
-  payerUserId    String?
-  amountMinor    BigInt
-  feeMinor       BigInt         @default(0)
-  currency       String
-  provider       String
-  providerRef    String         @unique
-  providerTxnId  String?
-  status         PaymentStatus  @default(PENDING)
-  mode           PaymentMode
-  expiresAt      DateTime?
-  paidAt         DateTime?
-  offlineMethod  String? // bank_transfer | cash | pos | other
-  receiptKey     String? // private bucket
-  note           String?
-  recordedById   String?
-  confirmedById  String?
-  confirmedAt    DateTime?
-  createdAt      DateTime       @default(now())
-  milestone      PaymentMilestone? @relation(fields: [milestoneId], references: [id])
+  id            String            @id @default(uuid(7))
+  purpose       PaymentPurpose
+  milestoneId   String?
+  payerUserId   String?
+  amountMinor   BigInt
+  feeMinor      BigInt            @default(0)
+  currency      String
+  provider      String
+  providerRef   String            @unique
+  providerTxnId String?
+  status        PaymentStatus     @default(PENDING)
+  mode          PaymentMode
+  expiresAt     DateTime?
+  paidAt        DateTime?
+  offlineMethod String? // bank_transfer | cash | pos | other
+  receiptKey    String? // private bucket
+  note          String?
+  recordedById  String?
+  confirmedById String?
+  confirmedAt   DateTime?
+  createdAt     DateTime          @default(now())
+  milestone     PaymentMilestone? @relation(fields: [milestoneId], references: [id])
 
   @@index([status, createdAt])
   @@index([milestoneId])
@@ -1123,15 +1250,15 @@ enum PaymentStatus {
 // ───────────── Planner workspace (Backend.md §3; P10-T01) ─────────────
 
 model Client {
-  id        String    @id @default(uuid(7))
+  id        String       @id @default(uuid(7))
   orgId     String
   name      String
   phone     String?
-  email     String?   @db.Citext
+  email     String?      @db.Citext
   notes     String?
-  stage     LeadStage @default(ENQUIRY)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  stage     LeadStage    @default(ENQUIRY)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   org       Organization @relation("OrgClients", fields: [orgId], references: [id], onDelete: Cascade)
   proposals Proposal[]
   invoices  Invoice[]
@@ -1147,7 +1274,7 @@ enum LeadStage {
 }
 
 model Proposal {
-  id         String   @id @default(uuid(7))
+  id         String       @id @default(uuid(7))
   orgId      String
   clientId   String
   eventId    String?
@@ -1155,9 +1282,9 @@ model Proposal {
   body       Json
   totalMinor BigInt
   currency   String
-  status     String   @default("DRAFT") // DRAFT | SENT | ACCEPTED | DECLINED
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  status     String       @default("DRAFT") // DRAFT | SENT | ACCEPTED | DECLINED
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
   org        Organization @relation("OrgProposals", fields: [orgId], references: [id], onDelete: Cascade)
   client     Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
@@ -1166,7 +1293,7 @@ model Proposal {
 }
 
 model Invoice {
-  id         String   @id @default(uuid(7))
+  id         String       @id @default(uuid(7))
   orgId      String
   clientId   String?
   eventId    String?
@@ -1175,9 +1302,9 @@ model Invoice {
   totalMinor BigInt
   currency   String
   dueAt      DateTime
-  status     String   @default("DRAFT") // DRAFT | SENT | PAID | VOID
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  status     String       @default("DRAFT") // DRAFT | SENT | PAID | VOID
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
   org        Organization @relation("OrgInvoices", fields: [orgId], references: [id], onDelete: Cascade)
   client     Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
@@ -1186,7 +1313,7 @@ model Invoice {
 }
 
 model VendorBookEntry {
-  id           String  @id @default(uuid(7))
+  id           String       @id @default(uuid(7))
   plannerOrgId String
   vendorOrgId  String?
   name         String
@@ -1194,8 +1321,8 @@ model VendorBookEntry {
   category     String
   notes        String?
   rateNote     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   org          Organization @relation("OrgVendorBook", fields: [plannerOrgId], references: [id], onDelete: Cascade)
 
   @@index([plannerOrgId, category])
