@@ -9,7 +9,11 @@
     "title": "Home",
     "emptyTitle": "Nothing planned yet",
     "emptyBody": "Create your first event and invite the people helping you.",
-    "createEvent": "Create an event"
+    "createEvent": "Create an event",
+    "myEvents": "Your events",
+    "noDate": "Date to be set",
+    "guests": "{count, plural, one {# guest} other {# guests}}",
+    "draft": "Draft · finish setting up"
   },
   "errors": {
     "genericTitle": "Something went wrong",
@@ -2297,6 +2301,57 @@
       "planner": "Your clients, events and pipeline.",
       "vendorOrg": "Running {org}: enquiries, quotes and bookings.",
       "vendor": "Your enquiries, quotes and bookings."
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "vendorHeading": "Your orders",
+    "vendorBody": "Every request, quote and booking, and what to do next.",
+    "clientHeading": "Vendor orders",
+    "clientBody": "Track every vendor you've asked, booked and paid.",
+    "viewAll": "View all {count}",
+    "stagesLabel": "Order stages",
+    "stage": {
+      "all": "All",
+      "requested": "Requested",
+      "quoted": "Quoted",
+      "booked": "Booked",
+      "confirmed": "Confirmed",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "closed": "Closed"
+    },
+    "tile": {
+      "requested": "New requests",
+      "quoted": "Quotes awaiting reply",
+      "booked": "Awaiting payment",
+      "confirmed": "Confirmed jobs"
+    },
+    "editProfile": "Edit business profile",
+    "unknownParty": "Client",
+    "emptyVendor": "No orders yet",
+    "emptyVendorBody": "When hosts and planners request a quote or book you, it shows up here.",
+    "emptyClient": "No vendor orders yet",
+    "emptyClientBody": "Request a quote from a vendor and follow it here until the day.",
+    "next": {
+      "vendor": {
+        "requested": "Send a quote",
+        "quoted": "Waiting for client",
+        "booked": "Awaiting payment",
+        "confirmed": "Booked",
+        "delivered": "Awaiting sign-off",
+        "completed": "Done",
+        "closed": "Closed"
+      },
+      "client": {
+        "requested": "Waiting for quote",
+        "quoted": "Review quote",
+        "booked": "Pay to confirm",
+        "confirmed": "Booked",
+        "delivered": "Sign off",
+        "completed": "Done",
+        "closed": "Closed"
+      }
     }
   }
 }

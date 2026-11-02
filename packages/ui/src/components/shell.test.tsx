@@ -7,7 +7,8 @@ import { AppShell, navigationForRole } from './shell.js';
 describe('navigationForRole', () => {
   it('gives hosts, planners and vendors different destinations', () => {
     expect(navigationForRole('host').tabs.map((t) => t.key)).toEqual(['home', 'events', 'inbox', 'money', 'more']);
-    expect(navigationForRole('vendor').tabs.map((t) => t.key)).toContain('bookings');
+    expect(navigationForRole('vendor').tabs.map((t) => t.key)).toContain('orders');
+    expect(navigationForRole('vendor').sidebar.map((t) => t.key)).toContain('bookings');
     expect(navigationForRole('planner').sidebar.map((t) => t.key)).toContain('pipeline');
     expect(navigationForRole('host').sidebar.map((t) => t.key)).not.toContain('pipeline');
   });

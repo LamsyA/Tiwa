@@ -1,13 +1,14 @@
 import { prisma } from '@tiwa/db';
 import type { AppRole } from '@tiwa/ui';
-import { listClients, listMyOrgs, plannerDashboard, vendorDashboard } from '@tiwa/core';
+import { listClients, listMyOrgs, myEventOrders, plannerDashboard, vendorDashboard, vendorOrders } from '@tiwa/core';
 import { Badge, Card, EmptyState, StatCard, buttonClasses } from '@tiwa/ui';
-import { CalendarPlus, Plus, Users } from 'lucide-react';
+import { CalendarCheck, CalendarPlus, FileText, Inbox, Plus, Users, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { RoleBadge } from '@/components/account-menu.js';
 import { ROLE_TONE } from '@/components/role-tone.js';
 import { AppFrame } from '@/components/app-frame.js';
+import { OrdersBoard } from '@/components/orders/orders-board.js';
 import { requirePageUser } from '@/lib/ctx.js';
 
 async function RoleHero({ role, name, org }: { role: AppRole; name: string; org?: string | undefined }) {
@@ -42,6 +43,7 @@ export default async function HomePage() {
   const t = await getTranslations('home');
   const tp = await getTranslations('planner');
   const tv = await getTranslations('vendor');
+  const to = await getTranslations('orders');
   const [orgs, me] = await Promise.all([
     listMyOrgs(ctx.actor.userId),
     prisma.user.findUniqueOrThrow({ where: { id: ctx.actor.userId }, select: { name: true, phone: true } }),
@@ -51,58 +53,46 @@ export default async function HomePage() {
   const vendorOrg = !plannerOrg ? orgs.find((r) => r.org.kind === 'VENDOR')?.org : undefined;
 
   if (vendorOrg) {
-    const dash = await vendorDashboard(ctx.actor, { orgId: vendorOrg.id });
+    const [dash, orders] = await Promise.all([
+      vendorDashboard(ctx.actor, { orgId: vendorOrg.id }),
+      vendorOrders(ctx.actor, { orgId: vendorOrg.id }),
+    ]);
+    const tiles = [
+      { stage: 'requested', icon: Inbox },
+      { stage: 'quoted', icon: FileText },
+      { stage: 'booked', icon: Wallet },
+      { stage: 'confirmed', icon: CalendarCheck },
+    ] as const;
     return (
       <AppFrame userId={ctx.actor.userId} active="home" title={tv('title')}>
-        <div className="flex flex-col gap-4 py-2">
+        <div className="flex flex-col gap-6 py-2">
           <RoleHero role="vendor" name={myName} org={vendorOrg.name} />
-          <section aria-label={tv('title')} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <StatCard
-              label={tv('enquiriesHeading')}
-              value={String(dash.needsToday.openEnquiries)}
-              help={tv('viewQuotes')}
-            />
-            <StatCard
-              label={tv('upcomingHeading')}
-              value={String(dash.needsToday.upcomingBookings)}
-              help={tv('viewBookings')}
-            />
-            <StatCard
-              label={tv('paymentsHeading')}
-              value={String(dash.needsToday.awaitingPayment)}
-              help={tv('viewBookings')}
-            />
-          </section>
-          <Card className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="font-semibold">{tv('upcomingHeading')}</h2>
-              <Link href="/bookings" className={buttonClasses({ variant: 'ghost' })}>
-                {tp('viewAll')}
+          <section aria-label={to('stagesLabel')} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {tiles.map(({ stage, icon: Icon }) => (
+              <Link
+                key={stage}
+                href={`/orders?stage=${stage}`}
+                className="border-border/70 bg-surface group flex flex-col gap-3 rounded-3xl border p-4 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:p-5"
+              >
+                <span className="bg-brand-soft text-brand-strong flex size-10 items-center justify-center rounded-2xl">
+                  <Icon aria-hidden className="size-5" />
+                </span>
+                <span>
+                  <span className="font-display block text-3xl font-bold tracking-tight">{orders.counts[stage]}</span>
+                  <span className="text-muted text-sm">{to(`tile.${stage}`)}</span>
+                </span>
               </Link>
-            </div>
-            {dash.upcomingBookings.length === 0 ? (
-              <p className="text-muted text-sm">{tv('noBookings')}</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {dash.upcomingBookings.map((b) => (
-                  <li key={b.id} className="text-sm">
-                    <Link href="/quotes" className="text-brand-strong font-medium">
-                      {b.eventName}
-                    </Link>
-                    <span className="text-muted"> · {b.status}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {dash.doubleBookingWarnings.length > 0 && (
-              <p className="text-warning mt-2 text-sm">
-                {tv('warningsHeading')}: {dash.doubleBookingWarnings.map((w) => w.date).join(', ')}
-              </p>
-            )}
-          </Card>
+            ))}
+          </section>
+          {dash.doubleBookingWarnings.length > 0 && (
+            <p className="border-warning/40 bg-warning-soft text-warning rounded-2xl border px-4 py-3 text-sm font-medium">
+              {tv('warningsHeading')}: {dash.doubleBookingWarnings.map((w) => w.date).join(', ')}
+            </p>
+          )}
+          <OrdersBoard rows={orders.rows} counts={orders.counts} side="vendor" limit={6} />
           <div className="flex flex-wrap gap-2">
-            <Link href="/quotes" className={buttonClasses()}>
-              {tv('viewQuotes')}
+            <Link href="/business/profile" className={buttonClasses({ variant: 'secondary' })}>
+              {to('editProfile')}
             </Link>
             <Link href="/calendar" className={buttonClasses({ variant: 'secondary' })}>
               {tv('viewCalendar')}
@@ -114,28 +104,76 @@ export default async function HomePage() {
   }
 
   if (!plannerOrg) {
+    const [events, orders] = await Promise.all([
+      prisma.event.findMany({
+        where: {
+          deletedAt: null,
+          status: { not: 'CANCELLED' },
+          participants: { some: { userId: ctx.actor.userId, removedAt: null, role: { in: ['HOST', 'CO_HOST'] } } },
+        },
+        orderBy: [{ startsAt: { sort: 'asc', nulls: 'last' } }],
+        take: 6,
+        select: { id: true, name: true, status: true, startsAt: true, expectedGuests: true },
+      }),
+      myEventOrders(ctx.actor),
+    ]);
     return (
       <AppFrame userId={ctx.actor.userId} active="home" title={t('title')}>
-        <div className="flex flex-col gap-6 py-2">
+        <div className="flex flex-col gap-8 py-2">
           <RoleHero role="host" name={myName} />
-          <EmptyState
-            icon={<CalendarPlus className="size-8" aria-hidden />}
-            title={t('emptyTitle')}
-            body={t('emptyBody')}
-            action={
-              <Link href="/events/new" className={buttonClasses()}>
-                {t('createEvent')}
-              </Link>
-            }
-          />
+          {events.length === 0 ? (
+            <EmptyState
+              icon={<CalendarPlus className="size-8" aria-hidden />}
+              title={t('emptyTitle')}
+              body={t('emptyBody')}
+              action={
+                <Link href="/events/new" className={buttonClasses()}>
+                  {t('createEvent')}
+                </Link>
+              }
+            />
+          ) : (
+            <section aria-labelledby="my-events" className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h2 id="my-events" className="font-display text-xl font-bold tracking-tight">
+                  {t('myEvents')}
+                </h2>
+                <Link href="/events/new" className={buttonClasses({ size: 'sm', className: 'rounded-full' })}>
+                  <Plus aria-hidden className="size-4" />
+                  {t('createEvent')}
+                </Link>
+              </div>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {events.map((event) => (
+                  <li key={event.id}>
+                    <Link
+                      href={event.status === 'DRAFT' ? `/events/new?id=${event.id}` : `/events/${event.id}`}
+                      className="border-border/70 bg-surface flex h-full flex-col gap-2 rounded-3xl border p-5 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]"
+                    >
+                      <span className="font-display text-lg leading-tight font-bold">{event.name}</span>
+                      <span className="text-muted text-sm">
+                        {event.startsAt ? event.startsAt.toISOString().slice(0, 10) : t('noDate')}
+                        {event.expectedGuests ? ` · ${t('guests', { count: event.expectedGuests })}` : ''}
+                      </span>
+                      {event.status === 'DRAFT' && (
+                        <span className="text-warning mt-auto text-xs font-semibold">{t('draft')}</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {orders.rows.length > 0 && <OrdersBoard rows={orders.rows} counts={orders.counts} side="client" limit={5} />}
         </div>
       </AppFrame>
     );
   }
 
-  const [dash, clients] = await Promise.all([
+  const [dash, clients, orders] = await Promise.all([
     plannerDashboard(ctx.actor, { orgId: plannerOrg.id }),
     listClients(ctx.actor, { orgId: plannerOrg.id }),
+    myEventOrders(ctx.actor),
   ]);
 
   return (
@@ -196,6 +234,8 @@ export default async function HomePage() {
           </div>
           {clients.length === 0 && <p className="text-muted mt-2 text-sm">{tp('emptyClients')}</p>}
         </Card>
+
+        <OrdersBoard rows={orders.rows} counts={orders.counts} side="client" limit={5} />
 
         <div className="flex flex-wrap gap-2">
           <Link href="/events/new" className={buttonClasses()}>

@@ -2,6 +2,7 @@
 
 import {
   Briefcase,
+  ClipboardList,
   CalendarDays,
   Home,
   Inbox,
@@ -41,6 +42,7 @@ const ICON = {
   bookings: <Briefcase className="size-5" aria-hidden />,
   settings: <Settings className="size-5" aria-hidden />,
   overview: <LayoutGrid className="size-5" aria-hidden />,
+  orders: <ClipboardList className="size-5" aria-hidden />,
 };
 
 /** Navigation config by role (Frontend.md §5.4). Single source of truth. */
@@ -59,6 +61,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
           item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
           item('clients', 'Clients', '/clients', ICON.clients),
+          item('orders', 'Vendor orders', '/orders', ICON.orders),
           item('pipeline', 'Pipeline', '/pipeline', ICON.pipeline),
           item('calendar', 'Calendar', '/calendar', ICON.events),
           item('vendors', 'Vendor book', '/vendors', ICON.bookings),
@@ -71,13 +74,14 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
       return {
         tabs: [
           item('home', 'Home', '/home', ICON.home),
+          item('orders', 'Orders', '/orders', ICON.orders),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
-          item('bookings', 'Bookings', '/bookings', ICON.bookings),
           item('calendar', 'Calendar', '/calendar', ICON.events),
           item('more', 'More', '/more', ICON.more),
         ],
         sidebar: [
           item('home', 'Home', '/home', ICON.home),
+          item('orders', 'Orders', '/orders', ICON.orders),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('quotes', 'Quotes', '/quotes', ICON.money),
           item('bookings', 'Bookings', '/bookings', ICON.bookings),
@@ -100,6 +104,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
         sidebar: [
           item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
+          item('orders', 'Vendor orders', '/orders', ICON.orders),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('money', 'Money', '/money', ICON.money),
           item('settings', 'Settings', '/settings', ICON.settings),
