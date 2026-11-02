@@ -205,15 +205,7 @@ export const EVENT_TYPES: EventTypeTemplate[] = [
       { key: 'media', label: 'Photo and video', percent: 5 },
       { key: 'misc', label: 'Other', percent: 10 },
     ],
-    vendorCategories: [
-      'venue',
-      'rentals',
-      'catering',
-      'printing',
-      'souvenirs',
-      'photography',
-      'live_band',
-    ],
+    vendorCategories: ['venue', 'rentals', 'catering', 'printing', 'souvenirs', 'photography', 'live_band'],
     programme: [
       { key: 'service_of_songs', title: 'Service of songs', offsetMinutes: 0, durationMinutes: 120 },
       { key: 'funeral_service', title: 'Funeral service', durationMinutes: 120 },
@@ -387,5 +379,29 @@ export const EVENT_TYPES: EventTypeTemplate[] = [
       { key: 'main_programme', title: 'Main programme', offsetMinutes: 30, durationMinutes: 120 },
       { key: 'closing', title: 'Closing and refreshments', offsetMinutes: 150 },
     ],
+  })),
+
+  // ───────── Something else (the host names the type) ─────────
+  ...(
+    [
+      ['custom_private', 'PRIVATE_CELEBRATION', PARTY_BUDGET, PRIVATE_FEATURES],
+      ['custom_corporate', 'CORPORATE', CORPORATE_BUDGET, { invites: true, moments: true, tickets: false }],
+      ['custom_public', 'PUBLIC_TICKETED', TICKETED_BUDGET, { invites: false, moments: true, tickets: true }],
+      ['custom_community', 'COMMUNITY', COMMUNITY_BUDGET, { invites: true, moments: true, tickets: false }],
+    ] as const
+  ).map(([key, format, budget, features]): EventTypeTemplate => ({
+    key,
+    format,
+    label: 'Event',
+    blurb: 'Your own kind of event',
+    nameSuggestion: "{name}'s event",
+    defaultDurationHours: 4,
+    days: 1,
+    features,
+    checklist: [...PLANNING_BASICS, ...CATERING, ...GUESTS, ...DAY_OF, ...AFTER],
+    budget,
+    vendorCategories: ['venue', 'catering', 'decor', 'photography', 'mc', 'sound_lighting'],
+    programme: [{ key: 'main', title: 'Main programme', offsetMinutes: 0 }],
+    custom: true,
   })),
 ];

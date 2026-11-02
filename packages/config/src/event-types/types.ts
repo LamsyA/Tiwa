@@ -70,4 +70,6 @@ export interface EventTypeTemplate {
   budget: BudgetSplit[];
   vendorCategories: string[];
   programme: ProgrammeTemplate[];
+  /** Fallback for a type the host names themselves; hidden from the picker cards. */
+  custom?: boolean;
 }

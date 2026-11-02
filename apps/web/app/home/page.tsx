@@ -1,10 +1,39 @@
+import { prisma } from '@tiwa/db';
+import type { AppRole } from '@tiwa/ui';
 import { listClients, listMyOrgs, plannerDashboard, vendorDashboard } from '@tiwa/core';
 import { Badge, Card, EmptyState, StatCard, buttonClasses } from '@tiwa/ui';
 import { CalendarPlus, Plus, Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { ROLE_TONE, RoleBadge } from '@/components/account-menu.js';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
+
+async function RoleHero({ role, name, org }: { role: AppRole; name: string; org?: string | undefined }) {
+  const t = await getTranslations('account');
+  const tone = ROLE_TONE[role];
+  return (
+    <section
+      className="relative overflow-hidden rounded-3xl p-6 text-white shadow-[var(--shadow-2)] sm:p-8"
+      style={{
+        background: `linear-gradient(135deg, color-mix(in oklab, ${tone} 88%, black 8%), color-mix(in oklab, ${tone} 55%, black 35%))`,
+      }}
+    >
+      <div aria-hidden className="tiwa-grid-bg absolute inset-0 opacity-20" />
+      <div className="relative flex flex-col gap-2">
+        <span className="w-fit rounded-full bg-white/90 px-0.5 py-0.5">
+          <RoleBadge role={role} />
+        </span>
+        <p className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          {name ? t('greeting', { name: name.split(/\s+/)[0] ?? name }) : t('greetingAnon')}
+        </p>
+        <p className="text-sm text-white/80 sm:text-base">
+          {org ? t(`heroBody.${role}Org`, { org }) : t(`heroBody.${role}`)}
+        </p>
+      </div>
+    </section>
+  );
+}
 
 /** Role home (PLN-01 planner, VND vendor, UF-21): needs-today, lists, quick actions. */
 export default async function HomePage() {
@@ -12,7 +41,11 @@ export default async function HomePage() {
   const t = await getTranslations('home');
   const tp = await getTranslations('planner');
   const tv = await getTranslations('vendor');
-  const orgs = await listMyOrgs(ctx.actor.userId);
+  const [orgs, me] = await Promise.all([
+    listMyOrgs(ctx.actor.userId),
+    prisma.user.findUniqueOrThrow({ where: { id: ctx.actor.userId }, select: { name: true, phone: true } }),
+  ]);
+  const myName = me.name && me.name !== me.phone ? me.name : '';
   const plannerOrg = orgs.find((r) => r.org.kind === 'PLANNER')?.org;
   const vendorOrg = !plannerOrg ? orgs.find((r) => r.org.kind === 'VENDOR')?.org : undefined;
 
@@ -21,6 +54,7 @@ export default async function HomePage() {
     return (
       <AppFrame userId={ctx.actor.userId} active="home" title={tv('title')}>
         <div className="flex flex-col gap-4 py-2">
+          <RoleHero role="vendor" name={myName} org={vendorOrg.name} />
           <section aria-label={tv('title')} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <StatCard
               label={tv('enquiriesHeading')}
@@ -81,16 +115,19 @@ export default async function HomePage() {
   if (!plannerOrg) {
     return (
       <AppFrame userId={ctx.actor.userId} active="home" title={t('title')}>
-        <EmptyState
-          icon={<CalendarPlus className="size-8" aria-hidden />}
-          title={t('emptyTitle')}
-          body={t('emptyBody')}
-          action={
-            <Link href="/events/new" className={buttonClasses()}>
-              {t('createEvent')}
-            </Link>
-          }
-        />
+        <div className="flex flex-col gap-6 py-2">
+          <RoleHero role="host" name={myName} />
+          <EmptyState
+            icon={<CalendarPlus className="size-8" aria-hidden />}
+            title={t('emptyTitle')}
+            body={t('emptyBody')}
+            action={
+              <Link href="/events/new" className={buttonClasses()}>
+                {t('createEvent')}
+              </Link>
+            }
+          />
+        </div>
       </AppFrame>
     );
   }
@@ -103,6 +140,7 @@ export default async function HomePage() {
   return (
     <AppFrame userId={ctx.actor.userId} active="home" title={tp('title')}>
       <div className="flex flex-col gap-4 py-2">
+        <RoleHero role="planner" name={myName} org={plannerOrg.name} />
         <section aria-label={tp('needsToday')} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard
             label={tp('needsToday')}

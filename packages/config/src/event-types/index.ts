@@ -40,7 +40,22 @@ export function getEventType(key: string): EventTypeTemplate | undefined {
 
 /** Lightweight list for type pickers (no checklists or budgets on the wire). */
 export function eventTypeCards(): { key: string; format: EventFormat; label: string; blurb: string }[] {
-  return EVENT_TYPES.map(({ key, format, label, blurb }) => ({ key, format, label, blurb }));
+  return EVENT_TYPES.filter((template) => !template.custom).map(({ key, format, label, blurb }) => ({
+    key,
+    format,
+    label,
+    blurb,
+  }));
+}
+
+/** The custom template for a format: used when the host names a type that isn't listed. */
+export function customEventType(format: EventFormat): EventTypeTemplate {
+  return EVENT_TYPES.find((template) => template.custom && template.format === format) as EventTypeTemplate;
+}
+
+/** What to call an event's type: the host's own name for a custom type, else the template label. */
+export function eventTypeLabel(event: { type: string; typeLabel?: string | null }): string {
+  return event.typeLabel?.trim() || getEventType(event.type)?.label || event.type;
 }
 
 export function suggestEventName(template: EventTypeTemplate, firstName: string): string {

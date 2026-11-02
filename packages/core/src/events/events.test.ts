@@ -1,4 +1,5 @@
 import { getEventType } from '@tiwa/config';
+import { eventTypeLabel } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
@@ -110,6 +111,20 @@ describe('createEventDraft', () => {
   it('rejects unknown types', async () => {
     const host = await makeUser();
     await expect(createEventDraft(host, { type: 'not_a_type' })).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('creates a type the host names themselves, under the format they pick', async () => {
+    const host = await makeUser();
+    const { eventId } = await createEventDraft(host, {
+      type: 'custom',
+      customLabel: 'Book launch',
+      format: 'COMMUNITY',
+    });
+    const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
+    expect(event).toMatchObject({ type: 'custom_community', typeLabel: 'Book launch', name: 'Book launch' });
+    expect(eventTypeLabel(event)).toBe('Book launch');
+    // A custom template can't be picked without a name.
+    await expect(createEventDraft(host, { type: 'custom_private' })).rejects.toBeInstanceOf(ValidationError);
   });
 });
 

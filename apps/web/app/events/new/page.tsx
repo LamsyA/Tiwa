@@ -1,9 +1,14 @@
-import { FORMAT_RULES, eventTypeCards, getEventType, suggestEventName, type EventFormat } from '@tiwa/config';
+import {
+  FORMAT_RULES,
+  eventTypeCards,
+  eventTypeLabel,
+  getEventType,
+  suggestEventName,
+  type EventFormat,
+} from '@tiwa/config';
 import { WIZARD_STEPS, loadEventAccess, utcToZoned, type WizardStep } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { Wizard, type WizardDraft } from './wizard.js';
 
@@ -15,7 +20,6 @@ export default async function NewEventPage({
 }) {
   const { id, step: stepParam } = await searchParams;
   const ctx = await requirePageUser(id ? `/events/new?id=${id}` : '/events/new');
-  const t = await getTranslations('events');
   const formats = (Object.keys(FORMAT_RULES) as EventFormat[]).map((key) => ({ key, label: FORMAT_RULES[key].label }));
 
   let draft: WizardDraft | null = null;
@@ -37,9 +41,12 @@ export default async function NewEventPage({
     const rules = FORMAT_RULES[event.format];
     draft = {
       id: event.id,
-      typeLabel: template?.label ?? event.type,
+      typeLabel: eventTypeLabel(event),
       // Untouched drafts carry the template label; offer the personal suggestion instead.
-      name: template && event.name === template.label ? suggestEventName(template, firstName) : event.name,
+      name:
+        template && !template.custom && event.name === template.label
+          ? suggestEventName(template, firstName)
+          : event.name,
       date: start?.date ?? '',
       startTime: start?.time ?? '',
       endTime: end?.time ?? '',
@@ -62,9 +69,6 @@ export default async function NewEventPage({
     step = requested ?? saved ?? 'basics';
   }
 
-  return (
-    <AppFrame userId={ctx.actor.userId} active="events" title={t('newTitle')}>
-      <Wizard step={step} draft={draft} types={eventTypeCards()} formats={formats} />
-    </AppFrame>
-  );
+  // Focused, full-screen flow: no app navigation while creating (the X returns to /events).
+  return <Wizard step={step} draft={draft} types={eventTypeCards()} formats={formats} />;
 }

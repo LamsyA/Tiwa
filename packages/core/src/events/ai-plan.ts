@@ -1,4 +1,4 @@
-import { getEventType } from '@tiwa/config';
+import { eventTypeLabel } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -68,6 +68,7 @@ export async function draftPlan(
     where: { id: input.eventId },
     select: {
       type: true,
+      typeLabel: true,
       format: true,
       countryCode: true,
       startsAt: true,
@@ -83,7 +84,7 @@ export async function draftPlan(
       .maximumFractionDigits ?? 2;
 
   const context: PlanDraftContext = {
-    eventType: getEventType(event.type)?.label ?? event.type,
+    eventType: eventTypeLabel(event),
     eventFormat: event.format,
     daysUntilEvent: event.startsAt
       ? Math.max(0, Math.round((event.startsAt.getTime() - now.getTime()) / DAY_MS))

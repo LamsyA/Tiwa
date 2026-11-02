@@ -1,4 +1,4 @@
-import { getEventType } from '@tiwa/config';
+import { eventTypeLabel } from '@tiwa/config';
 import {
   authorize,
   budgetAlerts,
@@ -38,7 +38,7 @@ export default async function EventOverviewPage({
   const t = await getTranslations('events');
   const overview = await getEventOverview(ctx.actor, id, new Date(), access);
   const { event, progress, deadlines, team } = overview;
-  const template = getEventType(event.type);
+  const typeLabel = eventTypeLabel(event);
   const firstDay = event.days[0];
   const canSeeMoney = (() => {
     try {
@@ -105,9 +105,9 @@ export default async function EventOverviewPage({
             className="pointer-events-none absolute -top-24 -right-16 -z-10 size-72 rounded-full bg-white/10 blur-3xl"
           />
           <div className="flex flex-wrap items-center gap-2">
-            {template && (
+            {typeLabel && (
               <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20 backdrop-blur-md">
-                {template.label}
+                {typeLabel}
               </span>
             )}
             <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20 backdrop-blur-md">

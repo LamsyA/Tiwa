@@ -120,6 +120,12 @@ export interface AppShellProps {
   sidePanel?: React.ReactNode;
   search?: React.ReactNode;
   roleSwitcher?: React.ReactNode;
+  /** Who is signed in (name, role, sign out): sidebar footer on desktop. */
+  account?: React.ReactNode;
+  /** Compact account button for the mobile top bar. */
+  accountCompact?: React.ReactNode;
+  /** Short role name under the wordmark (e.g. "Vendor workspace"). */
+  roleLabel?: string;
   /** Counts shown on navigation items by key (e.g. `{ inbox: 3 }` for unread chats). */
   badges?: Partial<Record<string, number>>;
   children: React.ReactNode;
@@ -141,6 +147,9 @@ export function AppShell({
   sidePanel,
   search,
   roleSwitcher,
+  account,
+  accountCompact,
+  roleLabel,
   badges = {},
   children,
 }: AppShellProps) {
@@ -166,8 +175,9 @@ export function AppShell({
       >
         <div className="flex h-16 items-center gap-2 px-4">
           {!collapsed && (
-            <a href="/home" className="font-display flex-1 text-xl font-bold tracking-tight">
-              Tiwa
+            <a href="/home" className="flex min-w-0 flex-1 flex-col leading-tight">
+              <span className="font-display text-xl font-bold tracking-tight">Tiwa</span>
+              {roleLabel && <span className="text-muted truncate text-[11px] font-medium">{roleLabel}</span>}
             </a>
           )}
           {roleSwitcher}
@@ -221,6 +231,7 @@ export function AppShell({
             </li>
           ))}
         </ul>
+        {account && !collapsed && <div className="border-border/70 border-t p-2">{account}</div>}
         <div
           className={cn(
             'border-border/70 flex items-center border-t p-3',
@@ -271,6 +282,7 @@ export function AppShell({
                 labels={{ light: 'Switch to light mode', dark: 'Switch to dark mode' }}
                 className="lg:hidden"
               />
+              {accountCompact && <div className="lg:hidden">{accountCompact}</div>}
             </div>
           </div>
           {sectionTabs && (

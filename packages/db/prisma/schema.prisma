@@ -123,6 +123,7 @@ model Event {
   id                     String             @id @default(uuid(7))
   slug                   String             @unique
   type                   String // template key from packages/config
+  typeLabel              String? // the host's own type name when it isn't listed (custom_* templates)
   format                 EventFormat
   status                 EventStatus        @default(DRAFT)
   name                   String

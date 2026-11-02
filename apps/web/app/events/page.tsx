@@ -1,4 +1,4 @@
-import { getEventType } from '@tiwa/config';
+import { eventTypeLabel } from '@tiwa/config';
 import { listMyEvents, type EventListTab } from '@tiwa/core';
 import { Badge, Card, DateText, EmptyState, ProgressRing, StatusPill, buttonClasses, cn } from '@tiwa/ui';
 import { CalendarPlus, Plus } from 'lucide-react';
@@ -60,7 +60,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {events.map((event) => {
-              const label = getEventType(event.type)?.label;
+              const label = eventTypeLabel(event);
               const href = event.status === 'DRAFT' ? `/events/new?id=${event.id}` : `/events/${event.id}`;
               return (
                 <li key={event.id}>

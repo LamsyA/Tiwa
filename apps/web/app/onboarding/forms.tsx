@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, FieldShell, GuestShell, Input } from '@tiwa/ui';
+import { Button, FieldShell, Input } from '@tiwa/ui';
+import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -51,9 +52,26 @@ function useSubmit(save: () => Promise<ActionResult<unknown>>, to: string) {
 function FormError({ message }: { message: string | undefined }) {
   if (!message) return null;
   return (
-    <p role="alert" className="text-danger mt-4 text-sm">
+    <p role="alert" className="border-danger/30 bg-danger-soft text-danger rounded-xl border px-4 py-3 text-sm">
       {message}
     </p>
+  );
+}
+
+function Panel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border-border/70 bg-surface/80 rounded-3xl border p-6 shadow-[var(--shadow-2)] backdrop-blur-xl sm:p-8">
+      {children}
+    </div>
+  );
+}
+
+function Submit({ saving, label }: { saving: boolean; label: string }) {
+  return (
+    <Button type="submit" fullWidth size="lg" loading={saving} className="mt-1">
+      {label}
+      <ArrowRight aria-hidden className="size-4" />
+    </Button>
   );
 }
 
@@ -63,15 +81,9 @@ export function HostProfileForm({ next }: { next: string }) {
   const { errors, saving, submit } = useSubmit(() => saveHostProfile({ name }), next);
 
   return (
-    <GuestShell
-      title={t('hostTitle')}
-      action={
-        <Button fullWidth loading={saving} onClick={() => void submit()}>
-          {t('continue')}
-        </Button>
-      }
-    >
+    <Panel>
       <form
+        className="flex flex-col gap-5"
         onSubmit={(event) => {
           event.preventDefault();
           void submit();
@@ -91,8 +103,9 @@ export function HostProfileForm({ next }: { next: string }) {
           )}
         </FieldShell>
         <FormError message={errors.form} />
+        <Submit saving={saving} label={t('continue')} />
       </form>
-    </GuestShell>
+    </Panel>
   );
 }
 
@@ -107,16 +120,9 @@ export function BusinessForm({ kind, next, askName }: { kind: 'PLANNER' | 'VENDO
   );
 
   return (
-    <GuestShell
-      title={kind === 'VENDOR' ? t('vendorTitle') : t('plannerTitle')}
-      action={
-        <Button fullWidth loading={saving} onClick={() => void submit()}>
-          {t('continue')}
-        </Button>
-      }
-    >
+    <Panel>
       <form
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-5"
         onSubmit={(event) => {
           event.preventDefault();
           void submit();
@@ -160,9 +166,9 @@ export function BusinessForm({ kind, next, askName }: { kind: 'PLANNER' | 'VENDO
             />
           )}
         </FieldShell>
-        <button type="submit" hidden />
         <FormError message={errors.form} />
+        <Submit saving={saving} label={t('continue')} />
       </form>
-    </GuestShell>
+    </Panel>
   );
 }

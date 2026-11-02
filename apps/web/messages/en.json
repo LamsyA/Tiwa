@@ -75,7 +75,18 @@
       "cityTooLong": "That city name is too long",
       "alreadySetUp": "You already have a business of this kind.",
       "generic": "We couldn't save that. Please try again."
-    }
+    },
+    "stepOf": "Step {step} of {total}",
+    "roleEyebrow": "Welcome to Tiwa",
+    "roleBody": "Choose how you'll use Tiwa. You'll get a workspace built for it.",
+    "roleHostTag": "Host",
+    "rolePlannerTag": "Planner",
+    "roleVendorTag": "Vendor",
+    "roleCta": "Continue",
+    "roleLater": "Hosting and running a business? Start with one; you can add the other later.",
+    "hostBody": "So your guests, vendors and co-hosts know who's planning.",
+    "plannerBody": "Clients, events, vendors and invoices in one place.",
+    "vendorBody": "Get found by hosts and planners, send quotes and manage bookings."
   },
   "settings": {
     "title": "Settings",
@@ -222,7 +233,9 @@
       "ticketsNeedPublic": "Tickets need a public event",
       "dateRequired": "Pick a date before creating the event",
       "unknownType": "Choose an event type",
-      "generic": "We couldn't save that. Please try again."
+      "generic": "We couldn't save that. Please try again.",
+      "typeTooShort": "Name your event type (at least 2 characters)",
+      "typeTooLong": "That event type name is too long"
     },
     "tabs": {
       "overview": "Overview",
@@ -1081,7 +1094,27 @@
       "usageLabel": "Storage",
       "publishedTab": "Published"
     },
-    "findVenueLink": "Find a venue on Tiwa"
+    "findVenueLink": "Find a venue on Tiwa",
+    "wizardClose": "Close and go to my events",
+    "wizardStepOf": "Step {step} of {total}",
+    "themeLight": "Switch to light mode",
+    "themeDark": "Switch to dark mode",
+    "typeEyebrow": "New event",
+    "typeBody": "Pick a type to start. You can change everything later.",
+    "typeFormats": "Event categories",
+    "typeAll": "All",
+    "customTitle": "Something else",
+    "customBody": "Not listed? Name your own kind of event.",
+    "customHelp": "Tell us what you're planning and how it runs.",
+    "customCancel": "Cancel",
+    "customLabel": "What kind of event is it?",
+    "customPlaceholder": "e.g. Book launch, Baby shower, Retreat",
+    "customFormat": "Which fits it best?",
+    "customStart": "Start planning",
+    "basicsBody": "Name it and set the date. You can change these any time.",
+    "venueBody": "Add the venue for each day, or leave it for later.",
+    "guestsBody": "A rough number and budget is fine to start.",
+    "featuresBody": "Turn on what you need. You can switch these later in settings."
   },
   "shared": {
     "headcount": {
@@ -2229,5 +2262,31 @@
     "planners": "Planners",
     "myEvents": "My events",
     "eyebrow": "Marketplace"
+  },
+  "account": {
+    "menu": "Account",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "moreTitle": "More",
+    "greeting": "Welcome back, {name}",
+    "greetingAnon": "Welcome back",
+    "role": {
+      "host": "Host",
+      "planner": "Planner",
+      "vendor": "Vendor"
+    },
+    "workspace": {
+      "host": "Host",
+      "planner": "Planner workspace",
+      "vendor": "Vendor workspace"
+    },
+    "heroBody": {
+      "host": "Plan, book and run your events from here.",
+      "plannerOrg": "Running {org}: your clients, events and pipeline.",
+      "planner": "Your clients, events and pipeline.",
+      "vendorOrg": "Running {org}: enquiries, quotes and bookings.",
+      "vendor": "Your enquiries, quotes and bookings."
+    }
   }
 }

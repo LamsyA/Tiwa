@@ -1,7 +1,9 @@
 import { safeNextPath } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
+import { getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { OnboardingFrame } from '@/components/onboarding-frame.js';
 import { auth } from '@/lib/auth.js';
 import { BusinessForm } from '../forms.js';
 
@@ -20,11 +22,16 @@ export default async function BusinessPage({
   });
   // Phone sign-ups still carry their number as a name; ask for a real one here.
   const askName = !user.name.trim() || user.name === user.phone;
+  const vendor = role === 'vendor';
+  const t = await getTranslations('onboarding');
   return (
-    <BusinessForm
-      kind={role === 'vendor' ? 'VENDOR' : 'PLANNER'}
-      next={safeNextPath(next, '/home')}
-      askName={askName}
-    />
+    <OnboardingFrame
+      step={2}
+      eyebrow={t(vendor ? 'roleVendorTag' : 'rolePlannerTag')}
+      title={t(vendor ? 'vendorTitle' : 'plannerTitle')}
+      body={t(vendor ? 'vendorBody' : 'plannerBody')}
+    >
+      <BusinessForm kind={vendor ? 'VENDOR' : 'PLANNER'} next={safeNextPath(next, '/home')} askName={askName} />
+    </OnboardingFrame>
   );
 }

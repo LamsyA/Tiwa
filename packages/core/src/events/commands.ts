@@ -1,7 +1,9 @@
 import {
+  EVENT_FORMATS,
   FORMAT_RULES,
   TIMEFRAME_DAYS_BEFORE,
   currencyForCountry,
+  customEventType,
   getEventType,
   timezoneForCountry,
   type Timeframe,
@@ -29,7 +31,12 @@ export type WizardStep = (typeof WIZARD_STEPS)[number];
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'invalidDate');
 const TIME = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'invalidTime');
 
-export const createEventDraftSchema = z.object({ type: z.string().min(1).max(64) });
+export const createEventDraftSchema = z.object({
+  type: z.string().min(1).max(64),
+  /** A type the host names themselves when theirs isn't listed (type = a `custom_*` template). */
+  customLabel: z.string().trim().min(2, 'typeTooShort').max(60, 'typeTooLong').optional(),
+  format: z.enum(EVENT_FORMATS).optional(),
+});
 
 export const stepSchemas = {
   basics: z.object({
@@ -87,16 +94,21 @@ function templateOrThrow(type: string) {
 
 /** Step 1 of the wizard: a DRAFT with template defaults and the creator as HOST. */
 export async function createEventDraft(actor: UserActor, input: z.infer<typeof createEventDraftSchema>) {
-  const template = templateOrThrow(input.type);
+  const custom = input.customLabel ? customEventType(input.format ?? 'PRIVATE_CELEBRATION') : null;
+  const template = custom ?? templateOrThrow(input.type);
+  if (template.custom && !custom)
+    throw new ValidationError('Name your event type', { field: 'customLabel', key: 'typeTooShort' });
+  const label = input.customLabel ?? template.label;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { countryCode: true } });
   const rules = FORMAT_RULES[template.format];
   return prisma.$transaction(async (tx) => {
     const event = await tx.event.create({
       data: {
-        slug: uniqueSlug(template.label),
+        slug: uniqueSlug(label),
         type: template.key,
+        typeLabel: custom ? label : null,
         format: template.format,
-        name: template.label,
+        name: label,
         visibility: rules.defaultVisibility,
         countryCode: user.countryCode,
         currency: currencyForCountry(user.countryCode),
