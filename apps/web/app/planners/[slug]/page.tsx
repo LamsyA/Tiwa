@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import { listVendorReviews, resolvePublicOrgId } from '@tiwa/core';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { loadPublicProfile } from '@/components/marketplace/loader.js';
 import { PublicProfileView } from '@/components/marketplace/public-profile.js';
+import { getCtx } from '@/lib/ctx.js';
 
 /** Public planner profile (MKT-07, P6-T04). Profile data is data-cached with
  * tag `vendor:{orgId}` (D-X18); route HTML stays dynamic because the root
@@ -23,6 +25,9 @@ export default async function PlannerProfilePage({ params }: { params: Promise<{
   const { slug } = await params;
   const { profile, photos, availabilityRows } = await loadPublicProfile(slug, 'PLANNER');
   const t = await getTranslations('marketplace');
+  const orgId = await resolvePublicOrgId(slug, 'PLANNER').catch(() => null);
+  const reviews = orgId ? await listVendorReviews(orgId, 10) : [];
+  const ctx = await getCtx();
   return (
     <main>
       <header className="border-border border-b">
@@ -32,7 +37,13 @@ export default async function PlannerProfilePage({ params }: { params: Promise<{
           </Link>
         </div>
       </header>
-      <PublicProfileView profile={profile} photos={photos} availabilityRows={availabilityRows} />
+      <PublicProfileView
+        profile={profile}
+        photos={photos}
+        availabilityRows={availabilityRows}
+        reviews={reviews.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))}
+        signedIn={ctx.actor !== null}
+      />
     </main>
   );
 }

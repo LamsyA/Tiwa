@@ -3,6 +3,7 @@ import { MessageBusiness } from '@/components/chat/message-business.js';
 import type { PublicProfile } from '@tiwa/core';
 import { Avatar, Badge, Card, Chip, ChipGroup, MoneyText, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
+import { ReviewReportButton } from './review-report.js';
 
 /** Public vendor/planner profile body (MKT-07, P6-T04): no chrome, no contacts, no prices beyond package starts. */
 
@@ -30,12 +31,24 @@ export async function PublicProfileView({
   availabilityRows,
   instantBook,
   siteVisit,
+  reviews,
+  signedIn,
 }: {
   profile: PublicProfile;
   photos: { id: string; url: string; caption: string | null }[];
   availabilityRows: AvailabilityRow[];
   instantBook?: React.ReactNode;
   siteVisit?: React.ReactNode;
+  reviews: {
+    id: string;
+    overall: number;
+    body: string | null;
+    authorName: string | null;
+    eventName: string | null;
+    reply: string | null;
+    createdAt: string;
+  }[];
+  signedIn: boolean;
 }) {
   const t = await getTranslations('marketplace');
   const now = new Date();
@@ -107,6 +120,36 @@ export async function PublicProfileView({
             </ul>
           </section>
         )}
+
+        <section aria-label={t('reviewsHeading')}>
+          <h2 className="mb-2 font-medium">{t('reviewsHeading')}</h2>
+          {reviews.length === 0 ? (
+            <p className="text-muted text-sm">{t('noReviews')}</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {reviews.map((row) => (
+                <li key={row.id}>
+                  <Card>
+                    <div className="flex flex-col gap-1 p-4 text-sm">
+                      <p className="font-medium">
+                        ★ {row.overall.toFixed(1)}
+                        {row.authorName ? ` · ${row.authorName}` : ''}
+                        {row.eventName ? ` · ${row.eventName}` : ''}
+                      </p>
+                      {row.body && <p>{row.body}</p>}
+                      {row.reply && (
+                        <p className="text-muted">
+                          {t('reviewReplyHeading')}: {row.reply}
+                        </p>
+                      )}
+                      {signedIn && <ReviewReportButton reviewId={row.id} />}
+                    </div>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section aria-label={t('packages')}>
           <h2 className="mb-2 font-medium">{t('packages')}</h2>

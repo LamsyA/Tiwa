@@ -1470,6 +1470,14 @@
     "seeAllNew": "See all new",
     "bookingsDone": "{count} events done",
     "reviewsCount": "{count} reviews",
+    "reviewsHeading": "Reviews",
+    "cancel": "Cancel",
+    "reviewReplyHeading": "Response from the vendor",
+    "reviewReport": "Report",
+    "reviewReportReason": "Why are you reporting this review?",
+    "reviewReportSubmit": "Send report",
+    "reviewReported": "Thanks — our team will take a look.",
+    "noReviews": "No reviews yet.",
     "serviceArea": "Serves {city} + {km} km",
     "calendarConfirmed": "Calendar confirmed {date}",
     "calendarUnconfirmed": "Availability not confirmed recently — message to check dates",
@@ -2053,7 +2061,14 @@
     "viewQuotes": "Open inbox",
     "viewBookings": "Bookings",
     "viewCalendar": "Calendar",
-    "bookingsTitle": "Bookings"
+    "bookingsTitle": "Bookings",
+    "reviewsHeading": "Reviews needing your response",
+    "reviewReplyLabel": "Your public reply",
+    "reviewReplySubmit": "Post reply",
+    "reviewReportLabel": "Report this review",
+    "reviewReportReason": "Why are you reporting it?",
+    "reviewReportSubmit": "Send report",
+    "reviewReported": "Thanks — our team will take a look."
   },
   "landing": {
     "theme": {

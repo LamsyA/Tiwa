@@ -1,6 +1,15 @@
 'use server';
 
-import { updateRunStatus, updateRunStatusSchema, vendorCheckIn, vendorCheckInSchema } from '@tiwa/core';
+import {
+  replyToReview,
+  replySchema,
+  reportReview,
+  reportReviewSchema,
+  updateRunStatus,
+  updateRunStatusSchema,
+  vendorCheckIn,
+  vendorCheckInSchema,
+} from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
 import { userAction } from '@/lib/ctx.js';
 import { dayChannel, publishLive } from '@/lib/live.js';
@@ -17,6 +26,20 @@ export const vendorCheckInAction = userAction(vendorCheckInSchema, async (input,
 export const vendorStatusAction = userAction(updateRunStatusSchema, async (input, ctx) => {
   const result = await updateRunStatus(ctx.actor, input);
   await publishLive(dayChannel(input.eventId), 'day');
+  revalidatePath('/bookings');
+  return result;
+});
+
+/** Vendor replies once to a host review (P14-T03, REV-04). */
+export const replyToReviewAction = userAction(replySchema, async (input, ctx) => {
+  const result = await replyToReview(ctx.actor, input);
+  revalidatePath('/bookings');
+  return result;
+});
+
+/** Anyone signed in can report a review (REV-06). */
+export const vendorReportReviewAction = userAction(reportReviewSchema, async (input, ctx) => {
+  const result = await reportReview(ctx.actor, input);
   revalidatePath('/bookings');
   return result;
 });

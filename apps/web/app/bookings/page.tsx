@@ -1,4 +1,4 @@
-import { listMyOrgs, listVendorBookingMoney, vendorDayTasks } from '@tiwa/core';
+import { listMyOrgs, listVendorBookingMoney, pendingReplies, vendorDayTasks } from '@tiwa/core';
 import { Badge, Card, EmptyState } from '@tiwa/ui';
 import { Briefcase } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { VendorDayCard } from './vendor-day.js';
+import { VendorReplies } from './vendor-replies.js';
 
 /** Vendor bookings with payment status (VND-04, P10-T08). */
 export default async function BookingsPage() {
@@ -20,14 +21,16 @@ export default async function BookingsPage() {
       </AppFrame>
     );
   }
-  const [rows, day] = await Promise.all([
+  const [rows, day, replies] = await Promise.all([
     listVendorBookingMoney(ctx.actor, { vendorOrgId: vendorOrg.id }),
     vendorDayTasks(ctx.actor, vendorOrg.id).catch(() => null),
+    pendingReplies(vendorOrg.id).catch(() => []),
   ]);
   const dayByBooking = new Map((day?.bookings ?? []).map((row) => [row.bookingId, row]));
   return (
     <AppFrame userId={ctx.actor.userId} active="bookings" title={t('bookingsTitle')}>
       <div className="flex flex-col gap-3 py-2">
+        <VendorReplies rows={replies.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))} />
         {rows.length === 0 ? (
           <EmptyState icon={<Briefcase className="size-8" aria-hidden />} title={t('noBookings')} body="" />
         ) : (

@@ -3,6 +3,7 @@
 import { Button, Card, Input } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
+import { ReviewReportButton } from '@/components/marketplace/review-report.js';
 import { closeEventAction, confirmDeliveryAction, createReviewAction } from './actions.js';
 
 export interface CloseBooking {
@@ -159,6 +160,7 @@ function ReviewCard(props: {
             {booking.review.reply}
           </p>
         )}
+        {booking.review.reply && <ReviewReportButton reviewId={booking.review.id} />}
       </Card>
     );
   }
@@ -214,7 +216,13 @@ function ReviewCard(props: {
                   }
                 />
                 {photo.thumbUrl ? (
-                  <img src={photo.thumbUrl} alt={t('reviewPhotoAlt')} width={64} height={64} className="rounded-lg object-cover" />
+                  <img
+                    src={photo.thumbUrl}
+                    alt={t('reviewPhotoAlt')}
+                    width={64}
+                    height={64}
+                    className="rounded-lg object-cover"
+                  />
                 ) : (
                   <span className="text-muted text-xs">{photo.id.slice(0, 8)}</span>
                 )}

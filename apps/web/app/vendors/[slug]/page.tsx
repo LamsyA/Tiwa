@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { authorize, loadEventAccess } from '@tiwa/core';
+import { authorize, listVendorReviews, loadEventAccess, resolvePublicOrgId } from '@tiwa/core';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { InstantBookDialog } from '@/components/marketplace/instant-book-dialog.js';
@@ -54,6 +54,9 @@ export default async function VendorProfilePage({
   }
   const isVenue = profile.profile.categories.includes('venue');
   const showVisit = canEdit && isVenue;
+  const orgId = await resolvePublicOrgId(slug, 'VENDOR').catch(() => null);
+  const reviews = orgId ? await listVendorReviews(orgId, 10) : [];
+  const ctx = await getCtx();
   return (
     <main>
       <header className="border-border border-b">
@@ -67,6 +70,8 @@ export default async function VendorProfilePage({
         profile={profile}
         photos={photos}
         availabilityRows={availabilityRows}
+        reviews={reviews.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))}
+        signedIn={ctx.actor !== null}
         instantBook={
           canBook && eventId ? (
             <InstantBookDialog
