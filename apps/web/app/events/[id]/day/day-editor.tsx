@@ -14,6 +14,7 @@ import {
   updateItemAction,
   updateStatusAction,
 } from './actions.js';
+import { ContactsPanel, IncidentsPanel, type DayContact, type DayIncident } from './day-panels.js';
 
 export interface DayItem {
   id: string;
@@ -72,12 +73,15 @@ export function DayEditor(props: {
   dependencies: { itemId: string; dependsOnId: string }[];
   owners: Owner[];
   checkins: { id: string; bookingId: string; userName: string; orgName: string | null; at: string }[];
+  incidents: DayIncident[];
+  contacts: DayContact[];
+  onsiteVendors: { orgId: string; name: string }[];
 }) {
   const t = useTranslations('day');
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'timeline' | 'mine'>('timeline');
+  const [tab, setTab] = useState<'timeline' | 'mine' | 'incidents' | 'contacts'>('timeline');
   const [title, setTitle] = useState('');
   const [starts, setStarts] = useState('');
   const [duration, setDuration] = useState('15');
@@ -150,7 +154,39 @@ export function DayEditor(props: {
         >
           {t('myTasksTab')} ({mine.length})
         </Button>
+        <Button
+          variant={tab === 'incidents' ? 'primary' : 'secondary'}
+          onClick={() => setTab('incidents')}
+          role="tab"
+          aria-selected={tab === 'incidents'}
+        >
+          {t('incidents')}
+        </Button>
+        <Button
+          variant={tab === 'contacts' ? 'primary' : 'secondary'}
+          onClick={() => setTab('contacts')}
+          role="tab"
+          aria-selected={tab === 'contacts'}
+        >
+          {t('contacts')}
+        </Button>
       </div>
+      {tab === 'incidents' && (
+        <IncidentsPanel
+          eventId={props.eventId}
+          canManage={props.canManage}
+          incidents={props.incidents}
+          owners={props.owners}
+        />
+      )}
+      {tab === 'contacts' && (
+        <ContactsPanel
+          eventId={props.eventId}
+          canManage={props.canManage}
+          contacts={props.contacts}
+          onsiteVendors={props.onsiteVendors}
+        />
+      )}
       {props.checkins.length > 0 && tab === 'timeline' && (
         <Card className="flex flex-col gap-1 p-3 text-sm">
           <h3 className="font-medium">{t('arrivals')}</h3>
@@ -164,7 +200,7 @@ export function DayEditor(props: {
         </Card>
       )}
       {tab === 'mine' && mine.length === 0 && <p className="text-muted text-sm">{t('noMine')}</p>}
-      {props.canManage && (
+      {(tab === 'timeline' || tab === 'mine') && props.canManage && (
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex flex-wrap gap-2">
             <Input
@@ -215,32 +251,36 @@ export function DayEditor(props: {
           </div>
         </Card>
       )}
-      {props.items.length === 0 && <p className="text-muted text-sm">{t('noItems')}</p>}
-      <ul className="flex flex-col gap-2">
-        {rows.map((row) =>
-          row.now || !row.item ? (
-            <li key={row.key} ref={nowRef} aria-hidden className="border-brand-strong relative my-1 border-t-2">
-              <span className="bg-brand-strong absolute -top-2.5 left-0 rounded-full px-2 text-[11px] font-medium text-white">
-                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </li>
-          ) : (
-            <ItemRow
-              key={row.item.id}
-              eventId={props.eventId}
-              row={row.item}
-              canManage={props.canManage}
-              owners={props.owners}
-              dependsOn={props.dependencies.filter((dep) => dep.itemId === row.item!.id)}
-              items={props.items}
-              pending={pending}
-              run={run}
-              affected={affected.has(row.item.id)}
-              onMarked={(dependantIds) => setJustMarked(dependantIds)}
-            />
-          ),
-        )}
-      </ul>
+      {(tab === 'timeline' || tab === 'mine') && (
+        <>
+          {props.items.length === 0 && <p className="text-muted text-sm">{t('noItems')}</p>}
+          <ul className="flex flex-col gap-2">
+            {rows.map((row) =>
+              row.now || !row.item ? (
+                <li key={row.key} ref={nowRef} aria-hidden className="border-brand-strong relative my-1 border-t-2">
+                  <span className="bg-brand-strong absolute -top-2.5 left-0 rounded-full px-2 text-[11px] font-medium text-white">
+                    {new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </li>
+              ) : (
+                <ItemRow
+                  key={row.item.id}
+                  eventId={props.eventId}
+                  row={row.item}
+                  canManage={props.canManage}
+                  owners={props.owners}
+                  dependsOn={props.dependencies.filter((dep) => dep.itemId === row.item!.id)}
+                  items={props.items}
+                  pending={pending}
+                  run={run}
+                  affected={affected.has(row.item.id)}
+                  onMarked={(dependantIds) => setJustMarked(dependantIds)}
+                />
+              ),
+            )}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

@@ -407,6 +407,208 @@ export async function vendorDayTasks(actor: UserActor, vendorOrgId: string): Pro
   };
 }
 
+const SEVERITY = z.enum(['low', 'normal', 'high']);
+
+export const logIncidentSchema = z.object({
+  eventId: z.string().uuid(),
+  title: z.string().trim().min(1, 'titleRequired').max(200, 'titleTooLong'),
+  details: z.string().trim().max(2000, 'notesTooLong').optional(),
+  severity: SEVERITY.optional(),
+  ownerUserId: userIdSchema.nullable().optional(),
+});
+
+/** Log a day-of incident (P12-T05, DAY-04). High severity also pages the
+ * owner through the `day.incident_raised` outbox stub (P13 `notify()`). */
+export async function logIncident(actor: UserActor, raw: z.input<typeof logIncidentSchema>) {
+  const input = logIncidentSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'runofshow.edit');
+  await checkOwner(input.eventId, input.ownerUserId, null);
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.incident.create({
+      data: {
+        id: uuidv7(),
+        eventId: input.eventId,
+        title: input.title,
+        details: input.details || null,
+        severity: input.severity ?? 'normal',
+        ownerUserId: input.ownerUserId ?? null,
+      },
+      select: { id: true },
+    });
+    if ((input.severity ?? 'normal') === 'high') {
+      await enqueue(tx, 'day.incident_raised', {
+        eventId: input.eventId,
+        incidentId: created.id,
+        ownerUserIds: input.ownerUserId ? [input.ownerUserId] : [],
+      });
+    }
+    await audit(tx, {
+      actor,
+      action: 'day.incident.log',
+      targetType: 'Incident',
+      targetId: created.id,
+      data: { eventId: input.eventId, severity: input.severity ?? 'normal' },
+    });
+    return created;
+  });
+  return { incidentId: row.id };
+}
+
+export const resolveIncidentSchema = z.object({
+  eventId: z.string().uuid(),
+  incidentId: z.string().uuid(),
+  resolution: z.string().trim().max(2000, 'notesTooLong').optional(),
+});
+
+export async function resolveIncident(actor: UserActor, raw: z.input<typeof resolveIncidentSchema>) {
+  const input = resolveIncidentSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'runofshow.edit');
+  const incident = await prisma.incident.findFirst({ where: { id: input.incidentId, eventId: input.eventId } });
+  if (!incident) throw new NotFoundError('Incident not found');
+  await prisma.$transaction(async (tx) => {
+    await tx.incident.update({
+      where: { id: incident.id },
+      data: { resolvedAt: new Date(), resolution: input.resolution || null },
+    });
+    await audit(tx, {
+      actor,
+      action: 'day.incident.resolve',
+      targetType: 'Incident',
+      targetId: incident.id,
+      data: { eventId: input.eventId },
+    });
+  });
+  return { incidentId: incident.id };
+}
+
+export interface DayIncidents {
+  incidents: {
+    id: string;
+    title: string;
+    details: string | null;
+    severity: string;
+    ownerUserId: string | null;
+    ownerName: string | null;
+    resolvedAt: Date | null;
+    resolution: string | null;
+    createdAt: Date;
+  }[];
+}
+
+export async function dayIncidents(actor: UserActor, eventId: string): Promise<DayIncidents> {
+  await requireEventAccess(actor, eventId, 'event.view');
+  const rows = await prisma.incident.findMany({
+    where: { eventId },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+  const ownerIds = [...new Set(rows.map((row) => row.ownerUserId).filter((id): id is string => id !== null))];
+  const owners =
+    ownerIds.length > 0
+      ? await prisma.user.findMany({ where: { id: { in: ownerIds } }, select: { id: true, name: true } })
+      : [];
+  const names = new Map(owners.map((row) => [row.id, row.name]));
+  return {
+    incidents: rows.map((row) => ({ ...row, ownerName: row.ownerUserId ? (names.get(row.ownerUserId) ?? '?') : null })),
+  };
+}
+
+export const createContactSchema = z.object({
+  eventId: z.string().uuid(),
+  name: z.string().trim().min(1, 'titleRequired').max(200, 'titleTooLong'),
+  role: z.string().trim().min(1, 'titleRequired').max(200, 'titleTooLong'),
+  phone: z.string().trim().min(5).max(30),
+  isBackupVendor: z.boolean().optional(),
+});
+
+export async function createContact(actor: UserActor, raw: z.input<typeof createContactSchema>) {
+  const input = createContactSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'runofshow.edit');
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.emergencyContact.create({
+      data: {
+        id: uuidv7(),
+        eventId: input.eventId,
+        name: input.name,
+        role: input.role,
+        phone: input.phone,
+        isBackupVendor: input.isBackupVendor ?? false,
+      },
+      select: { id: true },
+    });
+    await audit(tx, {
+      actor,
+      action: 'day.contact.create',
+      targetType: 'EmergencyContact',
+      targetId: created.id,
+      data: { eventId: input.eventId, name: input.name },
+    });
+    return created;
+  });
+  return { contactId: row.id };
+}
+
+export const deleteContactSchema = z.object({ eventId: z.string().uuid(), contactId: z.string().uuid() });
+
+export async function deleteContact(actor: UserActor, raw: z.input<typeof deleteContactSchema>) {
+  const input = deleteContactSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'runofshow.edit');
+  const contact = await prisma.emergencyContact.findFirst({
+    where: { id: input.contactId, eventId: input.eventId },
+  });
+  if (!contact) throw new NotFoundError('Contact not found');
+  await prisma.$transaction(async (tx) => {
+    await tx.emergencyContact.delete({ where: { id: contact.id } });
+    await audit(tx, {
+      actor,
+      action: 'day.contact.delete',
+      targetType: 'EmergencyContact',
+      targetId: contact.id,
+      data: { eventId: input.eventId, name: contact.name },
+    });
+  });
+  return { ok: true as const };
+}
+
+export interface DayContacts {
+  contacts: {
+    id: string;
+    name: string;
+    role: string;
+    phone: string;
+    isBackupVendor: boolean;
+  }[];
+  onsiteVendors: { orgId: string; name: string }[];
+}
+
+/** Emergency contacts + backup vendors (P12-T05, DAY-05), plus the
+ * on-site vendors derived from live bookings. */
+export async function dayContacts(actor: UserActor, eventId: string): Promise<DayContacts> {
+  await requireEventAccess(actor, eventId, 'event.view');
+  const [contacts, bookings] = await Promise.all([
+    prisma.emergencyContact.findMany({ where: { eventId }, orderBy: { name: 'asc' } }),
+    prisma.booking.findMany({
+      where: { eventId, status: { not: 'CANCELLED' } },
+      select: { vendorOrgId: true },
+    }),
+  ]);
+  const orgIds = [...new Set(bookings.map((row) => row.vendorOrgId))];
+  const orgs =
+    orgIds.length > 0
+      ? await prisma.organization.findMany({ where: { id: { in: orgIds } }, select: { id: true, name: true } })
+      : [];
+  return {
+    contacts: contacts.map((row) => ({
+      id: row.id,
+      name: row.name,
+      role: row.role,
+      phone: row.phone,
+      isBackupVendor: row.isBackupVendor,
+    })),
+    onsiteVendors: orgs.map((row) => ({ orgId: row.id, name: row.name })),
+  };
+}
+
 export const markLateSchema = z.object({
   eventId: z.string().uuid(),
   itemId: z.string().uuid(),

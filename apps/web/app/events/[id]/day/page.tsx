@@ -1,4 +1,4 @@
-import { authorize, runOfShow } from '@tiwa/core';
+import { authorize, dayContacts, dayIncidents, runOfShow } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Card } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -35,7 +35,11 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
       return false;
     }
   })();
-  const day = await runOfShow(ctx.actor, id).catch(() => null);
+  const [day, incidents, contacts] = await Promise.all([
+    runOfShow(ctx.actor, id).catch(() => null),
+    dayIncidents(ctx.actor, id).catch(() => null),
+    dayContacts(ctx.actor, id).catch(() => null),
+  ]);
   const [participants, orgs] = await Promise.all([
     prisma.eventParticipant.findMany({
       where: { eventId: id, removedAt: null, userId: { not: null } },
@@ -98,6 +102,13 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
             dependencies={day.dependencies}
             owners={owners}
             checkins={day.checkins.map((row) => ({ ...row, at: row.at.toISOString() }))}
+            incidents={(incidents?.incidents ?? []).map((row) => ({
+              ...row,
+              resolvedAt: row.resolvedAt?.toISOString() ?? null,
+              createdAt: row.createdAt.toISOString(),
+            }))}
+            contacts={contacts?.contacts ?? []}
+            onsiteVendors={contacts?.onsiteVendors ?? []}
           />
         )}
       </div>

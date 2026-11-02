@@ -2,15 +2,23 @@
 
 import {
   addDependency,
+  createContact,
+  createContactSchema,
   createFromProgramme,
   createRunItem,
   createRunItemSchema,
+  deleteContact,
+  deleteContactSchema,
   deleteRunItem,
   deleteRunItemSchema,
   dependencySchema,
+  logIncident,
+  logIncidentSchema,
   markLate,
   markLateSchema,
   removeDependency,
+  resolveIncident,
+  resolveIncidentSchema,
   updateRunItem,
   updateRunItemSchema,
   updateRunStatus,
@@ -76,6 +84,30 @@ export const updateStatusAction = userAction(updateRunStatusSchema, async (input
 
 export const markLateAction = userAction(markLateSchema, async (input, ctx) => {
   const result = await markLate(ctx.actor, input);
+  await announce(input.eventId);
+  return result;
+});
+
+export const logIncidentAction = userAction(logIncidentSchema, async (input, ctx) => {
+  const result = await logIncident(ctx.actor, input);
+  await announce(input.eventId);
+  return result;
+});
+
+export const resolveIncidentAction = userAction(resolveIncidentSchema, async (input, ctx) => {
+  const result = await resolveIncident(ctx.actor, input);
+  await announce(input.eventId);
+  return result;
+});
+
+export const createContactAction = userAction(createContactSchema, async (input, ctx) => {
+  const result = await createContact(ctx.actor, input);
+  await announce(input.eventId);
+  return result;
+});
+
+export const deleteContactAction = userAction(deleteContactSchema, async (input, ctx) => {
+  const result = await deleteContact(ctx.actor, input);
   await announce(input.eventId);
   return result;
 });

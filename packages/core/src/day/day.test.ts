@@ -8,11 +8,17 @@ import { permissionsFor, toStoredPermissions } from '../events/access.js';
 import { uuidv7 } from '../shared/ids.js';
 import {
   addDependency,
+  createContact,
   createFromProgramme,
   createRunItem,
+  dayContacts,
+  dayIncidents,
+  deleteContact,
   dependants,
+  logIncident,
   markLate,
   removeDependency,
+  resolveIncident,
   runOfShow,
   vendorCheckIn,
   vendorDayTasks,
@@ -213,6 +219,37 @@ describe('vendor arrival (DAY-03)', () => {
     await prisma.vendorCheckIn.deleteMany({ where: { eventId } });
     await prisma.booking.deleteMany({ where: { eventId } });
     await prisma.organization.deleteMany({ where: { id: otherOrg.id } }).catch(() => undefined);
+  });
+});
+
+describe('incidents and contacts (DAY-04–DAY-05)', () => {
+  it('logs, resolves, and manages contacts; vendors cannot log', async () => {
+    const logged = await logIncident(host, { eventId, title: 'Power cut', severity: 'high' });
+    expect(logged.incidentId).toBeTruthy();
+    const queued = await prisma.outboxEvent.findFirst({
+      where: { topic: 'day.incident_raised' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(queued).toBeTruthy();
+    const listed = await dayIncidents(host, eventId);
+    expect(listed.incidents.map((row) => row.title)).toContain('Power cut');
+    await expect(logIncident(vendor, { eventId, title: 'Sneaky' })).rejects.toThrow();
+    await resolveIncident(host, { eventId, incidentId: logged.incidentId, resolution: 'Generator on' });
+    const after = await dayIncidents(host, eventId);
+    expect(after.incidents.find((row) => row.id === logged.incidentId)?.resolvedAt).toBeTruthy();
+
+    const created = await createContact(host, {
+      eventId,
+      name: 'Dele Backup',
+      role: 'Generator',
+      phone: '+2348012345678',
+      isBackupVendor: true,
+    });
+    const contacts = await dayContacts(host, eventId);
+    expect(contacts.contacts.map((row) => row.name)).toContain('Dele Backup');
+    await deleteContact(host, { eventId, contactId: created.contactId });
+    const cleaned = await dayContacts(host, eventId);
+    expect(cleaned.contacts.map((row) => row.name)).not.toContain('Dele Backup');
   });
 });
 
