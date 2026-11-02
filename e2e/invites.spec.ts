@@ -99,7 +99,7 @@ test('UF-07: switch gates the tab; composer sends; tracking counts', async ({ pa
   await page.getByRole('button', { name: 'New invite' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.getByText('WhatsApp preview')).toBeVisible();
+  await expect(page.getByText(/Preview for/)).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByText('Ready to send?')).toBeVisible();
   await expect(page.getByRole('button', { name: /Send to 2 guests/ })).toBeVisible();

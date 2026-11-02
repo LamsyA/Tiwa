@@ -60,8 +60,22 @@ export default async function InvitesPage({
       sharedLinkEnabled: true,
       remindersEnabled: true,
       allowForwarding: true,
+      startsAt: true,
+      timezone: true,
+      days: { orderBy: { date: 'asc' }, take: 1, select: { venueName: true } },
     },
   });
+  // Spelled out once for the ready-made messages ("Saturday, 14 November at 4:00 PM").
+  const whenText = event.startsAt
+    ? new Intl.DateTimeFormat('en', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: event.timezone,
+      }).format(event.startsAt)
+    : '';
   const shareUrl = `${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}/rsvp`;
   const [listed, groups, batches, queue] =
     invitesOn && canManage
@@ -116,6 +130,8 @@ export default async function InvitesPage({
                 <Composer
                   eventId={id}
                   eventName={event.name}
+                  whenText={whenText}
+                  venueName={event.days[0]?.venueName ?? ''}
                   currency={event.currency}
                   appUrl={env.APP_URL.replace(/\/$/, '')}
                   guests={listed.guests.map((guest) => ({ id: guest.id, name: guest.name }))}

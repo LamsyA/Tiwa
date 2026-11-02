@@ -36,6 +36,8 @@ type Channel = 'WHATSAPP' | 'EMAIL' | 'SMS' | 'LINK';
 export function Composer({
   eventId,
   eventName,
+  whenText = '',
+  venueName = '',
   currency,
   appUrl,
   guests,
@@ -43,6 +45,8 @@ export function Composer({
 }: {
   eventId: string;
   eventName: string;
+  whenText?: string;
+  venueName?: string;
   currency: string;
   appUrl: string;
   guests: ComposerGuest[];
@@ -60,6 +64,9 @@ export function Composer({
   const [channels, setChannels] = React.useState<Channel[]>(['WHATSAPP', 'EMAIL', 'SMS']);
   const [smart, setSmart] = React.useState(true);
   const [message, setMessage] = React.useState('');
+  const [template, setTemplate] = React.useState('warm');
+  const [editing, setEditing] = React.useState(false);
+  const messageRef = React.useRef<HTMLTextAreaElement>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | undefined>();
   const [preview, setPreview] = React.useState<BatchPreview | undefined>();
@@ -90,10 +97,33 @@ export function Composer({
     }
   }
 
+  const details =
+    (whenText ? t('templates.detailsWhen', { when: whenText }) : '') +
+    (venueName ? t('templates.detailsWhere', { where: venueName }) : '');
+  const TEMPLATES = { INVITE: ['warm', 'formal', 'short'], UPDATE: ['reminder', 'change', 'thanks'] } as const;
+
+  function templateText(nextKind: 'INVITE' | 'UPDATE', key: string): string {
+    return t(`templates.${nextKind}.${key}.body` as 'templates.INVITE.warm.body', { event: eventName, details });
+  }
+
   function defaultMessage(nextKind: 'INVITE' | 'UPDATE'): string {
-    return nextKind === 'INVITE'
-      ? t('message.defaultInvite', { event: eventName })
-      : t('message.defaultUpdate', { event: eventName });
+    const key = TEMPLATES[nextKind][0];
+    setTemplate(key);
+    setEditing(false);
+    return templateText(nextKind, key);
+  }
+
+  /** Drop {name} / {link} in at the cursor, so nobody has to type the placeholders. */
+  function insertToken(token: string) {
+    const el = messageRef.current;
+    const start = el?.selectionStart ?? message.length;
+    const end = el?.selectionEnd ?? message.length;
+    const next = `${message.slice(0, start)}${token}${message.slice(end)}`;
+    setMessage(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(start + token.length, start + token.length);
+    });
   }
 
   function openComposer() {
@@ -149,8 +179,9 @@ export function Composer({
   const messageValid = message.trim().length > 0;
   const canNext = step === 0 ? whoValid : step === 1 ? howValid : step === 2 ? messageValid : true;
   const sampleLink = `${appUrl}/i/sample-token-for-preview`;
+  const sampleName = guests[0]?.name.split(' ')[0] ?? 'Ada';
   const rendered = message
-    .replaceAll('{name}', 'Ada')
+    .replaceAll('{name}', sampleName)
     .replaceAll('{link}', sampleLink)
     .replaceAll('{event}', eventName);
   const smsCount = rendered.length <= 160 ? 1 : Math.ceil(rendered.length / 153);
@@ -278,39 +309,88 @@ export function Composer({
               </div>
             )}
             {step === 2 && (
-              <div className="flex flex-col gap-3">
-                <FieldShell id="composer-message" label={t('message.label')} hint={t('message.hint')}>
-                  {(describedBy) => (
-                    <Textarea
-                      id="composer-message"
-                      aria-describedby={describedBy}
-                      rows={4}
-                      value={message}
-                      onChange={(event) => setMessage(event.target.value)}
-                    />
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h3 className="font-display text-lg font-bold">{t('templates.heading')}</h3>
+                  <p className="text-muted text-sm">{t('templates.sub')}</p>
+                </div>
+                <div className="flex flex-col gap-2" role="radiogroup" aria-label={t('templates.heading')}>
+                  {TEMPLATES[kind].map((key) => {
+                    const body = templateText(kind, key);
+                    const selected = !editing && template === key && message === body;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => {
+                          setTemplate(key);
+                          setMessage(body);
+                          setEditing(false);
+                        }}
+                        className={
+                          'rounded-2xl border p-3 text-left transition ' +
+                          (selected
+                            ? 'border-brand bg-brand-soft/40 ring-brand/30 ring-2'
+                            : 'border-border hover:border-brand/50 hover:bg-surface')
+                        }
+                      >
+                        <span className="text-brand-strong text-xs font-semibold tracking-wide uppercase">
+                          {t(`templates.${kind}.${key}.title` as 'templates.INVITE.warm.title')}
+                        </span>
+                        <span className="mt-1 block text-sm leading-relaxed">
+                          {body.replaceAll('{name}', sampleName).replaceAll('{link}', '🔗')}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="bg-surface-2 flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2 text-sm">
+                  <span className="font-medium">{t('templates.personalised')}:</span>
+                  <Chip>✓ {t('templates.nameTag')}</Chip>
+                  <Chip>✓ {t('templates.linkTag')}</Chip>
+                </div>
+                {editing ? (
+                  <div className="flex flex-col gap-2">
+                    <FieldShell id="composer-message" label={t('message.label')} hint={t('message.hint')}>
+                      {(describedBy) => (
+                        <Textarea
+                          id="composer-message"
+                          ref={messageRef}
+                          aria-describedby={describedBy}
+                          rows={5}
+                          value={message}
+                          onChange={(event) => setMessage(event.target.value)}
+                        />
+                      )}
+                    </FieldShell>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-muted text-xs">{t('templates.insertHint')}</span>
+                      <Chip onClick={() => insertToken('{name}')}>+ {t('templates.insertName')}</Chip>
+                      <Chip onClick={() => insertToken('{link}')}>+ {t('templates.insertLink')}</Chip>
+                      <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setEditing(false)}>
+                        {t('templates.doneEditing')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="secondary" size="sm" className="w-fit" onClick={() => setEditing(true)}>
+                    {t('templates.edit')}
+                  </Button>
+                )}
+                <Card className="p-3">
+                  <p className="text-muted mb-2 text-xs font-medium uppercase">
+                    {t('templates.previewFor', { name: sampleName })}
+                  </p>
+                  <p className="inline-block max-w-full rounded-2xl rounded-tl-sm bg-[#dcf8c6] p-2.5 text-sm break-words whitespace-pre-wrap text-black">
+                    {rendered}
+                  </p>
+                  {channels.includes('SMS') && (
+                    <p className="text-muted mt-2 text-xs">{t('message.segments', { count: smsCount })}</p>
                   )}
-                </FieldShell>
-                {channels.includes('WHATSAPP') && (
-                  <Card className="p-3">
-                    <p className="mb-1 text-xs font-medium uppercase">{t('message.previewWhatsapp')}</p>
-                    <p className="bg-surface-2 inline-block rounded-lg rounded-tl-none p-2 text-sm">{rendered}</p>
-                  </Card>
-                )}
-                {channels.includes('EMAIL') && (
-                  <Card className="p-3">
-                    <p className="mb-1 text-xs font-medium uppercase">{t('message.previewEmail')}</p>
-                    <p className="text-sm font-medium">{eventName}</p>
-                    <p className="text-muted text-sm">{rendered.slice(0, 140)}</p>
-                    <p className="text-muted mt-1 text-xs">{t('message.emailNote')}</p>
-                  </Card>
-                )}
-                {channels.includes('SMS') && (
-                  <Card className="p-3">
-                    <p className="mb-1 text-xs font-medium uppercase">{t('message.previewSms')}</p>
-                    <p className="text-sm">{rendered}</p>
-                    <p className="text-muted mt-1 text-xs">{t('message.segments', { count: smsCount })}</p>
-                  </Card>
-                )}
+                  {channels.includes('EMAIL') && <p className="text-muted mt-1 text-xs">{t('message.emailNote')}</p>}
+                </Card>
               </div>
             )}
             {step === 3 && preview && (
