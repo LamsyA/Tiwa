@@ -57,6 +57,26 @@ export async function createTask(actor: UserActor, input: z.infer<typeof createT
   return { taskId: task.id };
 }
 
+export const deleteTaskSchema = z.object({ eventId: z.string().uuid(), taskId: z.string().uuid() });
+
+/** The host's plan is theirs: any task can be removed by someone with `event.edit` (audited). */
+export async function deleteTask(actor: UserActor, input: z.infer<typeof deleteTaskSchema>) {
+  await requireEventAccess(actor, input.eventId, 'event.edit');
+  const task = await prisma.task.findFirst({ where: { id: input.taskId, eventId: input.eventId } });
+  if (!task) throw new NotFoundError('Task not found');
+  await prisma.$transaction(async (tx) => {
+    await tx.task.delete({ where: { id: task.id } });
+    await audit(tx, {
+      actor,
+      action: 'event.task.delete',
+      targetType: 'Task',
+      targetId: task.id,
+      data: { eventId: input.eventId, title: task.title },
+    });
+  });
+  return { ok: true as const };
+}
+
 export async function updateTask(actor: UserActor, input: z.infer<typeof updateTaskSchema>) {
   const access = await loadEventAccess(actor.userId, input.eventId);
   if (!access) throw new NotFoundError('Event not found');

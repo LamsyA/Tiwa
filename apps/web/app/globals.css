@@ -150,3 +150,50 @@ body {
   right: -8px;
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
+
+/* Plan page motion: short, soft, and off for reduced-motion users (tokens.css). */
+@keyframes tiwa-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes tiwa-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes tiwa-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.tiwa-fade-up {
+  animation: tiwa-fade-up 320ms var(--ease-out) both;
+}
+.tiwa-pop {
+  animation: tiwa-pop 280ms var(--ease-out) both;
+}
+.tiwa-shimmer {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: tiwa-shimmer 1.4s linear infinite;
+}
+.tiwa-ai-glow {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent),
+    0 8px 30px -10px color-mix(in oklab, var(--brand) 55%, transparent);
+}

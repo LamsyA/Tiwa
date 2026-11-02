@@ -51,15 +51,11 @@ test('UF-03-1/3/4: birthday in under 60s, template tasks + budget applied, no ti
   expect(Date.now() - started).toBeLessThan(60_000);
   const eventUrl = new URL(page.url()).pathname;
 
-  // D-X30: a new event starts with an empty plan and budget; template suggestions are opt-in.
+  // D-X30/D-X31: a new event starts with an empty plan; the host adds their own tasks.
   await page.goto(`${eventUrl}/plan`);
-  await expect(page.getByRole('heading', { name: 'Build your plan your way' })).toBeVisible();
-  await expect(page.getByText('Order the cake')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Pick from suggestions' }).click();
-  await page
-    .getByRole('dialog')
-    .getByRole('button', { name: /^Add \d+ tasks?$/ })
-    .click();
+  await expect(page.getByRole('heading', { name: 'Start your plan' })).toBeVisible();
+  await page.getByLabel('Add task').fill('Order the cake');
+  await page.getByRole('button', { name: 'Add task' }).click();
   await expect(page.getByText('Order the cake')).toBeVisible();
   await page.goto(`${eventUrl}/money`);
   await expect(page.getByText('Set up your budget')).toBeVisible();

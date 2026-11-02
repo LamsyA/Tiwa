@@ -93,3 +93,4 @@ export * from './tickets/manage.js';
 export * from './tickets/orders.js';
 export * from './tickets/queries.js';
 export * from './checkin/checkin.js';
+export * from './events/ai-plan.js';

@@ -1,12 +1,16 @@
 'use server';
 
+import { planDrafterFromEnv } from '@tiwa/ai';
+import { env } from '@tiwa/config';
 import {
-  applySuggestedTasks,
-  applySuggestedTasksSchema,
+  addDraftedTasks,
+  addDraftedTasksSchema,
   createTask,
   createTaskSchema,
-  eventIdSchema,
-  suggestedTasks,
+  deleteTask,
+  deleteTaskSchema,
+  draftPlan,
+  draftPlanSchema,
   updateTask,
   updateTaskSchema,
 } from '@tiwa/core';
@@ -27,11 +31,19 @@ export const editTask = userAction(updateTaskSchema, async (input, ctx) => {
   return result;
 });
 
-/** Opt-in template suggestions (D-X30): list them, then add the ones the host picked. */
-export const listSuggestionsAction = userAction(eventIdSchema, async (input, ctx) => suggestedTasks(ctx.actor, input));
+export const removeTask = userAction(deleteTaskSchema, async (input, ctx) => {
+  const result = await deleteTask(ctx.actor, input);
+  await publishLive(eventChannel(input.eventId), 'tasks');
+  return result;
+});
 
-export const applySuggestionsAction = userAction(applySuggestedTasksSchema, async (input, ctx) => {
-  const result = await applySuggestedTasks(ctx.actor, input);
+/** AI plan assistant (D-X31): suggestions only — nothing is saved here (AI-06). */
+export const draftPlanAction = userAction(draftPlanSchema, async (input, ctx) =>
+  draftPlan(planDrafterFromEnv(env), ctx.actor, input),
+);
+
+export const addDraftedTasksAction = userAction(addDraftedTasksSchema, async (input, ctx) => {
+  const result = await addDraftedTasks(ctx.actor, input);
   await publishLive(eventChannel(input.eventId), 'tasks');
   return result;
 });
