@@ -1,4 +1,5 @@
-import { getFlagsFor, listMyOrgs, unreadTotal } from '@tiwa/core';
+import { getFlagsFor, listMyOrgs, notificationUnreadCount, unreadTotal } from '@tiwa/core';
+import { BellButton } from './notifications/bell.js';
 import { prisma } from '@tiwa/db';
 import { AppShell, type AppRole } from '@tiwa/ui';
 import type * as React from 'react';
@@ -47,17 +48,20 @@ async function cachedOrgs(userId: string): Promise<Awaited<ReturnType<typeof lis
  * from lib/ctx (no second indexed user read on the same request).
  */
 const frameData = cache(async (userId: string) => {
-  // Reuse the request's user row and orgs (no second read), plus the unread chat badge (P6-T14).
-  const [user, orgs, unread, profile] = await Promise.all([
+  // Reuse the request's user row and orgs (no second read), plus the unread chat badge (P6-T14)
+  // and the notification bell count (P13-T03).
+  const actor = { kind: 'user', userId, isAdmin: false } as const;
+  const [user, orgs, unread, profile, bell] = await Promise.all([
     loadUserRow(userId),
     cachedOrgs(userId),
-    unreadTotal({ kind: 'user', userId, isAdmin: false }),
+    unreadTotal(actor),
     prisma.user.findUnique({ where: { id: userId }, select: { name: true, phone: true } }),
+    notificationUnreadCount(actor).catch(() => 0),
   ]);
   if (!user) throw new Error('user row vanished mid-request');
   const flags = await getFlagsFor(user.countryCode ?? '');
   const role = roleForOrgs(orgs);
-  return { role, flags, unread, account: accountFrom(role, orgs, profile) };
+  return { role, flags, unread, bell, account: accountFrom(role, orgs, profile) };
 });
 
 function accountFrom(
@@ -94,7 +98,7 @@ export async function AppFrame({
   sectionTabs?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const { role, flags, unread, account } = await frameData(userId);
+  const { role, flags, unread, bell, account } = await frameData(userId);
   const t = await getTranslations('account');
   return (
     <FlagsProvider flags={flags}>
@@ -103,6 +107,7 @@ export async function AppFrame({
         active={active}
         title={title}
         sectionTabs={sectionTabs}
+        actions={<BellButton initialUnread={bell} />}
         badges={{ inbox: unread }}
         roleLabel={t(`workspace.${role}`)}
         account={<AccountMenu account={account} />}

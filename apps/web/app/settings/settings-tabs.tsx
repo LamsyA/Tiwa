@@ -3,11 +3,18 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 /** Settings sections as links (each is its own route, so back/forward and deep links work). */
-export async function SettingsTabs({ active, showTeam }: { active: 'profile' | 'team'; showTeam: boolean }) {
+export async function SettingsTabs({
+  active,
+  showTeam,
+}: {
+  active: 'profile' | 'team' | 'notifications';
+  showTeam: boolean;
+}) {
   const t = await getTranslations('settings');
   const tabs = [
     { key: 'profile', href: '/settings', label: t('tabProfile') },
     ...(showTeam ? [{ key: 'team', href: '/settings/team', label: t('tabTeam') }] : []),
+    { key: 'notifications', href: '/settings/notifications', label: t('tabNotifications') },
   ];
   return (
     <nav aria-label={t('title')} className="flex gap-1 overflow-x-auto">

@@ -96,6 +96,7 @@
     "title": "Settings",
     "tabProfile": "Profile",
     "tabTeam": "Team",
+    "tabNotifications": "Notifications",
     "team": {
       "heading": "{org} team",
       "noOrgTitle": "No business yet",
@@ -2297,6 +2298,33 @@
     "noContacts": "No emergency contacts yet — add the people to call when things go wrong.",
     "noItems": "No run-of-show items yet — add the first one or create them from the programme.",
     "noMine": "Nothing assigned to you right now."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "{count, plural, one {# unread notification} other {# unread notifications}}",
+    "empty": "You're all caught up.",
+    "markAll": "Mark all read",
+    "save": "Save preferences",
+    "saved": "Preferences saved.",
+    "channels": {
+      "inApp": "In app",
+      "push": "Push",
+      "email": "Email",
+      "sms": "SMS",
+      "whatsapp": "WhatsApp"
+    },
+    "quietHours": "Quiet hours (Lagos time)",
+    "quietStart": "Start",
+    "quietEnd": "End",
+    "quietNote": "Only in-app notifications arrive during quiet hours — urgent event-day and payment alerts always come through.",
+    "urgentAlways": "Urgent — always on every channel",
+    "pushTitle": "Web push",
+    "pushEnable": "Enable push on this device",
+    "pushDisable": "Disable push on this device",
+    "pushOn": "Push is on for this device.",
+    "pushUnsupported": "Push isn't supported in this browser.",
+    "pushDenied": "Notifications are blocked — allow them in the browser settings first.",
+    "pushUnavailable": "Push isn't available right now — try again later."
   },
   "publicEvent": {
     "buyTickets": "Get tickets",

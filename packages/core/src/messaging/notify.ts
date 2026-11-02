@@ -238,6 +238,11 @@ export async function markAllNotificationsRead(actor: UserActor) {
   return { ok: true as const };
 }
 
+/** Bell badge count (single cheap query, used by the app frame). */
+export async function notificationUnreadCount(actor: UserActor): Promise<number> {
+  return prisma.notification.count({ where: { userId: actor.userId, readAt: null } });
+}
+
 const channelSchema = z.boolean();
 
 export const setPreferencesSchema = z.object({

@@ -8,7 +8,20 @@ declare global {
   }
 }
 
-declare const self: WorkerGlobalScope;
+declare const self: WorkerGlobalScope & {
+  registration: {
+    showNotification: (title: string, options?: Record<string, unknown>) => Promise<void>;
+    scope: string;
+  };
+  clients: {
+    matchAll: (options?: Record<string, unknown>) => Promise<{ url: string; focus: () => Promise<unknown> }[]>;
+    openWindow: (url: string) => Promise<unknown>;
+  };
+};
+
+interface ExtendableEventLike extends Event {
+  waitUntil: (promise: Promise<unknown>) => void;
+}
 
 /**
  * Dynamic requests are NEVER cached (P3-T13 root cause): Serwist's
@@ -63,3 +76,39 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+/** Web push display + tap-through (P13-T03, MSG-15). Payload comes from
+ * `messaging/notify`: { title, body, url }. */
+self.addEventListener('push', (event) => {
+  const data = (event as unknown as { data?: { json?: () => unknown } }).data?.json?.() as
+    { title?: string; body?: string; url?: string } | undefined;
+  const title = typeof data?.title === 'string' ? data.title : 'Tiwa';
+  const body = typeof data?.body === 'string' ? data.body : '';
+  const url = typeof data?.url === 'string' ? data.url : '/notifications';
+  (event as ExtendableEventLike).waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const target = (event as unknown as { notification: { data?: { url?: string }; close: () => void } }).notification;
+  const url = target.data?.url ?? '/notifications';
+  target.close();
+  (event as ExtendableEventLike).waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of windows) {
+        if ('focus' in client && client.url.includes(self.registration.scope)) {
+          await client.focus();
+          return;
+        }
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});
