@@ -288,34 +288,8 @@ export async function respondBookingChange(
           }
         }
       }
-      if (diff !== 0n) {
-        // UF-19: the extra (or reduced) amount lands on the next unpaid
-        // milestone, or a new one when everything is already scheduled.
-        const next = await tx.paymentMilestone.findFirst({
-          where: { bookingId: version.bookingId, state: 'SCHEDULED' },
-          orderBy: { createdAt: 'asc' },
-          select: { id: true, amountMinor: true },
-        });
-        if (next) {
-          const adjusted = next.amountMinor + diff;
-          await tx.paymentMilestone.update({
-            where: { id: next.id },
-            data: { amountMinor: adjusted < 0n ? 0n : adjusted },
-          });
-        } else {
-          await tx.paymentMilestone.create({
-            data: {
-              bookingId: version.bookingId,
-              kind: 'PAYMENT',
-              label: diff > 0n ? 'Balance adjustment' : 'Reduction',
-              amountMinor: diff > 0n ? diff : 0n,
-              currency: version.booking.currency,
-              dueAt: now,
-              releaseRule: 'ON_PAYMENT',
-            },
-          });
-        }
-      }
+      if (diff !== 0n)
+        await adjustMilestones(tx, version.bookingId, version.booking.currency, diff, version.version, now);
       await audit(tx, {
         actor,
         action: 'booking.acceptChange',
@@ -367,7 +341,7 @@ export interface ScopeDiff {
 
 export const listPendingChangesSchema = z.object({ vendorOrgId: z.string().uuid() });
 
-/** Vendor's incoming change requests (their bookings' PROPOSED versions). */
+/** Vendor's change requests (their bookings' PROPOSED versions), with what changed and who asked. */
 export async function listPendingChanges(actor: UserActor, raw: z.infer<typeof listPendingChangesSchema>) {
   const { vendorOrgId } = listPendingChangesSchema.parse(raw);
   const membership = await prisma.membership.findFirst({
@@ -375,19 +349,161 @@ export async function listPendingChanges(actor: UserActor, raw: z.infer<typeof l
     select: { role: true },
   });
   if (!membership) throw new ForbiddenError('Only the vendor team lists change requests');
-  const versions = await prisma.bookingVersion.findMany({
-    where: { status: 'PROPOSED', booking: { vendorOrgId } },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      version: true,
-      totalMinor: true,
-      reason: true,
-      scope: true,
-      booking: { select: { id: true, eventId: true, event: { select: { name: true } } } },
-    },
+  const [versions, team] = await Promise.all([
+    prisma.bookingVersion.findMany({
+      where: { status: 'PROPOSED', booking: { vendorOrgId } },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        version: true,
+        totalMinor: true,
+        reason: true,
+        scope: true,
+        proposedById: true,
+        createdAt: true,
+        booking: {
+          select: {
+            id: true,
+            eventId: true,
+            category: true,
+            currency: true,
+            event: { select: { name: true } },
+            versions: { where: { status: 'ACCEPTED' }, select: { scope: true, totalMinor: true }, take: 1 },
+          },
+        },
+      },
+    }),
+    prisma.membership.findMany({ where: { orgId: vendorOrgId }, select: { userId: true } }),
+  ]);
+  const vendorUsers = new Set(team.map((row) => row.userId));
+  return versions.map(({ booking: { versions: accepted, ...booking }, ...row }) => {
+    const current = accepted[0];
+    return {
+      ...row,
+      totalMinor: row.totalMinor.toString(),
+      createdAt: row.createdAt.toISOString(),
+      booking,
+      proposedBy: vendorUsers.has(row.proposedById) ? ('vendor' as const) : ('host' as const),
+      mine: row.proposedById === actor.userId,
+      summary: describeChange(
+        current ? { ...(current.scope as unknown as ScopeLike), totalMinor: current.totalMinor.toString() } : null,
+        { ...(row.scope as unknown as ScopeLike), totalMinor: row.totalMinor.toString() },
+      ),
+    };
   });
-  return versions.map((row) => ({ ...row, totalMinor: row.totalMinor.toString() }));
+}
+
+interface ScopeLike {
+  items?: { name: string; qty: number; unitMinor: string }[];
+  notes?: string | null;
+  serviceDate?: string | null;
+  slot?: string | null;
+  totalMinor: string;
+}
+
+export interface ChangeLine {
+  name: string;
+  kind: 'added' | 'removed' | 'changed' | 'same';
+  before: { qty: number; unitMinor: string } | null;
+  after: { qty: number; unitMinor: string } | null;
+}
+
+export interface ChangeSummary {
+  lines: ChangeLine[];
+  date: { before: string | null; after: string | null } | null;
+  slot: { before: string | null; after: string | null } | null;
+  notes: { before: string | null; after: string | null } | null;
+  beforeMinor: string;
+  afterMinor: string;
+  diffMinor: string;
+}
+
+/**
+ * What a change request actually changes, line by line (UF-19): items are
+ * matched by name, so the other side sees "added", "removed" or "2 → 3"
+ * instead of a bare version number.
+ */
+export function describeChange(before: ScopeLike | null, after: ScopeLike): ChangeSummary {
+  const key = (name: string) => name.trim().toLowerCase();
+  const old = new Map((before?.items ?? []).map((item) => [key(item.name), item]));
+  const lines: ChangeLine[] = [];
+  for (const item of after.items ?? []) {
+    const prev = old.get(key(item.name));
+    old.delete(key(item.name));
+    const next = { qty: item.qty, unitMinor: item.unitMinor };
+    if (!prev) lines.push({ name: item.name, kind: 'added', before: null, after: next });
+    else
+      lines.push({
+        name: item.name,
+        kind: prev.qty === item.qty && prev.unitMinor === item.unitMinor ? 'same' : 'changed',
+        before: { qty: prev.qty, unitMinor: prev.unitMinor },
+        after: next,
+      });
+  }
+  for (const item of old.values()) {
+    lines.push({ name: item.name, kind: 'removed', before: { qty: item.qty, unitMinor: item.unitMinor }, after: null });
+  }
+  const moved = (a: string | null | undefined, b: string | null | undefined) =>
+    (a ?? null) !== (b ?? null) ? { before: a ?? null, after: b ?? null } : null;
+  const beforeMinor = before?.totalMinor ?? '0';
+  return {
+    lines,
+    date: moved(before?.serviceDate, after.serviceDate),
+    slot: moved(before?.slot, after.slot),
+    notes: moved(before?.notes?.trim() || null, after.notes?.trim() || null),
+    beforeMinor,
+    afterMinor: after.totalMinor,
+    diffMinor: (BigInt(after.totalMinor) - BigInt(beforeMinor)).toString(),
+  };
+}
+
+const UNPAID = ['SCHEDULED', 'PENDING_PAYMENT'] as const;
+
+/**
+ * Accepted change moves the money (UF-19). More: added to the next unpaid
+ * milestone, or a new "Change vN" milestone due now when nothing is left
+ * unpaid. Less: taken off the unpaid milestones, latest first, never below
+ * zero and never as an empty row.
+ */
+async function adjustMilestones(
+  tx: Prisma.TransactionClient,
+  bookingId: string,
+  currency: string,
+  diff: bigint,
+  version: number,
+  now: Date,
+) {
+  const unpaid = await tx.paymentMilestone.findMany({
+    where: { bookingId, state: { in: [...UNPAID] } },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, amountMinor: true },
+  });
+  if (diff > 0n) {
+    const next = unpaid[0];
+    if (next) {
+      await tx.paymentMilestone.update({ where: { id: next.id }, data: { amountMinor: next.amountMinor + diff } });
+    } else {
+      await tx.paymentMilestone.create({
+        data: {
+          bookingId,
+          kind: 'PAYMENT',
+          label: `Change v${version}`,
+          amountMinor: diff,
+          currency,
+          dueAt: now,
+          releaseRule: 'ON_PAYMENT',
+        },
+      });
+    }
+    return;
+  }
+  let left = -diff;
+  for (const row of [...unpaid].reverse()) {
+    if (left === 0n) break;
+    const take = row.amountMinor < left ? row.amountMinor : left;
+    await tx.paymentMilestone.update({ where: { id: row.id }, data: { amountMinor: row.amountMinor - take } });
+    left -= take;
+  }
 }
 
 /** Old vs new for the diff view (UF-19): price difference plus what moved. */

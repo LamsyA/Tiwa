@@ -1,5 +1,5 @@
 import { listMyOrgs, listVendorBookingMoney, pendingReplies, vendorDayTasks } from '@tiwa/core';
-import { Badge, Card, EmptyState } from '@tiwa/ui';
+import { Card, EmptyState, MoneyText, StatusPill } from '@tiwa/ui';
 import { Briefcase } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -12,6 +12,8 @@ import { VendorReplies } from './vendor-replies.js';
 export default async function BookingsPage() {
   const ctx = await requirePageUser('/bookings');
   const t = await getTranslations('vendor');
+  const tb = await getTranslations('bookings');
+  const tv = await getTranslations('vendorBooking');
   const orgs = await listMyOrgs(ctx.actor.userId);
   const vendorOrg = orgs.find((r) => r.org.kind === 'VENDOR')?.org;
   if (!vendorOrg) {
@@ -39,15 +41,27 @@ export default async function BookingsPage() {
               const tasks = dayByBooking.get(b.id);
               return (
                 <li key={b.id} className="flex flex-col gap-2">
-                  <Card className="flex items-center justify-between gap-2 p-3">
-                    <div>
-                      <Link href="/quotes" className="font-medium">
-                        {b.eventName}
-                      </Link>
-                      <p className="text-muted text-sm">{b.status}</p>
-                    </div>
-                    <Badge>{b.outstandingMinor === '0' ? b.securedMinor : b.outstandingMinor}</Badge>
-                  </Card>
+                  <Link href={`/bookings/${b.id}`} className="group">
+                    <Card className="group-hover:border-brand/50 flex items-center justify-between gap-3 p-3 transition-colors">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{b.eventName}</p>
+                        <StatusPill tone={b.status === 'CONFIRMED' ? 'success' : 'neutral'}>
+                          {tb.has(`status.${b.status}`) ? tb(`status.${b.status}`) : b.status}
+                        </StatusPill>
+                      </div>
+                      <div className="text-right text-sm">
+                        <p className="text-muted text-xs">
+                          {b.outstandingMinor === '0' ? tv('money.secured') : tv('money.outstanding')}
+                        </p>
+                        <p className="font-semibold">
+                          <MoneyText
+                            value={b.outstandingMinor === '0' ? b.securedMinor : b.outstandingMinor}
+                            currency={b.currency}
+                          />
+                        </p>
+                      </div>
+                    </Card>
+                  </Link>
                   {tasks && (
                     <VendorDayCard
                       row={{

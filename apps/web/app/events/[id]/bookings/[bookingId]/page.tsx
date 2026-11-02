@@ -1,6 +1,6 @@
-import { bookingMoney, diffScopes, getBooking, listBookingPayments, stageForBooking } from '@tiwa/core';
+import { bookingMoney, describeChange, getBooking, listBookingPayments, stageForBooking } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Banner, Card, MoneyText, StatusPill } from '@tiwa/ui';
+import { Banner, Card, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -9,6 +9,7 @@ import { OrderTimeline } from '@/components/orders/order-timeline.js';
 import { BookingTabbar } from './booking-tabbar.js';
 import { ChangeRequestDialog, PendingDecision } from './change-dialog.js';
 import { PaymentsPanel } from './payments-panel.js';
+import { ChangeSummary as VersionSummary } from '@/components/bookings/change-summary.js';
 
 interface ScopeView {
   items: { name: string; qty: number; unitMinor: string }[];
@@ -61,6 +62,34 @@ export default async function BookingPage({
     select: { id: true, name: true, mime: true, sizeBytes: true },
   });
   const payments = await listBookingPayments(booking.id);
+  // Each version against the one before it, so a change reads as "what moved" (UF-19).
+  const summaries = new Map(
+    pricesHidden
+      ? []
+      : booking.versions.map((row, i) => {
+          const prev = booking.versions[i - 1];
+          return [
+            row.id,
+            prev
+              ? describeChange(
+                  { ...(prev.scope as unknown as ScopeView), totalMinor: String(prev.totalMinor) },
+                  { ...(row.scope as unknown as ScopeView), totalMinor: String(row.totalMinor) },
+                )
+              : null,
+          ] as const;
+        }),
+  );
+  const pendingSummary =
+    pending && !pricesHidden
+      ? describeChange(
+          { ...(current.scope as unknown as ScopeView), totalMinor: String(current.totalMinor) },
+          { ...(pending.scope as unknown as ScopeView), totalMinor: String(pending.totalMinor) },
+        )
+      : null;
+  const pendingBy = pending ? (pending as { proposedById?: string }).proposedById : undefined;
+  const askedByVendor = pendingBy
+    ? (await prisma.membership.count({ where: { orgId: booking.vendorOrgId, userId: pendingBy } })) > 0
+    : false;
   const money = pricesHidden
     ? { totalMinor: 0n, securedMinor: 0n, awaitingMinor: 0n, outstandingMinor: 0n }
     : bookingMoney(booking.milestones);
@@ -123,9 +152,12 @@ export default async function BookingPage({
         {pending && (
           <PendingDecision
             versionId={pending.id}
-            mine={(pending as { proposedById?: string }).proposedById === ctx.actor.userId}
-            vendorName={vendor?.name ?? ''}
-            version={pending.version}
+            mine={pendingBy === ctx.actor.userId}
+            otherName={vendor?.name ?? ''}
+            askedBy={askedByVendor ? (vendor?.name ?? '') : t('change.yourTeam')}
+            reason={pending.reason ?? null}
+            summary={pendingSummary}
+            currency={booking.currency}
           />
         )}
         <BookingTabbar eventId={eventId} bookingId={booking.id} active={active} items={tabs} label={t('title')} />
@@ -137,10 +169,13 @@ export default async function BookingPage({
                 <p className="text-muted">{t('hiddenByPlanner')}</p>
               ) : (
                 <>
-                  <ul className="text-muted flex flex-col gap-0.5">
+                  <ul className="divide-border/60 border-border/70 flex flex-col divide-y rounded-2xl border">
                     {scope.items.map((item, i) => (
-                      <li key={i}>
-                        {item.name} × {item.qty}
+                      <li key={i} className="flex items-center gap-3 px-4 py-2.5">
+                        <span className="min-w-0 flex-1">{item.name}</span>
+                        <span className="text-muted text-xs">
+                          {item.qty} × <MoneyText value={item.unitMinor} currency={booking.currency} />
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -177,12 +212,13 @@ export default async function BookingPage({
                 {event.name} · {event.timezone}
               </p>
               <div className="flex gap-2">
-                {!pricesHidden && scope && (
+                {!pricesHidden && scope && !pending && !closed && (
                   <ChangeRequestDialog
                     bookingId={booking.id}
                     currency={booking.currency}
                     current={{ items: scope.items, notes: scope.notes, serviceDate: scope.serviceDate }}
                     slot={scope.slot}
+                    side="host"
                   />
                 )}
               </div>
@@ -190,33 +226,29 @@ export default async function BookingPage({
           </Card>
         )}
         {active === 'versions' && (
-          <ul className="flex flex-col gap-2">
-            {booking.versions.map((row) => (
-              <li key={row.id} className="border-border rounded-lg border p-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">v{row.version}</span>
-                  <StatusPill
-                    tone={row.status === 'ACCEPTED' ? 'success' : row.status === 'PROPOSED' ? 'brand' : 'neutral'}
-                  >
-                    {row.status}
-                  </StatusPill>
-                  {row.version === booking.currentVersion && <span className="text-muted">{t('currentBadge')}</span>}
-                </div>
-                {pending && row.id === pending.id && current && !pricesHidden && scope && (
-                  <p className="text-muted mt-1">
-                    {t('diffAdded', {
-                      amount: (() => {
-                        const next = row.scope as unknown as ScopeView & { totalMinor: string };
-                        const prev = { ...scope, totalMinor: current.totalMinor } as unknown as ScopeView & {
-                          totalMinor: string;
-                        };
-                        return diffScopes(prev, next).totalDiffMinor;
-                      })(),
-                    })}
-                  </p>
-                )}
-              </li>
-            ))}
+          <ul className="flex flex-col gap-3">
+            {[...booking.versions].reverse().map((row) => {
+              const summary = summaries.get(row.id) ?? null;
+              return (
+                <li key={row.id} className="border-border/70 bg-surface flex flex-col gap-3 rounded-3xl border p-4">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-display font-semibold">v{row.version}</span>
+                    <StatusPill
+                      tone={row.status === 'ACCEPTED' ? 'success' : row.status === 'PROPOSED' ? 'brand' : 'neutral'}
+                    >
+                      {t.has(`versionStatus.${row.status}`) ? t(`versionStatus.${row.status}`) : row.status}
+                    </StatusPill>
+                    {row.version === booking.currentVersion && <span className="text-muted">{t('currentBadge')}</span>}
+                    <span className="text-muted ml-auto text-xs">
+                      {new Date(row.createdAt).toLocaleDateString('en', { dateStyle: 'medium' })}
+                    </span>
+                  </div>
+                  {summary && (
+                    <VersionSummary summary={summary} currency={booking.currency} reason={row.reason ?? null} />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
         {active === 'payments' && (
@@ -248,10 +280,13 @@ export default async function BookingPage({
         )}
         {active === 'messages' && (
           <Card>
-            <div className="p-4 text-sm">
-              <p className="text-muted">{t('messagesSoon')}</p>
-              <Link href="/inbox" className="underline">
-                {t('messagesTab')}
+            <div className="flex flex-col items-start gap-3 p-4 text-sm">
+              <p className="text-muted">{t('messagesBody', { name: vendor?.name ?? '' })}</p>
+              <Link
+                href={data.threadId ? `/inbox/${data.threadId}` : '/inbox'}
+                className={buttonClasses({ variant: 'secondary' })}
+              >
+                {t('openChat')}
               </Link>
             </div>
           </Card>
@@ -262,7 +297,7 @@ export default async function BookingPage({
               {files.length === 0 && <p className="text-muted">{t('noFiles')}</p>}
               {files.map((file) => (
                 <p key={file.id}>
-                  {file.name} · {file.sizeBytes}
+                  {file.name} · {formatSize(Number(file.sizeBytes))}
                 </p>
               ))}
             </div>
@@ -271,4 +306,10 @@ export default async function BookingPage({
       </div>
     </EventFrame>
   );
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

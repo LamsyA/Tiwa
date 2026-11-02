@@ -222,7 +222,86 @@ export const handlePaymentConfirmed = (data: unknown, log: Log) =>
 export const handlePaymentDeclined = (data: unknown, log: Log) =>
   handlePaymentAnswered(data, log, 'payment.offline_declined');
 
-/** Booking changed → both sides see it. */
+/** Each side opens the booking on its own page. */
+const hostBookingUrl = (eventId: string, bookingId: string) => `/events/${eventId}/bookings/${bookingId}`;
+const vendorBookingUrl = (bookingId: string) => `/bookings/${bookingId}`;
+
+async function changeContext(versionId: string) {
+  return prisma.bookingVersion.findUnique({
+    where: { id: versionId },
+    select: {
+      version: true,
+      reason: true,
+      totalMinor: true,
+      proposedById: true,
+      booking: {
+        select: {
+          id: true,
+          eventId: true,
+          vendorOrgId: true,
+          category: true,
+          totalMinor: true,
+          currency: true,
+          event: { select: { name: true } },
+        },
+      },
+    },
+  });
+}
+
+function changeBody(row: NonNullable<Awaited<ReturnType<typeof changeContext>>>): string {
+  const diff = row.totalMinor - row.booking.totalMinor;
+  const money =
+    diff === 0n ? '' : ` · ${diff > 0n ? '+' : '−'}${displayAmount(diff > 0n ? diff : -diff, row.booking.currency)}`;
+  const reason = row.reason ? ` · “${row.reason.slice(0, 80)}”` : '';
+  return `${row.booking.event.name}${money}${reason}`;
+}
+
+/** Change requested → the other side decides. */
+export async function handleChangeRequested(data: unknown, log: Log) {
+  const versionId = asString(asRecord(data).versionId);
+  if (!versionId) throw new Error('booking.change_requested needs versionId');
+  const row = await changeContext(versionId);
+  if (!row) return { missing: true as const };
+  const vendorTeam = await orgMemberUserIds(row.booking.vendorOrgId);
+  const byVendor = vendorTeam.includes(row.proposedById);
+  return fanout(
+    {
+      userIds: byVendor ? await teamUserIds(row.booking.eventId) : vendorTeam,
+      type: 'booking.changed',
+      title: byVendor ? 'Vendor asked to change the booking' : 'Client asked for a change',
+      body: changeBody(row),
+      url: byVendor ? hostBookingUrl(row.booking.eventId, row.booking.id) : vendorBookingUrl(row.booking.id),
+      data: { bookingId: row.booking.id, eventId: row.booking.eventId },
+      key: `chg-req:${versionId}`,
+    },
+    log,
+  );
+}
+
+/** Change declined → whoever asked hears back. */
+export async function handleChangeDeclined(data: unknown, log: Log) {
+  const versionId = asString(asRecord(data).versionId);
+  if (!versionId) throw new Error('booking.change_declined needs versionId');
+  const row = await changeContext(versionId);
+  if (!row) return { missing: true as const };
+  const vendorTeam = await orgMemberUserIds(row.booking.vendorOrgId);
+  const byVendor = vendorTeam.includes(row.proposedById);
+  return fanout(
+    {
+      userIds: byVendor ? vendorTeam : await teamUserIds(row.booking.eventId),
+      type: 'booking.changed',
+      title: 'Change request declined',
+      body: `${row.booking.event.name} · v${row.version}`,
+      url: byVendor ? vendorBookingUrl(row.booking.id) : hostBookingUrl(row.booking.eventId, row.booking.id),
+      data: { bookingId: row.booking.id, eventId: row.booking.eventId },
+      key: `chg-dec:${versionId}`,
+    },
+    log,
+  );
+}
+
+/** Booking changed → both sides see it, each with a link to their own booking page. */
 export async function handleBookingChanged(data: unknown, log: Log) {
   const payload = asRecord(data);
   const bookingId = asString(payload.bookingId);
@@ -235,18 +314,20 @@ export async function handleBookingChanged(data: unknown, log: Log) {
   });
   if (!booking) return { missing: true as const };
   const [team, vendorTeam] = await Promise.all([teamUserIds(eventId), orgMemberUserIds(vendorOrgId)]);
-  return fanout(
-    {
-      userIds: [...team, ...vendorTeam],
-      type: 'booking.changed',
-      title: 'Booking updated',
-      body: `${booking.event.name} · ${booking.category}`,
-      url: `/events/${eventId}/vendors`,
-      data: { bookingId, eventId },
-      key: `booking:${asString(payload.versionId) ?? bookingId}`,
-    },
+  const key = `booking:${asString(payload.versionId) ?? bookingId}`;
+  const common = {
+    type: 'booking.changed',
+    title: 'Booking updated',
+    body: `${booking.event.name} · ${booking.category}`,
+    data: { bookingId, eventId },
+    key,
+  };
+  const host = await fanout({ ...common, userIds: team, url: hostBookingUrl(eventId, bookingId) }, log);
+  const vendor = await fanout(
+    { ...common, userIds: vendorTeam.filter((id) => !team.includes(id)), url: vendorBookingUrl(bookingId) },
     log,
   );
+  return { notified: host.notified + vendor.notified, skipped: host.skipped + vendor.skipped };
 }
 
 /** Quote requested → the vendor team; quote sent → the event team. */

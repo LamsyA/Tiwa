@@ -169,18 +169,44 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
   await expect(host.getByText(/150,000/).first()).toBeVisible();
 
   // UF-19: host requests doubling portions; vendor accepts; booking moves to v2.
-  await host.getByRole('button', { name: 'Request change' }).click();
-  await host.getByLabel('Qty').first().fill('100');
-  await host.getByLabel(/Why is this change needed/).fill('Double portions');
+  await host.getByRole('button', { name: 'Request a change' }).click();
+  await host.getByLabel('Item 1 quantity').fill('100');
+  await host.getByLabel('Explain the change').fill('Double portions');
   await host.getByRole('button', { name: 'Send change request' }).click();
-  await expect(host.getByText('A change request is waiting')).toBeVisible();
+  await expect(host.getByText('Your change request is waiting')).toBeVisible();
 
+  // The vendor sees exactly what changed and why, not a bare version number.
   await gotoSettled(vendor, '/quotes');
-  await vendor.getByRole('button', { name: 'Accept', exact: true }).first().click();
+  const ask = vendor.locator('section', { hasText: 'The client asked for a change' }).first();
+  await expect(ask.getByText('Double portions')).toBeVisible({ timeout: 30_000 });
+  await expect(ask.getByText('Changed', { exact: true })).toBeVisible();
+  await expect(ask.getByText(/\+.*150,000/)).toBeVisible();
+  await ask.getByRole('button', { name: 'Accept changes' }).click();
   await expect(vendor.getByText('Double portions')).toHaveCount(0, { timeout: 30_000 });
 
   await gotoSettled(host, (host.url().split('?')[0] as string).split('#')[0] as string);
   await expect(host.getByText(/300,000/).first()).toBeVisible();
+
+  // The vendor asks for extra money from their own booking page; the host approves it.
+  const bookingId = (host.url().split('?')[0] as string).split('/').pop() as string;
+  await gotoSettled(vendor, `/bookings/${bookingId}`);
+  await vendor.getByRole('button', { name: 'Request a change or extra payment' }).click();
+  await vendor.getByRole('button', { name: 'Add an extra charge' }).click();
+  await vendor.getByLabel('Item 2 name').fill('Generator');
+  await vendor.getByLabel('Item 2 unit price').fill('20000');
+  await vendor.getByLabel('Explain the change').fill('No power backup at the venue');
+  await vendor.getByRole('button', { name: 'Send change request' }).click();
+  await expect(vendor.getByText('Your change request is waiting')).toBeVisible({ timeout: 30_000 });
+
+  await gotoSettled(host, (host.url().split('?')[0] as string).split('#')[0] as string);
+  const extra = host.locator('section', { hasText: 'asked for a change' }).first();
+  await expect(extra.getByText('No power backup at the venue')).toBeVisible({ timeout: 30_000 });
+  await expect(extra.getByText('Generator')).toBeVisible();
+  await expect(extra.getByText('Added', { exact: true })).toBeVisible();
+  await extra.getByRole('button', { name: 'Accept changes' }).click();
+  // The summary already says "→ 320,000"; wait until the request is gone so the new total is saved.
+  await expect(host.getByText('No power backup at the venue')).toHaveCount(0, { timeout: 30_000 });
+  await expect(host.getByText(/320,000/).first()).toBeVisible();
 
   // UF-17 step 5 (lean P8, D-X27): host records an offline payment with a receipt; vendor confirms; booking CONFIRMED.
   const bookingUrl = (host.url().split('?')[0] as string).split('#')[0] as string;
@@ -281,7 +307,8 @@ test('D-X39: request a quote straight from a vendor profile; the vendor can decl
   await expect(vendor.getByText(`Small chops for 50 ${RUN}`)).toBeVisible({ timeout: 30_000 });
   await vendor.getByRole('button', { name: 'Decline', exact: true }).first().click();
   await vendor.getByRole('button', { name: 'Yes, decline' }).click();
-  await expect(vendor.getByText('Declined').first()).toBeVisible({ timeout: 30_000 });
+  // A declined request leaves the inbox (only open requests are listed).
+  await expect(vendor.getByText(`Small chops for 50 ${RUN}`)).toHaveCount(0, { timeout: 30_000 });
 
   await vendorCtx.close();
   await hostCtx.close();

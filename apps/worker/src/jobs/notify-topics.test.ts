@@ -3,6 +3,8 @@ import { createLogger } from '@tiwa/core';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   handleBookingChanged,
+  handleChangeDeclined,
+  handleChangeRequested,
   handleDayIncidentRaised,
   handleDayItemLate,
   handleDaySignoffDue,
@@ -49,6 +51,7 @@ async function makeEvent(hostId: string, name: string) {
 afterAll(async () => {
   await prisma.notification.deleteMany({ where: { userId: { in: users } } }).catch(() => undefined);
   await prisma.outboxEvent.deleteMany({ where: { topic: 'messaging/notify' } }).catch(() => undefined);
+  await prisma.bookingVersion.deleteMany({ where: { booking: { eventId: { in: events } } } }).catch(() => undefined);
   await prisma.vendorCheckIn.deleteMany({ where: { eventId: { in: events } } }).catch(() => undefined);
   await prisma.payment.deleteMany({ where: { id: { in: payments } } }).catch(() => undefined);
   await prisma.paymentMilestone
@@ -198,6 +201,29 @@ describe('P13-T04 topic fan-out', () => {
     await handleBookingChanged({ versionId: 'v1', bookingId: booking.id, eventId, vendorOrgId: org.id }, log);
     expect(await rowsFor(hostId, 'booking.changed')).toHaveLength(1);
     expect(await rowsFor(vendorId, 'booking.changed')).toHaveLength(1);
+    expect((await rowsFor(vendorId, 'booking.changed'))[0]!.url).toBe(`/bookings/${booking.id}`);
+    expect((await rowsFor(hostId, 'booking.changed'))[0]!.url).toBe(`/events/${eventId}/bookings/${booking.id}`);
+    // A vendor's extra-money request reaches the host; the decline goes back to the vendor.
+    const extra = await prisma.bookingVersion.create({
+      data: {
+        bookingId: booking.id,
+        version: 2,
+        status: 'PROPOSED',
+        scope: { items: [] },
+        totalMinor: booking.totalMinor + 50_000n,
+        terms: 'none',
+        proposedById: vendorId,
+        reason: 'Extra generator',
+      },
+    });
+    await handleChangeRequested({ versionId: extra.id }, log);
+    const asked = (await rowsFor(hostId, 'booking.changed'))[0]!;
+    expect(asked.title).toBe('Vendor asked to change the booking');
+    expect(asked.body).toContain('Extra generator');
+    await handleChangeDeclined({ versionId: extra.id }, log);
+    expect((await rowsFor(vendorId, 'booking.changed'))[0]!.title).toBe('Change request declined');
+    await prisma.notification.deleteMany({ where: { userId: { in: [hostId, vendorId] } } });
+    await handleBookingChanged({ versionId: 'v1', bookingId: booking.id, eventId, vendorOrgId: org.id }, log);
     await handleQuoteRequested({ quoteRequestId: 'qr1', eventId, vendorOrgId: org.id, category: 'catering' }, log);
     expect(await rowsFor(vendorId, 'booking.changed')).toHaveLength(2);
     await handleQuoteSent({ quoteId: 'q1', eventId, vendorOrgId: org.id }, log);

@@ -13,6 +13,8 @@ import { INVITE_BATCH_QUEUED_TOPIC, handleInviteBatchQueued, type FanOutSink } f
 import { NOTIFY_TOPIC, handleNotify } from './notify.js';
 import {
   handleBookingChanged,
+  handleChangeDeclined,
+  handleChangeRequested,
   handleDayIncidentRaised,
   handleDayItemLate,
   handleDaySignoffDue,
@@ -54,6 +56,8 @@ export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanO
   ['payment.offline_confirmed']: async (data, log) => handlePaymentConfirmed(data, log),
   ['payment.offline_declined']: async (data, log) => handlePaymentDeclined(data, log),
   ['booking.changed']: async (data, log) => handleBookingChanged(data, log),
+  ['booking.change_requested']: async (data, log) => handleChangeRequested(data, log),
+  ['booking.change_declined']: async (data, log) => handleChangeDeclined(data, log),
   ['quote.requested']: async (data, log) => handleQuoteRequested(data, log),
   ['quote.sent']: async (data, log) => handleQuoteSent(data, log),
   ['review.received']: async (data, log) => handleReviewReceived(data, log),

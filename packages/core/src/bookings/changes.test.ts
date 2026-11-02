@@ -3,7 +3,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { permissionsFor, toStoredPermissions } from '../events/access.js';
 import { acceptQuote } from './accept.js';
-import { diffScopes, requestBookingChange, respondBookingChange } from './changes.js';
+import {
+  describeChange,
+  diffScopes,
+  listPendingChanges,
+  requestBookingChange,
+  respondBookingChange,
+} from './changes.js';
 import { requestQuotes } from '../quotes/requests.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
@@ -170,5 +176,63 @@ describe('booking change requests', () => {
     expect(diff.notesChanged).toBe(true);
     expect(diff.dateChanged).toBe(true);
     expect(diff.slotChanged).toBe(false);
+  });
+
+  it('vendor sees what the host asked for, item by item, and who asked', async () => {
+    const fourth = await makeBooking();
+    await requestBookingChange(host, {
+      bookingId: fourth,
+      scope: {
+        ...changedScope,
+        items: [
+          { name: 'Rice', qty: 12, unitMinor: '100000' },
+          { name: 'Small chops', qty: 50, unitMinor: '2000' },
+        ],
+        serviceDate: '2026-12-20',
+      },
+      reason: 'Two more tables',
+    });
+    const rows = await listPendingChanges(vendor, { vendorOrgId: orgId });
+    const row = rows.find((item) => item.booking.id === fourth)!;
+    expect(row.proposedBy).toBe('host');
+    expect(row.mine).toBe(false);
+    expect(row.reason).toBe('Two more tables');
+    expect(row.summary.lines.map((line) => [line.name, line.kind])).toEqual([
+      ['Rice', 'changed'],
+      ['Small chops', 'added'],
+    ]);
+    expect(row.summary.date).toEqual({ before: null, after: '2026-12-20' });
+    expect(row.summary.diffMinor).toBe('300000');
+  });
+
+  it('a lower total comes off the unpaid milestones without empty rows', async () => {
+    const fifth = await makeBooking();
+    const proposed = await requestBookingChange(vendor, {
+      bookingId: fifth,
+      scope: { ...changedScope, items: [{ name: 'Rice', qty: 3, unitMinor: '100000' }] },
+      reason: 'Smaller crowd',
+    });
+    await respondBookingChange(host, { versionId: proposed.versionId, accept: true });
+    const milestones = await prisma.paymentMilestone.findMany({ where: { bookingId: fifth } });
+    expect(milestones).toHaveLength(2);
+    expect(milestones.reduce((total, row) => total + row.amountMinor, 0n)).toBe(300_000n);
+    expect(milestones.every((row) => row.amountMinor >= 0n)).toBe(true);
+  });
+
+  it('describeChange lists removed items and leaves unchanged fields out', () => {
+    const summary = describeChange(
+      {
+        items: [
+          { name: 'Cake', qty: 1, unitMinor: '500' },
+          { name: 'DJ', qty: 1, unitMinor: '900' },
+        ],
+        totalMinor: '1400',
+      },
+      { items: [{ name: 'cake ', qty: 1, unitMinor: '500' }], totalMinor: '500' },
+    );
+    expect(summary.lines.map((line) => line.kind)).toEqual(['same', 'removed']);
+    expect(summary.date).toBeNull();
+    expect(summary.notes).toBeNull();
+    expect(summary.diffMinor).toBe('-900');
   });
 });

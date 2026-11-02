@@ -1940,7 +1940,62 @@
       "DISPUTED": "Disputed",
       "RECORDED_OFFLINE": "Awaiting vendor confirmation",
       "CONFIRMED_OFFLINE": "Paid"
-    }
+    },
+    "change": {
+      "hostTitle": "Request a change",
+      "vendorTitle": "Request a change or extra payment",
+      "hostIntro": "Edit what you need below. The vendor sees exactly what changed and accepts or declines. Nothing changes until they accept.",
+      "vendorIntro": "Add extra work, change quantities or prices, or move the date. The client sees exactly what changed and the new total, and decides. If they accept, the extra amount is added to what they still owe.",
+      "itemsHeading": "Items",
+      "itemName": "Item {n} name",
+      "itemQty": "Item {n} quantity",
+      "itemPrice": "Item {n} unit price",
+      "itemPlaceholder": "What is it?",
+      "removeItem": "Remove {name}",
+      "addItem": "Add an item",
+      "addCharge": "Add an extra charge",
+      "total": "Total",
+      "reasonLabel": "Explain the change",
+      "reasonHint": "The other side sees this message first, so be specific.",
+      "hostReasonPlaceholder": "We now expect 50 more guests, so we need 2 more trays of jollof and small chops.",
+      "vendorReasonPlaceholder": "The venue has no power backup, so we need to bring a generator for 6 hours.",
+      "sending": "Sending…",
+      "waitingTitle": "Your change request is waiting",
+      "waitingBody": "{name} will see what changed and accept or decline. We'll let you know.",
+      "incomingTitle": "{name} asked for a change",
+      "incomingBody": "Here is exactly what changes. If you accept, the booking and the amount still to pay are updated.",
+      "accept": "Accept changes",
+      "decline": "Decline",
+      "working": "Saving…",
+      "askedBy": "{name} wrote",
+      "kind": {
+        "added": "Added",
+        "removed": "Removed",
+        "changed": "Changed",
+        "same": "Same"
+      },
+      "unchanged": "{count, plural, one {# other item stays the same} other {# other items stay the same}}",
+      "date": "Date",
+      "slot": "Time slot",
+      "notes": "New notes",
+      "notesRemoved": "Notes removed",
+      "noDate": "No date",
+      "client": "The client",
+      "versionDiff": "Change from the previous version",
+      "inboxHeading": "Change requests",
+      "openBooking": "Open booking",
+      "waitingOnClient": "Waiting for the client",
+      "yourTeam": "Someone on your event team"
+    },
+    "versionStatus": {
+      "PROPOSED": "Awaiting decision",
+      "ACCEPTED": "Accepted",
+      "DECLINED": "Declined",
+      "SUPERSEDED": "Replaced",
+      "WITHDRAWN": "Withdrawn"
+    },
+    "messagesBody": "Talk to {name} about this booking. Messages, quotes and payments all stay in one chat.",
+    "openChat": "Open the chat"
   },
   "payments": {
     "secured": "Paid",
@@ -2730,5 +2785,24 @@
     "late": "{count} min late",
     "skipped": "Skipped",
     "liveNote": "Updates automatically."
+  },
+  "vendorBooking": {
+    "back": "All bookings",
+    "stillOwed": "Client still owes",
+    "when": "When",
+    "where": "Where",
+    "guests": "Guests",
+    "tbc": "To be confirmed",
+    "changeHint": "Job grew, or the client asked for something extra? Use “Request a change or extra payment”. The client approves it before anything changes.",
+    "money": {
+      "secured": "Paid",
+      "awaiting": "Awaiting your confirmation",
+      "outstanding": "Still to pay"
+    },
+    "askedByYou": "You asked",
+    "askedByClient": "Client asked",
+    "message": "Message the client",
+    "open": "Open booking",
+    "changeWaiting": "Change request waiting"
   }
 }

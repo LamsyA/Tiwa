@@ -17,7 +17,10 @@ const MY_MOVE: Record<'vendor' | 'client', OrderStage[]> = {
 };
 
 export function orderHref(row: OrderRow, side: 'vendor' | 'client'): string {
-  if (side === 'vendor') return row.requestId ? `/quotes/${row.requestId}` : '/bookings';
+  if (side === 'vendor') {
+    if (row.bookingId) return `/bookings/${row.bookingId}`;
+    return row.requestId ? `/quotes/${row.requestId}` : '/bookings';
+  }
   if (row.bookingId) return `/events/${row.eventId}/bookings/${row.bookingId}`;
   return row.categoryKey ? `/events/${row.eventId}/vendors/${row.categoryKey}` : `/events/${row.eventId}/vendors`;
 }
