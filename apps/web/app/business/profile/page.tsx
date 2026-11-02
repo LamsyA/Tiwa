@@ -88,7 +88,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
           <div className="flex flex-col gap-2 p-4">
             <h2 className="font-medium">{t('checklistHeading')}</h2>
             <p className="text-muted text-sm">{t('checklistBody')}</p>
-            {profile.profile?.published && <Banner tone="info">{t('live')}</Banner>}
+            {profile.profile?.published && <Banner tone="info">{t('liveBanner')}</Banner>}
             <ul className="flex flex-col gap-2">
               {steps.map((step) => (
                 <li key={step.key} className="flex items-center gap-3 text-sm">

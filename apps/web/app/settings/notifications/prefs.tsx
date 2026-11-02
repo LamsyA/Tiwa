@@ -88,9 +88,13 @@ export function NotificationPrefs(props: {
                       type="checkbox"
                       className="accent-[var(--brand)] size-3.5"
                       checked={on}
-                      onChange={(event) =>
-                        setChannels((prev) => ({ ...prev, [type]: { ...prev[type], [channel]: event.target.checked } }))
-                      }
+                      onChange={(event) => {
+                        setSaved(false);
+                        setChannels((prev) => ({
+                          ...prev,
+                          [type]: { ...prev[type], [channel]: event.target.checked },
+                        }));
+                      }}
                     />
                     {t(`channels.${channel}`)}
                   </label>
@@ -110,7 +114,10 @@ export function NotificationPrefs(props: {
             aria-label={t('quietStart')}
             type="time"
             value={quietStart}
-            onChange={(event) => setQuietStart(event.target.value)}
+            onChange={(event) => {
+              setSaved(false);
+              setQuietStart(event.target.value);
+            }}
             className="w-36"
           />
           <span className="text-muted">–</span>
@@ -118,7 +125,10 @@ export function NotificationPrefs(props: {
             aria-label={t('quietEnd')}
             type="time"
             value={quietEnd}
-            onChange={(event) => setQuietEnd(event.target.value)}
+            onChange={(event) => {
+              setSaved(false);
+              setQuietEnd(event.target.value);
+            }}
             className="w-36"
           />
         </div>

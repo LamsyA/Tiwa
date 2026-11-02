@@ -88,7 +88,7 @@ async function newVendor(page: Page, project: string): Promise<string> {
   return name;
 }
 
-test('UF-13: profile goes live only when complete; OG tags present', async ({ browser }, testInfo) => {
+test('UF-13: profile goes live when published; OG tags present', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const name = await newVendor(page, testInfo.project.name);
@@ -102,7 +102,7 @@ test('UF-13: profile goes live only when complete; OG tags present', async ({ br
   await page.getByRole('button', { name: 'Save' }).first().click();
   await expect(page.getByText('Saved')).toBeVisible();
 
-  // Not public until complete (UF-13-1): search finds nothing.
+  // Not public until published (D-X34: publishing no longer waits for the checklist).
   await pollSearch(page, `/vendors?q=${encodeURIComponent(name)}`, name, 0);
 
   // Portfolio: 6 uploads.
@@ -174,7 +174,7 @@ test('UF-14 search: category/city finds the vendor; blocked dates exclude (UF-14
   // q narrows to the vendor; broad category/city pages hold thousands (load set).
   await pollSearch(page, `/vendors?q=${encodeURIComponent(name)}`, name, 1);
   await gotoSettled(page, '/vendors?category=catering&city=Lagos');
-  await expect(page.getByRole('link', { name: 'View profile' })).toHaveCount(20);
+  await expect(page.getByRole('list', { name: 'Search results' }).getByRole('listitem')).toHaveCount(20);
 
   // Block a date, then search free on it (UF-14-2).
   await gotoSettled(page, '/business/profile');

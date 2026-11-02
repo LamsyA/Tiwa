@@ -1403,7 +1403,8 @@
     "verifySubmit": "Submit for verification",
     "verifySubmitted": "Submitted — we review business verifications in order.",
     "verifyUploading": "Uploading…",
-    "removeDoc": "Remove"
+    "removeDoc": "Remove",
+    "liveBanner": "Live on Tiwa: hosts and planners can find and message you."
   },
   "marketplace": {
     "about": "About",
@@ -1568,7 +1569,8 @@
     "compareFor": "Shortlist for {event}",
     "compareEmptyTitle": "Nothing to compare yet",
     "compareActions": "Actions",
-    "compareRequestQuote": "View and request quote"
+    "compareRequestQuote": "View and request quote",
+    "resultsLabel": "Search results"
   },
   "inbox": {
     "title": "Inbox",
@@ -2330,7 +2332,19 @@
     "onsiteVendors": "On-site vendors",
     "noContacts": "No emergency contacts yet — add the people to call when things go wrong.",
     "noItems": "No run-of-show items yet — add the first one or create them from the programme.",
-    "noMine": "Nothing assigned to you right now."
+    "noMine": "Nothing assigned to you right now.",
+    "hero": {
+      "now": "Happening now",
+      "next": "Up next",
+      "nothingLive": "Nothing running right now",
+      "startedAt": "Started {time}",
+      "allDone": "Everything's done",
+      "inMinutes": "{count, plural, one {in # min} other {in # min}}",
+      "done": "Done",
+      "late": "Running late",
+      "incidents": "Open incidents",
+      "onsite": "Vendors on site"
+    }
   },
   "notifications": {
     "title": "Notifications",

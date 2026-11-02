@@ -161,7 +161,7 @@ export async function SearchPageBody({
         {result.hits.length === 0 ? (
           <EmptyState icon={<SearchX className="size-6" />} title={t('noResults')} body={t('noResultsBody')} />
         ) : (
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul aria-label={t('resultsLabel')} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {result.hits.map((hit, index) => (
               <li
                 key={hit.orgId}

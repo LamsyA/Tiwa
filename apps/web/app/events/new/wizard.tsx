@@ -728,7 +728,7 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
                   return (
                     <label
                       key={visibility}
-                      className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+                      className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 ${
                         selected ? 'border-brand bg-brand-soft/50' : 'border-border/70 hover:bg-surface-2'
                       }`}
                     >
@@ -741,7 +741,9 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
                         <Icon className="size-4" />
                       </span>
                       <span className="flex-1 text-sm">{t(`visibility.${visibility}`)}</span>
-                      <RadioItem value={visibility} aria-label={t(`visibility.${visibility}`)} />
+                      <span className="shrink-0">
+                        <RadioItem value={visibility} aria-label={t(`visibility.${visibility}`)} />
+                      </span>
                     </label>
                   );
                 })}
@@ -798,7 +800,7 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
         )}
       </div>
 
-      <div className="bg-bg/85 border-border/60 fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur-xl">
+      <div className="bg-bg/85 border-border/60 sticky bottom-0 z-30 -mx-4 border-t backdrop-blur-xl sm:-mx-6 lg:mx-0 lg:rounded-2xl lg:border">
         <div
           className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6"
           style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}

@@ -30,10 +30,13 @@ async function newHostWithEvent(page: Page, name: string): Promise<string> {
   await page.getByLabel('Date', { exact: true }).fill('2031-06-01');
   await page.getByLabel('Starts').fill('16:00');
   await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Where and when' })).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Guests and budget' })).toBeVisible();
   await page.getByLabel('Expected guests').fill('50');
   await page.getByLabel('Total budget').fill('500000');
   await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Choose features' })).toBeVisible();
   await page.getByRole('button', { name: 'Create event' }).click();
   await expect(page).toHaveURL(/\/events\/[0-9a-f-]+\?welcome=1$/);
   return new URL(page.url()).pathname.split('/')[2] as string;
@@ -46,7 +49,7 @@ test('UF-20: budget figures, expense, pledge, income, export and live update', a
 
   // Step 1: five stat cards and the template's categories.
   await host.goto(`/events/${eventId}/money`);
-  for (const label of ['Planned', 'Committed', 'Paid', 'Outstanding', 'Uncommitted']) {
+  for (const label of ['Planned budget', 'Committed', 'Paid', 'Outstanding', 'Uncommitted']) {
     await expect(host.getByText(label, { exact: true }).first()).toBeVisible();
   }
   await expect(host.getByText(/500,000/).first()).toBeVisible();

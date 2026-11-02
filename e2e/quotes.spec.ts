@@ -166,7 +166,7 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
   await viewBooking.click();
   await expect(host).toHaveURL(/\/events\/.+\/bookings\/.+/);
   // 50 × ₦3,000 = ₦150,000 — the server-computed total.
-  await expect(host.getByText(/150,000/)).toBeVisible();
+  await expect(host.getByText(/150,000/).first()).toBeVisible();
 
   // UF-19: host requests doubling portions; vendor accepts; booking moves to v2.
   await host.getByRole('button', { name: 'Request change' }).click();
@@ -180,7 +180,7 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
   await expect(vendor.getByText('Double portions')).toHaveCount(0, { timeout: 30_000 });
 
   await gotoSettled(host, (host.url().split('?')[0] as string).split('#')[0] as string);
-  await expect(host.getByText(/300,000/)).toBeVisible();
+  await expect(host.getByText(/300,000/).first()).toBeVisible();
 
   // UF-17 step 5 (lean P8, D-X27): host records an offline payment with a receipt; vendor confirms; booking CONFIRMED.
   const bookingUrl = (host.url().split('?')[0] as string).split('#')[0] as string;
