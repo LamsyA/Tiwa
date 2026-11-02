@@ -198,3 +198,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - P13-T06 done: prefs persist + quiet hours e2e 2/2 at 390/1280 (incl. push onboarding feedback states); table-driven channel test, fan-out + nudge + topic + deadline worker tests green. Manual: iOS home-screen web-push check still open (no device in this session).
 - P13 GATE: passed (3/3: unit incl. table-driven matrix, worker fan-out, e2e prefs/bell 2/2). Phase P13 DONE. Manual M4 item: iOS home-screen web-push check + SMS fallback verification (no device this session).
 - D-X37: chat replies, no deletion, online/last seen + typing, bell notifications for new messages, dates no longer masked.
+- D-X38: host-set RSVPs, ready-made invite messages, public live agenda (/e/{slug}/agenda), overview tab de-dup + new progress card, vendor profile cache fix. Core day+guests tests 54/54; e2e guests/invites/day/create-event pass on dev (day flaky first try).

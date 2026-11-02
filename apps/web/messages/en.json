@@ -331,7 +331,8 @@
         "NO": "Can't come"
       },
       "guestsEmpty": "No guests yet. Add them with their email so invites reach them.",
-      "guestsOpen": "{count, plural, =0 {Add guests} one {See # guest} other {See all # guests}}"
+      "guestsOpen": "{count, plural, =0 {Add guests} one {See # guest} other {See all # guests}}",
+      "startPlan": "Build your checklist"
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
@@ -829,8 +830,8 @@
         "emailRequired": "Add an email so we can send them the invite"
       },
       "rsvpLabels": {
-        "YES": "Yes",
-        "NO": "No",
+        "YES": "Coming",
+        "NO": "Not coming",
         "MAYBE": "Maybe",
         "NONE": "No reply"
       },
@@ -870,6 +871,11 @@
         "copy": "Copy link",
         "copied": "Copied",
         "expires": "Valid until {date}"
+      },
+      "rsvpChange": {
+        "label": "Is {name} coming?",
+        "trigger": "{name}: {status}. Change reply",
+        "failed": "Couldn’t save that reply — try again."
       }
     },
     "invites": {
@@ -939,8 +945,8 @@
           "manualHint": "Every guest gets your first channel that fits their contact details."
         },
         "message": {
-          "label": "Message",
-          "hint": "Use '{name}' for the guest's name and '{link}' for their personal link.",
+          "label": "Your words (optional)",
+          "hint": "Every guest automatically gets their own name and personal reply link — no typing needed.",
           "defaultInvite": "You're invited to {event}! Tap your personal link to reply: '{link}'",
           "defaultUpdate": "An update about {event}: '{link}'",
           "previewWhatsapp": "WhatsApp preview",
@@ -970,6 +976,49 @@
           "pickGuests": "Pick at least one guest",
           "pickGroup": "Pick a group",
           "emptyMessage": "Write a message first"
+        },
+        "templates": {
+          "heading": "Pick a message",
+          "sub": "Ready to send. Each guest sees their own name and a personal link to reply.",
+          "personalised": "Personalised for every guest",
+          "nameTag": "Their name",
+          "linkTag": "Their own reply link",
+          "edit": "Edit the wording",
+          "doneEditing": "Done editing",
+          "insertName": "Guest name",
+          "insertLink": "Reply link",
+          "insertHint": "Tap to insert where your cursor is",
+          "previewFor": "Preview for {name}",
+          "detailsWhen": " on {when}",
+          "detailsWhere": " at {where}",
+          "INVITE": {
+            "warm": {
+              "title": "Warm",
+              "body": "Hi '{name}'! 🎉 You're invited to {event}{details}. We'd love to have you there — tap your personal link to reply: '{link}'"
+            },
+            "formal": {
+              "title": "Formal",
+              "body": "Dear '{name}', you are cordially invited to {event}{details}. Kindly confirm your attendance here: '{link}'"
+            },
+            "short": {
+              "title": "Short",
+              "body": "'{name}', you're invited to {event}{details}! Reply here: '{link}'"
+            }
+          },
+          "UPDATE": {
+            "reminder": {
+              "title": "Reminder",
+              "body": "Hi '{name}', a friendly reminder that {event} is coming up{details}. Your details are here: '{link}'"
+            },
+            "change": {
+              "title": "Something changed",
+              "body": "Hi '{name}', there's an update about {event}{details}. Please check the latest details: '{link}'"
+            },
+            "thanks": {
+              "title": "Thank you",
+              "body": "Hi '{name}', thank you for replying to {event}! Everything you need is here: '{link}'"
+            }
+          }
         }
       },
       "tracking": {
@@ -1235,7 +1284,9 @@
       "sendFailed": "We couldn't save that — please try again.",
       "closed": "RSVP is closed for this event."
     },
-    "extrasSave": "Save details"
+    "extrasSave": "Save details",
+    "agendaTitle": "Live agenda",
+    "agendaHint": "On the day, follow what’s happening now and what’s next."
   },
   "gallery": {
     "official": "Official",
@@ -2350,6 +2401,45 @@
       "late": "Running late",
       "incidents": "Open incidents",
       "onsite": "Vendors on site"
+    },
+    "minutes": "{count} min",
+    "edit": "Edit",
+    "closeEdit": "Close",
+    "save": "Save changes",
+    "status": {
+      "PLANNED": "Planned",
+      "STARTED": "Happening now",
+      "DONE": "Done",
+      "LATE": "Running late",
+      "SKIPPED": "Skipped"
+    },
+    "visibility": {
+      "public": "Guests see this",
+      "team": "Team only"
+    },
+    "add": {
+      "heading": "Add to the day",
+      "sub": "What happens, when it starts and how long it takes. Times are in the event’s time zone.",
+      "public": "Show to guests",
+      "publicHint": "Guests will see this on the live agenda on the day.",
+      "privateHint": "Only your team and vendors see this (setup, cues, backstage)."
+    },
+    "guide": {
+      "heading": "Plan the day, minute by minute",
+      "body": "Build the running order for your event: what happens, when, and who handles it. On the day, tap Start and Done to keep everyone in sync — vendors see their own cues and guests follow the public parts live.",
+      "step1": "Add each moment (arrivals, speeches, dinner…)",
+      "step2": "Switch on “Show to guests” for what guests should follow",
+      "step3": "On the day, tap Start / Done — late changes ripple to what depends on it"
+    },
+    "share": {
+      "heading": "Guest agenda",
+      "body": "Guests can follow the public parts of your day live on their phones. It opens on {date}.",
+      "bodyNoDate": "Guests can follow the public parts of your day live on their phones. It opens on the event day.",
+      "bodyOpen": "Live now — guests see what is happening and what’s next.",
+      "count": "{count, plural, =0 {Nothing is public yet — switch on “Guests see this” on an item.} one {# moment is public} other {# moments are public}}",
+      "open": "Open guest view",
+      "copy": "Copy link",
+      "copied": "Link copied"
     }
   },
   "notifications": {
@@ -2534,5 +2624,25 @@
         "closed": ""
       }
     }
+  },
+  "agenda": {
+    "title": "Live agenda",
+    "metaTitle": "{event} · Live agenda",
+    "eyebrow": "Live agenda",
+    "progress": "{done} of {total} done",
+    "closedTitle": "The agenda opens on the day",
+    "closedBody": "Come back on {date} to follow everything live — what’s happening now and what’s next.",
+    "closedNoDate": "Come back on the event day to follow everything live.",
+    "emptyTitle": "Nothing to show yet",
+    "emptyBody": "The hosts haven’t shared the running order. Check back soon.",
+    "now": "Happening now",
+    "next": "Up next",
+    "between": "A short break",
+    "since": "Started {time}",
+    "allDone": "That’s everything — thanks for coming!",
+    "fullAgenda": "Today’s running order",
+    "late": "{count} min late",
+    "skipped": "Skipped",
+    "liveNote": "Updates automatically."
   }
 }

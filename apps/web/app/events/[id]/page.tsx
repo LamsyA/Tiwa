@@ -11,22 +11,40 @@ import {
   listPaymentSchedule,
   utcToZoned,
 } from '@tiwa/core';
-import {
-  Avatar,
-  Banner,
-  Card,
-  DateText,
-  MoneyText,
-  ProgressRing,
-  RelativeTime,
-  StatusPill,
-  buttonClasses,
-} from '@tiwa/ui';
+import { Avatar, Banner, Card, DateText, MoneyText, RelativeTime, StatusPill, buttonClasses } from '@tiwa/ui';
 import { prisma } from '@tiwa/db';
-import { CalendarDays, ClipboardList, Mail, MapPin, Store, Users, Wallet } from 'lucide-react';
+import {
+  CalendarClock,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  Images,
+  LayoutDashboard,
+  Mail,
+  MapPin,
+  Settings,
+  Store,
+  Ticket,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { EventFrame, loadEventPage } from '@/components/event-frame.js';
+import { EventFrame, loadEventPage, visibleSections, type EventSection } from '@/components/event-frame.js';
+
+const SECTION_ICONS: Record<EventSection, typeof Users> = {
+  overview: LayoutDashboard,
+  plan: ClipboardList,
+  money: Wallet,
+  documents: FileText,
+  guests: Users,
+  invites: Mail,
+  moments: Images,
+  vendors: Store,
+  tickets: Ticket,
+  day: CalendarClock,
+  settings: Settings,
+};
 
 /** EVT-05 / Frontend.md §6.3: header, progress, next deadlines, money, vendors, guests, moments, team. */
 
@@ -83,13 +101,11 @@ export default async function EventOverviewPage({
   ]);
   const replyCount = (key: string) => replies.find((row) => row.rsvp === key)?._count._all ?? 0;
   const guestTotal = replies.reduce((sum, row) => sum + row._count._all, 0);
-  const quickLinks = [
-    { key: 'plan', href: `/events/${id}/plan`, icon: ClipboardList },
-    { key: 'guests', href: `/events/${id}/guests`, icon: Users },
-    ...(invitesOn ? [{ key: 'invites', href: `/events/${id}/invites`, icon: Mail }] : []),
-    { key: 'vendors', href: `/events/${id}/vendors`, icon: Store },
-    ...(canSeeMoney ? [{ key: 'money', href: `/events/${id}/money`, icon: Wallet }] : []),
-  ];
+  const tabs = await getTranslations('events.tabs');
+  const quickLinks = visibleSections(access, ctx.actor.userId, { invitesOn, momentsOn, ticketsOn })
+    .filter((section) => section.key !== 'overview')
+    .map((section) => ({ key: section.key, href: `/events/${id}${section.path}`, icon: SECTION_ICONS[section.key] }));
+  const percent = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
   const moneyAlerts = money ? budgetAlerts(money[0], money[1]).length : 0;
   const now = new Date();
 
@@ -101,6 +117,7 @@ export default async function EventOverviewPage({
       invitesOn={invitesOn}
       momentsOn={momentsOn}
       ticketsOn={ticketsOn}
+      hideTabs
       active="overview"
       title={event.name}
     >
@@ -171,7 +188,7 @@ export default async function EventOverviewPage({
           )}
         </header>
 
-        <nav aria-label={t('overview.quickLinks')} className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <nav aria-label={t('overview.quickLinks')} className="grid grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2">
           {quickLinks.map(({ key, href, icon: Icon }) => (
             <Link
               key={key}
@@ -181,41 +198,66 @@ export default async function EventOverviewPage({
               <span className="bg-brand-soft text-brand-strong flex size-10 items-center justify-center rounded-xl transition group-hover:scale-105">
                 <Icon aria-hidden className="size-5" />
               </span>
-              {t(`overview.quick.${key}`)}
+              <span className="w-full truncate text-xs sm:text-sm">{tabs(key)}</span>
             </Link>
           ))}
         </nav>
 
         <div className="grid gap-4 lg:grid-cols-12">
-          <Card className="flex items-center gap-5 p-5 lg:col-span-4">
-            <ProgressRing
-              value={progress.done}
-              max={Math.max(progress.total, 1)}
-              label={t('overview.progressLabel')}
-              showValue
+          <Card className="relative flex flex-col gap-4 overflow-hidden p-5 lg:col-span-4">
+            <div
+              aria-hidden
+              className="bg-brand/10 pointer-events-none absolute -top-16 -right-16 size-44 rounded-full blur-2xl"
             />
-            <div className="flex flex-col gap-1">
-              <h2 className="font-display text-lg font-bold">{t('overview.progressHeading')}</h2>
-              <p className="text-muted text-sm" data-testid="progress-counts">
-                {t('overview.progressCounts', { done: progress.done, total: progress.total })}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-display text-lg font-bold">{t('overview.progressHeading')}</h2>
+                <p className="text-muted text-sm" data-testid="progress-counts">
+                  {t('overview.progressCounts', { done: progress.done, total: progress.total })}
+                </p>
+              </div>
+              <p className="font-display text-4xl leading-none font-bold tabular-nums">
+                {percent}
+                <span className="text-muted text-lg">%</span>
               </p>
-              <dl className="flex gap-3 text-sm">
-                <div>
-                  <dt className="text-muted">{t('overview.outstanding')}</dt>
-                  <dd className="font-medium">{progress.outstanding}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">{t('overview.overdue')}</dt>
-                  <dd className={progress.overdue > 0 ? 'text-danger font-medium' : 'font-medium'}>
-                    {progress.overdue}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted">{t('overview.blocked')}</dt>
-                  <dd className="font-medium">{progress.blocked}</dd>
-                </div>
-              </dl>
             </div>
+            <div
+              role="progressbar"
+              aria-label={t('overview.progressLabel')}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={percent}
+              className="bg-surface-2 h-3 w-full overflow-hidden rounded-full"
+            >
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand-strong)] transition-[width] duration-700"
+                style={{ width: `${Math.max(percent, progress.done > 0 ? 4 : 0)}%` }}
+              />
+            </div>
+            <dl className="grid grid-cols-3 gap-2 text-center">
+              {(
+                [
+                  ['outstanding', progress.outstanding, ''],
+                  ['overdue', progress.overdue, progress.overdue > 0 ? 'text-danger' : ''],
+                  ['blocked', progress.blocked, progress.blocked > 0 ? 'text-warning' : ''],
+                ] as const
+              ).map(([key, value, tone]) => (
+                <div key={key} className="bg-surface-2 rounded-2xl px-2 py-2.5">
+                  <dd className={`font-display text-xl font-bold tabular-nums ${tone}`}>{value}</dd>
+                  <dt className="text-muted text-xs">{t(`overview.${key}`)}</dt>
+                </div>
+              ))}
+            </dl>
+            <Link
+              href={`/events/${id}/plan`}
+              className={buttonClasses({
+                variant: progress.total === 0 ? 'primary' : 'secondary',
+                size: 'sm',
+                className: 'w-fit rounded-full',
+              })}
+            >
+              {progress.total === 0 ? t('overview.startPlan') : t('overview.openPlan')}
+            </Link>
           </Card>
 
           <Card className="flex flex-col gap-3 p-5 lg:col-span-8">

@@ -97,6 +97,21 @@ async function markAccepted(eventId: string, userId: string): Promise<void> {
   });
 }
 
+/** Sections this member can open, in tab order (also the overview's section grid). */
+export function visibleSections(
+  access: EventAccess,
+  userId: string,
+  flags: { invitesOn?: boolean; momentsOn?: boolean; ticketsOn?: boolean },
+): { key: EventSection; path: string }[] {
+  return SECTIONS.filter(
+    (section) =>
+      can(access, userId, section.needs) &&
+      (!section.needsInvites || Boolean(flags.invitesOn)) &&
+      (!section.needsMoments || Boolean(flags.momentsOn)) &&
+      (!section.needsTickets || Boolean(flags.ticketsOn)),
+  ).map(({ key, path }) => ({ key, path }));
+}
+
 export async function EventFrame({
   eventId,
   userId,
@@ -106,6 +121,7 @@ export async function EventFrame({
   invitesOn = false,
   momentsOn = false,
   ticketsOn = false,
+  hideTabs = false,
   children,
 }: {
   eventId: string;
@@ -116,37 +132,35 @@ export async function EventFrame({
   invitesOn?: boolean;
   momentsOn?: boolean;
   ticketsOn?: boolean;
+  /** The overview shows every section as its own grid, so the strip would repeat it. */
+  hideTabs?: boolean;
   children: React.ReactNode;
 }) {
   const t = await getTranslations('events.tabs');
-  const tabs = SECTIONS.filter(
-    (section) =>
-      can(access, userId, section.needs) &&
-      (!section.needsInvites || invitesOn) &&
-      (!section.needsMoments || momentsOn) &&
-      (!('needsTickets' in section) || !(section as { needsTickets?: boolean }).needsTickets || ticketsOn),
-  );
+  const tabs = visibleSections(access, userId, { invitesOn, momentsOn, ticketsOn });
   return (
     <AppFrame
       userId={userId}
       active="events"
       title={title}
       sectionTabs={
-        <nav aria-label={t('sections')} className="flex gap-1">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.key}
-              href={`/events/${eventId}${tab.path}`}
-              aria-current={active === tab.key ? 'page' : undefined}
-              className={cn(
-                'flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-medium transition-colors',
-                active === tab.key ? 'bg-text text-bg' : 'text-muted hover:text-text hover:bg-surface-2',
-              )}
-            >
-              {t(tab.key)}
-            </Link>
-          ))}
-        </nav>
+        hideTabs ? undefined : (
+          <nav aria-label={t('sections')} className="flex gap-1">
+            {tabs.map((tab) => (
+              <Link
+                key={tab.key}
+                href={`/events/${eventId}${tab.path}`}
+                aria-current={active === tab.key ? 'page' : undefined}
+                className={cn(
+                  'flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-medium transition-colors',
+                  active === tab.key ? 'bg-text text-bg' : 'text-muted hover:text-text hover:bg-surface-2',
+                )}
+              >
+                {t(tab.key)}
+              </Link>
+            ))}
+          </nav>
+        )
       }
     >
       {children}
