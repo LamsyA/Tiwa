@@ -106,6 +106,10 @@ export function DayEditor(props: {
   useEffect(() => {
     const source = new EventSource(`/api/sse/day/${props.eventId}`);
     source.addEventListener('change', () => router.refresh());
+    // The SW may serve a cached shell from an earlier visit (P12-T06); the
+    // ready ping proves we are online, so converge to the live timeline once.
+    // Offline there is no ready event, and the cached UI stays as-is.
+    source.addEventListener('ready', () => router.refresh(), { once: true });
     return () => source.close();
   }, [props.eventId, router]);
 
@@ -181,9 +185,16 @@ export function DayEditor(props: {
   const pinOffline = () => {
     start(async () => {
       try {
+        // Explicit shell pin (P12-T06): the SW revalidates lazily, so store
+        // this visit's HTML directly — the offline reload is deterministic.
+        const shell = await fetch(window.location.href, { credentials: 'same-origin' });
+        if (shell.ok && 'caches' in window) {
+          const cache = await caches.open('day-pages');
+          await cache.put(window.location.href, shell);
+        }
         const response = await fetch(`/api/day/${props.eventId}/snapshot`);
         const body = (await response.json()) as { ok: boolean; data?: unknown };
-        if (body.ok) {
+        if (body.ok && shell.ok) {
           saveSnapshot(props.eventId, body.data);
           setSnapshotAt(new Date().toISOString());
         } else {
@@ -224,7 +235,7 @@ export function DayEditor(props: {
         {queued > 0 && <span>{t('queuedChanges', { count: queued })}</span>}
         <span className="ml-auto" />
         {snapshotLabel && <span className="text-muted">{t('offlineReadyAt', { at: snapshotLabel })}</span>}
-        <Button variant="secondary" disabled={pending || syncing} onClick={pinOffline}>
+        <Button variant="secondary" disabled={pending || syncing || !online} onClick={pinOffline}>
           {t('makeOffline')}
         </Button>
         {queued > 0 && online && (

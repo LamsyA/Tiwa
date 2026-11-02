@@ -403,7 +403,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P12-T05 Incidents and emergency contacts / backup vendors.
 - [x] P12-T06 Offline: pre-cache day data, queue mutations, sync; offline indicator.
 - [x] P12-T07 Booking progress job (IN_PROGRESS at start) and delivery sign-off prompts after the event (feeds release engine).
-- [ ] P12-T08 e2e UF-24 including offline mode.
+- [x] P12-T08 e2e UF-24 including offline mode.
 
 **GATE P12 (Milestone M3 demo on staging)**
 

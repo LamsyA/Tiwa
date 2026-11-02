@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { permissionsFor, toStoredPermissions } from '../events/access.js';
 import { uuidv7 } from '../shared/ids.js';
+import fc from 'fast-check';
 import {
   addDependency,
   createContact,
@@ -250,6 +251,68 @@ describe('incidents and contacts (DAY-04–DAY-05)', () => {
     await deleteContact(host, { eventId, contactId: created.contactId });
     const cleaned = await dayContacts(host, eventId);
     expect(cleaned.contacts.map((row) => row.name)).not.toContain('Dele Backup');
+  });
+});
+
+describe('dependants on random DAGs (GATE P12)', () => {
+  it('matches graph reachability and rejects every cycle-closing link', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 2, max: 8 }),
+        fc.array(fc.tuple(fc.integer({ min: 0, max: 7 }), fc.integer({ min: 0, max: 7 })), { maxLength: 20 }),
+        async (size, pairs) => {
+          const ids: string[] = [];
+          for (let index = 0; index < size; index++) {
+            const row = await createRunItem(host, {
+              eventId,
+              title: `DAG node ${index} ${uuidv7().slice(0, 8)}`,
+              startsAt: new Date(Date.now() + index * 60_000).toISOString(),
+            });
+            ids.push(row.itemId);
+          }
+          // Acyclic edges only (lower → higher index): the expected closure.
+          const children = new Map<string, string[]>();
+          for (const [from, to] of pairs) {
+            const a = from % size;
+            const b = to % size;
+            if (a === b) continue;
+            const [parent, child] = a < b ? [ids[a]!, ids[b]!] : [ids[b]!, ids[a]!];
+            const list = children.get(parent) ?? [];
+            if (!list.includes(child)) list.push(child);
+            children.set(parent, list);
+            await addDependency(host, { eventId, itemId: child, dependsOnId: parent }).catch(() => undefined);
+          }
+          const expected = (root: string): string[] => {
+            const out: string[] = [];
+            const queue = [...(children.get(root) ?? [])];
+            const seen = new Set<string>();
+            while (queue.length > 0) {
+              const current = queue.shift()!;
+              if (seen.has(current)) continue;
+              seen.add(current);
+              out.push(current);
+              queue.push(...(children.get(current) ?? []));
+            }
+            return out.sort();
+          };
+          for (const id of ids) {
+            expect([...(await dependants(id))].sort()).toEqual(expected(id));
+          }
+          // Any link back from the first node to a reachable dependant closes a loop.
+          const reachable = expected(ids[0]!);
+          if (reachable.length > 0) {
+            await expect(
+              addDependency(host, { eventId, itemId: ids[0]!, dependsOnId: reachable[0]! }),
+            ).rejects.toThrow();
+          }
+          for (const id of ids) {
+            await prisma.runDependency.deleteMany({ where: { itemId: id } });
+            await prisma.runItem.delete({ where: { id } });
+          }
+        },
+      ),
+      { numRuns: 20 },
+    );
   });
 });
 
