@@ -15,11 +15,32 @@ import { notFound } from 'next/navigation';
  * `/api/profile-photo/[itemId]` (fresh signed redirect) because signed URLs
  * must never sit in cached HTML. */
 
-function cachedProfile(orgId: string, kind: PublicProfileKind) {
-  return unstable_cache(() => getPublicProfileForOrg(orgId, kind), ['public-profile', orgId, kind], {
-    tags: [`vendor:${orgId}`],
-    revalidate: 3600,
-  })();
+// The data cache stores JSON, which has no BigInt or Date: money (package
+// prices, starting price) and dates are tagged on the way in and revived on
+// the way out, so the page gets the same types as an uncached call.
+const BIGINT_TAG = '__bigint:';
+const DATE_TAG = '__date:';
+function encode(this: Record<string, unknown>, key: string, value: unknown) {
+  const raw = this[key];
+  if (raw instanceof Date) return `${DATE_TAG}${raw.toISOString()}`;
+  return typeof value === 'bigint' ? `${BIGINT_TAG}${value}` : value;
+}
+function decode(_: string, value: unknown) {
+  if (typeof value !== 'string') return value;
+  if (value.startsWith(BIGINT_TAG)) return BigInt(value.slice(BIGINT_TAG.length));
+  if (value.startsWith(DATE_TAG)) return new Date(value.slice(DATE_TAG.length));
+  return value;
+}
+
+type PublicProfile = Awaited<ReturnType<typeof getPublicProfileForOrg>>;
+
+async function cachedProfile(orgId: string, kind: PublicProfileKind): Promise<PublicProfile> {
+  const json = await unstable_cache(
+    async () => JSON.stringify(await getPublicProfileForOrg(orgId, kind), encode),
+    ['public-profile-v2', orgId, kind],
+    { tags: [`vendor:${orgId}`], revalidate: 3600 },
+  )();
+  return JSON.parse(json, decode) as PublicProfile;
 }
 
 export async function loadPublicProfile(slug: string, kind: PublicProfileKind) {
