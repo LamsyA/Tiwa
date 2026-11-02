@@ -252,7 +252,7 @@
     },
     "overview": {
       "welcomeTitle": "Your event is ready",
-      "welcomeBody": "We added a checklist and budget from the template. Start with the next deadline below.",
+      "welcomeBody": "Your event is ready. Build your plan and set your budget your way — suggestions are there if you want them.",
       "noDate": "Date not set",
       "progressHeading": "Progress",
       "progressLabel": "Tasks done",
@@ -294,7 +294,7 @@
       "tabPast": "Past",
       "tabDrafts": "Drafts",
       "emptyUpcomingTitle": "No upcoming events",
-      "emptyUpcomingBody": "Create an event to get a checklist, budget and team space.",
+      "emptyUpcomingBody": "Create an event to plan it your way with your team, budget and vendors.",
       "emptyPastTitle": "No past events yet",
       "emptyPastBody": "Events you've finished or cancelled will show here.",
       "emptyDraftsTitle": "No drafts",
@@ -493,7 +493,11 @@
         "invalidReceipt": "That receipt couldn't be read. Upload a photo or PDF.",
         "typeNotAllowed": "Upload a photo or PDF.",
         "tooLarge": "That file is too large (10 MB max).",
-        "uploadFailed": "The receipt didn't upload. Try again."
+        "uploadFailed": "The receipt didn't upload. Try again.",
+        "labelRequired": "Give every line a name.",
+        "labelTaken": "You already have a line with that name.",
+        "labelTooLong": "Keep line names under 60 characters.",
+        "budgetNotEmpty": "Your budget already has lines."
       },
       "alerts": {
         "overTotal": "Committed spending is over your total budget by",
@@ -512,7 +516,18 @@
         "booking": "Booking",
         "expense": "Expense"
       },
-      "hiddenByPlanner": "Hidden by planner"
+      "hiddenByPlanner": "Hidden by planner",
+      "setupTitle": "Set up your budget",
+      "setupBody": "Decide your total and split it across the things that matter to you — venue, food, outfits, anything. You're in control of every line.",
+      "setupCta": "Set up budget",
+      "useSuggested": "Or start from a suggested split",
+      "editBudgetBody": "Rename, re-amount or delete any line, or add your own.",
+      "noLinesYet": "No lines yet — add the first one below.",
+      "lineName": "Line name",
+      "lineNamePlaceholder": "e.g. Aso-ebi and outfits",
+      "lineAmount": "Amount for {line}",
+      "removeLine": "Remove {line}",
+      "addLine": "Add a line"
     },
     "plan": {
       "heading": "Plan",
@@ -571,7 +586,17 @@
         "ownerNotMember": "The owner must be on this event",
         "FORBIDDEN": "You can't change this task.",
         "generic": "We couldn't save that. Please try again."
-      }
+      },
+      "emptyTitle": "Build your plan your way",
+      "emptyBody": "Add your own tasks under each timeframe below, or pick from suggestions for this kind of event — nothing is added until you choose.",
+      "pickSuggestions": "Pick from suggestions",
+      "suggestionsTitle": "Suggested tasks",
+      "suggestionsBody": "Tick the tasks that fit your event. You can edit or delete any of them later.",
+      "loading": "Loading…",
+      "selectAll": "Select all",
+      "selectNone": "Clear",
+      "alreadyAdded": "On your plan",
+      "addSelected": "{count, plural, =0 {Add tasks} one {Add # task} other {Add # tasks}}"
     },
     "documents": {
       "heading": "Documents",
@@ -1834,8 +1859,8 @@
       "body": "Stop juggling spreadsheets, group chats and bank screenshots. Tiwa keeps the whole event together.",
       "items": {
         "plan": {
-          "title": "Plan with a checklist that builds itself",
-          "body": "Pick an event type and get tasks, timelines and a budget split ready to edit."
+          "title": "A plan that works your way",
+          "body": "Add your own tasks and budget lines, or pick from suggestions for your event type."
         },
         "guests": {
           "title": "Invites and RSVPs",

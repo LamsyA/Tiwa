@@ -5,7 +5,16 @@ import type { Actor } from '../auth/authorize.js';
 import { ForbiddenError, InvalidTransitionError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { utcToZoned, zonedTimeToUtc } from '../shared/zoned.js';
 import { fromStoredPermissions, loadEventAccess, permissionsFor, toStoredPermissions } from './access.js';
-import { cancelEvent, createEventDraft, duplicateEvent, finalizeEvent, saveEventStep } from './commands.js';
+import {
+  applySuggestedBudget,
+  applySuggestedTasks,
+  cancelEvent,
+  createEventDraft,
+  duplicateEvent,
+  finalizeEvent,
+  saveEventStep,
+  suggestedTasks,
+} from './commands.js';
 import { getEventOverview, listMyEvents } from './queries.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
@@ -157,7 +166,7 @@ describe('saveEventStep', () => {
 });
 
 describe('finalizeEvent (UF-03-3)', () => {
-  it('applies the template: tasks, budget split, programme; DRAFT → ACTIVE', async () => {
+  it('leaves the plan and budget to the host; programme outline only; DRAFT → ACTIVE (D-X30)', async () => {
     const host = await makeUser();
     const eventId = await birthday(host, '50000000');
     await finalizeEvent(host, { eventId }, new Date('2030-01-01T00:00:00Z'));
@@ -166,20 +175,35 @@ describe('finalizeEvent (UF-03-3)', () => {
     const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
     expect(event.status).toBe('ACTIVE');
     expect(event.wizardStep).toBeNull();
-
-    const tasks = await prisma.task.findMany({ where: { eventId } });
-    expect(tasks.map((task) => task.key).sort()).toEqual(template.checklist.map((item) => item.key).sort());
-    const book = tasks.find((task) => task.key === 'book_venue');
-    expect(book?.dueAt?.toISOString()).toBe(new Date(Date.UTC(2030, 8, 19, 17)).toISOString()); // 84 days before
-
-    const categories = await prisma.budgetCategory.findMany({ where: { eventId }, orderBy: { sortOrder: 'asc' } });
-    expect(categories.map((category) => category.key)).toEqual(template.budget.map((split) => split.key));
-    expect(categories.reduce((sum, category) => sum + category.plannedMinor, 0n)).toBe(50_000_000n);
-    expect(categories[0]?.plannedMinor).toBe(12_500_000n); // venue 25%
+    expect(event.plannedBudgetMinor).toBe(50_000_000n);
+    expect(await prisma.task.count({ where: { eventId } })).toBe(0);
+    expect(await prisma.budgetCategory.count({ where: { eventId } })).toBe(0);
 
     const programme = await prisma.programmeItem.findMany({ where: { eventId } });
     expect(programme).toHaveLength(template.programme.length);
     expect(programme.every((item) => item.dayId !== null)).toBe(true);
+  });
+
+  it('suggestions are opt-in: chosen tasks with due dates, and a split only for an empty budget', async () => {
+    const host = await makeUser();
+    const eventId = await birthday(host, '50000000');
+    await finalizeEvent(host, { eventId });
+    const template = getEventType('birthday')!;
+
+    const picked = await applySuggestedTasks(host, { eventId, keys: ['book_venue'] }, new Date('2030-01-01T00:00:00Z'));
+    expect(picked.added).toBe(1);
+    const book = await prisma.task.findFirstOrThrow({ where: { eventId, key: 'book_venue' } });
+    expect(book.dueAt?.toISOString()).toBe(new Date(Date.UTC(2030, 8, 19, 17)).toISOString()); // 84 days before
+    const rest = await applySuggestedTasks(host, { eventId });
+    expect(rest.added).toBe(template.checklist.length - 1);
+    expect((await applySuggestedTasks(host, { eventId })).added).toBe(0);
+    expect((await suggestedTasks(host, { eventId })).every((item) => item.added)).toBe(true);
+
+    await applySuggestedBudget(host, { eventId });
+    const categories = await prisma.budgetCategory.findMany({ where: { eventId }, orderBy: { sortOrder: 'asc' } });
+    expect(categories.map((category) => category.key)).toEqual(template.budget.map((split) => split.key));
+    expect(categories.reduce((sum, category) => sum + category.plannedMinor, 0n)).toBe(50_000_000n);
+    await expect(applySuggestedBudget(host, { eventId })).rejects.toMatchObject({ code: 'VALIDATION' });
   });
 
   it('runs once; only the host may finalize', async () => {
@@ -252,7 +276,7 @@ describe('queries', () => {
     expect(await ids('drafts')).toEqual([draft]);
     expect(await ids('past')).toEqual([past]);
     const [card] = await listMyEvents(host.userId, 'upcoming');
-    expect(card?.progress.total).toBe(getEventType('birthday')!.checklist.length);
+    expect(card?.progress.total).toBe(0); // no tasks until the host adds or opts in (D-X30)
     expect(card?.role).toBe('HOST');
   });
 
@@ -260,6 +284,7 @@ describe('queries', () => {
     const host = await makeUser('Ada');
     const eventId = await birthday(host);
     await finalizeEvent(host, { eventId });
+    await applySuggestedTasks(host, { eventId });
     const firstTask = await prisma.task.findFirstOrThrow({ where: { eventId } });
     await prisma.task.update({ where: { id: firstTask.id }, data: { status: 'DONE', completedAt: new Date() } });
     const blocked = await prisma.task.findFirstOrThrow({ where: { eventId, status: 'TODO' } });

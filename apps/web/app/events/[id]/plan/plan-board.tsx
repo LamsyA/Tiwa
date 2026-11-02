@@ -19,6 +19,7 @@ import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
+import { SuggestionsSheet } from './suggestions.js';
 import { useLive } from '@/hooks/use-live.js';
 import type { ActionResult } from '@/lib/action.js';
 import { addTask, editTask } from './actions.js';
@@ -131,6 +132,12 @@ export function PlanBoard({
           {t('progress', { done, total: tasks.length })}
         </p>
       </div>
+      {canEdit && tasks.length === 0 && <SuggestionsSheet eventId={eventId} prominent />}
+      {canEdit && tasks.length > 0 && (
+        <div className="flex justify-end">
+          <SuggestionsSheet eventId={eventId} prominent={false} />
+        </div>
+      )}
       {!canEdit && <Banner tone="info">{t('readOnly')}</Banner>}
       {error && <Banner tone="danger">{error}</Banner>}
 
@@ -143,7 +150,7 @@ export function PlanBoard({
             onClick={() => setFilter(key)}
             className={cn(
               'focus-visible:outline-focus h-9 rounded-full border px-3 text-sm font-medium focus-visible:outline-2',
-              filter === key ? 'border-brand-strong bg-brand-soft text-text' : 'border-border bg-surface text-muted',
+              filter === key ? 'border-text bg-text text-bg' : 'border-border/80 bg-bg text-text/75 hover:text-text',
             )}
           >
             {label}
@@ -168,11 +175,14 @@ export function PlanBoard({
               <AddTask eventId={eventId} group={group} groupLabel={label} onError={setError} />
             )}
             {inGroup.length > 0 && (
-              <ul className="border-border bg-surface divide-border divide-y rounded-lg border">
+              <ul className="border-border/80 bg-bg divide-border/70 divide-y overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
                 {inGroup.map((task) => {
                   const late = daysOverdue(task, now);
                   return (
-                    <li key={task.id} className="flex items-center gap-3 px-3 py-2">
+                    <li
+                      key={task.id}
+                      className="hover:bg-surface/70 flex items-center gap-3 px-4 py-3 transition-colors"
+                    >
                       <Checkbox
                         checked={task.status === 'DONE'}
                         disabled={!canEdit && task.ownerUserId !== me}

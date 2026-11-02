@@ -221,11 +221,12 @@ function dueFor(startsAt: Date | null, timeframe: Timeframe, now: Date): Date | 
 export const eventIdSchema = z.object({ eventId: z.string().uuid() });
 
 /**
- * DRAFT → ACTIVE (HOST). Applies the template once: checklist tasks, budget
- * categories (the planned budget split by template percentages), programme
- * items on day 1, and a day if none was set (UF-03 step 6, UF-03-3).
+ * DRAFT → ACTIVE (HOST). Creates day 1 if none was set and the template's
+ * programme outline. The checklist and the budget split are NOT applied any
+ * more (D-X30): the host builds their own plan and allocations, or opts in to
+ * the template's suggestions with `applySuggestedTasks` / `applySuggestedBudget`.
  */
-export async function finalizeEvent(actor: UserActor, input: z.infer<typeof eventIdSchema>, now = new Date()) {
+export async function finalizeEvent(actor: UserActor, input: z.infer<typeof eventIdSchema>, _now = new Date()) {
   const access = await requireEventAccess(actor, input.eventId, 'event.edit');
   requireHost(access);
   return prisma.$transaction(async (tx) => {
@@ -233,50 +234,14 @@ export async function finalizeEvent(actor: UserActor, input: z.infer<typeof even
     if (event.status !== 'DRAFT') throw new InvalidTransitionError('Event is not a draft', { status: event.status });
     if (!event.startsAt) throw new ValidationError('Pick a date first', { field: 'date', key: 'dateRequired' });
     const template = templateOrThrow(event.type);
-    // Pure CPU work up front so the tx holds the connection for writes only.
-    const splits = allocate(
-      event.plannedBudgetMinor,
-      template.budget.map((split) => split.percent),
-    );
-
-    // Reads in parallel instead of serially: days + existing task keys.
-    const [foundDays, taskKeys] = await Promise.all([
-      tx.eventDay.findMany({ where: { eventId: event.id }, orderBy: { sortOrder: 'asc' } }),
-      tx.task.findMany({ where: { eventId: event.id }, select: { key: true } }),
-    ]);
-    let days = foundDays;
+    let days = await tx.eventDay.findMany({ where: { eventId: event.id }, orderBy: { sortOrder: 'asc' } });
     if (days.length === 0) {
       const day = await tx.eventDay.create({ data: { eventId: event.id, date: startOfDate(event.startsAt) } });
       days = [day];
     }
 
-    const existingKeys = new Set(taskKeys.map((row) => row.key));
     const firstDay = days[0];
-    // Independent tables: tasks + budget + programme insert in parallel.
     await Promise.all([
-      tx.task.createMany({
-        data: template.checklist
-          .filter((item) => !existingKeys.has(item.key))
-          .map((item, index) => ({
-            eventId: event.id,
-            key: item.key,
-            title: item.title,
-            timeframe: item.timeframe,
-            dueAt: dueFor(event.startsAt, item.timeframe, now),
-            priority: item.priority ?? 'NORMAL',
-            sortOrder: index,
-          })),
-      }),
-      tx.budgetCategory.createMany({
-        data: template.budget.map((split, index) => ({
-          eventId: event.id,
-          key: split.key,
-          label: split.label,
-          plannedMinor: splits[index] ?? 0n,
-          sortOrder: index,
-        })),
-        skipDuplicates: true,
-      }),
       tx.programmeItem.createMany({
         data: template.programme.map((item, index) => {
           const startsAt =
@@ -304,6 +269,115 @@ export async function finalizeEvent(actor: UserActor, input: z.infer<typeof even
     await enqueue(tx, 'event.finalized', { eventId: event.id });
     return { eventId: event.id };
   });
+}
+
+export const applySuggestedTasksSchema = z.object({
+  eventId: z.string().uuid(),
+  /** Template checklist keys to add; omitted = all of them. */
+  keys: z.array(z.string().min(1).max(60)).max(100).optional(),
+});
+
+/**
+ * Opt-in (D-X30): add the event type's suggested checklist tasks (all, or the
+ * keys the host ticked). Tasks already on the plan are skipped, so applying
+ * twice is harmless. Every task stays editable and deletable afterwards.
+ */
+export async function applySuggestedTasks(
+  actor: UserActor,
+  input: z.input<typeof applySuggestedTasksSchema>,
+  now = new Date(),
+) {
+  const { eventId, keys } = applySuggestedTasksSchema.parse(input);
+  await requireEventAccess(actor, eventId, 'event.edit');
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: eventId },
+    select: { type: true, startsAt: true },
+  });
+  const template = templateOrThrow(event.type);
+  const existing = new Set(
+    (await prisma.task.findMany({ where: { eventId }, select: { key: true } })).map((row) => row.key),
+  );
+  const wanted = keys ? new Set(keys) : null;
+  const offset = await prisma.task.count({ where: { eventId } });
+  const rows = template.checklist
+    .filter((item) => (!wanted || wanted.has(item.key)) && !existing.has(item.key))
+    .map((item, index) => ({
+      eventId,
+      key: item.key,
+      title: item.title,
+      timeframe: item.timeframe,
+      dueAt: dueFor(event.startsAt, item.timeframe, now),
+      priority: item.priority ?? ('NORMAL' as const),
+      sortOrder: offset + index,
+    }));
+  if (rows.length > 0) {
+    await prisma.$transaction(async (tx) => {
+      await tx.task.createMany({ data: rows });
+      await audit(tx, {
+        actor,
+        action: 'event.tasks.suggested',
+        targetType: 'Event',
+        targetId: eventId,
+        data: { added: rows.length },
+      });
+    });
+  }
+  return { added: rows.length };
+}
+
+/** The template's suggested checklist, for the "pick suggestions" sheet. */
+export async function suggestedTasks(actor: UserActor, input: z.infer<typeof eventIdSchema>) {
+  await requireEventAccess(actor, input.eventId, 'event.view');
+  const event = await prisma.event.findUniqueOrThrow({ where: { id: input.eventId }, select: { type: true } });
+  const existing = new Set(
+    (await prisma.task.findMany({ where: { eventId: input.eventId }, select: { key: true } })).map((row) => row.key),
+  );
+  return templateOrThrow(event.type).checklist.map((item) => ({
+    key: item.key,
+    title: item.title,
+    timeframe: item.timeframe,
+    added: existing.has(item.key),
+  }));
+}
+
+/**
+ * Opt-in (D-X30): create budget categories from the event type's suggested
+ * split of the host's total budget. Only when the event has no categories yet,
+ * so it never overwrites the host's own allocations.
+ */
+export async function applySuggestedBudget(actor: UserActor, input: z.infer<typeof eventIdSchema>) {
+  await requireEventAccess(actor, input.eventId, 'money.edit');
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: input.eventId },
+    select: { type: true, plannedBudgetMinor: true },
+  });
+  if ((await prisma.budgetCategory.count({ where: { eventId: input.eventId } })) > 0) {
+    throw new ValidationError('This budget already has categories', { key: 'budgetNotEmpty' });
+  }
+  const template = templateOrThrow(event.type);
+  const splits = allocate(
+    event.plannedBudgetMinor,
+    template.budget.map((split) => split.percent),
+  );
+  await prisma.$transaction(async (tx) => {
+    await tx.budgetCategory.createMany({
+      data: template.budget.map((split, index) => ({
+        eventId: input.eventId,
+        key: split.key,
+        label: split.label,
+        plannedMinor: splits[index] ?? 0n,
+        sortOrder: index,
+      })),
+    });
+    await audit(tx, {
+      actor,
+      action: 'budget.suggested',
+      targetType: 'Event',
+      targetId: input.eventId,
+      data: { categories: template.budget.length },
+    });
+  });
+  return { categories: template.budget.length };
 }
 
 function startOfDate(instant: Date): Date {

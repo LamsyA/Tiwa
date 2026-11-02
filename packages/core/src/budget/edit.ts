@@ -294,3 +294,102 @@ export async function deleteContribution(actor: UserActor, raw: z.input<typeof c
   });
   return { ok: true as const };
 }
+
+// Custom budget lines (D-X30): the host names their own categories and amounts.
+
+export const addBudgetCategorySchema = z.object({
+  eventId: z.string().uuid(),
+  label: z.string().trim().min(1, 'labelRequired').max(60, 'labelTooLong'),
+  plannedMinor: minor.default('0'),
+});
+
+export const budgetCategoryRefSchema = z.object({ eventId: z.string().uuid(), key: z.string().min(1).max(60) });
+export const renameBudgetCategorySchema = budgetCategoryRefSchema.extend({
+  label: z.string().trim().min(1, 'labelRequired').max(60, 'labelTooLong'),
+});
+
+/** A stable key from a label ("Aso-ebi & outfits" → "aso_ebi_outfits"), unique within the event. */
+function keyFromLabel(label: string, taken: Set<string>): string {
+  const base =
+    label
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 40) || 'category';
+  let key = base;
+  for (let n = 2; taken.has(key); n += 1) key = `${base}_${n}`;
+  return key;
+}
+
+export async function addBudgetCategory(actor: UserActor, raw: z.input<typeof addBudgetCategorySchema>) {
+  const input = addBudgetCategorySchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'money.edit');
+  const existing = await prisma.budgetCategory.findMany({
+    where: { eventId: input.eventId },
+    select: { key: true, label: true, sortOrder: true },
+  });
+  if (existing.some((row) => row.label.toLowerCase() === input.label.toLowerCase())) {
+    throw new ValidationError('A category with that name exists', { field: 'label', key: 'labelTaken' });
+  }
+  const key = keyFromLabel(input.label, new Set(existing.map((row) => row.key)));
+  const sortOrder = existing.reduce((max, row) => Math.max(max, row.sortOrder), -1) + 1;
+  await prisma.$transaction(async (tx) => {
+    await tx.budgetCategory.create({
+      data: { eventId: input.eventId, key, label: input.label, plannedMinor: BigInt(input.plannedMinor), sortOrder },
+    });
+    await audit(tx, {
+      actor,
+      action: 'budget.category.add',
+      targetType: 'Event',
+      targetId: input.eventId,
+      data: { key, plannedMinor: input.plannedMinor },
+    });
+  });
+  return { key };
+}
+
+export async function renameBudgetCategory(actor: UserActor, raw: z.input<typeof renameBudgetCategorySchema>) {
+  const input = renameBudgetCategorySchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'money.edit');
+  const row = await prisma.budgetCategory.findUnique({
+    where: { eventId_key: { eventId: input.eventId, key: input.key } },
+  });
+  if (!row) throw new NotFoundError('Category not found');
+  await prisma.$transaction(async (tx) => {
+    await tx.budgetCategory.update({ where: { id: row.id }, data: { label: input.label } });
+    await audit(tx, {
+      actor,
+      action: 'budget.category.rename',
+      targetType: 'Event',
+      targetId: input.eventId,
+      data: { key: input.key, from: row.label, to: input.label },
+    });
+  });
+  return { ok: true as const };
+}
+
+/**
+ * Removes a budget line. Expenses filed under it move to the "Other" line
+ * (budgetSummary shows unknown keys there); bookings are matched by category
+ * and simply fall through to the next matching line.
+ */
+export async function removeBudgetCategory(actor: UserActor, raw: z.input<typeof budgetCategoryRefSchema>) {
+  const input = budgetCategoryRefSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'money.edit');
+  const row = await prisma.budgetCategory.findUnique({
+    where: { eventId_key: { eventId: input.eventId, key: input.key } },
+  });
+  if (!row) throw new NotFoundError('Category not found');
+  await prisma.$transaction(async (tx) => {
+    await tx.budgetCategory.delete({ where: { id: row.id } });
+    await audit(tx, {
+      actor,
+      action: 'budget.category.remove',
+      targetType: 'Event',
+      targetId: input.eventId,
+      data: { key: input.key, label: row.label, plannedMinor: row.plannedMinor.toString() },
+    });
+  });
+  return { ok: true as const };
+}

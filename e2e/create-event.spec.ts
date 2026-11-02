@@ -51,11 +51,20 @@ test('UF-03-1/3/4: birthday in under 60s, template tasks + budget applied, no ti
   expect(Date.now() - started).toBeLessThan(60_000);
   const eventUrl = new URL(page.url()).pathname;
 
-  // UF-03-3: checklist tasks and budget categories match the birthday template.
+  // D-X30: a new event starts with an empty plan and budget; template suggestions are opt-in.
   await page.goto(`${eventUrl}/plan`);
+  await expect(page.getByRole('heading', { name: 'Build your plan your way' })).toBeVisible();
+  await expect(page.getByText('Order the cake')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Pick from suggestions' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /^Add \d+ tasks?$/ })
+    .click();
   await expect(page.getByText('Order the cake')).toBeVisible();
   await page.goto(`${eventUrl}/money`);
-  await expect(page.getByText('Food and drinks')).toBeVisible();
+  await expect(page.getByText('Set up your budget')).toBeVisible();
+  await page.getByRole('button', { name: 'Or start from a suggested split' }).click();
+  await expect(page.getByText('Food and drinks').first()).toBeVisible();
 });
 
 test('UF-03-2: reloading resumes at the same step with saved input', async ({ page }) => {

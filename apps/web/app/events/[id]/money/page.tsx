@@ -8,6 +8,7 @@ import {
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa/ui';
+import { Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
@@ -18,6 +19,7 @@ import {
   AllocationsDialog,
   ContributionActions,
   ExpenseActions,
+  SuggestedBudgetButton,
 } from './money-editors.js';
 import { MoneyTabbar } from './money-tabbar.js';
 
@@ -39,7 +41,7 @@ export default async function EventMoneyPage({
 }) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(id, '/money', 'money.view');
+  const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '/money', 'money.view');
   const t = await getTranslations('events.money');
   const event = await prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } });
   const active: Tab = TABS.includes(tab as Tab) ? (tab as Tab) : 'budget';
@@ -51,6 +53,7 @@ export default async function EventMoneyPage({
       access={access}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
       active="money"
       title={event.name}
     >
@@ -68,7 +71,11 @@ export default async function EventMoneyPage({
     .filter((line) => line.label !== null)
     .map((line) => ({ key: line.key, label: line.label as string, plannedMinor: line.plannedMinor.toString() }));
   const money = (value: bigint | string | null) =>
-    value == null ? <span className="text-muted text-sm">{t('hiddenByPlanner')}</span> : <MoneyText value={value.toString()} currency={currency} />;
+    value == null ? (
+      <span className="text-muted text-sm">{t('hiddenByPlanner')}</span>
+    ) : (
+      <MoneyText value={value.toString()} currency={currency} />
+    );
 
   const [schedule, expenses, contributions] = await Promise.all([
     listPaymentSchedule(ctx.actor, { eventId: id }, access),
@@ -146,7 +153,7 @@ export default async function EventMoneyPage({
       </div>
       <MoneyTabbar eventId={id} active={active} items={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))} />
 
-      {active === 'budget' && canEdit && (
+      {active === 'budget' && canEdit && categoryOptions.length > 0 && (
         <div className="flex justify-end">
           <AllocationsDialog
             eventId={id}
@@ -159,7 +166,26 @@ export default async function EventMoneyPage({
       {active === 'budget' && (
         <Card className="p-2 sm:p-4">
           {summary.lines.length === 0 ? (
-            <EmptyState title={t('empty')} body="" />
+            <EmptyState
+              icon={<Wallet className="size-6" />}
+              title={t('setupTitle')}
+              body={canEdit ? t('setupBody') : t('empty')}
+              action={
+                canEdit ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <AllocationsDialog
+                      eventId={id}
+                      currency={currency}
+                      plannedTotalMinor={totals.plannedMinor.toString()}
+                      categories={[]}
+                      triggerLabel={t('setupCta')}
+                      triggerVariant="primary"
+                    />
+                    <SuggestedBudgetButton eventId={id} />
+                  </div>
+                ) : undefined
+              }
+            />
           ) : (
             <ul className="divide-border divide-y text-sm">
               {summary.lines.map((line) => (

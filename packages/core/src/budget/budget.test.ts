@@ -3,11 +3,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { permissionsFor, toStoredPermissions } from '../events/access.js';
 import {
+  addBudgetCategory,
   addContribution,
   addExpense,
   deleteContribution,
   deleteExpense,
   recordContributionReceived,
+  removeBudgetCategory,
+  renameBudgetCategory,
   setAllocations,
   setExpensePaid,
 } from './edit.js';
@@ -160,6 +163,21 @@ describe('budget edits (UF-20)', () => {
     expect((await listContributions(host, { eventId })).length).toBe(2);
     await deleteContribution(host, { contributionId });
     expect((await listContributions(host, { eventId })).length).toBe(1);
+  });
+
+  it('custom budget lines: add with an amount, rename, remove (D-X30)', async () => {
+    const { key } = await addBudgetCategory(host, { eventId, label: 'Aso-ebi & outfits', plannedMinor: '150000' });
+    expect(key).toBe('aso_ebi_outfits');
+    await expect(addBudgetCategory(host, { eventId, label: 'aso-ebi & OUTFITS' })).rejects.toMatchObject({
+      code: 'VALIDATION',
+    });
+    await renameBudgetCategory(host, { eventId, key, label: 'Outfits' });
+    let summary = await budgetSummary(host, { eventId });
+    expect(summary.lines.find((line) => line.key === key)).toMatchObject({ label: 'Outfits', plannedMinor: 150_000n });
+    await removeBudgetCategory(host, { eventId, key });
+    summary = await budgetSummary(host, { eventId });
+    expect(summary.lines.some((line) => line.key === key)).toBe(false);
+    await expect(addBudgetCategory(viewer, { eventId, label: 'X' })).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('UF-20-3: money view reads but cannot edit; no money permission → FORBIDDEN; stranger → NOT_FOUND', async () => {

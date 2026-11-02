@@ -34,7 +34,16 @@ async function quickEvent(page: Page, name: string): Promise<string> {
   await expect(page.getByRole('heading', { name: 'Choose features' })).toBeVisible();
   await page.getByRole('button', { name: 'Create event' }).click();
   await expect(page).toHaveURL(/\/events\/[0-9a-f-]+\?welcome=1$/);
-  return new URL(page.url()).pathname;
+  const eventUrl = new URL(page.url()).pathname;
+  // D-X30: plans start empty; these specs work on the birthday suggestions, added by opt-in.
+  await page.goto(`${eventUrl}/plan`);
+  await page.getByRole('button', { name: 'Pick from suggestions' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /^Add \d+ tasks?$/ })
+    .click();
+  await expect(page.getByRole('checkbox', { name: /Order the cake/ })).toBeVisible();
+  return eventUrl;
 }
 
 function yesterdayISO(): string {

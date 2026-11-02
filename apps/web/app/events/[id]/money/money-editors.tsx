@@ -10,16 +10,22 @@ import {
   ResponsiveDialog,
   MoneyText,
   Select,
+  cn,
 } from '@tiwa/ui';
+import { Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import {
+  addBudgetCategoryAction,
   addContributionAction,
+  applySuggestedBudgetAction,
   addExpenseAction,
   deleteContributionAction,
   deleteExpenseAction,
   recordReceivedAction,
+  removeBudgetCategoryAction,
+  renameBudgetCategoryAction,
   setAllocationsAction,
   setExpensePaidAction,
   startExpenseReceiptAction,
@@ -59,76 +65,199 @@ function useRun() {
   return { error, setError, working, run };
 }
 
+interface EditableLine {
+  /** Existing category key, or null for a line added in this session. */
+  key: string | null;
+  label: string;
+  plannedMinor: string;
+  originalLabel?: string;
+}
+
+/**
+ * Budget editor (D-X30): the host sets the total and owns every line — rename,
+ * re-amount, delete, or add their own. Saved as add / rename / remove calls
+ * followed by one allocations update, so the audit history shows each step.
+ */
 export function AllocationsDialog({
   eventId,
   currency,
   plannedTotalMinor,
   categories,
+  triggerLabel,
+  triggerVariant = 'secondary',
 }: {
   eventId: string;
   currency: string;
   plannedTotalMinor: string;
   categories: { key: string; label: string; plannedMinor: string }[];
+  triggerLabel?: string;
+  triggerVariant?: 'primary' | 'secondary';
 }) {
   const t = useTranslations('events.money');
+  const router = useRouter();
+  const failure = useFailure();
+  const initial = (): EditableLine[] =>
+    categories.map((row) => ({
+      key: row.key,
+      label: row.label,
+      plannedMinor: row.plannedMinor,
+      originalLabel: row.label,
+    }));
   const [open, setOpen] = React.useState(false);
   const [total, setTotal] = React.useState(plannedTotalMinor);
-  const [rows, setRows] = React.useState(categories);
-  const { error, working, run } = useRun();
+  const [rows, setRows] = React.useState<EditableLine[]>(initial);
+  const [removed, setRemoved] = React.useState<string[]>([]);
+  const [error, setError] = React.useState<string | null>(null);
+  const [working, setWorking] = React.useState(false);
   const allocated = rows.reduce((sum, row) => sum + BigInt(row.plannedMinor || '0'), 0n);
   const left = BigInt(total || '0') - allocated;
 
+  function update(index: number, patch: Partial<EditableLine>) {
+    setRows((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  async function save() {
+    setError(null);
+    if (rows.some((row) => !row.label.trim())) return setError(t('errors.labelRequired'));
+    setWorking(true);
+    try {
+      for (const key of removed) {
+        const result = await removeBudgetCategoryAction({ eventId, key });
+        if (!result.ok) return setError(failure(result));
+      }
+      const keys: string[] = [];
+      for (const row of rows) {
+        if (row.key === null) {
+          const result = await addBudgetCategoryAction({
+            eventId,
+            label: row.label.trim(),
+            plannedMinor: row.plannedMinor || '0',
+          });
+          if (!result.ok) return setError(failure(result));
+          keys.push(result.data.key);
+        } else {
+          if (row.label.trim() !== row.originalLabel) {
+            const result = await renameBudgetCategoryAction({ eventId, key: row.key, label: row.label.trim() });
+            if (!result.ok) return setError(failure(result));
+          }
+          keys.push(row.key);
+        }
+      }
+      const result = await setAllocationsAction({
+        eventId,
+        plannedTotalMinor: total || '0',
+        allocations: rows
+          .map((row, i) => ({ key: keys[i]!, plannedMinor: row.plannedMinor || '0' }))
+          .filter((_, i) => rows[i]!.key !== null),
+      });
+      if (!result.ok) return setError(failure(result));
+      setOpen(false);
+      setRemoved([]);
+      router.refresh();
+    } finally {
+      setWorking(false);
+    }
+  }
+
   return (
     <>
-      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        {t('editBudget')}
+      <Button
+        variant={triggerVariant}
+        size="sm"
+        onClick={() => {
+          setRows(initial());
+          setRemoved([]);
+          setTotal(plannedTotalMinor);
+          setOpen(true);
+        }}
+      >
+        {triggerLabel ?? t('editBudget')}
       </Button>
-      <ResponsiveDialog open={open} onOpenChange={setOpen} title={t('editBudget')}>
-        <div className="flex flex-col gap-3 p-4 text-sm">
+      <ResponsiveDialog open={open} onOpenChange={setOpen} title={t('editBudget')} description={t('editBudgetBody')}>
+        <div className="flex flex-col gap-4 text-sm">
           {error && <Banner tone="danger">{error}</Banner>}
-          <label className="flex flex-col gap-1 font-medium">
+          <label className="flex flex-col gap-1.5 font-semibold">
             {t('totalBudget')}
             <MoneyInput value={total} onValueChange={setTotal} currency={currency} />
           </label>
-          {rows.map((row, index) => (
-            <label key={row.key} className="flex items-center gap-3">
-              <span className="flex-1">{row.label}</span>
-              <MoneyInput
-                className="w-40"
-                aria-label={row.label}
-                value={row.plannedMinor}
-                currency={currency}
-                onValueChange={(value) =>
-                  setRows((current) =>
-                    current.map((item, i) => (i === index ? { ...item, plannedMinor: value } : item)),
-                  )
-                }
-              />
-            </label>
-          ))}
-          <p className={left < 0n ? 'text-danger' : 'text-muted'}>
-            {left < 0n ? t('overAllocated') : t('leftToAllocate')}:{' '}
-            <MoneyText value={(left < 0n ? -left : left).toString()} currency={currency} />
-          </p>
-          <Button
-            disabled={working}
-            onClick={() =>
-              void run(
-                () =>
-                  setAllocationsAction({
-                    eventId,
-                    plannedTotalMinor: total || '0',
-                    allocations: rows.map((row) => ({ key: row.key, plannedMinor: row.plannedMinor || '0' })),
-                  }),
-                () => setOpen(false),
-              )
-            }
+          <div className="flex flex-col gap-2">
+            <p className="font-semibold">{t('categoriesHeading')}</p>
+            {rows.length === 0 && <p className="text-muted">{t('noLinesYet')}</p>}
+            {rows.map((row, index) => (
+              <div key={row.key ?? `new-${index}`} className="flex items-center gap-2">
+                <Input
+                  aria-label={t('lineName')}
+                  value={row.label}
+                  placeholder={t('lineNamePlaceholder')}
+                  onChange={(event) => update(index, { label: event.target.value })}
+                  className="flex-1"
+                />
+                <MoneyInput
+                  className="w-36"
+                  aria-label={t('lineAmount', { line: row.label || t('lineName') })}
+                  value={row.plannedMinor}
+                  currency={currency}
+                  onValueChange={(value) => update(index, { plannedMinor: value })}
+                />
+                <button
+                  type="button"
+                  aria-label={t('removeLine', { line: row.label || t('lineName') })}
+                  onClick={() => {
+                    if (row.key) setRemoved((current) => [...current, row.key!]);
+                    setRows((current) => current.filter((_, i) => i !== index));
+                  }}
+                  className="text-muted hover:text-danger hover:bg-danger-soft grid size-10 shrink-0 place-items-center rounded-xl transition-colors"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                </button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start"
+              onClick={() => setRows((current) => [...current, { key: null, label: '', plannedMinor: '' }])}
+            >
+              <Plus className="size-4" aria-hidden />
+              {t('addLine')}
+            </Button>
+          </div>
+          <div
+            className={cn(
+              'flex items-center justify-between rounded-xl px-4 py-3 font-medium',
+              left < 0n ? 'bg-danger-soft text-danger' : 'bg-surface text-text',
+            )}
           >
+            <span>{left < 0n ? t('overAllocated') : t('leftToAllocate')}</span>
+            <MoneyText value={(left < 0n ? -left : left).toString()} currency={currency} />
+          </div>
+          <Button disabled={working} onClick={() => void save()}>
             {t('save')}
           </Button>
         </div>
       </ResponsiveDialog>
     </>
+  );
+}
+
+/** Opt-in suggested split (D-X30): only offered while the budget has no lines. */
+export function SuggestedBudgetButton({ eventId }: { eventId: string }) {
+  const t = useTranslations('events.money');
+  const { error, working, run } = useRun();
+  return (
+    <span className="flex flex-col items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={working}
+        onClick={() => void run(() => applySuggestedBudgetAction({ eventId }))}
+      >
+        <Sparkles className="size-4" aria-hidden />
+        {t('useSuggested')}
+      </Button>
+      {error && <span className="text-danger text-xs">{error}</span>}
+    </span>
   );
 }
 

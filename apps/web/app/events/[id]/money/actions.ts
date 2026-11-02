@@ -1,7 +1,15 @@
 'use server';
 
 import {
+  addBudgetCategory,
+  addBudgetCategorySchema,
   addContribution,
+  applySuggestedBudget,
+  budgetCategoryRefSchema,
+  eventIdSchema,
+  removeBudgetCategory,
+  renameBudgetCategory,
+  renameBudgetCategorySchema,
   addContributionSchema,
   addExpense,
   addExpenseSchema,
@@ -46,4 +54,21 @@ export const recordReceivedAction = userAction(recordReceivedSchema, (input, ctx
 
 export const deleteContributionAction = userAction(contributionIdSchema, (input, ctx) =>
   deleteContribution(ctx.actor, input),
+);
+
+/** Custom budget lines and the opt-in suggested split (D-X30). */
+export const addBudgetCategoryAction = userAction(addBudgetCategorySchema, (input, ctx) =>
+  addBudgetCategory(ctx.actor, input),
+);
+
+export const renameBudgetCategoryAction = userAction(renameBudgetCategorySchema, (input, ctx) =>
+  renameBudgetCategory(ctx.actor, input),
+);
+
+export const removeBudgetCategoryAction = userAction(budgetCategoryRefSchema, (input, ctx) =>
+  removeBudgetCategory(ctx.actor, input),
+);
+
+export const applySuggestedBudgetAction = userAction(eventIdSchema, (input, ctx) =>
+  applySuggestedBudget(ctx.actor, input),
 );

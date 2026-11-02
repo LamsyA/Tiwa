@@ -50,6 +50,8 @@ test('UF-20: budget figures, expense, pledge, income, export and live update', a
     await expect(host.getByText(label, { exact: true }).first()).toBeVisible();
   }
   await expect(host.getByText(/500,000/).first()).toBeVisible();
+  // D-X30: no automatic split — the host opts in to the suggested one (still fully editable).
+  await host.getByRole('button', { name: 'Or start from a suggested split' }).click();
   await expect(host.getByText('Venue').first()).toBeVisible();
 
   // Expenses tab: a paid ₦20,000 expense → Committed and Paid both ₦20,000.
