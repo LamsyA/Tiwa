@@ -19,7 +19,11 @@ export function currencyForCountry(country: string = process.env.DEFAULT_COUNTRY
 
 /** Narrow currency symbol (e.g. ₦) via Intl — no hardcoded symbols in UI. */
 export function currencySymbol(currency: string, locale = 'en'): string {
-  const parts = new Intl.NumberFormat(locale, { style: 'currency', currency }).formatToParts(0);
+  const parts = new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+  }).formatToParts(0);
   return parts.find((part) => part.type === 'currency')?.value ?? currency;
 }
 

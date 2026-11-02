@@ -10,7 +10,6 @@ import {
 } from '@tiwa/core';
 import {
   Avatar,
-  Badge,
   Banner,
   Card,
   DateText,
@@ -35,7 +34,7 @@ export default async function EventOverviewPage({
 }) {
   const { id } = await params;
   const { welcome } = await searchParams;
-  const { ctx, access, invitesOn, momentsOn } = await loadEventPage(id, '');
+  const { ctx, access, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '');
   const t = await getTranslations('events');
   const overview = await getEventOverview(ctx.actor, id, new Date(), access);
   const { event, progress, deadlines, team } = overview;
@@ -76,6 +75,7 @@ export default async function EventOverviewPage({
       access={access}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
       active="overview"
       title={event.name}
     >
@@ -95,40 +95,59 @@ export default async function EventOverviewPage({
         {event.status === 'CANCELLED' && <Banner tone="danger">{t('overview.cancelledBanner')}</Banner>}
 
         <header
-          className="border-border flex flex-col gap-2 overflow-hidden rounded-lg border p-4"
-          style={{ borderTop: `6px solid ${event.themeColor ?? 'var(--brand)'}` }}
+          className="relative isolate overflow-hidden rounded-3xl px-5 py-6 text-white shadow-[0_20px_50px_-24px_rgb(0_0_0/0.45)] sm:px-8 sm:py-8"
+          style={{
+            background: `radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, ${event.themeColor ?? 'var(--brand)'} 70%, white 0%) 0%, transparent 55%), linear-gradient(135deg, color-mix(in oklab, ${event.themeColor ?? 'var(--brand-strong)'} 85%, black) 0%, #1a0f0a 100%)`,
+          }}
         >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 -right-16 -z-10 size-72 rounded-full bg-white/10 blur-3xl"
+          />
           <div className="flex flex-wrap items-center gap-2">
-            {template && <Badge>{template.label}</Badge>}
-            <Badge tone="brand">{t(`roles.${overview.myRole}`)}</Badge>
-            {event.status !== 'ACTIVE' && <StatusPill tone="neutral">{t(`status.${event.status}`)}</StatusPill>}
-          </div>
-          <p className="font-display text-2xl font-bold lg:hidden">{event.name}</p>
-          <p className="text-muted flex flex-wrap items-center gap-2">
-            <CalendarDays aria-hidden className="size-4" />
-            {event.startsAt ? (
-              <>
-                <DateText value={event.startsAt} format="datetime" timeZone={event.timezone} />
-                {event.startsAt > now && (
-                  <span>
-                    · <RelativeTime value={event.startsAt} />
-                  </span>
-                )}
-              </>
-            ) : (
-              t('overview.noDate')
+            {template && (
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20 backdrop-blur-md">
+                {template.label}
+              </span>
             )}
+            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20 backdrop-blur-md">
+              {t(`roles.${overview.myRole}`)}
+            </span>
+            {event.status !== 'ACTIVE' && (
+              <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-semibold">
+                {t(`status.${event.status}`)}
+              </span>
+            )}
+          </div>
+          <p className="font-display mt-4 text-3xl leading-tight font-bold tracking-[-0.02em] sm:text-4xl lg:hidden">
+            {event.name}
           </p>
-          {firstDay?.venueName && (
-            <p className="text-muted flex items-center gap-2">
-              <MapPin aria-hidden className="size-4" />
-              {firstDay.venueName}
+          <div className="mt-4 flex flex-col gap-2 text-[15px] text-white/85 sm:flex-row sm:items-center sm:gap-6">
+            <p className="flex flex-wrap items-center gap-2">
+              <CalendarDays aria-hidden className="size-4" />
+              {event.startsAt ? (
+                <DateText value={event.startsAt} format="datetime" timeZone={event.timezone} />
+              ) : (
+                t('overview.noDate')
+              )}
+            </p>
+            {firstDay?.venueName && (
+              <p className="flex items-center gap-2">
+                <MapPin aria-hidden className="size-4" />
+                {firstDay.venueName}
+              </p>
+            )}
+          </div>
+          {event.startsAt && event.startsAt > now && (
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-black">
+              <span className="size-1.5 rounded-full bg-[var(--brand-strong)]" />
+              <RelativeTime value={event.startsAt} />
             </p>
           )}
         </header>
 
         <div className="grid gap-4 lg:grid-cols-12">
-          <Card className="flex items-center gap-4 p-4 lg:col-span-4">
+          <Card className="flex items-center gap-5 p-5 lg:col-span-4">
             <ProgressRing
               value={progress.done}
               max={Math.max(progress.total, 1)}
@@ -136,7 +155,7 @@ export default async function EventOverviewPage({
               showValue
             />
             <div className="flex flex-col gap-1">
-              <h2 className="font-medium">{t('overview.progressHeading')}</h2>
+              <h2 className="font-display text-lg font-bold">{t('overview.progressHeading')}</h2>
               <p className="text-muted text-sm" data-testid="progress-counts">
                 {t('overview.progressCounts', { done: progress.done, total: progress.total })}
               </p>
@@ -159,9 +178,9 @@ export default async function EventOverviewPage({
             </div>
           </Card>
 
-          <Card className="flex flex-col gap-3 p-4 lg:col-span-8">
+          <Card className="flex flex-col gap-3 p-5 lg:col-span-8">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-medium">{t('overview.deadlinesHeading')}</h2>
+              <h2 className="font-display text-lg font-bold">{t('overview.deadlinesHeading')}</h2>
               <Link href={`/events/${id}/plan`} className="text-brand-strong text-sm font-medium">
                 {t('overview.openPlan')}
               </Link>
@@ -188,7 +207,7 @@ export default async function EventOverviewPage({
           </Card>
 
           {money && (
-            <Card className="flex flex-col gap-3 p-4 lg:col-span-4">
+            <Card className="flex flex-col gap-3 p-5 lg:col-span-4">
               <div className="flex items-center gap-2">
                 <h2 className="flex-1 font-medium">{t('overview.moneyHeading')}</h2>
                 {moneyAlerts > 0 && (
@@ -215,14 +234,14 @@ export default async function EventOverviewPage({
             </Card>
           )}
 
-          <Card className="flex flex-col gap-2 p-4 lg:col-span-4">
-            <h2 className="font-medium">{t('overview.vendorsHeading')}</h2>
+          <Card className="flex flex-col gap-2 p-5 lg:col-span-4">
+            <h2 className="font-display text-lg font-bold">{t('overview.vendorsHeading')}</h2>
             <p className="text-muted text-sm">{t('overview.vendorsComingSoon')}</p>
           </Card>
 
           {event.invitesEnabled && (
-            <Card className="flex flex-col gap-2 p-4 lg:col-span-4">
-              <h2 className="font-medium">{t('overview.guestsHeading')}</h2>
+            <Card className="flex flex-col gap-2 p-5 lg:col-span-4">
+              <h2 className="font-display text-lg font-bold">{t('overview.guestsHeading')}</h2>
               {event.expectedGuests !== null && (
                 <p className="font-medium">{t('overview.guestsExpected', { count: event.expectedGuests })}</p>
               )}
@@ -231,8 +250,8 @@ export default async function EventOverviewPage({
           )}
 
           {event.momentsEnabled && (
-            <Card className="flex flex-col gap-2 p-4 lg:col-span-4">
-              <h2 className="font-medium">{t('overview.momentsHeading')}</h2>
+            <Card className="flex flex-col gap-2 p-5 lg:col-span-4">
+              <h2 className="font-display text-lg font-bold">{t('overview.momentsHeading')}</h2>
               {canModerateMoments ? (
                 <Link href={`/events/${id}/moments`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
                   {t('overview.momentsManage')}
@@ -247,9 +266,9 @@ export default async function EventOverviewPage({
             </Card>
           )}
 
-          <Card className="flex flex-col gap-3 p-4 lg:col-span-8">
+          <Card className="flex flex-col gap-3 p-5 lg:col-span-8">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-medium">{t('overview.teamHeading')}</h2>
+              <h2 className="font-display text-lg font-bold">{t('overview.teamHeading')}</h2>
               <div className="flex gap-1">
                 {['HOST', 'CO_HOST', 'PLANNER', 'PLANNER_STAFF'].includes(overview.myRole) && (
                   <Link href={`/events/${id}/chat`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>

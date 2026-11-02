@@ -294,7 +294,13 @@ function AddTask({
         value={title}
         onChange={(event) => setTitle(event.target.value)}
       />
-      <Button type="submit" variant="secondary" loading={saving} aria-label={t('addTaskIn', { group: groupLabel })}>
+      <Button
+        type="submit"
+        variant="secondary"
+        loading={saving}
+        className="shrink-0 whitespace-nowrap"
+        aria-label={t('addTaskIn', { group: groupLabel })}
+      >
         <Plus aria-hidden className="size-5" />
         <span className="hidden sm:inline">{t('addTask')}</span>
       </Button>

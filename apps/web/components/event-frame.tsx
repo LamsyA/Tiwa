@@ -10,9 +10,16 @@ import { requirePageUser } from '@/lib/ctx.js';
 import { AppFrame } from './app-frame.js';
 
 export type EventSection =
-  'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'vendors' | 'settings';
+  'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'vendors' | 'tickets' | 'settings';
 
-const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?: boolean; needsMoments?: boolean }[] = [
+const SECTIONS: {
+  key: EventSection;
+  path: string;
+  needs: Action;
+  needsInvites?: boolean;
+  needsMoments?: boolean;
+  needsTickets?: boolean;
+}[] = [
   { key: 'overview', path: '', needs: 'event.view' },
   { key: 'plan', path: '/plan', needs: 'event.view' },
   { key: 'money', path: '/money', needs: 'money.view' },
@@ -26,6 +33,9 @@ const SECTIONS: { key: EventSection; path: string; needs: Action; needsInvites?:
   { key: 'moments', path: '/moments', needs: 'event.view', needsMoments: true },
   // Vendor search and shortlisting for the event (P6-T07); quoting states arrive with P7.
   { key: 'vendors', path: '/vendors', needs: 'event.view' },
+  // Tickets are optional like invites (TKT-01, P11-T02): the tab shows while
+  // the host has them on.
+  { key: 'tickets', path: '/tickets', needs: 'event.view', needsTickets: true },
   { key: 'settings', path: '/settings', needs: 'event.view' },
 ];
 
@@ -53,7 +63,7 @@ export async function loadEventPage(eventId: string, path: string, needs: Action
   const [event] = await Promise.all([
     prisma.event.findUniqueOrThrow({
       where: { id: eventId },
-      select: { invitesEnabled: true, momentsEnabled: true },
+      select: { invitesEnabled: true, momentsEnabled: true, ticketsEnabled: true },
     }),
     access.role !== 'HOST' ? markAccepted(eventId, ctx.actor.userId) : Promise.resolve(),
   ]);
@@ -63,6 +73,7 @@ export async function loadEventPage(eventId: string, path: string, needs: Action
     allowed: can(access, ctx.actor.userId, needs),
     invitesOn: event.invitesEnabled,
     momentsOn: event.momentsEnabled,
+    ticketsOn: event.ticketsEnabled,
   };
 }
 
@@ -82,6 +93,7 @@ export async function EventFrame({
   title,
   invitesOn = false,
   momentsOn = false,
+  ticketsOn = false,
   children,
 }: {
   eventId: string;
@@ -91,6 +103,7 @@ export async function EventFrame({
   title: string;
   invitesOn?: boolean;
   momentsOn?: boolean;
+  ticketsOn?: boolean;
   children: React.ReactNode;
 }) {
   const t = await getTranslations('events.tabs');
@@ -98,7 +111,8 @@ export async function EventFrame({
     (section) =>
       can(access, userId, section.needs) &&
       (!section.needsInvites || invitesOn) &&
-      (!section.needsMoments || momentsOn),
+      (!section.needsMoments || momentsOn) &&
+      (!('needsTickets' in section) || !(section as { needsTickets?: boolean }).needsTickets || ticketsOn),
   );
   return (
     <AppFrame
@@ -113,8 +127,8 @@ export async function EventFrame({
               href={`/events/${eventId}${tab.path}`}
               aria-current={active === tab.key ? 'page' : undefined}
               className={cn(
-                'flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-medium',
-                active === tab.key ? 'border-brand-strong text-text' : 'text-muted hover:text-text border-transparent',
+                'flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-medium transition-colors',
+                active === tab.key ? 'bg-text text-bg' : 'text-muted hover:text-text hover:bg-surface-2',
               )}
             >
               {t(tab.key)}
