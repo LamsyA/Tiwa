@@ -15,6 +15,7 @@ import {
 import { REMINDERS_EVERY_MS, REMINDERS_JOB, handleReminders } from './jobs/reminders.js';
 import { TICKET_EXPIRY_EVERY_MS, TICKET_EXPIRY_JOB, handleTicketExpiry } from './jobs/ticket-expiry.js';
 import { DAY_PROGRESS_EVERY_MS, DAY_PROGRESS_JOB, handleDayProgress } from './jobs/day-progress.js';
+import { CHAT_NUDGES_EVERY_MS, CHAT_NUDGES_JOB, handleChatNudges } from './jobs/chat-nudges.js';
 import { RETENTION_EVERY_MS, RETENTION_JOB, handleRetention } from './jobs/retention.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
@@ -52,6 +53,7 @@ async function main() {
       if (job.name === QUOTE_EXPIRY_JOB) return handleQuoteExpiry(log);
       if (job.name === TICKET_EXPIRY_JOB) return handleTicketExpiry(log);
       if (job.name === DAY_PROGRESS_JOB) return handleDayProgress(log);
+      if (job.name === CHAT_NUDGES_JOB) return handleChatNudges(log);
       if (job.name === HOLD_EXPIRY_JOB) return handleHoldExpiry(log);
       if (job.name === RETENTION_JOB) return handleRetention(log);
       if (job.name === SEND_INVITE_JOB) return handleSendInvite(job.data, log);
@@ -133,6 +135,11 @@ async function main() {
     DAY_PROGRESS_JOB,
     { every: DAY_PROGRESS_EVERY_MS },
     { name: DAY_PROGRESS_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
+  );
+  await queue.upsertJobScheduler(
+    CHAT_NUDGES_JOB,
+    { every: CHAT_NUDGES_EVERY_MS },
+    { name: CHAT_NUDGES_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
   );
   log.info({ queue: QUEUE_NAME }, 'listening');
 }

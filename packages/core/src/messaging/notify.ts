@@ -41,6 +41,16 @@ export const NOTIFY_TYPES: Record<string, NotifyTypeDef> = {
     channels: { inApp: true, push: true, email: false, sms: false, whatsapp: false },
     urgent: false,
   },
+  // Nudges skip the bell (the inbox badge is the in-app surface) and ride
+  // push first, then one email/WhatsApp summary — see findNudgeCandidates.
+  'chat.nudge': {
+    channels: { inApp: false, push: true, email: false, sms: false, whatsapp: false },
+    urgent: false,
+  },
+  'chat.summary': {
+    channels: { inApp: false, push: false, email: true, sms: false, whatsapp: true },
+    urgent: false,
+  },
   'booking.changed': {
     channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
     urgent: false,
