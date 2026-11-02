@@ -199,3 +199,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - P13 GATE: passed (3/3: unit incl. table-driven matrix, worker fan-out, e2e prefs/bell 2/2). Phase P13 DONE. Manual M4 item: iOS home-screen web-push check + SMS fallback verification (no device this session).
 - D-X37: chat replies, no deletion, online/last seen + typing, bell notifications for new messages, dates no longer masked.
 - D-X38: host-set RSVPs, ready-made invite messages, public live agenda (/e/{slug}/agenda), overview tab de-dup + new progress card, vendor profile cache fix. Core day+guests tests 54/54; e2e guests/invites/day/create-event pass on dev (day flaky first try).
+- P14-T01 done: Review model + migration; VENDOR `review.reply` OWN (matrix + table updated); core reviews (COMPLETED-gated create, photos validated against event media, once-only reply/report, on-read rating with 5-review threshold) + notify wiring (review.received/replied) + tests incl. UF-25-1.

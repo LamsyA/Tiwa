@@ -271,6 +271,61 @@ export async function handleQuoteRequested(data: unknown, log: Log) {
   );
 }
 
+/** P14: a new review lands → the vendor team. */
+export async function handleReviewReceived(data: unknown, log: Log) {
+  const payload = asRecord(data);
+  const reviewId = asString(payload.reviewId);
+  if (!reviewId) throw new Error('review.received needs reviewId');
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    select: { overall: true, vendorOrgId: true, bookingId: true },
+  });
+  if (!review) return { missing: true as const };
+  const booking = await prisma.booking.findUnique({
+    where: { id: review.bookingId },
+    select: { eventId: true, event: { select: { name: true } } },
+  });
+  if (!booking) return { missing: true as const };
+  return fanout(
+    {
+      userIds: await orgMemberUserIds(review.vendorOrgId),
+      type: 'review.received',
+      title: `New review: ${review.overall.toFixed(1)} / 5`,
+      body: booking.event.name,
+      url: '/orders',
+      data: { reviewId, eventId: booking.eventId },
+      key: `rev:${reviewId}`,
+    },
+    log,
+  );
+}
+
+/** P14: a vendor reply lands → the event team. */
+export async function handleReviewReplied(data: unknown, log: Log) {
+  const payload = asRecord(data);
+  const reviewId = asString(payload.reviewId);
+  const eventId = asString(payload.eventId);
+  if (!reviewId || !eventId) throw new Error('review.replied needs reviewId + eventId');
+  const [review, event] = await Promise.all([
+    prisma.review.findUnique({ where: { id: reviewId }, select: { vendorOrgId: true } }),
+    prisma.event.findUnique({ where: { id: eventId }, select: { name: true } }),
+  ]);
+  if (!review || !event) return { missing: true as const };
+  const vendor = await prisma.organization.findUnique({ where: { id: review.vendorOrgId }, select: { name: true } });
+  return fanout(
+    {
+      userIds: await teamUserIds(eventId),
+      type: 'review.replied',
+      title: 'Vendor replied to your review',
+      body: `${event.name} · ${vendor?.name ?? 'vendor'}`,
+      url: `/events/${eventId}/close`,
+      data: { reviewId, eventId },
+      key: `revrep:${reviewId}`,
+    },
+    log,
+  );
+}
+
 export async function handleQuoteSent(data: unknown, log: Log) {
   const payload = asRecord(data);
   const quoteId = asString(payload.quoteId);

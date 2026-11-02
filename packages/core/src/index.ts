@@ -64,6 +64,7 @@ export * from './chat/masking.js';
 export * from './chat/safety.js';
 export * from './chat/cards.js';
 export * from './chat/decisions.js';
+export * from './reviews/reviews.js';
 export * from './chat/nudges.js';
 export * from './messaging/notify.js';
 export * from './shared/schemas.js';

@@ -395,3 +395,10 @@ Template:
 - Decision: (1) Hosts can set a guest's reply by hand (Coming / Maybe / Not coming / No reply) from the guest list; plus-ones are capped at the allowance and cleared on decline. (2) The invite composer offers ready-written messages (three per kind) with each guest's name and personal link filled in automatically; editing is optional and placeholders are inserted with a tap. (3) Run-of-show items have `isPublic`; public items (or the public programme when none are marked) show to guests on `/e/{slug}/agenda`, which opens on the event's first day in its time zone and refreshes every 30 s; titles and times only. (4) The event overview drops the duplicate tab strip and shows every section as its own grid. (5) Public vendor profiles are cached with BigInt/Date tagging, since the data cache stores JSON.
 - Why: owner report: the vendor profile crashed (BigInt in cached profile), tabs were repeated, hosts couldn't record replies, typing {name}/{link} per message was painful, and the event-day page wasn't usable by guests.
 - Affects: packages/core guests (setGuestRsvp), day (isPublic, agenda.ts) + tests; packages/db RunItem.isPublic migration; apps/web guests, invites composer, day page/editor, /e/[slug]/agenda, overview, marketplace loader.
+
+### 2026-11-02 — Ratings computed on read, no roll-up job
+- ID: D-X39
+- Status: AGENT (plan P14-T01 said "rating roll-up job")
+- Decision: `vendorRating()` computes count + mean live from indexed review rows (average only surfaces at 5+ reviews per REV-05). No cached column and no scheduled job: the read is a single indexed query and can never go stale.
+- Why: a roll-up job adds write amplification and staleness windows for no benefit at this scale.
+- Affects: packages/core/src/reviews, BUILD_PLAN P14-T01.

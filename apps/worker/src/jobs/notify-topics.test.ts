@@ -11,6 +11,8 @@ import {
   handlePaymentRecorded,
   handleQuoteRequested,
   handleQuoteSent,
+  handleReviewReceived,
+  handleReviewReplied,
 } from './notify-topics.js';
 
 // P13-T04: earlier stubs fan out through notify() — rows land, keys dedupe.
@@ -200,5 +202,47 @@ describe('P13-T04 topic fan-out', () => {
     expect(await rowsFor(vendorId, 'booking.changed')).toHaveLength(2);
     await handleQuoteSent({ quoteId: 'q1', eventId, vendorOrgId: org.id }, log);
     expect((await rowsFor(hostId, 'booking.changed')).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('review received notifies the vendor, reply notifies the event team', async () => {
+    const hostId = await makeUser('Rev Host');
+    const vendorId = await makeUser('Rev Vendor');
+    const eventId = await makeEvent(hostId, 'Rev Event');
+    const org = await prisma.organization.create({
+      data: { kind: 'VENDOR', name: 'Rev Catering', slug: `rev-cat-${Date.now().toString(36)}`, countryCode: 'NG' },
+    });
+    orgs.push(org.id);
+    await prisma.membership.create({ data: { orgId: org.id, userId: vendorId, role: 'OWNER' } });
+    const booking = await prisma.booking.create({
+      data: {
+        eventId,
+        vendorOrgId: org.id,
+        category: 'catering',
+        status: 'COMPLETED',
+        paymentMode: 'OFFLINE',
+        totalMinor: 100_000n,
+        currency: 'NGN',
+      },
+    });
+    const review = await prisma.review.create({
+      data: {
+        bookingId: booking.id,
+        vendorOrgId: org.id,
+        authorId: hostId,
+        quality: 5,
+        communication: 5,
+        punctuality: 5,
+        value: 5,
+        scope: 5,
+        overall: 5,
+      },
+    });
+    await handleReviewReceived({ reviewId: review.id }, log);
+    expect(await rowsFor(vendorId, 'review.received')).toHaveLength(1);
+    expect(await rowsFor(hostId, 'review.received')).toHaveLength(0);
+    await handleReviewReplied({ reviewId: review.id, eventId }, log);
+    expect(await rowsFor(hostId, 'review.replied')).toHaveLength(1);
+    const again = await handleReviewReceived({ reviewId: review.id }, log);
+    expect(again).toMatchObject({ notified: 0 });
   });
 });

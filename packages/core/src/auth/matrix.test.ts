@@ -41,7 +41,7 @@ const EVENT_ROWS: Partial<Record<Action, Row>> = {
   'moments.upload.guest':             ['Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
   'moments.upload.official':          ['N', 'N', 'G', 'N', 'N', 'Y'],
   'review.create':                    ['Y', 'N', 'Y', 'N', 'N', 'N'],
-  'review.reply':                     ['N', 'N', 'N', 'N', 'N', 'N'],
+  'review.reply':                     ['N', 'N', 'N', 'N', 'O', 'O'],
   'review.report':                    ['Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
   'dispute.open':                     ['Y', 'N', 'Y', 'N', 'O', 'O'],
   'dispute.addEvidence':              ['Y', 'N', 'Y', 'N', 'O', 'O'],

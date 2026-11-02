@@ -78,6 +78,14 @@ export const NOTIFY_TYPES: Record<string, NotifyTypeDef> = {
     channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
     urgent: false,
   },
+  'review.received': {
+    channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
+    urgent: false,
+  },
+  'review.replied': {
+    channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
+    urgent: false,
+  },
 };
 
 const FALLBACK_DEF: NotifyTypeDef = {

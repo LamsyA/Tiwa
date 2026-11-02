@@ -1575,3 +1575,28 @@ model PushSubscription {
 
   @@index([userId])
 }
+
+// ───────────── Trust (Backend.md §3, P14-T01) ─────────────
+// One review per booking (bookingId unique). overall is the mean of the
+// five 1–5 scores (REV-02). photoIds reference Moments media of the event.
+
+model Review {
+  id            String   @id @default(uuid(7))
+  bookingId     String   @unique
+  vendorOrgId   String
+  authorId      String
+  quality       Int
+  communication Int
+  punctuality   Int
+  value         Int
+  scope         Int
+  overall       Float
+  body          String?
+  photoIds      String[]
+  reply         String?
+  repliedAt     DateTime?
+  hidden        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([vendorOrgId, createdAt])
+}

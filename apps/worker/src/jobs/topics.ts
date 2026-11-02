@@ -21,6 +21,8 @@ import {
   handlePaymentRecorded,
   handleQuoteRequested,
   handleQuoteSent,
+  handleReviewReceived,
+  handleReviewReplied,
 } from './notify-topics.js';
 
 type Log = ReturnType<typeof createLogger>;
@@ -54,6 +56,8 @@ export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanO
   ['booking.changed']: async (data, log) => handleBookingChanged(data, log),
   ['quote.requested']: async (data, log) => handleQuoteRequested(data, log),
   ['quote.sent']: async (data, log) => handleQuoteSent(data, log),
+  ['review.received']: async (data, log) => handleReviewReceived(data, log),
+  ['review.replied']: async (data, log) => handleReviewReplied(data, log),
   [MEDIA_PROCESS_IMAGE_TOPIC]: async (data, log, sink) => handleProcessImage(data, log, sink),
   [MEDIA_PROCESS_VIDEO_TOPIC]: async (data, log, sink) => handleProcessVideo(data, log, sink),
   [MEDIA_WATERMARK_JOB]: async (data, log) => handleWatermark(data, log),

@@ -222,7 +222,7 @@ const VENDOR_RULES: RoleRules = {
   'moments.upload.guest': ALLOW,
   'moments.upload.official': DENY,
   'review.create': DENY,
-  'review.reply': DENY,
+  'review.reply': OWN, // own booking's review, once
   'review.report': ALLOW,
   'dispute.open': OWN, // own booking
   'dispute.addEvidence': OWN,
