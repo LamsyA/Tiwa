@@ -1,0 +1,13 @@
+{
+  "$comment": "P12 gate (BUILD_PLAN.md GATE P12). e2e covers UF-24 (editor, late dependants, incidents, contacts, cross-page live, SW offline reload) at 390 + 1280 px; unit covers items/deps/cycles, transitive dependants on random DAGs (property test), vendor isolation, arrival, incidents/contacts, and the progress job. The staging demo (public conference + private party with run-of-show) is a manual M3 step.",
+  "phase": 12,
+  "name": "Event day",
+  "checks": [
+    { "id": "seed", "run": "pnpm db:seed" },
+    {
+      "id": "unit",
+      "run": "pnpm --filter @tiwa/db exec dotenv -e ../../.env -- pnpm --filter @tiwa/core exec vitest run src/day"
+    },
+    { "id": "e2e-uf24", "run": "pnpm e2e e2e/day.spec.ts" }
+  ]
+}
