@@ -213,7 +213,7 @@ export function ChatThread({
 
   return (
     <section aria-label={header.title} className="flex h-full min-h-0 flex-col">
-      <header className="border-border flex items-center gap-2 border-b px-2 py-2">
+      <header className="border-border/60 flex items-center gap-3 border-b bg-[var(--chat-panel)] px-3 py-2.5">
         <Link
           href="/inbox"
           aria-label={t('back')}
@@ -222,14 +222,14 @@ export function ChatThread({
           <ArrowLeft aria-hidden className="size-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate font-semibold">{header.title}</h2>
+          <h2 className="truncate text-[15px] font-semibold">{header.title}</h2>
           {header.eventName && !header.isTeam && (
             <p className="text-muted truncate text-xs">
               {header.guestEnquiry ? t('metAt', { event: header.eventName }) : t('about', { event: header.eventName })}
             </p>
           )}
           {typing && (
-            <p className="text-brand-strong text-xs" role="status">
+            <p className="text-xs text-[var(--chat-accent)]" role="status">
               {typing.name ? t('typing', { name: typing.name }) : t('someoneTyping')}
             </p>
           )}
@@ -264,7 +264,7 @@ export function ChatThread({
         />
       </header>
 
-      <div className="flex-1 overflow-y-auto px-3 py-3" aria-live="polite">
+      <div className="tiwa-chat-wall flex-1 overflow-y-auto px-3 py-4 sm:px-[6%]" aria-live="polite">
         {hasMore && (
           <div className="mb-3 text-center">
             <Button variant="ghost" size="sm" onClick={() => void loadOlder()}>
@@ -273,7 +273,7 @@ export function ChatThread({
           </div>
         )}
         {ordered.length === 0 && optimistic.length === 0 && <p className="text-muted text-center">{t('noMessages')}</p>}
-        <ol className="flex flex-col gap-1.5">
+        <ol className="flex flex-col gap-1">
           {ordered.map((m, index) => {
             const previous = ordered[index - 1];
             const canEdit = m.mine && !m.deleted && now - new Date(m.createdAt).getTime() < EDIT_WINDOW_MS;
@@ -329,7 +329,7 @@ export function ChatThread({
       )}
       {editing ? (
         <form
-          className="border-border flex flex-col gap-2 border-t p-2"
+          className="border-border/60 flex flex-col gap-2 border-t bg-[var(--chat-panel)] p-2"
           onSubmit={(event) => {
             event.preventDefault();
             void editChatMessage({ messageId: editing.id, body: editing.body }).then((result) => {

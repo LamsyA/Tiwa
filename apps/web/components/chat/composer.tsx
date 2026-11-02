@@ -49,7 +49,7 @@ export function Composer({
 
   return (
     <form
-      className="border-border bg-bg flex items-end gap-2 border-t p-2"
+      className="flex items-end gap-2 bg-[var(--chat-panel)] px-3 py-2.5"
       onSubmit={(event) => {
         event.preventDefault();
         submit();
@@ -89,7 +89,7 @@ export function Composer({
         rows={1}
         maxLength={4000}
         disabled={disabled}
-        className="max-h-40 min-h-11 flex-1 resize-none"
+        className="bg-bg max-h-40 min-h-11 flex-1 resize-none rounded-3xl border-transparent px-4 py-2.5 shadow-none focus:border-transparent focus:ring-0"
         value={body}
         onChange={(event) => {
           setBody(event.target.value);
@@ -106,9 +106,14 @@ export function Composer({
           }
         }}
       />
-      <IconButton type="submit" label={t('send')} disabled={disabled || !body.trim()}>
+      <button
+        type="submit"
+        aria-label={t('send')}
+        disabled={disabled || !body.trim()}
+        className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--chat-accent)] text-white shadow-1 transition-transform hover:brightness-105 active:scale-95 disabled:opacity-40"
+      >
         <SendHorizontal aria-hidden className="size-5" />
-      </IconButton>
+      </button>
     </form>
   );
 }

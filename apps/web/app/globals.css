@@ -77,3 +77,76 @@ body {
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
 }
+
+/* Chat (inbox, event team chat): WhatsApp-style palette, wallpaper and bubble tails. */
+:root {
+  --chat-wall: #efeae2;
+  --chat-doodle: rgb(0 0 0 / 0.045);
+  --chat-panel: #f0f2f5;
+  --chat-in: #ffffff;
+  --chat-out: #d9fdd3;
+  --chat-out-text: #111b21;
+  --chat-meta: #667781;
+  --chat-seen: #53bdeb;
+  --chat-accent: #00a884;
+}
+:root[data-theme='dark'] {
+  --chat-wall: #0b141a;
+  --chat-doodle: rgb(255 255 255 / 0.035);
+  --chat-panel: #202c33;
+  --chat-in: #202c33;
+  --chat-out: #005c4b;
+  --chat-out-text: #e9edef;
+  --chat-meta: #8696a0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --chat-wall: #0b141a;
+    --chat-doodle: rgb(255 255 255 / 0.035);
+    --chat-panel: #202c33;
+    --chat-in: #202c33;
+    --chat-out: #005c4b;
+    --chat-out-text: #e9edef;
+    --chat-meta: #8696a0;
+  }
+}
+.tiwa-chat-wall {
+  background-color: var(--chat-wall);
+  background-image:
+    radial-gradient(var(--chat-doodle) 1.2px, transparent 1.3px),
+    radial-gradient(var(--chat-doodle) 1.2px, transparent 1.3px);
+  background-size: 28px 28px;
+  background-position:
+    0 0,
+    14px 14px;
+}
+.tiwa-bubble-in,
+.tiwa-bubble-out {
+  position: relative;
+  box-shadow: 0 1px 0.5px rgb(11 20 26 / 0.13);
+}
+.tiwa-bubble-in {
+  background: var(--chat-in);
+  color: var(--text);
+}
+.tiwa-bubble-out {
+  background: var(--chat-out);
+  color: var(--chat-out-text);
+}
+.tiwa-tail.tiwa-bubble-in::before,
+.tiwa-tail.tiwa-bubble-out::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 13px;
+  background: inherit;
+}
+.tiwa-tail.tiwa-bubble-in::before {
+  left: -8px;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.tiwa-tail.tiwa-bubble-out::before {
+  right: -8px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}

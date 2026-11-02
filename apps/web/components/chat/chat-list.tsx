@@ -50,10 +50,10 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
   };
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex h-full flex-col">
       <form
         role="search"
-        className="relative"
+        className="relative px-3 pt-3"
         onSubmit={(event) => {
           event.preventDefault();
           router.replace(href({ q: query.trim() }));
@@ -61,28 +61,28 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
       >
         <Search
           aria-hidden
-          className="text-muted pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2"
+          className="text-muted pointer-events-none absolute top-1/2 left-7 mt-1.5 size-4 -translate-y-1/2"
         />
         <Input
           type="search"
           aria-label={t('search')}
           placeholder={t('search')}
-          className="pl-10"
+          className="h-10 rounded-xl border-transparent bg-[var(--chat-panel)] pl-11 shadow-none focus:border-transparent"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </form>
-      <nav aria-label={t('filters')} className="flex gap-2 overflow-x-auto pb-1">
+      <nav aria-label={t('filters')} className="scrollbar-none flex gap-2 overflow-x-auto px-3 py-3">
         {FILTERS.map((item) => (
           <Link
             key={item.key}
             href={href({ filter: item.key })}
             aria-current={filter === item.key ? 'page' : undefined}
             className={cn(
-              'flex h-9 shrink-0 items-center rounded-full border px-3 text-sm font-medium',
+              'flex h-8 shrink-0 items-center rounded-full px-3 text-[13px] font-medium transition-colors',
               filter === item.key
-                ? 'border-brand-strong bg-brand-soft text-text'
-                : 'border-border bg-surface text-muted',
+                ? 'bg-[color-mix(in_oklab,var(--chat-accent)_18%,transparent)] text-[var(--chat-accent)]'
+                : 'text-muted bg-[var(--chat-panel)] hover:text-text',
             )}
           >
             {t(item.label)}
@@ -97,7 +97,7 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
           body={filter === 'all' && !query ? t('emptyBody') : ''}
         />
       ) : (
-        <ul className="divide-border flex-1 divide-y overflow-y-auto">
+        <ul className="flex-1 overflow-y-auto">
           {rows.map((row) => {
             const title = row.title || (row.kind === 'EVENT' ? t('team') : '…');
             return (
@@ -106,26 +106,31 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
                   href={`/inbox/${row.threadId}${params.toString() ? `?${params.toString()}` : ''}`}
                   aria-current={activeId === row.threadId ? 'page' : undefined}
                   className={cn(
-                    'hover:bg-surface-2 flex min-h-[64px] items-center gap-3 px-2 py-3',
-                    activeId === row.threadId && 'bg-brand-soft',
+                    'group flex min-h-[72px] items-center gap-3 px-3 transition-colors hover:bg-[var(--chat-panel)]',
+                    activeId === row.threadId && 'bg-[var(--chat-panel)]',
                   )}
                 >
                   {row.kind === 'EVENT' ? (
                     <span
                       aria-hidden
-                      className="bg-surface-2 flex size-10 shrink-0 items-center justify-center rounded-full"
+                      className="bg-brand-soft text-brand-strong flex size-12 shrink-0 items-center justify-center rounded-full"
                     >
                       <Users className="size-5" />
                     </span>
                   ) : (
                     <Avatar name={title} />
                   )}
-                  <span className="min-w-0 flex-1">
+                  <span className="border-border/60 flex min-h-[72px] min-w-0 flex-1 flex-col justify-center border-b py-2.5">
                     <span className="flex items-center gap-2">
                       <span className={cn('truncate', row.unread > 0 ? 'font-semibold' : 'font-medium')}>{title}</span>
                       {row.muted && <BellOff aria-hidden className="text-muted size-4 shrink-0" />}
                       {row.lastMessage && (
-                        <span className="text-muted ml-auto shrink-0 text-xs">
+                        <span
+                          className={cn(
+                            'ml-auto shrink-0 text-xs',
+                            row.unread > 0 ? 'font-medium text-[var(--chat-accent)]' : 'text-muted',
+                          )}
+                        >
                           <RelativeTime value={row.lastMessage.at} />
                         </span>
                       )}
@@ -147,7 +152,7 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
                       </span>
                       {row.unread > 0 && (
                         <span
-                          className="bg-brand-strong text-on-brand shrink-0 rounded-full px-2 text-xs font-medium"
+                          className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-[var(--chat-accent)] px-1.5 text-[11px] font-semibold text-white"
                           aria-label={t('unreadCount', { count: row.unread })}
                         >
                           {row.unread > 99 ? '99+' : row.unread}

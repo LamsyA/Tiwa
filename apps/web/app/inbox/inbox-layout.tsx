@@ -33,14 +33,14 @@ export async function InboxLayout({
   const rows = await listInbox(ctx.actor, { filter, ...(q ? { search: q } : {}) });
   return (
     <AppFrame userId={ctx.actor.userId} active="inbox" title={t('title')}>
-      <div className="grid h-[calc(100dvh-180px)] min-h-[420px] gap-4 lg:h-[calc(100dvh-160px)] lg:grid-cols-[360px_minmax(0,1fr)]">
-        <div className={cn('min-h-0', activeId && 'hidden lg:block')}>
+      <div className="border-border/80 bg-bg -mx-4 grid h-[calc(100dvh-180px)] min-h-[420px] overflow-hidden lg:mx-0 lg:h-[calc(100dvh-170px)] lg:grid-cols-[380px_minmax(0,1fr)] lg:rounded-2xl lg:border lg:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-16px_rgb(0_0_0/0.15)]">
+        <div className={cn('border-border/70 min-h-0 lg:border-r', activeId && 'hidden lg:block')}>
           <ChatList rows={rows} filter={filter} {...(activeId ? { activeId } : {})} />
         </div>
         <div
           className={cn(
-            'border-border min-h-0 overflow-hidden rounded-lg lg:border',
-            !activeId && 'hidden lg:flex lg:items-center lg:justify-center',
+            'min-h-0 overflow-hidden',
+            !activeId && 'tiwa-chat-wall hidden lg:flex lg:items-center lg:justify-center',
           )}
         >
           {children}
