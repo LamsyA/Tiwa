@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { authorize, listVendorReviews, loadEventAccess, resolvePublicOrgId } from '@tiwa/core';
+import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { authorize, listMyEvents, listVendorReviews, loadEventAccess, resolvePublicOrgId } from '@tiwa/core';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { InstantBookDialog } from '@/components/marketplace/instant-book-dialog.js';
+import { QuoteRequestDialog, type QuoteEventOption } from '@/components/marketplace/quote-request-dialog.js';
 import { SiteVisitDialog } from '@/components/marketplace/site-visit-dialog.js';
 import { PublicProfileView } from '@/components/marketplace/public-profile.js';
 import { loadPublicProfile } from '@/components/marketplace/loader.js';
@@ -52,6 +54,34 @@ export default async function VendorProfilePage({
       }
     }
   }
+  // Quote requests (D-X39): any event the viewer plans (host, co-host, planner).
+  // The server re-checks event.edit on send.
+  const viewer = await getCtx();
+  let quoteEvents: QuoteEventOption[] = [];
+  if (viewer.actor) {
+    const userId = viewer.actor.userId;
+    const [upcoming, drafts] = await Promise.all([
+      listMyEvents(userId, 'upcoming').catch(() => []),
+      listMyEvents(userId, 'drafts').catch(() => []),
+    ]);
+    quoteEvents = [...upcoming, ...drafts]
+      .filter((row) => ['HOST', 'CO_HOST', 'PLANNER', 'PLANNER_STAFF'].includes(row.role))
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        when: row.startsAt
+          ? new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', timeZone: row.timezone }).format(
+              row.startsAt,
+            )
+          : null,
+        currency: profile.profile.currency,
+      }));
+  }
+  const offered = profile.profile.categories.filter((key) => key in VENDOR_CATEGORIES);
+  const quoteCategories = (offered.length > 0 ? offered : Object.keys(VENDOR_CATEGORIES)).map((key) => ({
+    key,
+    label: VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES],
+  }));
   const isVenue = profile.profile.categories.includes('venue');
   const showVisit = canEdit && isVenue;
   const orgId = await resolvePublicOrgId(slug, 'VENDOR').catch(() => null);
@@ -84,6 +114,16 @@ export default async function VendorProfilePage({
               }))}
             />
           ) : null
+        }
+        requestQuote={
+          <QuoteRequestDialog
+            vendorOrgId={profile.org.id}
+            vendorName={profile.org.name}
+            events={quoteEvents}
+            categories={quoteCategories}
+            defaultEventId={eventId && quoteEvents.some((row) => row.id === eventId) ? eventId : undefined}
+            signInHref={viewer.actor ? undefined : `/login?next=${encodeURIComponent(`/vendors/${slug}`)}`}
+          />
         }
         siteVisit={showVisit && eventId ? <SiteVisitDialog eventId={eventId} vendorOrgId={profile.org.id} /> : null}
       />

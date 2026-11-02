@@ -116,6 +116,15 @@ describe('requestQuotes', () => {
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
+  it('lets a vendor with no categories yet be asked for any service; others must match', async () => {
+    const open = await makeVendorOrg('fresh-vendor', []);
+    const result = await requestQuotes(host, { eventId, category: 'cake', vendorOrgIds: [open] });
+    expect(result.requests).toHaveLength(1);
+    await expect(
+      requestQuotes(host, { eventId, category: 'cake', vendorOrgIds: [vendorIds[0]!] }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
   it('buildQuoteBrief carries date, venue and headcount', async () => {
     const brief = await buildQuoteBrief(eventId);
     expect(brief.currency).toBe('NGN');

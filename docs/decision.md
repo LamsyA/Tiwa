@@ -402,3 +402,9 @@ Template:
 - Decision: Hourly `reviews/rollup-ratings` writes the cached profile columns (`ratingAvg` only at 5+ reviews per REV-05, plus `ratingCount`/`completedBookings`) that marketplace search sort/filter and the public score read; `vendorRating()` stays as the shared computation the job calls. On-read alone would have left search permanently unrated.
 - Why: the search and public profile read cached columns, so the cache must be fed; hourly is fresh enough for reputation.
 - Affects: packages/core/src/reviews, apps/worker rollup-ratings, marketplace search/profile, BUILD_PLAN P14-T01.
+
+- ID: D-X39
+- Status: LOCKED (owner, 2026-11-02)
+- Decision: Booking starts from the vendor. (1) Every vendor profile has "Request a quote": pick the event (pre-selected when you came from an event), the service (the vendor's categories, or any category if they haven't set one), a note and an optional budget; the brief (date, venue, guests) is added on the server. The shortlist → category page path stays for asking several vendors at once. (2) `requestQuotes` accepts any category for a published vendor with no categories yet (D-X34 lets them publish early). (3) Vendors can decline a request from their quotes inbox; requests show readable service, date, venue, guests and the host's note. (4) The quotes inbox shows a warning when a section fails to load instead of hiding it. (5) Until card checkout (P8), the booking payments note says payment is made directly and confirmed by the vendor.
+- Why: owner report: booking "doesn't work" on the frontend — the profile said "Quote requests open with bookings — check back soon", the only route was hidden behind shortlist + category page, and vendors without categories could never be asked.
+- Affects: packages/core quotes/requests (+test); apps/web vendor profile page, public-profile, quote-request-dialog, marketplace actions, quotes inbox + decline-enquiry, payments note; e2e/quotes.spec.ts.

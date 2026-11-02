@@ -31,6 +31,7 @@ export async function PublicProfileView({
   availabilityRows,
   instantBook,
   siteVisit,
+  requestQuote,
   reviews,
   signedIn,
 }: {
@@ -39,6 +40,8 @@ export async function PublicProfileView({
   availabilityRows: AvailabilityRow[];
   instantBook?: React.ReactNode;
   siteVisit?: React.ReactNode;
+  /** "Request a quote" (D-X39); the page decides who may send one. */
+  requestQuote?: React.ReactNode;
   reviews: {
     id: string;
     overall: number;
@@ -306,12 +309,12 @@ export async function PublicProfileView({
                   <MoneyText value={profile.profile.startingPriceMinor} currency={profile.profile.currency} />
                 </p>
               )}
+              {requestQuote}
+              {instantBook}
               <React.Suspense fallback={null}>
                 <MessageBusiness orgId={profile.org.id} orgName={profile.org.name} />
               </React.Suspense>
-              {instantBook}
               {siteVisit}
-              <p className="text-muted text-sm">{t('requestQuoteSoon')}</p>
             </div>
           </Card>
         </div>

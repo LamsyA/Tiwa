@@ -101,7 +101,15 @@ export async function requestQuotes(actor: UserActor, raw: z.infer<typeof reques
   const byId = new Map(orgs.map((org) => [org.id, org]));
   for (const vendorOrgId of uniqueVendorIds) {
     const org = byId.get(vendorOrgId);
-    if (!org || org.kind !== 'VENDOR' || !org.profile?.published || !org.profile.categories.includes(input.category)) {
+    // A vendor who hasn't picked categories yet (they can publish early, D-X34)
+    // can be asked for any service; otherwise the request must match one.
+    const offers = org?.profile?.categories ?? [];
+    if (
+      !org ||
+      org.kind !== 'VENDOR' ||
+      !org.profile?.published ||
+      (offers.length > 0 && !offers.includes(input.category))
+    ) {
       throw new ValidationError('Vendor cannot receive this request', {
         field: 'vendorOrgIds',
         key: 'vendorIneligible',

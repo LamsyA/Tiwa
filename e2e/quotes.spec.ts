@@ -37,8 +37,8 @@ function pngBuffer(seed: number, sizeKB = 50): Buffer {
 }
 
 /** Fresh vendor with a published catering profile; returns the business name. */
-async function newCateringVendor(page: Page): Promise<string> {
-  const name = `E2E Cater ${RUN}`;
+async function newCateringVendor(page: Page, suffix = ''): Promise<string> {
+  const name = `E2E Cater ${RUN}${suffix}`;
   await isolateIp(page);
   await signInWithPhone(page, '/signup', freshPhone());
   await expect(page).toHaveURL(/\/onboarding\/role/);
@@ -207,7 +207,7 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
 
   await gotoSettled(host, `${bookingUrl}?tab=payments`);
   await expect(host.getByText('Paid (confirmed)').first()).toBeVisible();
-  await expect(host.getByText('CONFIRMED', { exact: true })).toBeVisible();
+  await expect(host.getByText('Confirmed', { exact: true }).first()).toBeVisible();
 
   // UF-30-6: the booking thread carries the quote + booking cards.
   await gotoSettled(host, '/inbox?filter=bookings');
@@ -246,6 +246,42 @@ test('UF-29-7: site visit request reaches the venue; confirmed time shows for bo
   await gotoSettled(host, `/events/${eventId}/vendors`);
   await expect(host.getByText('CONFIRMED')).toBeVisible();
   await expect(host.getByText('2031')).toBeVisible();
+
+  await vendorCtx.close();
+  await hostCtx.close();
+});
+
+test('D-X39: request a quote straight from a vendor profile; the vendor can decline it', async ({ browser }) => {
+  const vendorCtx = await browser.newContext();
+  const hostCtx = await browser.newContext();
+  const vendor = await vendorCtx.newPage();
+  const host = await hostCtx.newPage();
+
+  const vendorName = await newCateringVendor(vendor, ' direct');
+  const eventId = await newHostWithEvent(host, `Direct Party ${RUN}`);
+
+  // From search to the profile with the event attached; no shortlist needed.
+  await gotoSettled(host, `/vendors?q=${encodeURIComponent(vendorName)}&eventId=${eventId}`);
+  await expect(async () => {
+    await host.reload().catch(() => undefined);
+    await expect(host.getByRole('link', { name: vendorName }).first()).toBeVisible({ timeout: 10_000 });
+  }).toPass({ timeout: 90_000 });
+  await host.getByRole('link', { name: vendorName }).first().click();
+  await expect(host).toHaveURL(new RegExp(`eventId=${eventId}`));
+
+  await host.getByRole('button', { name: 'Request a quote' }).first().click();
+  const dialog = host.getByRole('dialog');
+  await expect(dialog.getByText(`Direct Party ${RUN}`)).toBeVisible();
+  await dialog.getByLabel('What do you need?').fill(`Small chops for 50 ${RUN}`);
+  await dialog.getByRole('button', { name: 'Send request' }).click();
+  await expect(dialog.getByText('Request sent')).toBeVisible({ timeout: 30_000 });
+
+  // The vendor sees the brief with the note, and can turn it down.
+  await gotoSettled(vendor, '/quotes');
+  await expect(vendor.getByText(`Small chops for 50 ${RUN}`)).toBeVisible({ timeout: 30_000 });
+  await vendor.getByRole('button', { name: 'Decline', exact: true }).first().click();
+  await vendor.getByRole('button', { name: 'Yes, decline' }).click();
+  await expect(vendor.getByText('Declined').first()).toBeVisible({ timeout: 30_000 });
 
   await vendorCtx.close();
   await hostCtx.close();

@@ -1568,7 +1568,6 @@
     "venueSpaceAvailability": "Availability this month",
     "venueNoSpaces": "No bookable spaces listed yet.",
     "save": "Save",
-    "cancel": "Cancel",
     "uploading": "Uploading…",
     "uploadPhotos": "Upload photos",
     "removePhoto": "Remove",
@@ -1635,7 +1634,26 @@
     "compareEmptyTitle": "Nothing to compare yet",
     "compareActions": "Actions",
     "compareRequestQuote": "View and request quote",
-    "resultsLabel": "Search results"
+    "resultsLabel": "Search results",
+    "quoteRequest": {
+      "cta": "Request a quote",
+      "title": "Ask {vendor} for a quote",
+      "body": "Tell them what you need. Your event’s date, venue and guest count are added for you.",
+      "event": "For which event?",
+      "service": "Service",
+      "notes": "What do you need?",
+      "notesPlaceholder": "e.g. Jollof, fried rice and small chops for 70 guests, served 4–8pm",
+      "budget": "Budget (optional)",
+      "briefNote": "Your phone number and email are not shared until you book.",
+      "send": "Send request",
+      "sentTitle": "Request sent",
+      "sentBody": "{vendor} will reply with a quote. You’ll get a notification, and you can compare it with others.",
+      "track": "Track this request",
+      "close": "Done",
+      "noEvents": "Create an event first, so the vendor knows the date and guest count.",
+      "createEvent": "Create an event",
+      "alreadyAsked": "You already asked this vendor for this service on this event. Track it from the event’s Vendors tab."
+    }
   },
   "inbox": {
     "title": "Inbox",
@@ -1834,7 +1852,23 @@
     "briefVenue": "Venue",
     "briefGuests": "Guests",
     "briefFrom": "Request from {name}",
-    "briefBudget": "Their budget"
+    "briefBudget": "Their budget",
+    "sectionFailed": "Part of this page didn’t load. Refresh to try again.",
+    "enquiry": {
+      "guests": "{count} guests",
+      "open": "Open",
+      "decline": "Decline",
+      "declineConfirm": "Turn this request down?",
+      "declineYes": "Yes, decline",
+      "keep": "Keep it",
+      "declineFailed": "Couldn’t decline — try again.",
+      "status": {
+        "OPEN": "New request",
+        "QUOTED": "Quote sent",
+        "DECLINED_BY_VENDOR": "Declined",
+        "CLOSED": "Closed"
+      }
+    }
   },
   "bookings": {
     "title": "Booking",
@@ -1915,7 +1949,7 @@
     "due": "due {date}",
     "paidOutside": "I paid outside Tiwa",
     "viewReceipt": "View receipt",
-    "offlineNote": "Pay the vendor directly (bank transfer, cash or POS) and record it here. The vendor confirms they received it.",
+    "offlineNote": "Pay the vendor directly (bank transfer, cash or POS) and record it here. The vendor confirms they received it. Card payment in the app is coming soon.",
     "recordTitle": "Record a payment made outside Tiwa",
     "paidOnLabel": "Date paid",
     "methodLabel": "How did you pay?",
