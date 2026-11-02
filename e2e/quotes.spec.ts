@@ -195,6 +195,8 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
   });
   await record.getByLabel(/Note for the vendor/).fill(`Paid at the office ${RUN}`);
   await record.getByRole('button', { name: 'Record payment' }).click();
+  // The money summary always shows this label; wait for the dialog to close so the payment is saved.
+  await expect(record).toBeHidden({ timeout: 30_000 });
   await expect(host.getByText('Awaiting vendor confirmation').first()).toBeVisible({ timeout: 30_000 });
 
   await gotoSettled(vendor, '/quotes');
