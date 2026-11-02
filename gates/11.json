@@ -1,0 +1,15 @@
+{
+  "$comment": "P11 gate — automated checks (BUILD_PLAN.md GATE P11). e2e covers UF-22 (organiser publishes, free instant + paid offline-confirm) and UF-23 (scan once + duplicate + offline download) at 390 + 1280 px; the node load script asserts 300 scans/min across 6 devices with scan p95 <= 300 ms (k6 is not installed in this repo); the 200-parallel/100-seats no-oversell proof is a unit test.",
+  "phase": 11,
+  "name": "Tickets and check-in",
+  "checks": [
+    { "id": "seed", "run": "pnpm db:seed" },
+    {
+      "id": "unit",
+      "run": "pnpm --filter @tiwa/db exec dotenv -e ../../.env -- pnpm --filter @tiwa/core exec vitest run src/tickets src/checkin src/budget/summary.test.ts"
+    },
+    { "id": "e2e-uf22", "run": "pnpm e2e e2e/tickets.spec.ts" },
+    { "id": "e2e-uf23", "run": "pnpm e2e e2e/checkin.spec.ts" },
+    { "id": "load", "run": "node --env-file=.env scripts/load-checkin.mjs" }
+  ]
+}
