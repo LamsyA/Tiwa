@@ -30,7 +30,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | P10   | Planner workspace and vendor dashboard   | TODO        |                |
 | P11   | Tickets and check-in                     | DONE        | P11 GATE 5/5   |
 | P12   | Event day                                | DONE        | P12 GATE 3/3   |
-| P13   | Notifications and event-team chat        | TODO        |                |
+| P13   | Notifications and event-team chat        | DONE        | P13 GATE 3/3   |
 | P14   | Reviews and event close                  | TODO        |                |
 | P15   | AI assistant                             | TODO        |                |
 | P16   | Admin console                            | TODO        |                |
