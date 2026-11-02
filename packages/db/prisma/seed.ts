@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { deflateSync } from 'node:zlib';
 import { EVENT_TYPES, TIMEFRAME_DAYS_BEFORE, getEventType } from '@tiwa/config';
+import { eventName, plannerName, vendorName } from './names.js';
 import { prisma } from '../src/index.js';
 
 /** 32 random bytes, base64url, no padding — mirrors core generateToken(32). */
@@ -605,7 +606,7 @@ async function seedPlannerUniverse(now: Date) {
         type: 'birthday',
         format: 'PRIVATE_CELEBRATION',
         status: 'ACTIVE',
-        name: `Seed Plan Event ${i + 1}`,
+        name: eventName(i),
         countryCode: 'NG',
         currency: 'NGN',
         timezone: 'Africa/Lagos',
@@ -1088,7 +1089,7 @@ async function seedMarketplace() {
       vendorIndex += 1;
       const slug = `seed-vendor-${String(vendorIndex).padStart(2, '0')}`;
       const city = category.cities[copy] as string;
-      const name = `${category.label} ${city} ${vendorIndex}`;
+      const name = vendorName(category.key, vendorIndex * 7);
       const org = await prisma.organization.create({
         data: {
           kind: 'VENDOR',
@@ -1214,7 +1215,7 @@ async function seedMarketplace() {
     const org = await prisma.organization.create({
       data: {
         kind: 'PLANNER',
-        name: `Seed Planner ${i}`,
+        name: plannerName(i - 1),
         slug,
         countryCode: 'NG',
         city: i % 2 === 0 ? 'Abuja' : 'Lagos',
@@ -1224,11 +1225,11 @@ async function seedMarketplace() {
       data: {
         orgId: org.id,
         categories: ['decor', 'mc'],
-        bio: `Seed Planner ${i} — full coordination.`,
+        bio: `${plannerName(i - 1)} — full planning and on-the-day coordination.`,
         city: i % 2 === 0 ? 'Abuja' : 'Lagos',
         currency: 'NGN',
         published: true,
-        searchText: `Seed Planner ${i} coordination`,
+        searchText: `${plannerName(i - 1)} planner coordination`,
       },
     });
     await portfolioFor(org.id, 6);

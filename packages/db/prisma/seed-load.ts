@@ -3,6 +3,7 @@
 // Usage: pnpm db:seed:load
 import { VENDOR_CATEGORIES } from '@tiwa/config';
 import { prisma } from '../src/index.js';
+import { vendorName } from './names.js';
 
 const CITIES = ['Lagos', 'Lagos', 'Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Lagos', 'Kano'];
 const KEYS = Object.keys(VENDOR_CATEGORIES);
@@ -25,7 +26,7 @@ async function main() {
       const city = CITIES[n % CITIES.length] as string;
       return {
         kind: 'VENDOR' as const,
-        name: `Load Vendor ${n}`,
+        name: vendorName(KEYS[n % KEYS.length] as string, Math.floor(n / KEYS.length)),
         slug: `load-vendor-${String(n).padStart(4, '0')}`,
         countryCode: 'NG',
         city,
@@ -35,24 +36,24 @@ async function main() {
     await prisma.organization.createMany({ data: orgs });
     const created = await prisma.organization.findMany({
       where: { slug: { startsWith: 'load-vendor-' } },
-      select: { id: true, name: true, city: true },
+      select: { id: true, slug: true, city: true },
     });
-    const byName = new Map(created.map((row) => [row.name, row]));
+    const bySlug = new Map(created.map((row) => [row.slug, row]));
     const profiles = orgs.map((org, i) => {
       const n = start + i + 1;
       const category = KEYS[n % KEYS.length] as string;
-      const row = byName.get(org.name);
+      const row = bySlug.get(org.slug);
       return {
         orgId: row?.id ?? '',
         categories: [category],
-        bio: `Load vendor ${n} for search performance.`,
+        bio: `${org.name} — trusted for weddings, birthdays and corporate events in ${org.city}.`,
         city: org.city as string,
         currency: 'NGN',
         startingPriceMinor: BigInt(50_000_00 + ((n * 7919) % 900_000_00)),
         published: true,
         ratingAvg: n % 3 === 0 ? 4 + (n % 10) / 10 : null,
         ratingCount: n % 3 === 0 ? 6 + (n % 40) : 0,
-        searchText: `Load Vendor ${n} ${org.city} ${category}`,
+        searchText: `${org.name} ${org.city} ${category}`,
       };
     });
     await prisma.businessProfile.createMany({ data: profiles.filter((p) => p.orgId !== '') });
