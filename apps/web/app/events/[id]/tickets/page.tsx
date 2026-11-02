@@ -1,6 +1,6 @@
 import { authorize, isEnabled, listTicketOrders, ticketSales } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Banner, Card, DateText, buttonClasses } from '@tiwa/ui';
+import { Banner, Card, DateText, MoneyText, buttonClasses } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
@@ -107,7 +107,9 @@ export default async function TicketsPage({ params }: { params: Promise<{ id: st
             </div>
             <div>
               <p className="text-muted text-sm">{t('revenue')}</p>
-              <p className="font-display text-2xl font-bold">{sales.revenueMinor}</p>
+              <p className="font-display text-2xl font-bold">
+                <MoneyText value={sales.revenueMinor} currency={event.currency} />
+              </p>
             </div>
             <div>
               <p className="text-muted text-sm">{t('paidOrders')}</p>

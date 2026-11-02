@@ -379,7 +379,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P11-T06 Check-in scanner page (lazy QR scanner, result overlay, haptics/sound, manual search), live counter via SSE.
 - [x] P11-T07 Offline check-in: download signed list to IndexedDB, queue scans, sync endpoint, duplicate detection across devices.
 - [x] P11-T08 Invitation passes (from P4) scannable by the same scanner.
-- [ ] P11-T09 Organiser payouts of ticket revenue (flag `payments.payouts`).
+- [x] P11-T09 Organiser payouts of ticket revenue (flag `payments.payouts`).
 - [ ] P11-T10 e2e UF-22, UF-23; concurrency test 200 buyers / 100 seats; k6 300 scans/min.
 
 **GATE P11**
