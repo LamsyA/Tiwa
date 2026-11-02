@@ -64,7 +64,7 @@ const OUTPUT_SCHEMA = {
 } as const;
 
 /** Prompt v1. Versioned so changes show up in review and logs. */
-export const PLAN_PROMPT_VERSION = 'plan-draft@1';
+export const PLAN_PROMPT_VERSION = 'plan-draft@2';
 const SYSTEM = [
   'You help people plan their own events (birthdays, weddings, funerals, church programmes, reunions, corporate events, concerts and more) without a professional planner.',
   "Turn the host's request into a practical checklist of 6 to 20 tasks that fits their event, timing, guest count and budget.",
@@ -77,8 +77,12 @@ function describe(context: PlanDraftContext): string {
   const lines = [
     `Event type: ${context.eventType} (${context.eventFormat.toLowerCase().replace(/_/g, ' ')})`,
     context.daysUntilEvent !== null ? `Days until the event: ${context.daysUntilEvent}` : 'Date: not set yet',
-    context.expectedGuests ? `Expected guests: ${context.expectedGuests}` : null,
-    context.budget ? `Total budget: ${context.budget.amount} ${context.budget.currency}` : null,
+    context.expectedGuests
+      ? `Saved guest estimate (use the request instead if it gives a number): ${context.expectedGuests}`
+      : null,
+    context.budget
+      ? `Saved total budget (use the request instead if it gives one): ${context.budget.amount} ${context.budget.currency}`
+      : null,
     context.existingTasks.length > 0 ? `Tasks they already have:\n- ${context.existingTasks.join('\n- ')}` : null,
     `What they want help with:\n${context.request}`,
   ];
