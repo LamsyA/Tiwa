@@ -72,6 +72,20 @@ export async function SearchPageBody({
     ...(first(sp.cursor) ? { cursor: first(sp.cursor)! } : {}),
   });
 
+  // New listings rank below rated ones; show the newest up front on an unfiltered first page.
+  const unfiltered =
+    !first(sp.cursor) &&
+    !filters.q &&
+    !filters.category &&
+    !filters.city &&
+    !filters.minPrice &&
+    !filters.maxPrice &&
+    !filters.minRating &&
+    !filters.verified &&
+    !filters.freeOn &&
+    sort === 'rating';
+  const newest = unfiltered ? (await searchMarketplace(ctx.actor, { kind, sort: 'recent', take: 4 })).hits : [];
+
   const kept = new URLSearchParams();
   for (const [key, value] of Object.entries({
     q: filters.q,
@@ -110,6 +124,39 @@ export async function SearchPageBody({
       <div className="mb-8">
         <SearchFilters base={base} initial={filters} />
       </div>
+      {newest.length > 0 && (
+        <section aria-labelledby="newest-heading" className="mb-10">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 id="newest-heading" className="font-display text-lg font-bold tracking-tight">
+              {t('justJoined')}
+            </h2>
+            <Link href={`${base}?sort=recent`} className="text-brand-strong text-sm font-medium hover:underline">
+              {t('seeAllNew')}
+            </Link>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {newest.map((hit) => (
+              <li key={hit.orgId}>
+                <Link
+                  href={`${base}/${hit.slug}${eventId ? `?eventId=${eventId}` : ''}`}
+                  className="border-border/70 bg-surface hover:border-brand/50 flex items-center gap-3 rounded-2xl border p-3 transition hover:shadow-[var(--shadow-1)]"
+                >
+                  <span className="bg-brand-soft text-brand-strong flex size-11 shrink-0 items-center justify-center rounded-xl font-bold">
+                    {hit.name.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">{hit.name}</span>
+                    <span className="text-muted block truncate text-xs">
+                      @{hit.slug}
+                      {hit.categoryLabels[0] ? ` · ${hit.categoryLabels[0]}` : ''}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div>
         {result.hits.length === 0 ? (
           <EmptyState icon={<SearchX className="size-6" />} title={t('noResults')} body={t('noResultsBody')} />

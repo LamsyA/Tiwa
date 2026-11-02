@@ -100,10 +100,18 @@ export const publishProfileSchema = z.object({ orgId: z.string().uuid(), publish
  */
 export async function publishProfile(actor: UserActor, input: z.infer<typeof publishProfileSchema>) {
   await loadAccess(actor, input.orgId, 'org.manage');
+  const org = await prisma.organization.findUniqueOrThrow({ where: { id: input.orgId }, select: { name: true } });
   return prisma.$transaction(async (tx) => {
     const profile = await tx.businessProfile.upsert({
       where: { orgId: input.orgId },
-      create: { orgId: input.orgId, categories: [], city: '', currency: 'NGN', published: input.published },
+      create: {
+        orgId: input.orgId,
+        categories: [],
+        city: '',
+        currency: 'NGN',
+        published: input.published,
+        searchText: org.name.toLowerCase(),
+      },
       update: { published: input.published },
     });
     await audit(tx, {

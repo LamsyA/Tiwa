@@ -71,7 +71,13 @@ export async function searchMarketplace(
         ? [{ startingPriceMinor: 'desc' as const }, { id: 'asc' as const }]
         : input.sort === 'recent'
           ? [{ org: { createdAt: 'desc' as const } }, { id: 'asc' as const }]
-          : [{ ratingAvg: 'desc' as const }, { ratingCount: 'desc' as const }, { id: 'asc' as const }];
+          : // Ties (e.g. no reviews yet) go to the newest business, so new listings surface.
+            [
+              { ratingAvg: { sort: 'desc' as const, nulls: 'last' as const } },
+              { ratingCount: 'desc' as const },
+              { org: { createdAt: 'desc' as const } },
+              { id: 'asc' as const },
+            ];
 
   const rows = await prisma.businessProfile.findMany({
     where: {
@@ -88,6 +94,9 @@ export async function searchMarketplace(
             OR: [
               { searchText: { contains: input.q, mode: 'insensitive' as const } },
               { city: { contains: input.q, mode: 'insensitive' as const } },
+              // Business name and @handle (slug), so a just-published business is findable by name.
+              { org: { name: { contains: input.q, mode: 'insensitive' as const } } },
+              { org: { slug: { contains: input.q.replace(/^@/, '').toLowerCase() } } },
             ],
           }
         : {}),

@@ -231,7 +231,11 @@ export function AppShell({
             </li>
           ))}
         </ul>
-        {account && !collapsed && <div className="border-border/70 border-t p-2">{account}</div>}
+        {account && (
+          <div className={cn('border-border/70 border-t p-2', collapsed && 'flex justify-center')}>
+            {collapsed ? accountCompact : account}
+          </div>
+        )}
         <div
           className={cn(
             'border-border/70 flex items-center border-t p-3',

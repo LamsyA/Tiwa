@@ -1356,6 +1356,8 @@
     "reviews": "Reviews",
     "verified": "Verified",
     "newOnTiwa": "New on Tiwa",
+    "justJoined": "Just joined Tiwa",
+    "seeAllNew": "See all new",
     "bookingsDone": "{count} events done",
     "reviewsCount": "{count} reviews",
     "serviceArea": "Serves {city} + {km} km",
