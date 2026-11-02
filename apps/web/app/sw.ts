@@ -1,6 +1,6 @@
 import { defaultCache } from '@serwist/next/worker';
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
-import { NetworkOnly, Serwist, type RuntimeCaching } from 'serwist';
+import { ExpirationPlugin, NetworkOnly, Serwist, StaleWhileRevalidate, type RuntimeCaching } from 'serwist';
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -18,6 +18,24 @@ declare const self: WorkerGlobalScope;
  * per-user pages on the device for 24 h. Static hashed assets keep the
  * default strategies; offline event pages get targeted caching in P12.
  */
+/**
+ * Targeted offline shell (P12-T06, UF-24-1): the day timeline is cached
+ * document-only (never RSC — see the P3-T13 note below) so the page opens
+ * after one visit with no network. Mutations queue in localStorage and the
+ * cache revalidates on every online visit, so it is never older than the
+ * last visit; entries expire after 7 days to bound storage.
+ */
+const dayPages: RuntimeCaching[] = [
+  {
+    matcher: ({ request, url, sameOrigin }) =>
+      sameOrigin && request.mode === 'navigate' && /^\/events\/[^/]+\/day$/.test(url.pathname),
+    handler: new StaleWhileRevalidate({
+      cacheName: 'day-pages',
+      plugins: [new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 7 * 24 * 3600 })],
+    }),
+  },
+];
+
 const networkOnlyDynamic: RuntimeCaching[] = [
   {
     matcher: ({ request, sameOrigin }) => sameOrigin && request.headers.get('RSC') === '1',
@@ -39,7 +57,7 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [...networkOnlyDynamic, ...defaultCache],
+  runtimeCaching: [...dayPages, ...networkOnlyDynamic, ...defaultCache],
 });
 
 serwist.addEventListeners();

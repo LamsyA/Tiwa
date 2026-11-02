@@ -14,6 +14,7 @@ import {
   updateItemAction,
   updateStatusAction,
 } from './actions.js';
+import { loadQueue, loadSnapshotAt, queueMutation, replayQueue, saveSnapshot, type DayMutation } from './day-queue.js';
 import { ContactsPanel, IncidentsPanel, type DayContact, type DayIncident } from './day-panels.js';
 
 export interface DayItem {
@@ -62,8 +63,9 @@ function closure(roots: string[], dependencies: { itemId: string; dependsOnId: s
   return out;
 }
 
-/** Run-of-show timeline (P12-T02/T03): editor for managers, now-line with
- * auto-scroll, mark-late with dependant highlighting, live refresh. */
+/** Run-of-show timeline (P12-T02/T03/T06): editor for managers, now-line
+ * with auto-scroll, mark-late with dependant highlighting, live refresh,
+ * offline snapshot + queued mutations with sync. */
 export function DayEditor(props: {
   eventId: string;
   canManage: boolean;
@@ -88,6 +90,10 @@ export function DayEditor(props: {
   const [justMarked, setJustMarked] = useState<string[]>([]);
   const [now] = useState(() => Date.now());
   const nowRef = useRef<HTMLLIElement | null>(null);
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+  const [queued, setQueued] = useState(() => loadQueue(props.eventId).length);
+  const [snapshotAt, setSnapshotAt] = useState<string | null>(() => loadSnapshotAt(props.eventId));
+  const [syncing, setSyncing] = useState(false);
 
   const mine = props.items.filter(
     (row) => row.ownerUserId === props.myUserId || (row.ownerOrgId !== null && props.myOrgIds.includes(row.ownerOrgId)),
@@ -101,6 +107,36 @@ export function DayEditor(props: {
     const source = new EventSource(`/api/sse/day/${props.eventId}`);
     source.addEventListener('change', () => router.refresh());
     return () => source.close();
+  }, [props.eventId, router]);
+
+  useEffect(() => {
+    const onStatus = () => {
+      const up = navigator.onLine;
+      setOnline(up);
+      if (up) {
+        void replayQueue(props.eventId).then((result) => {
+          setQueued(result.left);
+          if (result.left === 0) router.refresh();
+        });
+      }
+    };
+    window.addEventListener('online', onStatus);
+    window.addEventListener('offline', onStatus);
+    if (navigator.onLine) {
+      fetch(`/api/day/${props.eventId}/snapshot`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((body: { ok: boolean; data?: unknown } | null) => {
+          if (body?.ok) {
+            saveSnapshot(props.eventId, body.data);
+            setSnapshotAt(new Date().toISOString());
+          }
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      window.removeEventListener('online', onStatus);
+      window.removeEventListener('offline', onStatus);
+    };
   }, [props.eventId, router]);
 
   const lateIds = useMemo(() => props.items.filter((row) => row.status === 'LATE').map((row) => row.id), [props.items]);
@@ -117,6 +153,52 @@ export function DayEditor(props: {
       }
     });
   };
+
+  /** Offline-first submit (P12-T06): queue the serializable edit while
+   * offline, run it live otherwise. */
+  const submit = (mutation: DayMutation | null, fn: () => Promise<{ ok: boolean } | Promise<unknown>>) => {
+    if (mutation && !online) {
+      setQueued(queueMutation(props.eventId, mutation));
+      return;
+    }
+    run(fn);
+  };
+
+  const sync = () => {
+    setSyncing(true);
+    start(async () => {
+      try {
+        const result = await replayQueue(props.eventId);
+        setQueued(result.left);
+        if (!result.ok) setError('saveFailed');
+        else router.refresh();
+      } finally {
+        setSyncing(false);
+      }
+    });
+  };
+
+  const pinOffline = () => {
+    start(async () => {
+      try {
+        const response = await fetch(`/api/day/${props.eventId}/snapshot`);
+        const body = (await response.json()) as { ok: boolean; data?: unknown };
+        if (body.ok) {
+          saveSnapshot(props.eventId, body.data);
+          setSnapshotAt(new Date().toISOString());
+        } else {
+          setError('saveFailed');
+        }
+      } catch {
+        setError('saveFailed');
+      }
+    });
+  };
+
+  const snapshotLabel = useMemo(
+    () => (snapshotAt ? new Date(snapshotAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : null),
+    [snapshotAt],
+  );
 
   const visible = tab === 'mine' ? mine : props.items;
   const shownNowIndex = useMemo(() => {
@@ -137,6 +219,20 @@ export function DayEditor(props: {
           {t('lateNote')}
         </Card>
       )}
+      <div className="flex flex-wrap items-center gap-2 text-sm" role="status">
+        {!online && <span className="rounded-full border px-2 py-0.5">{t('offline')}</span>}
+        {queued > 0 && <span>{t('queuedChanges', { count: queued })}</span>}
+        <span className="ml-auto" />
+        {snapshotLabel && <span className="text-muted">{t('offlineReadyAt', { at: snapshotLabel })}</span>}
+        <Button variant="secondary" disabled={pending || syncing} onClick={pinOffline}>
+          {t('makeOffline')}
+        </Button>
+        {queued > 0 && online && (
+          <Button disabled={pending || syncing} onClick={sync}>
+            {t('syncNow')}
+          </Button>
+        )}
+      </div>
       <div className="flex gap-2" role="tablist" aria-label={t('title')}>
         <Button
           variant={tab === 'timeline' ? 'primary' : 'secondary'}
@@ -177,6 +273,8 @@ export function DayEditor(props: {
           canManage={props.canManage}
           incidents={props.incidents}
           owners={props.owners}
+          submit={submit}
+          pending={pending}
         />
       )}
       {tab === 'contacts' && (
@@ -185,6 +283,8 @@ export function DayEditor(props: {
           canManage={props.canManage}
           contacts={props.contacts}
           onsiteVendors={props.onsiteVendors}
+          submit={submit}
+          pending={pending}
         />
       )}
       {props.checkins.length > 0 && tab === 'timeline' && (
@@ -226,16 +326,16 @@ export function DayEditor(props: {
             />
             <Button
               disabled={pending || !title.trim() || !starts}
-              onClick={() =>
-                run(() =>
-                  createItemAction({
-                    eventId: props.eventId,
-                    title: title.trim(),
-                    startsAt: new Date(starts).toISOString(),
-                    durationMin: /^\d+$/.test(duration) ? Number(duration) : 15,
-                  }),
-                )
-              }
+              onClick={() => {
+                const payload = {
+                  title: title.trim(),
+                  startsAt: new Date(starts).toISOString(),
+                  durationMin: /^\d+$/.test(duration) ? Number(duration) : 15,
+                };
+                submit({ kind: 'item-create', ...payload }, () =>
+                  createItemAction({ eventId: props.eventId, ...payload }),
+                );
+              }}
             >
               {t('addItem')}
             </Button>
@@ -244,7 +344,7 @@ export function DayEditor(props: {
             <Button
               variant="secondary"
               disabled={pending}
-              onClick={() => run(() => fromProgrammeAction({ eventId: props.eventId }))}
+              onClick={() => submit({ kind: 'from-programme' }, () => fromProgrammeAction({ eventId: props.eventId }))}
             >
               {t('fromProgramme')}
             </Button>
@@ -272,7 +372,7 @@ export function DayEditor(props: {
                   dependsOn={props.dependencies.filter((dep) => dep.itemId === row.item!.id)}
                   items={props.items}
                   pending={pending}
-                  run={run}
+                  submit={submit}
                   affected={affected.has(row.item.id)}
                   onMarked={(dependantIds) => setJustMarked(dependantIds)}
                 />
@@ -293,7 +393,7 @@ function ItemRow(props: {
   dependsOn: { itemId: string; dependsOnId: string }[];
   items: DayItem[];
   pending: boolean;
-  run: (fn: () => Promise<{ ok: boolean } | Promise<unknown>>) => void;
+  submit: (mutation: DayMutation | null, fn: () => Promise<{ ok: boolean } | Promise<unknown>>) => void;
   affected: boolean;
   onMarked: (dependantIds: string[]) => void;
 }) {
@@ -316,7 +416,7 @@ function ItemRow(props: {
 
   const markLate = () => {
     if (!/^\d+$/.test(lateBy)) return;
-    props.run(async () => {
+    props.submit({ kind: 'late', itemId: row.id, lateByMin: Number(lateBy) }, async () => {
       setLating(true);
       try {
         const result = await markLateAction({ eventId: props.eventId, itemId: row.id, lateByMin: Number(lateBy) });
@@ -357,7 +457,9 @@ function ItemRow(props: {
             variant="secondary"
             disabled={props.pending}
             onClick={() =>
-              props.run(() => updateStatusAction({ eventId: props.eventId, itemId: row.id, status: 'STARTED' }))
+              props.submit({ kind: 'status', itemId: row.id, status: 'STARTED' }, () =>
+                updateStatusAction({ eventId: props.eventId, itemId: row.id, status: 'STARTED' }),
+              )
             }
           >
             {t('start')}
@@ -368,7 +470,9 @@ function ItemRow(props: {
             variant="secondary"
             disabled={props.pending}
             onClick={() =>
-              props.run(() => updateStatusAction({ eventId: props.eventId, itemId: row.id, status: 'DONE' }))
+              props.submit({ kind: 'status', itemId: row.id, status: 'DONE' }, () =>
+                updateStatusAction({ eventId: props.eventId, itemId: row.id, status: 'DONE' }),
+              )
             }
           >
             {t('done')}
@@ -396,7 +500,11 @@ function ItemRow(props: {
             <Button
               variant="ghost"
               disabled={props.pending}
-              onClick={() => props.run(() => deleteItemAction({ eventId: props.eventId, itemId: row.id }))}
+              onClick={() =>
+                props.submit({ kind: 'item-delete', itemId: row.id }, () =>
+                  deleteItemAction({ eventId: props.eventId, itemId: row.id }),
+                )
+              }
             >
               {t('delete')}
             </Button>
@@ -440,18 +548,17 @@ function ItemRow(props: {
           </select>
           <Button
             disabled={props.pending || !title.trim() || !starts}
-            onClick={() =>
-              props.run(() =>
-                updateItemAction({
-                  eventId: props.eventId,
-                  itemId: row.id,
-                  title: title.trim(),
-                  startsAt: new Date(starts).toISOString(),
-                  durationMin: /^\d+$/.test(duration) ? Number(duration) : 15,
-                  ...ownerValue(owner),
-                }),
-              )
-            }
+            onClick={() => {
+              const payload = {
+                title: title.trim(),
+                startsAt: new Date(starts).toISOString(),
+                durationMin: /^\d+$/.test(duration) ? Number(duration) : 15,
+                ...ownerValue(owner),
+              };
+              props.submit({ kind: 'item-update', itemId: row.id, ...payload }, () =>
+                updateItemAction({ eventId: props.eventId, itemId: row.id, ...payload }),
+              );
+            }}
           >
             {t('owner')}
           </Button>
@@ -473,7 +580,11 @@ function ItemRow(props: {
           <Button
             variant="secondary"
             disabled={props.pending || !link}
-            onClick={() => props.run(() => addDepAction({ eventId: props.eventId, itemId: row.id, dependsOnId: link }))}
+            onClick={() =>
+              props.submit({ kind: 'dep-add', itemId: row.id, dependsOnId: link }, () =>
+                addDepAction({ eventId: props.eventId, itemId: row.id, dependsOnId: link }),
+              )
+            }
           >
             {t('addDep')}
           </Button>
@@ -483,7 +594,7 @@ function ItemRow(props: {
               variant="ghost"
               disabled={props.pending}
               onClick={() =>
-                props.run(() =>
+                props.submit({ kind: 'dep-remove', itemId: row.id, dependsOnId: dep.dependsOnId }, () =>
                   removeDepAction({ eventId: props.eventId, itemId: row.id, dependsOnId: dep.dependsOnId }),
                 )
               }

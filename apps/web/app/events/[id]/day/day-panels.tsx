@@ -2,8 +2,10 @@
 
 import { Button, Card, Input } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
+
 import { createContactAction, deleteContactAction, logIncidentAction, resolveIncidentAction } from './actions.js';
+import type { DayMutation } from './day-queue.js';
 
 export interface DayIncident {
   id: string;
@@ -31,9 +33,10 @@ export function IncidentsPanel(props: {
   canManage: boolean;
   incidents: DayIncident[];
   owners: { id: string; name: string; kind: 'user' | 'org' }[];
+  submit: (mutation: DayMutation | null, fn: () => Promise<{ ok: boolean }>) => void;
+  pending: boolean;
 }) {
   const t = useTranslations('day');
-  const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
@@ -41,10 +44,12 @@ export function IncidentsPanel(props: {
   const [owner, setOwner] = useState('');
   const [resolutions, setResolutions] = useState<Record<string, string>>({});
 
-  const run = (fn: () => Promise<{ ok: boolean }>) => {
+  const run = (mutation: DayMutation, fn: () => Promise<{ ok: boolean }>) => {
     setError(null);
-    start(async () => {
-      if (!(await fn()).ok) setError('saveFailed');
+    props.submit(mutation, async () => {
+      const result = await fn();
+      if (!result.ok) setError('saveFailed');
+      return result;
     });
   };
 
@@ -92,18 +97,18 @@ export function IncidentsPanel(props: {
                 ))}
             </select>
             <Button
-              disabled={pending || !title.trim()}
-              onClick={() =>
-                run(() =>
-                  logIncidentAction({
-                    eventId: props.eventId,
-                    title: title.trim(),
-                    details: details.trim() || undefined,
-                    severity: severity as 'low' | 'normal' | 'high',
-                    ownerUserId: owner || null,
-                  }),
-                )
-              }
+              disabled={props.pending || !title.trim()}
+              onClick={() => {
+                const payload = {
+                  title: title.trim(),
+                  details: details.trim() || undefined,
+                  severity: severity as 'low' | 'normal' | 'high',
+                  ownerUserId: owner || null,
+                };
+                run({ kind: 'incident-log', ...payload }, () =>
+                  logIncidentAction({ eventId: props.eventId, ...payload }),
+                );
+              }}
             >
               {t('logIncident')}
             </Button>
@@ -142,16 +147,13 @@ export function IncidentsPanel(props: {
                     />
                     <Button
                       variant="secondary"
-                      disabled={pending}
-                      onClick={() =>
-                        run(() =>
-                          resolveIncidentAction({
-                            eventId: props.eventId,
-                            incidentId: row.id,
-                            resolution: resolutions[row.id]?.trim() || undefined,
-                          }),
-                        )
-                      }
+                      disabled={props.pending}
+                      onClick={() => {
+                        const resolution = resolutions[row.id]?.trim() || undefined;
+                        run({ kind: 'incident-resolve', incidentId: row.id, resolution }, () =>
+                          resolveIncidentAction({ eventId: props.eventId, incidentId: row.id, resolution }),
+                        );
+                      }}
                     >
                       {t('resolve')}
                     </Button>
@@ -171,19 +173,22 @@ export function ContactsPanel(props: {
   canManage: boolean;
   contacts: DayContact[];
   onsiteVendors: { orgId: string; name: string }[];
+  submit: (mutation: DayMutation | null, fn: () => Promise<{ ok: boolean }>) => void;
+  pending: boolean;
 }) {
   const t = useTranslations('day');
-  const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [phone, setPhone] = useState('');
   const [backup, setBackup] = useState(false);
 
-  const run = (fn: () => Promise<{ ok: boolean }>) => {
+  const run = (mutation: DayMutation, fn: () => Promise<{ ok: boolean }>) => {
     setError(null);
-    start(async () => {
-      if (!(await fn()).ok) setError('saveFailed');
+    props.submit(mutation, async () => {
+      const result = await fn();
+      if (!result.ok) setError('saveFailed');
+      return result;
     });
   };
 
@@ -222,18 +227,13 @@ export function ContactsPanel(props: {
               {t('backupVendor')}
             </label>
             <Button
-              disabled={pending || !name.trim() || !role.trim() || !phone.trim()}
-              onClick={() =>
-                run(() =>
-                  createContactAction({
-                    eventId: props.eventId,
-                    name: name.trim(),
-                    role: role.trim(),
-                    phone: phone.trim(),
-                    isBackupVendor: backup,
-                  }),
-                )
-              }
+              disabled={props.pending || !name.trim() || !role.trim() || !phone.trim()}
+              onClick={() => {
+                const payload = { name: name.trim(), role: role.trim(), phone: phone.trim(), isBackupVendor: backup };
+                run({ kind: 'contact-create', ...payload }, () =>
+                  createContactAction({ eventId: props.eventId, ...payload }),
+                );
+              }}
             >
               {t('addContact')}
             </Button>
@@ -267,8 +267,12 @@ export function ContactsPanel(props: {
                 {props.canManage && (
                   <Button
                     variant="ghost"
-                    disabled={pending}
-                    onClick={() => run(() => deleteContactAction({ eventId: props.eventId, contactId: row.id }))}
+                    disabled={props.pending}
+                    onClick={() =>
+                      run({ kind: 'contact-delete', contactId: row.id }, () =>
+                        deleteContactAction({ eventId: props.eventId, contactId: row.id }),
+                      )
+                    }
                   >
                     {t('delete')}
                   </Button>

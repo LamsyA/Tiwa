@@ -401,7 +401,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P12-T03 Day view: timeline with now-line, statuses, mark late → transitive dependants highlighted + owners alerted.
 - [x] P12-T04 Vendor "My tasks" and one-tap arrival check-in (optional location).
 - [x] P12-T05 Incidents and emergency contacts / backup vendors.
-- [ ] P12-T06 Offline: pre-cache day data, queue mutations, sync; offline indicator.
+- [x] P12-T06 Offline: pre-cache day data, queue mutations, sync; offline indicator.
 - [ ] P12-T07 Booking progress job (IN_PROGRESS at start) and delivery sign-off prompts after the event (feeds release engine).
 - [ ] P12-T08 e2e UF-24 including offline mode.
 
