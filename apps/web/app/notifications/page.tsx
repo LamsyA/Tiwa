@@ -12,7 +12,7 @@ export default async function NotificationsPage() {
   return (
     <AppFrame userId={ctx.actor.userId} active="notifications" title={t('title')}>
       <div className="flex flex-col gap-4 py-2">
-        <NotificationList rows={rows} />
+        <NotificationList rows={rows} now={new Date().toISOString()} />
       </div>
     </AppFrame>
   );

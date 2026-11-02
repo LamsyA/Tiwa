@@ -387,9 +387,12 @@ export default async function EventOverviewPage({
             {activity.entries.length === 0 ? (
               <p className="text-muted text-sm">{t('overview.activityEmpty')}</p>
             ) : (
-              <ul className="flex flex-col gap-1.5">
+              <ul className="border-border/70 ml-1.5 flex flex-col gap-3 border-l pl-4">
                 {activity.entries.map((row) => (
-                  <li key={row.id} className="flex items-baseline justify-between gap-2 text-sm">
+                  <li
+                    key={row.id}
+                    className="before:bg-brand relative flex items-baseline justify-between gap-2 text-sm before:absolute before:top-1.5 before:-left-[21px] before:size-2 before:rounded-full"
+                  >
                     <span className="min-w-0 truncate">
                       {prettyAction(row.action)}
                       {row.actorName ? ` · ${row.actorName}` : ''}

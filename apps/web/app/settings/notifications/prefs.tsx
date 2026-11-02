@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Card, Input } from '@tiwa/ui';
+import { Banner, Button, Input } from '@tiwa/ui';
+import { Moon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { savePreferencesAction } from './actions.js';
@@ -53,39 +54,57 @@ export function NotificationPrefs(props: {
         quietStart: quietStart ? toMinutes(quietStart) : null,
         quietEnd: quietEnd ? toMinutes(quietEnd) : null,
       });
-      if (!result.ok) setError('saveFailed');
+      if (!result.ok) setError(t('saveFailed'));
       else setSaved(true);
     });
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {error && <p className="text-danger text-sm">{error}</p>}
-      {saved && <p className="text-sm">{t('saved')}</p>}
-      {Object.keys(props.types).map((type) => (
-        <Card key={type} className="flex flex-col gap-2 p-4 text-sm">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="font-medium">{prettyType(type)}</span>
-            {props.types[type]?.urgent && <span className="text-muted text-xs">{t('urgentAlways')}</span>}
+    <div className="flex flex-col gap-5">
+      {error && <Banner tone="danger">{error}</Banner>}
+      {saved && <Banner tone="info">{t('saved')}</Banner>}
+      <div className="border-border/70 bg-surface divide-border/60 divide-y overflow-hidden rounded-3xl border">
+        {Object.keys(props.types).map((type) => (
+          <div key={type} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+            <div className="min-w-0 flex-1">
+              <span className="block font-semibold">{prettyType(type)}</span>
+              {props.types[type]?.urgent && (
+                <span className="text-warning text-xs font-medium">{t('urgentAlways')}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {CHANNELS.map((channel) => {
+                const on = channels[type]?.[channel] ?? false;
+                return (
+                  <label
+                    key={channel}
+                    className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                      on
+                        ? 'border-brand/50 bg-brand-soft text-brand-strong'
+                        : 'border-border/70 text-muted hover:text-text'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="accent-[var(--brand)] size-3.5"
+                      checked={on}
+                      onChange={(event) =>
+                        setChannels((prev) => ({ ...prev, [type]: { ...prev[type], [channel]: event.target.checked } }))
+                      }
+                    />
+                    {t(`channels.${channel}`)}
+                  </label>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {CHANNELS.map((channel) => (
-              <label key={channel} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={channels[type]?.[channel] ?? false}
-                  onChange={(event) =>
-                    setChannels((prev) => ({ ...prev, [type]: { ...prev[type], [channel]: event.target.checked } }))
-                  }
-                />
-                {t(`channels.${channel}`)}
-              </label>
-            ))}
-          </div>
-        </Card>
-      ))}
-      <Card className="flex flex-col gap-2 p-4 text-sm">
-        <span className="font-medium">{t('quietHours')}</span>
+        ))}
+      </div>
+      <div className="border-border/70 bg-surface flex flex-col gap-3 rounded-3xl border p-5">
+        <span className="flex items-center gap-2 font-semibold">
+          <Moon aria-hidden className="text-muted size-4" />
+          {t('quietHours')}
+        </span>
         <div className="flex flex-wrap items-center gap-2">
           <Input
             aria-label={t('quietStart')}
@@ -104,9 +123,9 @@ export function NotificationPrefs(props: {
           />
         </div>
         <p className="text-muted text-xs">{t('quietNote')}</p>
-      </Card>
+      </div>
       <div>
-        <Button disabled={pending} onClick={save}>
+        <Button disabled={pending} loading={pending} onClick={save} className="rounded-full px-6">
           {t('save')}
         </Button>
       </div>
