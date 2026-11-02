@@ -18,6 +18,7 @@ import {
   CalendarDays,
   ClipboardList,
   FileText,
+  Flag,
   Images,
   LayoutDashboard,
   Mail,
@@ -43,6 +44,7 @@ const SECTION_ICONS: Record<EventSection, typeof Users> = {
   vendors: Store,
   tickets: Ticket,
   day: CalendarClock,
+  close: Flag,
   settings: Settings,
 };
 
@@ -188,7 +190,10 @@ export default async function EventOverviewPage({
           )}
         </header>
 
-        <nav aria-label={t('overview.quickLinks')} className="grid grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2">
+        <nav
+          aria-label={t('overview.quickLinks')}
+          className="grid grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2"
+        >
           {quickLinks.map(({ key, href, icon: Icon }) => (
             <Link
               key={key}

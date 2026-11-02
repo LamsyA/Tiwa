@@ -79,7 +79,7 @@ export async function createReview(actor: UserActor, raw: z.input<typeof createR
     await enqueue(tx, 'review.received', { reviewId: created.id, bookingId: booking.id, eventId: booking.eventId });
     return created;
   });
-  return { reviewId: row.id, overall };
+  return { reviewId: row.id, overall, eventId: booking.eventId };
 }
 
 export const replySchema = z.object({
@@ -188,6 +188,29 @@ export interface VendorReviewRow {
   authorName: string | null;
   eventName: string | null;
   createdAt: Date;
+}
+
+/** Reviews awaiting a vendor reply (T03): their booking's event name included. */
+export async function pendingReplies(vendorOrgId: string) {
+  const rows = await prisma.review.findMany({
+    where: { vendorOrgId, reply: null, hidden: false },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  });
+  const bookings = await prisma.booking.findMany({
+    where: { id: { in: rows.map((row) => row.bookingId) } },
+    select: { id: true, event: { select: { name: true } }, category: true },
+  });
+  const byBooking = new Map(bookings.map((row) => [row.id, row] as const));
+  return rows.map((row) => ({
+    id: row.id,
+    bookingId: row.bookingId,
+    overall: row.overall,
+    body: row.body,
+    eventName: byBooking.get(row.bookingId)?.event.name ?? null,
+    category: byBooking.get(row.bookingId)?.category ?? null,
+    createdAt: row.createdAt,
+  }));
 }
 
 /** Public review list for a vendor profile: published only, newest first. */

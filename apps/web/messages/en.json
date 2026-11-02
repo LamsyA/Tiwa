@@ -254,7 +254,8 @@
       "moments": "Moments",
       "vendors": "Vendors",
       "tickets": "Tickets",
-      "day": "Event day"
+      "day": "Event day",
+      "close": "Close"
     },
     "roles": {
       "HOST": "Host",
@@ -2477,6 +2478,33 @@
       "earlier": "Earlier"
     },
     "unread": "Unread"
+  },
+  "close": {
+    "title": "Close event",
+    "subtitle": "Confirm every delivery, settle the books, and thank your vendors with a review.",
+    "deliveriesHeading": "Deliveries",
+    "confirmDelivery": "Confirm delivery",
+    "delivered": "Delivered",
+    "awaitingDelivery": "Waiting on delivery",
+    "reconciliationHeading": "Final reconciliation",
+    "reviewHeading": "Review {vendor}",
+    "reviewsHeading": "Vendor reviews",
+    "quality": "Quality",
+    "communication": "Communication",
+    "punctuality": "Punctuality",
+    "value": "Value for money",
+    "scope": "Kept to scope",
+    "reviewBody": "What stood out? (optional)",
+    "reviewPhotos": "Photos from the event",
+    "reviewPhotoAlt": "Event photo",
+    "submitReview": "Leave review",
+    "reviewed": "Reviewed",
+    "reviewsLocked": "Reviews open once the booking is completed.",
+    "replyHeading": "Vendor reply",
+    "finish": "Finish and close event",
+    "finishBlocked": "Confirm every delivery first — then you can close the event.",
+    "closed": "Event closed. Thank you — your reviews help every future host.",
+    "noBookings": "No vendor bookings on this event — nothing to close."
   },
   "publicEvent": {
     "buyTickets": "Get tickets",
