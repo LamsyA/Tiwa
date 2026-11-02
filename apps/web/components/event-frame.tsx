@@ -10,7 +10,17 @@ import { requirePageUser } from '@/lib/ctx.js';
 import { AppFrame } from './app-frame.js';
 
 export type EventSection =
-  'overview' | 'plan' | 'money' | 'documents' | 'guests' | 'invites' | 'moments' | 'vendors' | 'tickets' | 'settings';
+  | 'overview'
+  | 'plan'
+  | 'money'
+  | 'documents'
+  | 'guests'
+  | 'invites'
+  | 'moments'
+  | 'vendors'
+  | 'tickets'
+  | 'day'
+  | 'settings';
 
 const SECTIONS: {
   key: EventSection;
@@ -36,6 +46,8 @@ const SECTIONS: {
   // Tickets are optional like invites (TKT-01, P11-T02): the tab shows while
   // the host has them on.
   { key: 'tickets', path: '/tickets', needs: 'event.view', needsTickets: true },
+  // Run-of-show (P12): every event gets a day timeline.
+  { key: 'day', path: '/day', needs: 'event.view' },
   { key: 'settings', path: '/settings', needs: 'event.view' },
 ];
 

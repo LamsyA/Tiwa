@@ -235,7 +235,8 @@
       "invites": "Invites",
       "moments": "Moments",
       "vendors": "Vendors",
-      "tickets": "Tickets"
+      "tickets": "Tickets",
+      "day": "Event day"
     },
     "roles": {
       "HOST": "Host",
@@ -2120,6 +2121,37 @@
     "searchAction": "Search",
     "kindTicket": "Ticket",
     "kindGuest": "Guest invite"
+  },
+  "day": {
+    "title": "Event day",
+    "timeline": "Timeline",
+    "myTasks": "My tasks",
+    "incidents": "Incidents",
+    "contacts": "Contacts",
+    "addItem": "Add item",
+    "itemTitle": "Title",
+    "startsAt": "Starts",
+    "duration": "Minutes",
+    "owner": "Owner",
+    "unassigned": "Unassigned",
+    "fromProgramme": "Create from programme",
+    "createdFromProgramme": "Created {count} items from the programme",
+    "dependsOn": "Waits on",
+    "addDep": "Link",
+    "late": "Late",
+    "markLate": "Mark late",
+    "lateBy": "Minutes late",
+    "lateNote": "Dependants are highlighted and their owners alerted.",
+    "start": "Start",
+    "done": "Done",
+    "skip": "Skip",
+    "reopen": "Reopen",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this item and its links?",
+    "arrived": "Arrived",
+    "arrive": "I've arrived",
+    "noItems": "No run-of-show items yet — add the first one or create them from the programme.",
+    "noMine": "Nothing assigned to you right now."
   },
   "publicEvent": {
     "buyTickets": "Get tickets",
