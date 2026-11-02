@@ -432,7 +432,6 @@
       "noExpensesBody": "Add costs you pay outside a booking, like printing or transport.",
       "incomeExpected": "Expected",
       "incomeReceived": "Received",
-      "ticketsLater": "Shown when ticket sales open",
       "viewOnly": "You can view the budget but not change it.",
       "tabs": {
         "budget": "Budget",

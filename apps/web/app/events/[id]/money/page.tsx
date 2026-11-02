@@ -357,10 +357,6 @@ export default async function EventMoneyPage({
                   {canEdit && <ContributionActions contributionId={row.id} currency={currency} />}
                 </li>
               ))}
-            <li className="text-muted flex items-center gap-2 py-2">
-              <span className="flex-1">{t('kinds.tickets')}</span>
-              {t('ticketsLater')}
-            </li>
           </ul>
         </Card>
       )}

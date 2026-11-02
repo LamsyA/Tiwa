@@ -32,6 +32,8 @@ export interface BudgetInput {
   }[];
   expenses: { id: string; categoryKey: string; description: string; amountMinor: bigint; paidAt: Date | null }[];
   contributions: { kind: string; pledgedMinor: bigint; receivedMinor: bigint }[];
+  /** Paid ticket revenue (P11-T05; D-D05). Optional so older callers keep working. */
+  ticketIncomeMinor?: bigint;
 }
 
 export interface BudgetFigures {
@@ -132,6 +134,14 @@ export function computeBudget(input: BudgetInput): BudgetSummary {
     entry.receivedMinor += row.receivedMinor;
     income.set(row.kind, entry);
   }
+  // Ticket income (P11-T05): paid orders are received in full, like sponsors.
+  const ticketIncome = input.ticketIncomeMinor ?? 0n;
+  if (ticketIncome > 0n) {
+    const entry = income.get('tickets') ?? { kind: 'tickets', pledgedMinor: 0n, receivedMinor: 0n };
+    entry.pledgedMinor += ticketIncome;
+    entry.receivedMinor += ticketIncome;
+    income.set('tickets', entry);
+  }
   const incomeRows = [...income.values()];
 
   return {
@@ -169,7 +179,7 @@ export async function budgetSummary(actor: UserActor, raw: z.input<typeof budget
 
 /** Raw inputs for one event (also used by the consistency check and exports). */
 export async function loadBudgetInput(eventId: string): Promise<BudgetInput & { currency: string }> {
-  const [event, categories, bookings, expenses, contributions] = await Promise.all([
+  const [event, categories, bookings, expenses, contributions, ticketIncome] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id: eventId }, select: { plannedBudgetMinor: true, currency: true } }),
     prisma.budgetCategory.findMany({
       where: { eventId },
@@ -197,6 +207,8 @@ export async function loadBudgetInput(eventId: string): Promise<BudgetInput & { 
       where: { eventId },
       select: { kind: true, pledgedMinor: true, receivedMinor: true },
     }),
+    // Paid ticket orders are income (D-D05; P11-T05).
+    prisma.ticketOrder.aggregate({ where: { eventId, status: 'PAID' }, _sum: { totalMinor: true } }),
   ]);
   const orgs = await prisma.organization.findMany({
     where: { id: { in: [...new Set(bookings.map((row) => row.vendorOrgId))] } },
@@ -210,5 +222,6 @@ export async function loadBudgetInput(eventId: string): Promise<BudgetInput & { 
     bookings: bookings.map(({ vendorOrgId, ...row }) => ({ ...row, vendorName: names.get(vendorOrgId) ?? '' })),
     expenses,
     contributions,
+    ticketIncomeMinor: ticketIncome._sum.totalMinor ?? 0n,
   };
 }

@@ -135,4 +135,18 @@ describe('computeBudget examples', () => {
     expect(summary.unallocatedMinor).toBe(100_000n);
     expect(summary.income).toEqual([{ kind: 'family', pledgedMinor: 150n, receivedMinor: 90n }]);
   });
+
+  it('adds paid ticket revenue as received income (P11-T05)', () => {
+    const base: BudgetInput = {
+      plannedTotalMinor: 0n,
+      categories: [],
+      bookings: [],
+      expenses: [],
+      contributions: [],
+    };
+    expect(computeBudget(base).income).toEqual([]);
+    const summary = computeBudget({ ...base, ticketIncomeMinor: 250_000n });
+    expect(summary.income).toEqual([{ kind: 'tickets', pledgedMinor: 250_000n, receivedMinor: 250_000n }]);
+    expect(summary.incomeTotals).toMatchObject({ pledgedMinor: 250_000n, receivedMinor: 250_000n });
+  });
 });
