@@ -16,10 +16,7 @@ export function NewChat() {
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    if (q.trim().replace(/^@/, '').length < 2) {
-      setHits([]);
-      return;
-    }
+    if (q.trim().replace(/^@/, '').length < 2) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setLoading(true);
@@ -76,7 +73,7 @@ export function NewChat() {
             </p>
           )}
           <ul className="flex max-h-[50vh] flex-col gap-1 overflow-y-auto">
-            {hits.map((hit) => (
+            {(q.trim().replace(/^@/, '').length < 2 ? [] : hits).map((hit) => (
               <li key={hit.orgId} className="hover:bg-surface-2 flex items-center gap-3 rounded-xl p-2.5">
                 <span className="bg-brand-soft text-brand-strong flex size-11 shrink-0 items-center justify-center rounded-full font-bold">
                   {hit.name.slice(0, 1).toUpperCase()}
