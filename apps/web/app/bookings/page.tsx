@@ -1,10 +1,11 @@
-import { listMyOrgs, listVendorBookingMoney } from '@tiwa/core';
+import { listMyOrgs, listVendorBookingMoney, vendorDayTasks } from '@tiwa/core';
 import { Badge, Card, EmptyState } from '@tiwa/ui';
 import { Briefcase } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
+import { VendorDayCard } from './vendor-day.js';
 
 /** Vendor bookings with payment status (VND-04, P10-T08). */
 export default async function BookingsPage() {
@@ -19,7 +20,11 @@ export default async function BookingsPage() {
       </AppFrame>
     );
   }
-  const rows = await listVendorBookingMoney(ctx.actor, { vendorOrgId: vendorOrg.id });
+  const [rows, day] = await Promise.all([
+    listVendorBookingMoney(ctx.actor, { vendorOrgId: vendorOrg.id }),
+    vendorDayTasks(ctx.actor, vendorOrg.id).catch(() => null),
+  ]);
+  const dayByBooking = new Map((day?.bookings ?? []).map((row) => [row.bookingId, row]));
   return (
     <AppFrame userId={ctx.actor.userId} active="bookings" title={t('bookingsTitle')}>
       <div className="flex flex-col gap-3 py-2">
@@ -27,19 +32,32 @@ export default async function BookingsPage() {
           <EmptyState icon={<Briefcase className="size-8" aria-hidden />} title={t('noBookings')} body="" />
         ) : (
           <ul className="flex flex-col gap-2">
-            {rows.map((b) => (
-              <li key={b.id}>
-                <Card className="flex items-center justify-between gap-2 p-3">
-                  <div>
-                    <Link href="/quotes" className="font-medium">
-                      {b.eventName}
-                    </Link>
-                    <p className="text-muted text-sm">{b.status}</p>
-                  </div>
-                  <Badge>{b.outstandingMinor === '0' ? b.securedMinor : b.outstandingMinor}</Badge>
-                </Card>
-              </li>
-            ))}
+            {rows.map((b) => {
+              const tasks = dayByBooking.get(b.id);
+              return (
+                <li key={b.id} className="flex flex-col gap-2">
+                  <Card className="flex items-center justify-between gap-2 p-3">
+                    <div>
+                      <Link href="/quotes" className="font-medium">
+                        {b.eventName}
+                      </Link>
+                      <p className="text-muted text-sm">{b.status}</p>
+                    </div>
+                    <Badge>{b.outstandingMinor === '0' ? b.securedMinor : b.outstandingMinor}</Badge>
+                  </Card>
+                  {tasks && (
+                    <VendorDayCard
+                      row={{
+                        ...tasks,
+                        startsAt: tasks.startsAt?.toISOString() ?? null,
+                        arrivedAt: tasks.arrivedAt?.toISOString() ?? null,
+                        items: tasks.items.map((item) => ({ ...item, startsAt: item.startsAt.toISOString() })),
+                      }}
+                    />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

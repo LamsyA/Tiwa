@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { authorize, type Actor } from '../auth/authorize.js';
 import { loadEventAccess, requireEventAccess } from '../events/access.js';
 import { userIdSchema } from '../shared/schemas.js';
-import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit, enqueue } from '../shared/outbox.js';
 
@@ -268,6 +268,145 @@ export async function removeDependency(actor: UserActor, raw: z.input<typeof dep
   return { ok: true as const };
 }
 
+export const vendorCheckInSchema = z.object({
+  bookingId: z.string().uuid(),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+});
+
+/** One-tap vendor arrival (P12-T04, DAY-03): the vendor's own team taps when
+ * they reach the venue. Editors may record it too. The web action fans out
+ * on the day channel so it lands on the planner's screen (UF-24-3). */
+export async function vendorCheckIn(actor: UserActor, raw: z.input<typeof vendorCheckInSchema>) {
+  const input = vendorCheckInSchema.parse(raw);
+  const booking = await prisma.booking.findUnique({
+    where: { id: input.bookingId },
+    select: { id: true, eventId: true, vendorOrgId: true, status: true },
+  });
+  if (!booking || booking.status === 'CANCELLED') throw new NotFoundError('Booking not found');
+  const [access, membership, participantOrgIds] = await Promise.all([
+    loadEventAccess(actor.userId, booking.eventId),
+    prisma.membership.findFirst({
+      where: { userId: actor.userId, orgId: booking.vendorOrgId },
+      select: { role: true },
+    }),
+    prisma.eventParticipant.findMany({
+      where: { eventId: booking.eventId, userId: actor.userId, removedAt: null, orgId: { not: null } },
+      select: { orgId: true },
+    }),
+  ]);
+  // Editors pass the matrix; the vendor's own team passes on org membership
+  // or a participant row carrying the vendor org (same pattern as
+  // listVendorBookingMoney — quote-accepted vendors are not necessarily
+  // event participants).
+  let allowed = !!membership || participantOrgIds.some((row) => row.orgId === booking.vendorOrgId);
+  if (access) {
+    try {
+      authorize(actor, 'runofshow.edit', { eventId: booking.eventId, access });
+      allowed = true;
+    } catch {
+      // fall through to the team check
+    }
+  }
+  if (!allowed) throw new ForbiddenError('Only the vendor team checks in arrivals');
+  const row = await prisma.vendorCheckIn.create({
+    data: {
+      id: uuidv7(),
+      eventId: booking.eventId,
+      bookingId: booking.id,
+      userId: actor.userId,
+      ...(input.lat !== undefined ? { lat: input.lat } : {}),
+      ...(input.lng !== undefined ? { lng: input.lng } : {}),
+    },
+    select: { id: true, at: true },
+  });
+  await prisma.$transaction(async (tx) => {
+    await audit(tx, {
+      actor,
+      action: 'day.vendor.checkin',
+      targetType: 'Booking',
+      targetId: booking.id,
+      data: { eventId: booking.eventId },
+    });
+  });
+  return { checkinId: row.id, eventId: booking.eventId, at: row.at };
+}
+
+export interface VendorDayTasks {
+  bookings: {
+    bookingId: string;
+    eventId: string;
+    eventName: string;
+    startsAt: Date | null;
+    status: string;
+    arrivedAt: Date | null;
+    items: { id: string; title: string; startsAt: Date; durationMin: number; status: string }[];
+  }[];
+}
+
+/** Everything one vendor org has on today-and-beyond (P12-T04): their
+ * bookings with arrival state plus the run items assigned to them. */
+export async function vendorDayTasks(actor: UserActor, vendorOrgId: string): Promise<VendorDayTasks> {
+  const [membership, teamRow] = await Promise.all([
+    prisma.membership.findFirst({
+      where: { userId: actor.userId, orgId: vendorOrgId },
+      select: { role: true },
+    }),
+    prisma.eventParticipant.findFirst({
+      where: { userId: actor.userId, orgId: vendorOrgId, removedAt: null },
+      select: { id: true },
+    }),
+  ]);
+  if (!membership && !teamRow) throw new ForbiddenError('Only the vendor team views these tasks');
+  const bookings = await prisma.booking.findMany({
+    where: { vendorOrgId, status: { not: 'CANCELLED' } },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+    select: {
+      id: true,
+      eventId: true,
+      status: true,
+      event: { select: { name: true, startsAt: true } },
+    },
+  });
+  const eventIds = [...new Set(bookings.map((row) => row.eventId))];
+  const [items, checkins] = await Promise.all([
+    eventIds.length > 0
+      ? prisma.runItem.findMany({
+          where: { eventId: { in: eventIds }, ownerOrgId: vendorOrgId },
+          orderBy: [{ startsAt: 'asc' }, { sortOrder: 'asc' }],
+          select: { id: true, eventId: true, title: true, startsAt: true, durationMin: true, status: true },
+        })
+      : Promise.resolve([]),
+    bookings.length > 0
+      ? prisma.vendorCheckIn.findMany({
+          where: { bookingId: { in: bookings.map((row) => row.id) } },
+          orderBy: { at: 'desc' },
+          select: { bookingId: true, at: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const firstArrival = new Map<string, Date>();
+  for (const row of [...checkins].reverse()) firstArrival.set(row.bookingId, row.at);
+  const itemsByEvent = new Map<string, typeof items>();
+  for (const row of items) {
+    const list = itemsByEvent.get(row.eventId) ?? [];
+    list.push(row);
+    itemsByEvent.set(row.eventId, list);
+  }
+  return {
+    bookings: bookings.map((row) => ({
+      bookingId: row.id,
+      eventId: row.eventId,
+      eventName: row.event.name,
+      startsAt: row.event.startsAt,
+      status: row.status,
+      arrivedAt: firstArrival.get(row.id) ?? null,
+      items: (itemsByEvent.get(row.eventId) ?? []).map(({ eventId: _eventId, ...item }) => item),
+    })),
+  };
+}
+
 export const markLateSchema = z.object({
   eventId: z.string().uuid(),
   itemId: z.string().uuid(),
@@ -285,10 +424,17 @@ export async function markLate(actor: UserActor, raw: z.input<typeof markLateSch
   const dependantIds = await dependants(item.id);
   const dependantItems =
     dependantIds.length > 0
-      ? await prisma.runItem.findMany({ where: { id: { in: dependantIds } }, select: { ownerUserId: true, ownerOrgId: true } })
+      ? await prisma.runItem.findMany({
+          where: { id: { in: dependantIds } },
+          select: { ownerUserId: true, ownerOrgId: true },
+        })
       : [];
-  const ownerUserIds = [...new Set(dependantItems.map((row) => row.ownerUserId).filter((id): id is string => id !== null))];
-  const ownerOrgIds = [...new Set(dependantItems.map((row) => row.ownerOrgId).filter((id): id is string => id !== null))];
+  const ownerUserIds = [
+    ...new Set(dependantItems.map((row) => row.ownerUserId).filter((id): id is string => id !== null)),
+  ];
+  const ownerOrgIds = [
+    ...new Set(dependantItems.map((row) => row.ownerOrgId).filter((id): id is string => id !== null)),
+  ];
   await prisma.$transaction(async (tx) => {
     await tx.runItem.update({ where: { id: item.id }, data: { status: 'LATE', lateByMin: input.lateByMin } });
     await enqueue(tx, 'day.item_late', {

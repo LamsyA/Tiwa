@@ -92,9 +92,12 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
           <DayEditor
             eventId={id}
             canManage={canManage}
+            myUserId={ctx.actor.userId}
+            myOrgIds={memberOrgIds}
             items={day.items.map((row) => ({ ...row, status: row.status, startsAt: row.startsAt.toISOString() }))}
             dependencies={day.dependencies}
             owners={owners}
+            checkins={day.checkins.map((row) => ({ ...row, at: row.at.toISOString() }))}
           />
         )}
       </div>

@@ -66,20 +66,28 @@ function closure(roots: string[], dependencies: { itemId: string; dependsOnId: s
 export function DayEditor(props: {
   eventId: string;
   canManage: boolean;
+  myUserId: string;
+  myOrgIds: string[];
   items: DayItem[];
   dependencies: { itemId: string; dependsOnId: string }[];
   owners: Owner[];
+  checkins: { id: string; bookingId: string; userName: string; orgName: string | null; at: string }[];
 }) {
   const t = useTranslations('day');
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'timeline' | 'mine'>('timeline');
   const [title, setTitle] = useState('');
   const [starts, setStarts] = useState('');
   const [duration, setDuration] = useState('15');
   const [justMarked, setJustMarked] = useState<string[]>([]);
   const [now] = useState(() => Date.now());
   const nowRef = useRef<HTMLLIElement | null>(null);
+
+  const mine = props.items.filter(
+    (row) => row.ownerUserId === props.myUserId || (row.ownerOrgId !== null && props.myOrgIds.includes(row.ownerOrgId)),
+  );
 
   useEffect(() => {
     nowRef.current?.scrollIntoView({ block: 'center' });
@@ -96,11 +104,6 @@ export function DayEditor(props: {
     () => new Set([...closure(lateIds, props.dependencies), ...justMarked]),
     [lateIds, props.dependencies, justMarked],
   );
-  const nowIndex = useMemo(() => {
-    const index = props.items.findIndex((row) => new Date(row.startsAt).getTime() > now);
-    return index === -1 ? props.items.length : index;
-  }, [props.items, now]);
-
   const run = (fn: () => Promise<{ ok: boolean } | Promise<unknown>>) => {
     setError(null);
     start(async () => {
@@ -111,11 +114,16 @@ export function DayEditor(props: {
     });
   };
 
-  const rows: { key: string; item?: DayItem; now?: boolean }[] = props.items.map((item) => ({
+  const visible = tab === 'mine' ? mine : props.items;
+  const shownNowIndex = useMemo(() => {
+    const index = visible.findIndex((row) => new Date(row.startsAt).getTime() > now);
+    return index === -1 ? visible.length : index;
+  }, [visible, now]);
+  const rows: { key: string; item?: DayItem; now?: boolean }[] = visible.map((item) => ({
     key: item.id,
     item,
   }));
-  rows.splice(nowIndex, 0, { key: '__now', now: true });
+  if (tab === 'timeline') rows.splice(shownNowIndex, 0, { key: '__now', now: true });
 
   return (
     <div className="flex flex-col gap-4">
@@ -125,6 +133,37 @@ export function DayEditor(props: {
           {t('lateNote')}
         </Card>
       )}
+      <div className="flex gap-2" role="tablist" aria-label={t('title')}>
+        <Button
+          variant={tab === 'timeline' ? 'primary' : 'secondary'}
+          onClick={() => setTab('timeline')}
+          role="tab"
+          aria-selected={tab === 'timeline'}
+        >
+          {t('timeline')}
+        </Button>
+        <Button
+          variant={tab === 'mine' ? 'primary' : 'secondary'}
+          onClick={() => setTab('mine')}
+          role="tab"
+          aria-selected={tab === 'mine'}
+        >
+          {t('myTasksTab')} ({mine.length})
+        </Button>
+      </div>
+      {props.checkins.length > 0 && tab === 'timeline' && (
+        <Card className="flex flex-col gap-1 p-3 text-sm">
+          <h3 className="font-medium">{t('arrivals')}</h3>
+          {props.checkins.slice(0, 10).map((row) => (
+            <p key={row.id} className="text-muted">
+              {row.userName}
+              {row.orgName ? ` · ${row.orgName}` : ''} ·{' '}
+              {new Date(row.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          ))}
+        </Card>
+      )}
+      {tab === 'mine' && mine.length === 0 && <p className="text-muted text-sm">{t('noMine')}</p>}
       {props.canManage && (
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex flex-wrap gap-2">

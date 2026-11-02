@@ -14,6 +14,8 @@ import {
   markLate,
   removeDependency,
   runOfShow,
+  vendorCheckIn,
+  vendorDayTasks,
 } from './day.js';
 import { updateRunStatus } from './day.js';
 
@@ -162,6 +164,55 @@ describe('mark late (DAY-02, UF-24-2)', () => {
     });
     expect(queued).toBeTruthy();
     expect((queued!.payload as { itemId: string }).itemId).toBe(sound.id);
+  });
+});
+
+describe('vendor arrival (DAY-03)', () => {
+  it('lets the vendor team tap arrival on their own booking only', async () => {
+    const booking = await prisma.booking.create({
+      data: {
+        id: uuidv7(),
+        eventId,
+        vendorOrgId,
+        category: 'catering',
+        status: 'CONFIRMED',
+        paymentMode: 'OFFLINE',
+        totalMinor: 100_000n,
+        currency: 'NGN',
+      },
+    });
+    const tapped = await vendorCheckIn(vendor, { bookingId: booking.id, lat: 6.45, lng: 3.39 });
+    expect(tapped.eventId).toBe(eventId);
+    await expect(vendorCheckIn(outsider, { bookingId: booking.id })).rejects.toThrow();
+    const otherOrg = await prisma.organization.create({
+      data: {
+        kind: 'VENDOR',
+        name: 'P12 Other Catering',
+        slug: `p12-other-${Date.now().toString(36)}`,
+        countryCode: 'NG',
+      },
+    });
+    const otherBooking = await prisma.booking.create({
+      data: {
+        id: uuidv7(),
+        eventId,
+        vendorOrgId: otherOrg.id,
+        category: 'catering',
+        status: 'CONFIRMED',
+        paymentMode: 'OFFLINE',
+        totalMinor: 50_000n,
+        currency: 'NGN',
+      },
+    });
+    await expect(vendorCheckIn(vendor, { bookingId: otherBooking.id })).rejects.toThrow();
+    const tasks = await vendorDayTasks(vendor, vendorOrgId);
+    const mine = tasks.bookings.find((row) => row.bookingId === booking.id)!;
+    expect(mine.arrivedAt).toBeTruthy();
+    expect(mine.items.map((row) => row.title)).toContain('Sound check');
+    await expect(vendorDayTasks(outsider, vendorOrgId)).rejects.toThrow();
+    await prisma.vendorCheckIn.deleteMany({ where: { eventId } });
+    await prisma.booking.deleteMany({ where: { eventId } });
+    await prisma.organization.deleteMany({ where: { id: otherOrg.id } }).catch(() => undefined);
   });
 });
 

@@ -2150,6 +2150,9 @@
     "deleteConfirm": "Delete this item and its links?",
     "arrived": "Arrived",
     "arrive": "I've arrived",
+    "arrivedAt": "Arrived {at}",
+    "arrivals": "Arrivals",
+    "myTasksTab": "My tasks",
     "noItems": "No run-of-show items yet — add the first one or create them from the programme.",
     "noMine": "Nothing assigned to you right now."
   },
