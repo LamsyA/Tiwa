@@ -28,7 +28,7 @@ References: `PRD` requirement IDs (e.g. `GST-05`), user flows (`UF-07`), and doc
 | P8    | Payments, ledger, held payments, payouts | TODO        |                |
 | P9    | Budget and finance                       | TODO        |                |
 | P10   | Planner workspace and vendor dashboard   | TODO        |                |
-| P11   | Tickets and check-in                     | TODO        |                |
+| P11   | Tickets and check-in                     | DONE        | P11 GATE 5/5   |
 | P12   | Event day                                | TODO        |                |
 | P13   | Notifications and event-team chat        | TODO        |                |
 | P14   | Reviews and event close                  | TODO        |                |
