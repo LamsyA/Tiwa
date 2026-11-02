@@ -188,6 +188,47 @@ export async function updateGuest(
   });
 }
 
+export const setGuestRsvpSchema = z.object({
+  eventId: z.string().uuid(),
+  guestId: z.string().uuid(),
+  rsvp: z.enum(['NONE', 'YES', 'NO', 'MAYBE']),
+  plusOnes: z.number().int().min(0).max(20).optional(),
+});
+
+/**
+ * The host records a reply on a guest's behalf (they answered by phone, in
+ * person, on WhatsApp). Plus-ones stay within the guest's allowance; "no
+ * reply" clears the response time so reminders treat them as pending again.
+ */
+export async function setGuestRsvp(
+  actor: UserActor,
+  input: z.infer<typeof setGuestRsvpSchema>,
+  preloaded?: EventAccess,
+): Promise<{ rsvp: string; plusOnes: number }> {
+  await resolveEventAccess(actor, input.eventId, 'guests.manage', preloaded);
+  const guest = await prisma.guest.findFirst({
+    where: { id: input.guestId, eventId: input.eventId, deletedAt: null },
+    select: { id: true, plusOnesAllowed: true, plusOnes: true },
+  });
+  if (!guest) throw new ValidationError('Guest not found', { field: 'guestId', key: 'guestNotFound' });
+  const coming = input.rsvp === 'YES' || input.rsvp === 'MAYBE';
+  const plusOnes = coming ? Math.min(input.plusOnes ?? guest.plusOnes, guest.plusOnesAllowed) : 0;
+  await prisma.$transaction(async (tx) => {
+    await tx.guest.update({
+      where: { id: guest.id },
+      data: { rsvp: input.rsvp, plusOnes, respondedAt: input.rsvp === 'NONE' ? null : new Date() },
+    });
+    await audit(tx, {
+      actor,
+      action: 'guests.setRsvp',
+      targetType: 'Guest',
+      targetId: guest.id,
+      data: { rsvp: input.rsvp, plusOnes },
+    });
+  });
+  return { rsvp: input.rsvp, plusOnes };
+}
+
 export const deleteGuestsSchema = z.object({
   eventId: z.string().uuid(),
   guestIds: z.array(z.string().uuid()).min(1).max(MAX_GUESTS_PER_CALL),

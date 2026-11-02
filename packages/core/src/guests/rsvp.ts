@@ -59,6 +59,8 @@ export interface InvitePage {
     hostName: string;
     momentsOn: boolean;
     allowForwarding: boolean;
+    /** Public slug, for the live agenda link (/e/{slug}/agenda). */
+    slug: string;
     cancelled: boolean;
     over: boolean;
   };
@@ -96,6 +98,7 @@ export async function invitePage(token: string): Promise<InvitePage> {
           createdBy: { select: { name: true } },
           momentsEnabled: true,
           allowForwarding: true,
+          slug: true,
         },
       },
     },
@@ -134,6 +137,7 @@ export async function invitePage(token: string): Promise<InvitePage> {
       hostName: event.createdBy.name,
       momentsOn: event.momentsEnabled,
       allowForwarding: event.allowForwarding,
+      slug: event.slug,
       cancelled: event.status === 'CANCELLED',
       over: event.endsAt
         ? event.endsAt < now

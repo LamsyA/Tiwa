@@ -11,6 +11,7 @@ import {
   listGroups,
   listGuests,
   mergeGuests,
+  setGuestRsvp,
   updateGroup,
   updateGuest,
 } from './guests.js';
@@ -122,6 +123,30 @@ describe('guests', () => {
     const deleted = await deleteGuests(host, { eventId, guestIds: [keep!] });
     expect(deleted).toEqual({ deleted: 1 });
     expect((await listGuests(host, { eventId })).total).toBe(0);
+  });
+
+  it('lets the host record a reply for a guest, capping plus-ones and clearing them on decline', async () => {
+    const host = await makeHost();
+    const { eventId } = await createEventDraft(host, { type: 'birthday' });
+    events.push(eventId);
+    const added = await addGuests(host, {
+      eventId,
+      guests: [{ name: 'Tolu', email: 'tolu@example.com', groupIds: [], plusOnesAllowed: 1 }],
+    });
+    const guestId = added.created[0]!;
+    expect(await setGuestRsvp(host, { eventId, guestId, rsvp: 'YES', plusOnes: 5 })).toEqual({
+      rsvp: 'YES',
+      plusOnes: 1,
+    });
+    let row = await prisma.guest.findUniqueOrThrow({ where: { id: guestId } });
+    expect(row.respondedAt).not.toBeNull();
+    expect(await setGuestRsvp(host, { eventId, guestId, rsvp: 'NO' })).toEqual({ rsvp: 'NO', plusOnes: 0 });
+    await setGuestRsvp(host, { eventId, guestId, rsvp: 'NONE' });
+    row = await prisma.guest.findUniqueOrThrow({ where: { id: guestId } });
+    expect(row).toMatchObject({ rsvp: 'NONE', respondedAt: null });
+
+    const stranger = await makeHost();
+    await expect(setGuestRsvp(stranger, { eventId, guestId, rsvp: 'YES' })).rejects.toThrow();
   });
 
   it('manages groups and strips deleted groups from guests', async () => {

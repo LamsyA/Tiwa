@@ -34,6 +34,7 @@ import {
 } from './guest-dialogs.js';
 import { GroupsManager } from './groups-manager.js';
 import { HeadcountPanel } from './headcount-report.js';
+import { RsvpControl } from './rsvp-control.js';
 import { TablesManager, type TableItem } from './tables-manager.js';
 
 export interface GuestGroupItem {
@@ -247,11 +248,14 @@ export function GuestsManager(props: GuestsManagerProps) {
                 {
                   key: 'rsvp',
                   header: t('table.rsvp'),
-                  cell: (row) => (
-                    <StatusPill tone={row.rsvp === 'YES' ? 'success' : row.rsvp === 'NO' ? 'danger' : 'neutral'}>
-                      {t(`rsvpLabels.${row.rsvp}` as 'rsvpLabels.YES')}
-                    </StatusPill>
-                  ),
+                  cell: (row) =>
+                    canManage ? (
+                      <RsvpControl eventId={eventId} guestId={row.id} guestName={row.name} rsvp={row.rsvp} />
+                    ) : (
+                      <StatusPill tone={row.rsvp === 'YES' ? 'success' : row.rsvp === 'NO' ? 'danger' : 'neutral'}>
+                        {t(`rsvpLabels.${row.rsvp}` as 'rsvpLabels.YES')}
+                      </StatusPill>
+                    ),
                 },
                 ...(canManage
                   ? [
@@ -272,9 +276,13 @@ export function GuestsManager(props: GuestsManagerProps) {
                       {redacted ? t('table.redacted') : (row.phone ?? row.email ?? t('table.noContact'))}
                     </span>
                   </span>
-                  <StatusPill tone={row.rsvp === 'YES' ? 'success' : row.rsvp === 'NO' ? 'danger' : 'neutral'}>
-                    {t(`rsvpLabels.${row.rsvp}` as 'rsvpLabels.YES')}
-                  </StatusPill>
+                  {canManage ? (
+                    <RsvpControl eventId={eventId} guestId={row.id} guestName={row.name} rsvp={row.rsvp} />
+                  ) : (
+                    <StatusPill tone={row.rsvp === 'YES' ? 'success' : row.rsvp === 'NO' ? 'danger' : 'neutral'}>
+                      {t(`rsvpLabels.${row.rsvp}` as 'rsvpLabels.YES')}
+                    </StatusPill>
+                  )}
                   {canManage && <EditGuestDialog eventId={eventId} guest={row} appUrl={appUrl} />}
                 </Card>
               )}

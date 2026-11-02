@@ -27,6 +27,8 @@ import {
   requestCsvImport,
   requestCsvImportSchema,
   requireEventAccess,
+  setGuestRsvp,
+  setGuestRsvpSchema,
   suggestCsvMapping,
   updateGroup,
   updateGroupSchema,
@@ -74,6 +76,13 @@ export const addGuestsAction = userAction(addGuestsSchema, async (input, ctx) =>
 export const editGuest = userAction(updateGuestSchema, async (input, ctx) => {
   await updateGuest(ctx.actor, input);
   await notify(input.eventId);
+});
+
+/** Host records a guest's reply by hand (phone, in person, WhatsApp). */
+export const setGuestRsvpAction = userAction(setGuestRsvpSchema, async (input, ctx) => {
+  const result = await setGuestRsvp(ctx.actor, input);
+  await notify(input.eventId);
+  return result;
 });
 
 export const removeGuests = userAction(deleteGuestsSchema, async (input, ctx) => {
