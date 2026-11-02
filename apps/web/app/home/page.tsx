@@ -5,7 +5,8 @@ import { Badge, Card, EmptyState, StatCard, buttonClasses } from '@tiwa/ui';
 import { CalendarPlus, Plus, Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { ROLE_TONE, RoleBadge } from '@/components/account-menu.js';
+import { RoleBadge } from '@/components/account-menu.js';
+import { ROLE_TONE } from '@/components/role-tone.js';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 

@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./shared/*.js": {
+      "types": "./dist/shared/*.d.ts",
+      "default": "./dist/shared/*.js"
+    },
     "./shared/*": {
       "types": "./dist/shared/*.d.ts",
       "default": "./dist/shared/*.js"

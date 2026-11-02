@@ -7,12 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { signOut } from '@/lib/auth-client.js';
-
-export const ROLE_TONE: Record<AppRole, string> = {
-  host: 'var(--brand)',
-  planner: 'var(--accent)',
-  vendor: 'var(--warning)',
-};
+import { ROLE_TONE } from './role-tone.js';
 
 const ROLE_ICON: Record<AppRole, React.ComponentType<{ className?: string }>> = {
   host: PartyPopper,

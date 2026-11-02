@@ -94,20 +94,13 @@ export async function getBusinessProfile(actor: UserActor, orgId: string) {
 
 export const publishProfileSchema = z.object({ orgId: z.string().uuid(), published: z.boolean() });
 
-/** Publish gate (UF-13-1): profile + ≥6 portfolio + ≥1 package. Unpublishing is always allowed. */
+/**
+ * Publish or unpublish. No completeness gate (D-X34): a new business can go
+ * live straight away and finish its profile later; the checklist only guides.
+ */
 export async function publishProfile(actor: UserActor, input: z.infer<typeof publishProfileSchema>) {
   await loadAccess(actor, input.orgId, 'org.manage');
   return prisma.$transaction(async (tx) => {
-    if (input.published) {
-      const [profile, portfolioCount, packageCount] = await Promise.all([
-        tx.businessProfile.findUnique({ where: { orgId: input.orgId } }),
-        tx.portfolioItem.count({ where: { orgId: input.orgId } }),
-        tx.servicePackage.count({ where: { orgId: input.orgId, active: true } }),
-      ]);
-      const ready =
-        Boolean(profile && profile.categories.length > 0 && profile.city) && portfolioCount >= 6 && packageCount >= 1;
-      if (!ready) throw new ConflictError('Profile is not complete', { reason: 'profile-incomplete' });
-    }
     const profile = await tx.businessProfile.upsert({
       where: { orgId: input.orgId },
       create: { orgId: input.orgId, categories: [], city: '', currency: 'NGN', published: input.published },
@@ -132,7 +125,7 @@ export interface ProfileChecklist {
   verification: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
   /** Bank account always false until P8 (payments.setupBankAccount). */
   bank: boolean;
-  /** Publishable when Profile + Portfolio (≥6) + ≥1 Package are complete (UF-13-1). */
+  /** Always true (D-X34): publishing no longer waits for the checklist. */
   publishable: boolean;
   portfolioCount: number;
 }
@@ -160,7 +153,7 @@ export async function getChecklist(actor: UserActor, orgId: string): Promise<Pro
     availability,
     verification: verification?.status ?? 'NONE',
     bank: false,
-    publishable: hasProfile && hasPortfolio && hasPackages,
+    publishable: true,
     portfolioCount,
   };
 }

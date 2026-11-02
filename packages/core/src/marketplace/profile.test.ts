@@ -125,14 +125,14 @@ describe('packages', () => {
 });
 
 describe('getChecklist', () => {
-  it('tracks profile → portfolio → packages toward publishable', async () => {
+  it('tracks profile → portfolio → packages; publishable from the start (D-X34)', async () => {
     const fresh = await makeOrg('VENDOR', 'check-org');
     await prisma.membership.create({ data: { orgId: fresh, userId: owner.userId, role: 'OWNER' } });
     let checklist = await getChecklist(owner, fresh);
-    expect(checklist.publishable).toBe(false);
+    expect(checklist.publishable).toBe(true);
     await upsertBusinessProfile(owner, { ...profileInput, orgId: fresh });
     checklist = await getChecklist(owner, fresh);
-    expect(checklist).toMatchObject({ profile: true, portfolio: false, packages: false, publishable: false });
+    expect(checklist).toMatchObject({ profile: true, portfolio: false, packages: false, publishable: true });
     await prisma.portfolioItem.createMany({
       data: Array.from({ length: 6 }, (_, index) => ({
         orgId: fresh,

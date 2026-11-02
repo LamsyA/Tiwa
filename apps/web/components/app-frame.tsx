@@ -57,12 +57,28 @@ const frameData = cache(async (userId: string) => {
   if (!user) throw new Error('user row vanished mid-request');
   const flags = await getFlagsFor(user.countryCode ?? '');
   const role = roleForOrgs(orgs);
+  return { role, flags, unread, account: accountFrom(role, orgs, profile) };
+});
+
+function accountFrom(
+  role: AppRole,
+  orgs: Awaited<ReturnType<typeof listMyOrgs>>,
+  profile: { name: string; phone: string | null } | null,
+): AccountInfo {
   const org = role === 'host' ? undefined : orgs.find((row) => row.org.kind === role.toUpperCase())?.org;
   // Phone sign-ups carry their number as a name until onboarding.
   const name = profile && profile.name && profile.name !== profile.phone ? profile.name : '';
-  const account: AccountInfo = { name: name || (profile?.phone ?? ''), role, orgName: org?.name ?? null };
-  return { role, flags, unread, account };
-});
+  return { name: name || (profile?.phone ?? ''), role, orgName: org?.name ?? null };
+}
+
+/** Name, role and business for the account menu outside the app frame (marketplace top bar). */
+export async function loadAccount(userId: string): Promise<AccountInfo> {
+  const [orgs, profile] = await Promise.all([
+    cachedOrgs(userId),
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true, phone: true } }),
+  ]);
+  return accountFrom(roleForOrgs(orgs), orgs, profile);
+}
 
 /** Signed-in app frame: role navigation plus the user's resolved feature flags for client components. */
 export async function AppFrame({

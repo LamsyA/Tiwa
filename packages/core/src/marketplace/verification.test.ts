@@ -3,8 +3,7 @@ import { FakeStorage } from '@tiwa/storage';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { ConflictError, ValidationError } from '../shared/errors.js';
-import { savePackage } from './packages.js';
-import { publishProfile, upsertBusinessProfile } from './profile.js';
+import { publishProfile } from './profile.js';
 import { startVerificationUpload, submitVerification } from './verification.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
@@ -20,15 +19,6 @@ async function makeUser(name: string): Promise<UserActor> {
   users.push(user.id);
   return { kind: 'user', userId: user.id, isAdmin: false };
 }
-
-const profileInput = (org: string) => ({
-  orgId: org,
-  categories: ['photography'],
-  city: 'Ikeja',
-  serviceAreaKm: 50,
-  currency: 'NGN',
-  allowGuestEnquiries: true,
-});
 
 beforeAll(async () => {
   const org = await prisma.organization.create({
@@ -53,15 +43,7 @@ afterAll(async () => {
 });
 
 describe('publishProfile', () => {
-  it('refuses until profile + 6 photos + 1 package are complete, then publishes and unpublishes', async () => {
-    await expect(publishProfile(admin, { orgId, published: true })).rejects.toBeInstanceOf(ConflictError);
-    await upsertBusinessProfile(admin, profileInput(orgId));
-    await expect(publishProfile(admin, { orgId, published: true })).rejects.toBeInstanceOf(ConflictError);
-    await prisma.portfolioItem.createMany({
-      data: Array.from({ length: 6 }, (_, index) => ({ orgId, kind: 'PHOTO' as const, key: `p${index}` })),
-    });
-    await expect(publishProfile(admin, { orgId, published: true })).rejects.toBeInstanceOf(ConflictError);
-    await savePackage(admin, { orgId, name: 'Shoot', currency: 'NGN', includes: [], addOns: [], active: true });
+  it('publishes a brand-new business with an empty profile, then unpublishes (D-X34)', async () => {
     const published = await publishProfile(admin, { orgId, published: true });
     expect(published.published).toBe(true);
     const unpublished = await publishProfile(admin, { orgId, published: false });

@@ -1,8 +1,12 @@
 import { ThemeToggle, buttonClasses, cn } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
+import { headers } from 'next/headers';
 import type { StaticImageData } from 'next/image';
 import Link from 'next/link';
 import type * as React from 'react';
+import { auth } from '@/lib/auth.js';
+import { AccountMenu } from '../account-menu.js';
+import { loadAccount } from '../app-frame.js';
 // Sample cover photos until businesses upload their own: Pexels (free licence, commercial use),
 // self-hosted. IDs: venue 12688995 30311728 36028895 · catering 28736731 13915043 17952748 ·
 // small chops 37648029 29037265 · decor 37190288 11450796 · makeup 34049570 33951059 ·
@@ -118,6 +122,8 @@ export async function MarketplaceFrame({
   const t = await getTranslations('marketplaceFrame');
   const app = await getTranslations('app');
   const landing = await getTranslations('landing');
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  const account = session?.user ? await loadAccount(session.user.id as string) : null;
   const sections: { key: MarketplaceSection; href: string }[] = [
     { key: 'vendors', href: '/vendors' },
     { key: 'venues', href: '/venues' },
@@ -149,11 +155,12 @@ export async function MarketplaceFrame({
           <div className="ml-auto flex items-center gap-1.5">
             <ThemeToggle labels={{ light: landing('theme.light'), dark: landing('theme.dark') }} />
             <Link
-              href="/home"
+              href={account ? '/home' : '/login'}
               className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'rounded-full' })}
             >
-              {t('myEvents')}
+              {account ? t('myEvents') : t('signIn')}
             </Link>
+            {account && <AccountMenu account={account} compact />}
           </div>
         </div>
         <nav aria-label={t('nav')} className="scrollbar-none flex gap-1 overflow-x-auto px-4 pb-2.5 sm:hidden">

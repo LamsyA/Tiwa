@@ -1273,7 +1273,7 @@
     "forbiddenTitle": "No access",
     "forbiddenBody": "Only team admins can edit this business profile.",
     "checklistHeading": "Get listed",
-    "checklistBody": "Complete these steps to publish your public profile.",
+    "checklistBody": "You can publish now and finish these any time. Complete profiles get more enquiries.",
     "stepProfile": "Profile details",
     "stepPortfolio": "Portfolio (6+ photos)",
     "stepPackages": "At least one package",
@@ -1308,7 +1308,7 @@
     "cancel": "Cancel",
     "noPackages": "No packages yet. Add your first one above.",
     "portfolioHeading": "Portfolio",
-    "portfolioBody": "{count} of 6 photos needed for publishing.",
+    "portfolioBody": "Add at least 6 photos so clients can see your work ({count} more to go).",
     "uploadPhotos": "Upload photos",
     "removePhoto": "Remove",
     "removePhotoTitle": "Remove this photo?",
@@ -1336,7 +1336,7 @@
       "NOT_FOUND": "That item no longer exists."
     },
     "publishHeading": "Publish",
-    "publishBody": "Your public profile goes live when the checklist above is complete.",
+    "publishBody": "Go live now and keep improving your profile. You can unpublish any time.",
     "publish": "Publish profile",
     "unpublish": "Unpublish",
     "publishedNote": "Live — unpublishing hides it immediately.",
@@ -2261,7 +2261,8 @@
     "venues": "Venues",
     "planners": "Planners",
     "myEvents": "My events",
-    "eyebrow": "Marketplace"
+    "eyebrow": "Marketplace",
+    "signIn": "Sign in"
   },
   "account": {
     "menu": "Account",
