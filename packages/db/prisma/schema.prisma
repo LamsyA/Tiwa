@@ -55,6 +55,9 @@ model User {
   ownedTasks          Task[]             @relation("TaskOwner")
   sessions            Session[]
   accounts            Account[]
+  notifications       Notification[]
+  notificationPreference NotificationPreference?
+  pushSubscriptions   PushSubscription[]
 }
 
 enum AdminRole {
@@ -1528,4 +1531,44 @@ model UserBlock {
   @@index([blockerOrgId])
   @@index([blockedUserId])
   @@index([blockedOrgId])
+}
+
+// ───────────── Notifications (Backend.md §3, §10; P13-T01) ─────────────
+// One bell for everything. `type` names the event (e.g. "chat.message",
+// "day.item_late"); `data` carries ids only, never personal data.
+// Delivery (push/email/SMS/WhatsApp) is fanned out by messaging/notify (P13-T03).
+
+model Notification {
+  id        String    @id @default(uuid(7))
+  userId    String
+  type      String
+  title     String
+  body      String
+  url       String
+  data      Json      @default("{}")
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model NotificationPreference {
+  userId     String @id
+  channels   Json // {type: {inApp, push, email, sms, whatsapp}}
+  quietStart Int? // minutes from midnight, Africa/Lagos wall time
+  quietEnd   Int?
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid(7))
+  userId    String
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

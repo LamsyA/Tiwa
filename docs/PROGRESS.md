@@ -189,3 +189,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X34: businesses publish without completing the checklist; account menu + sign out in marketplace bar; /more fixed (client nav links); role colours moved to a shared module (home banner was blank).
 - P12 GATE: passed (3/3: seed, unit 10/10, e2e UF-24 2/2). Phase P12 DONE. M3 staging demo (public conference + private party with run-of-show) remains a manual step.
 - D-X35/D-X36: order tracker (vendor/host/planner), New chat by @handle, event vendors + compare + overview redesign, invites page redesign, guest email required.
+- P13-T01 done: Notification (+data payload, user cascade), NotificationPreference (channels JSON, quiet window), PushSubscription (unique endpoint) + migration 20261102093507 (P6 raw-SQL index drift stripped again, indexes re-applied + verified, checksums reconciled for both edited migrations); User back-relations added.

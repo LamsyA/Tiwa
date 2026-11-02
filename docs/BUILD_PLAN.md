@@ -418,7 +418,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** one reliable notification pipeline for everything, and decisions surfaced on the event record (chat itself, including team threads, was built in P6).
 **Read first:** `PRD.md MSG-*`, `Backend.md §3 (messaging), §10 (notify)`, `Frontend.md §6.3 (inbox, settings)`.
 
-- [ ] P13-T01 Prisma: Notification, NotificationPreference (PushSubscription exists from P6).
+- [x] P13-T01 Prisma: Notification, NotificationPreference (PushSubscription exists from P6).
 - [ ] P13-T02 Decisions from team chat shown on the event overview and in the event's activity history; participant sync tested for member add/remove.
 - [ ] P13-T03 `notify()` pipeline: in-app bell, web push (VAPID), email, SMS, WhatsApp; preferences matrix; quiet hours; urgent override for event-day and payment failures.
 - [ ] P13-T04 Replace earlier notification stubs (P3 deadlines, P4 invites, P8 payments, P12 alerts) with `notify()`.
