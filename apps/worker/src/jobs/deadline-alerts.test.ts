@@ -22,6 +22,7 @@ function iso(offsetMs: number, base = Date.now()): string {
 }
 
 afterAll(async () => {
+  await prisma.notification.deleteMany({ where: { userId: { in: users } } }).catch(() => undefined);
   await prisma.task.deleteMany({ where: { eventId: { in: mine } } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: mine } } });
   await prisma.outboxEvent.deleteMany({
@@ -63,14 +64,15 @@ describe('events/deadline-alerts', () => {
     expect(alerts.find((alert) => alert.taskId === overdue.taskId)?.kind).toBe('overdue');
     expect(alerts.find((alert) => alert.taskId === soon.taskId)?.kind).toBe('dueSoon');
 
-    // The stub logs ids only — never titles.
+    // P13-T04: the job fans out through notify() — once per task per kind per day.
     logged.length = 0;
     const result = await handleDeadlineAlerts(fakeLog, now);
     expect(result.dueSoon).toBeGreaterThanOrEqual(1);
     expect(result.overdue).toBeGreaterThanOrEqual(1);
-    expect(JSON.stringify(logged)).toContain(overdue.taskId);
-    expect(JSON.stringify(logged)).toContain(soon.taskId);
-    expect(JSON.stringify(logged)).not.toContain('Overdue');
+    const rows = await prisma.notification.findMany({ where: { userId: host.userId, type: 'task.deadline' } });
+    expect(rows.map((row) => row.title).sort()).toEqual(['Due soon: Soon', 'Overdue: Overdue']);
+    const again = await handleDeadlineAlerts(fakeLog, now);
+    expect(again).toMatchObject({ dueSoon: 0, overdue: 0 });
 
     // Closed events never alert: cancel and re-scan.
     await cancelEvent(host, { eventId });

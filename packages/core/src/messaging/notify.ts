@@ -175,7 +175,16 @@ export async function resolveSendChannels(
   notificationId: string,
   urgentHint = false,
   now: Date = new Date(),
-): Promise<{ id: string; userId: string; type: string; title: string; body: string; url: string; channels: ChannelPrefs; urgent: boolean } | null> {
+): Promise<{
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  url: string;
+  channels: ChannelPrefs;
+  urgent: boolean;
+} | null> {
   const row = await prisma.notification.findUnique({
     where: { id: notificationId },
     select: { id: true, userId: true, type: true, title: true, body: true, url: true },
@@ -243,16 +252,57 @@ export async function notificationUnreadCount(actor: UserActor): Promise<number>
   return prisma.notification.count({ where: { userId: actor.userId, readAt: null } });
 }
 
+/** Exact-once guard: has this user already got this keyed notification?
+ * Handlers pass keys like `payment:<id>:confirmed` so outbox retries and
+ * hourly re-scans never double-notify. */
+export async function alreadyNotified(userId: string, type: string, key: string): Promise<boolean> {
+  const rows = await prisma.notification.findMany({
+    where: { userId, type },
+    orderBy: { createdAt: 'desc' },
+    take: 30,
+    select: { data: true },
+  });
+  return rows.some((row) => (row.data as { key?: unknown } | null)?.key === key);
+}
+
+/** Host-side recipients: the creator plus the event team (P13-T04 fan-out). */
+export async function teamUserIds(eventId: string): Promise<string[]> {
+  const [event, team] = await Promise.all([
+    prisma.event.findUnique({ where: { id: eventId }, select: { createdById: true } }),
+    prisma.eventParticipant.findMany({
+      where: {
+        eventId,
+        removedAt: null,
+        role: { in: ['HOST', 'CO_HOST', 'PLANNER', 'PLANNER_STAFF'] },
+        userId: { not: null },
+      },
+      select: { userId: true },
+    }),
+  ]);
+  return [...new Set([...(event ? [event.createdById] : []), ...team.map((row) => row.userId as string)])];
+}
+
+/** Everyone on a vendor org's roster (owners, admins, staff). */
+export async function orgMemberUserIds(orgId: string): Promise<string[]> {
+  const rows = await prisma.membership.findMany({ where: { orgId }, select: { userId: true } });
+  return [...new Set(rows.map((row) => row.userId))];
+}
+
 const channelSchema = z.boolean();
 
 export const setPreferencesSchema = z.object({
-  channels: z.record(z.string().max(80), z.object({
-    inApp: channelSchema.optional(),
-    push: channelSchema.optional(),
-    email: channelSchema.optional(),
-    sms: channelSchema.optional(),
-    whatsapp: channelSchema.optional(),
-  })).optional(),
+  channels: z
+    .record(
+      z.string().max(80),
+      z.object({
+        inApp: channelSchema.optional(),
+        push: channelSchema.optional(),
+        email: channelSchema.optional(),
+        sms: channelSchema.optional(),
+        whatsapp: channelSchema.optional(),
+      }),
+    )
+    .optional(),
   quietStart: z.number().int().min(0).max(1439).nullable().optional(),
   quietEnd: z.number().int().min(0).max(1439).nullable().optional(),
 });

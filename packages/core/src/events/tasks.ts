@@ -148,6 +148,10 @@ export interface DeadlineAlert {
   eventId: string;
   kind: DeadlineKind;
   dueAt: Date;
+  title: string;
+  ownerUserId: string | null;
+  eventName: string;
+  creatorUserId: string;
 }
 
 /**
@@ -164,13 +168,31 @@ export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Prom
       dueAt: { not: null, lte: soon },
       event: { status: { in: ['DRAFT', 'ACTIVE'] } },
     },
-    select: { id: true, eventId: true, dueAt: true },
+    select: {
+      id: true,
+      eventId: true,
+      dueAt: true,
+      title: true,
+      ownerUserId: true,
+      event: { select: { name: true, createdById: true } },
+    },
     orderBy: { dueAt: 'asc' },
     take: 500,
   });
   return rows.flatMap((row) =>
     row.dueAt
-      ? [{ taskId: row.id, eventId: row.eventId, kind: row.dueAt < now ? 'overdue' : 'dueSoon', dueAt: row.dueAt }]
+      ? [
+          {
+            taskId: row.id,
+            eventId: row.eventId,
+            kind: row.dueAt < now ? ('overdue' as const) : ('dueSoon' as const),
+            dueAt: row.dueAt,
+            title: row.title,
+            ownerUserId: row.ownerUserId,
+            eventName: row.event.name,
+            creatorUserId: row.event.createdById,
+          },
+        ]
       : [],
   );
 }
