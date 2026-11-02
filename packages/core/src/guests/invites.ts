@@ -3,7 +3,7 @@ import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize, type Actor, type EventAccess } from '../auth/authorize.js';
 import { resolveEventAccess } from '../events/access.js';
-import { toE164 } from '../shared/contact.js';
+import { normaliseEmail, toE164 } from '../shared/contact.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -65,6 +65,8 @@ export async function toggleSharedLink(
 export const sharedLinkRsvpSchema = z.object({
   eventSlug: z.string().min(1).max(120),
   name: z.string().trim().min(1).max(120),
+  /** Required (D-X36): the guest's pass and event updates go here. */
+  email: z.string().trim().min(3, 'emailRequired').max(254),
   phone: z.string().trim().max(32).optional(),
 });
 
@@ -82,6 +84,12 @@ export async function sharedLinkRsvp(input: z.infer<typeof sharedLinkRsvpSchema>
     throw new NotFoundError('Event not found', { slug: input.eventSlug });
   }
   if (!event.sharedLinkEnabled) throw new ConflictError('RSVP is closed for this event', { key: 'rsvpClosed' });
+  let email: string;
+  try {
+    email = normaliseEmail(input.email);
+  } catch {
+    throw new ValidationError('Invalid email', { field: 'email', key: 'invalidEmail' });
+  }
   let phone: string | null = null;
   if (input.phone) {
     try {
@@ -96,6 +104,7 @@ export async function sharedLinkRsvp(input: z.infer<typeof sharedLinkRsvpSchema>
         eventId: event.id,
         name: input.name,
         phone,
+        email,
         source: 'SHARED_LINK',
         rsvp: 'YES',
         respondedAt: new Date(),

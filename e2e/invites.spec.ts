@@ -130,6 +130,7 @@ test('UF-09: shared link RSVP creates a guest; toggle off closes it', async ({ p
   const anon = await anonPage(browser);
   await anon.goto(shareUrl);
   await anon.getByLabel('Your name').fill('Walk-in Wale');
+  await anon.getByLabel('Email', { exact: true }).fill('wale@example.com');
   await anon.getByRole('button', { name: "I'm coming" }).click();
   await expect(anon.getByText("You're on the list")).toBeVisible({ timeout: 15000 });
   await anon.context().close();

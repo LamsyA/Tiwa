@@ -25,7 +25,14 @@ export function ShareSection({
   const [copied, setCopied] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | undefined>();
-  const [canShare] = React.useState(() => typeof navigator !== 'undefined' && 'share' in navigator);
+  const [canShare, setCanShare] = React.useState(false);
+  // Effect, not render-time detection: server renders without the button and
+  // the first client render must match it, or React throws a hydration
+  // mismatch on browsers with the Web Share API.
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: first render must match server (no button) to avoid hydration mismatch; enable after mount.
+    if (typeof navigator !== 'undefined' && 'share' in navigator) setCanShare(true);
+  }, []);
 
   async function copy() {
     await navigator.clipboard.writeText(shareUrl);

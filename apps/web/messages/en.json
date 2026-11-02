@@ -301,7 +301,30 @@
       "momentsView": "View gallery",
       "teamChat": "Team chat",
       "moneyAlerts": "{count, plural, one {# alert} other {# alerts}}",
-      "moneyOpen": "Open budget"
+      "moneyOpen": "Open budget",
+      "quickLinks": "Event sections",
+      "quick": {
+        "plan": "Plan",
+        "guests": "Guests",
+        "invites": "Invites",
+        "vendors": "Vendors",
+        "money": "Money"
+      },
+      "vendorsOpen": "Open",
+      "vendorStage": {
+        "quoted": "Quoted",
+        "booked": "Booked",
+        "confirmed": "Confirmed"
+      },
+      "vendorsEmpty": "No vendors yet. Find caterers, DJs, venues and more, compare them and request quotes.",
+      "vendorsFind": "Find vendors",
+      "rsvp": {
+        "YES": "Coming",
+        "MAYBE": "Maybe",
+        "NO": "Can't come"
+      },
+      "guestsEmpty": "No guests yet. Add them with their email so invites reach them.",
+      "guestsOpen": "{count, plural, =0 {Add guests} one {See # guest} other {See all # guests}}"
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
@@ -718,7 +741,7 @@
         "title": "Add a guest",
         "name": "Name",
         "phone": "Phone (optional)",
-        "email": "Email (optional)",
+        "email": "Email",
         "groups": "Groups",
         "save": "Add guest",
         "fromContacts": "Pick from contacts",
@@ -795,7 +818,8 @@
         "groupNotFound": "That group doesn't exist",
         "mergeSelf": "Pick different guests to merge",
         "invalidFileKey": "That upload isn't valid — please try again",
-        "tableNotFound": "That table doesn't exist"
+        "tableNotFound": "That table doesn't exist",
+        "emailRequired": "Add an email so we can send them the invite"
       },
       "rsvpLabels": {
         "YES": "Yes",
@@ -854,7 +878,7 @@
       },
       "share": {
         "title": "Share one link",
-        "body": "For smaller gatherings: anyone with this link can RSVP with just a name. No personal invites needed.",
+        "body": "For smaller gatherings: anyone with this link can RSVP with their name and email. No personal invites needed.",
         "linkLabel": "Event link",
         "copy": "Copy link",
         "copied": "Copied",
@@ -1004,7 +1028,26 @@
         "copied": "Copied",
         "revoke": "Revoke & issue new link",
         "revoked": "New link issued — the old one no longer works."
-      }
+      },
+      "heroTitle": "Invite your guests",
+      "heroBody": "Send personal invites by email, WhatsApp or SMS, and watch replies come in live.",
+      "stat": {
+        "guests": "Guests",
+        "sent": "Invites sent",
+        "yes": "Coming",
+        "maybe": "Maybe",
+        "no": "Can't come"
+      },
+      "testInbox": "Test mode: emails go to the local test inbox (Mailpit) until an email provider is set up, so guests won't receive them yet.",
+      "unreachable": "{count, plural, one {# guest has} other {# guests have}} no email or phone, so they can only get a link.",
+      "addContacts": "Add contacts",
+      "stepN": "Step {n}",
+      "steps": {
+        "add": "Add guests with emails",
+        "send": "Send invites",
+        "track": "Track replies"
+      },
+      "settingsHeading": "Invitation settings"
     },
     "momentsPage": {
       "title": "Moments",
@@ -1153,8 +1196,11 @@
         "invalidPhone": "That phone number doesn't look right — or leave it blank",
         "rsvpClosed": "This link no longer accepts replies. Please contact the host.",
         "rateLimited": "Too many replies from here — try again later",
-        "generic": "We couldn't save that. Please try again."
-      }
+        "generic": "We couldn't save that. Please try again.",
+        "invalidEmail": "Enter a valid email address"
+      },
+      "email": "Email",
+      "emailHint": "We'll send your pass and any updates here."
     }
   },
   "invite": {

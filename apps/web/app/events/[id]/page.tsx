@@ -3,6 +3,7 @@ import {
   authorize,
   budgetAlerts,
   budgetSummary,
+  eventOrders,
   galleryCodeForEvent,
   getEventOverview,
   listPaymentSchedule,
@@ -19,7 +20,8 @@ import {
   StatusPill,
   buttonClasses,
 } from '@tiwa/ui';
-import { CalendarDays, MapPin } from 'lucide-react';
+import { prisma } from '@tiwa/db';
+import { CalendarDays, ClipboardList, Mail, MapPin, Store, Users, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
@@ -56,7 +58,7 @@ export default async function EventOverviewPage({
       return false;
     }
   })();
-  const [galleryCode, money] = await Promise.all([
+  const [galleryCode, money, orders, replies] = await Promise.all([
     event.momentsEnabled ? galleryCodeForEvent(id) : Promise.resolve(null),
     canSeeMoney
       ? Promise.all([
@@ -64,7 +66,18 @@ export default async function EventOverviewPage({
           listPaymentSchedule(ctx.actor, { eventId: id }, access),
         ])
       : Promise.resolve(null),
+    eventOrders(ctx.actor, { eventId: id }).catch(() => null),
+    prisma.guest.groupBy({ by: ['rsvp'], where: { eventId: id, deletedAt: null }, _count: { _all: true } }),
   ]);
+  const replyCount = (key: string) => replies.find((row) => row.rsvp === key)?._count._all ?? 0;
+  const guestTotal = replies.reduce((sum, row) => sum + row._count._all, 0);
+  const quickLinks = [
+    { key: 'plan', href: `/events/${id}/plan`, icon: ClipboardList },
+    { key: 'guests', href: `/events/${id}/guests`, icon: Users },
+    ...(invitesOn ? [{ key: 'invites', href: `/events/${id}/invites`, icon: Mail }] : []),
+    { key: 'vendors', href: `/events/${id}/vendors`, icon: Store },
+    ...(canSeeMoney ? [{ key: 'money', href: `/events/${id}/money`, icon: Wallet }] : []),
+  ];
   const moneyAlerts = money ? budgetAlerts(money[0], money[1]).length : 0;
   const now = new Date();
 
@@ -145,6 +158,21 @@ export default async function EventOverviewPage({
             </p>
           )}
         </header>
+
+        <nav aria-label={t('overview.quickLinks')} className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+          {quickLinks.map(({ key, href, icon: Icon }) => (
+            <Link
+              key={key}
+              href={href}
+              className="border-border/70 bg-surface group flex flex-col items-center gap-2 rounded-2xl border px-2 py-3 text-center text-sm font-medium transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-1)]"
+            >
+              <span className="bg-brand-soft text-brand-strong flex size-10 items-center justify-center rounded-xl transition group-hover:scale-105">
+                <Icon aria-hidden className="size-5" />
+              </span>
+              {t(`overview.quick.${key}`)}
+            </Link>
+          ))}
+        </nav>
 
         <div className="grid gap-4 lg:grid-cols-12">
           <Card className="flex items-center gap-5 p-5 lg:col-span-4">
@@ -234,20 +262,71 @@ export default async function EventOverviewPage({
             </Card>
           )}
 
-          <Card className="flex flex-col gap-2 p-5 lg:col-span-4">
-            <h2 className="font-display text-lg font-bold">{t('overview.vendorsHeading')}</h2>
-            <p className="text-muted text-sm">{t('overview.vendorsComingSoon')}</p>
+          <Card className="flex flex-col gap-3 p-5 lg:col-span-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-lg font-bold">{t('overview.vendorsHeading')}</h2>
+              <Link href={`/events/${id}/vendors`} className="text-brand-strong text-sm font-medium">
+                {t('overview.vendorsOpen')}
+              </Link>
+            </div>
+            {orders && orders.rows.some((row) => row.stage !== 'closed') ? (
+              <>
+                <dl className="grid grid-cols-3 gap-2 text-center">
+                  {(['quoted', 'booked', 'confirmed'] as const).map((stage) => (
+                    <div key={stage} className="bg-surface-2 rounded-2xl p-2">
+                      <dd className="font-display text-xl font-bold">{orders.counts[stage]}</dd>
+                      <dt className="text-muted text-xs">{t(`overview.vendorStage.${stage}`)}</dt>
+                    </div>
+                  ))}
+                </dl>
+                <ul className="flex flex-col gap-1.5 text-sm">
+                  {orders.rows
+                    .filter((row) => row.stage !== 'closed')
+                    .slice(0, 3)
+                    .map((row) => (
+                      <li key={row.id} className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 truncate font-medium">{row.counterparty}</span>
+                        <span className="text-muted shrink-0 text-xs">{row.category}</span>
+                      </li>
+                    ))}
+                </ul>
+              </>
+            ) : (
+              <>
+                <p className="text-muted text-sm">{t('overview.vendorsEmpty')}</p>
+                <Link
+                  href={`/events/${id}/vendors`}
+                  className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'w-fit rounded-full' })}
+                >
+                  {t('overview.vendorsFind')}
+                </Link>
+              </>
+            )}
           </Card>
 
-          {event.invitesEnabled && (
+          {
             <Card className="flex flex-col gap-2 p-5 lg:col-span-4">
               <h2 className="font-display text-lg font-bold">{t('overview.guestsHeading')}</h2>
               {event.expectedGuests !== null && (
                 <p className="font-medium">{t('overview.guestsExpected', { count: event.expectedGuests })}</p>
               )}
-              <p className="text-muted text-sm">{t('overview.guestsComingSoon')}</p>
+              {guestTotal > 0 ? (
+                <dl className="grid grid-cols-3 gap-2 text-center">
+                  {(['YES', 'MAYBE', 'NO'] as const).map((key) => (
+                    <div key={key} className="bg-surface-2 rounded-2xl p-2">
+                      <dd className="font-display text-xl font-bold">{replyCount(key)}</dd>
+                      <dt className="text-muted text-xs">{t(`overview.rsvp.${key}`)}</dt>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="text-muted text-sm">{t('overview.guestsEmpty')}</p>
+              )}
+              <Link href={`/events/${id}/guests`} className="text-brand-strong text-sm font-medium">
+                {t('overview.guestsOpen', { count: guestTotal })}
+              </Link>
             </Card>
-          )}
+          }
 
           {event.momentsEnabled && (
             <Card className="flex flex-col gap-2 p-5 lg:col-span-4">

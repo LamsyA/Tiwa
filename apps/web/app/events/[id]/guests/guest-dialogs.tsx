@@ -119,6 +119,20 @@ export function AddGuestDialog({
             />
           )}
         </FieldShell>
+        <FieldShell id="guest-email" label={t('addDialog.email')}>
+          {(describedBy) => (
+            <Input
+              id="guest-email"
+              aria-describedby={describedBy}
+              value={email}
+              type="email"
+              required
+              inputMode="email"
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          )}
+        </FieldShell>
         <FieldShell id="guest-phone" label={t('addDialog.phone')}>
           {(describedBy) => (
             <Input
@@ -128,18 +142,6 @@ export function AddGuestDialog({
               inputMode="tel"
               autoComplete="tel"
               onChange={(event) => setPhone(event.target.value)}
-            />
-          )}
-        </FieldShell>
-        <FieldShell id="guest-email" label={t('addDialog.email')}>
-          {(describedBy) => (
-            <Input
-              id="guest-email"
-              aria-describedby={describedBy}
-              value={email}
-              inputMode="email"
-              autoComplete="email"
-              onChange={(event) => setEmail(event.target.value)}
             />
           )}
         </FieldShell>
@@ -678,8 +680,14 @@ export function ContactsButton({
 }) {
   const t = useTranslations('events.guests');
   const { run, busy, error } = useRun();
-  // Feature-detected on first render (client-only component): unsupported browsers get nothing.
-  const [supported] = React.useState(contactsSupported);
+  // Effect, not render-time detection: server renders nothing and the first
+  // client render must match it, or React throws a hydration mismatch on
+  // browsers with the Contacts API.
+  const [supported, setSupported] = React.useState(false);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: first render must match server (null) to avoid hydration mismatch; enable after mount.
+    setSupported(contactsSupported());
+  }, []);
   const [picked, setPicked] = React.useState<number | undefined>();
   if (!supported) return null;
 

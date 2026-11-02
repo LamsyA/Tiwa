@@ -66,6 +66,17 @@ export async function addGuests(
     input.eventId,
     input.guests.flatMap((guest) => guest.groupIds),
   );
+  // D-X36: a guest added by hand needs an email so invites and updates can reach them; phone is optional.
+  if (input.source === 'MANUAL') {
+    for (const guest of input.guests) {
+      if (!guest.email) throw new ValidationError('Email is required', { field: 'email', key: 'emailRequired' });
+      try {
+        normaliseEmail(guest.email);
+      } catch {
+        throw new ValidationError('Invalid email', { field: 'email', key: 'invalidEmail' });
+      }
+    }
+  }
   const warnings: AddGuestsWarning[] = [];
   const rows = input.guests.map((guest, index) => {
     let phone: string | null = null;

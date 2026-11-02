@@ -2,6 +2,7 @@ import { prisma } from '@tiwa/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { addParticipant } from '../events/members.js';
 import { createEventDraft } from '../events/commands.js';
+import { ValidationError } from '../shared/errors.js';
 import {
   addGuests,
   createGroup,
@@ -57,6 +58,24 @@ describe('guests', () => {
     const { guests } = await listGuests(host, { eventId });
     expect(guests.map((guest) => guest.phone).sort()).toEqual(['+2348031234567', '+2348039876543', null].sort());
     expect(guests.find((guest) => guest.phone === '+2348039876543')?.name).toBe('+2348039876543');
+  });
+
+  it('requires a valid email when a guest is added by hand; phone stays optional (D-X36)', async () => {
+    const host = await makeHost();
+    const { eventId } = await createEventDraft(host, { type: 'birthday' });
+    events.push(eventId);
+    await expect(
+      addGuests(host, { eventId, source: 'MANUAL', guests: [{ name: 'No Email', groupIds: [] }] }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    await expect(
+      addGuests(host, { eventId, source: 'MANUAL', guests: [{ name: 'Bad', email: 'nope', groupIds: [] }] }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    const ok = await addGuests(host, {
+      eventId,
+      source: 'MANUAL',
+      guests: [{ name: 'Ada', email: 'ada@example.com', groupIds: [] }],
+    });
+    expect(ok.created).toHaveLength(1);
   });
 
   it('rejects unknown groups and enforces guests.manage', async () => {

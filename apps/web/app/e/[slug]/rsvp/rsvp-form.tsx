@@ -9,6 +9,7 @@ export function RsvpForm({ slug }: { slug: string }) {
   const t = useTranslations('shared.rsvp');
   const te = useTranslations('shared.rsvp.errors');
   const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | undefined>();
@@ -32,11 +33,12 @@ export function RsvpForm({ slug }: { slug: string }) {
           event.preventDefault();
           setBusy(true);
           setError(undefined);
-          void submitSharedRsvp({ eventSlug: slug, name, ...(phone ? { phone } : {}) }).then((result) => {
+          void submitSharedRsvp({ eventSlug: slug, name, email, ...(phone ? { phone } : {}) }).then((result) => {
             setBusy(false);
             if (!result.ok) {
               const key = result.fieldErrors ? Object.values(result.fieldErrors).flat()[0] : undefined;
               if (key === 'invalidPhone') setError(te('invalidPhone'));
+              else if (key === 'invalidEmail' || key === 'emailRequired') setError(te('invalidEmail'));
               else if (result.code === 'RATE_LIMITED') setError(te('rateLimited'));
               else if (result.code === 'CONFLICT') setError(te('rsvpClosed'));
               else setError(te('generic'));
@@ -55,6 +57,20 @@ export function RsvpForm({ slug }: { slug: string }) {
               value={name}
               autoComplete="name"
               onChange={(event) => setName(event.target.value)}
+              required
+            />
+          )}
+        </FieldShell>
+        <FieldShell id="rsvp-email" label={t('email')} hint={t('emailHint')}>
+          {(describedBy) => (
+            <Input
+              id="rsvp-email"
+              aria-describedby={describedBy}
+              type="email"
+              value={email}
+              inputMode="email"
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
               required
             />
           )}

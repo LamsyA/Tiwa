@@ -63,9 +63,19 @@ describe('sharedLinkRsvp', () => {
     await toggleSharedLink(host, { eventId, enabled: true });
     const { slug } = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
 
-    const { guestId } = await sharedLinkRsvp({ eventSlug: slug, name: 'Walk-in Wale', phone: '08031234567' });
+    const { guestId } = await sharedLinkRsvp({
+      eventSlug: slug,
+      name: 'Walk-in Wale',
+      email: 'Wale@Example.com',
+      phone: '08031234567',
+    });
     const guest = await prisma.guest.findUniqueOrThrow({ where: { id: guestId } });
-    expect(guest).toMatchObject({ source: 'SHARED_LINK', rsvp: 'YES', phone: '+2348031234567' });
+    expect(guest).toMatchObject({
+      source: 'SHARED_LINK',
+      rsvp: 'YES',
+      phone: '+2348031234567',
+      email: 'wale@example.com',
+    });
     expect(guest.inviteToken).toBeTruthy();
   });
 
@@ -75,13 +85,19 @@ describe('sharedLinkRsvp', () => {
     events.push(eventId);
     const { slug } = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
 
-    await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x' })).rejects.toThrow(/closed/);
-    await expect(sharedLinkRsvp({ eventSlug: 'no-such-slug', name: 'x' })).rejects.toThrow(/not found/i);
+    await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x', email: 'x@example.com' })).rejects.toThrow(/closed/);
+    await expect(sharedLinkRsvp({ eventSlug: 'no-such-slug', name: 'x', email: 'x@example.com' })).rejects.toThrow(
+      /not found/i,
+    );
     await toggleSharedLink(host, { eventId, enabled: true });
-    await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x', phone: '123' })).rejects.toThrow();
+    await expect(
+      sharedLinkRsvp({ eventSlug: slug, name: 'x', email: 'x@example.com', phone: '123' }),
+    ).rejects.toThrow();
+    // D-X36: email is required and must be valid.
+    await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x', email: 'not-an-email' })).rejects.toThrow();
     // …and turning it back off closes RSVP again.
     await toggleSharedLink(host, { eventId, enabled: false });
-    await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x' })).rejects.toThrow(/closed/);
+    await expect(sharedLinkRsvp({ eventSlug: slug, name: 'x', email: 'x@example.com' })).rejects.toThrow(/closed/);
   });
 });
 

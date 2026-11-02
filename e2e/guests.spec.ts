@@ -74,6 +74,7 @@ test('UF-06-1: manual add, paste add, search, bulk delete', async ({ page }) => 
   await page.getByRole('button', { name: 'Type names' }).click();
   await page.getByLabel('Name', { exact: true }).fill('Adaeze Okafor');
   await page.getByLabel('Phone (optional)').fill('08031234567');
+  await page.getByLabel('Email', { exact: true }).fill('guest1-' + Date.now() + '@example.com');
   await page.getByRole('button', { name: 'Add guest' }).click();
   await see(page, 'Adaeze Okafor');
 
@@ -126,6 +127,7 @@ test('UF-06-2: groups, assignment, duplicate merge', async ({ page }) => {
   await page.getByRole('button', { name: 'Type names' }).click();
   await page.getByLabel('Name', { exact: true }).fill('Group Member');
   await page.getByLabel('Phone (optional)').fill('08035551111');
+  await page.getByLabel('Email', { exact: true }).fill('guest2-' + Date.now() + '@example.com');
   await page.getByRole('button', { name: 'Add guest' }).click();
   await see(page, 'Group Member');
   await page.getByRole('checkbox', { name: 'Select row 1' }).filter({ visible: true }).first().check();
@@ -138,6 +140,7 @@ test('UF-06-2: groups, assignment, duplicate merge', async ({ page }) => {
   await page.getByRole('button', { name: 'Add guests' }).click();
   await page.getByLabel('Name', { exact: true }).fill('Group Member Twin');
   await page.getByLabel('Phone (optional)').fill('08035551111');
+  await page.getByLabel('Email', { exact: true }).fill('guest3-' + Date.now() + '@example.com');
   await page.getByRole('button', { name: 'Add guest' }).click();
   await expect(page.getByText('Possible duplicates')).toBeVisible({ timeout: 15000 });
   await page
@@ -154,6 +157,7 @@ test('UF-06-3: view-only member sees redacted contacts', async ({ page, browser 
   await page.getByRole('button', { name: 'Type names' }).click();
   await page.getByLabel('Name', { exact: true }).fill('Private Guest');
   await page.getByLabel('Phone (optional)').fill('08031234567');
+  await page.getByLabel('Email', { exact: true }).fill('guest4-' + Date.now() + '@example.com');
   await page.getByRole('button', { name: 'Add guest' }).click();
   await see(page, 'Private Guest');
 

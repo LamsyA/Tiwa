@@ -16,7 +16,7 @@ export default async function GuestsPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(id, '/guests', 'event.view');
+  const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '/guests', 'event.view');
   const t = await getTranslations('events.guests');
   if (!allowed) {
     const tf = await getTranslations('events');
@@ -27,6 +27,7 @@ export default async function GuestsPage({
         access={access}
         invitesOn={invitesOn}
         momentsOn={momentsOn}
+        ticketsOn={ticketsOn}
         active="guests"
         title={t('title')}
       >
@@ -44,28 +45,28 @@ export default async function GuestsPage({
     }
   })();
 
-  const rsvp =
-    query.rsvp === 'YES' || query.rsvp === 'NO' || query.rsvp === 'MAYBE' || query.rsvp === 'NONE'
-      ? query.rsvp
-      : undefined;
-  const [counts, listed, groups, tables, report, event] = await Promise.all([
+  const rsvp = (['YES', 'NO', 'MAYBE', 'NONE'] as const).find((candidate) => query.rsvp === candidate);
+  // Per-tab fetching: only load the data the open tab renders. Counts and
+  // groups always load (they feed the header counters, group filter and the
+  // add-guest dialog); the 500-row guest list only on list/tables, tables
+  // only on tables, the aggregate report only on headcount.
+  const tab = query.tab === 'groups' || query.tab === 'tables' || query.tab === 'headcount' ? query.tab : 'list';
+  const listFilter = {
+    eventId: id,
+    ...(query.q ? { search: query.q } : {}),
+    ...(query.group ? { groupId: query.group } : {}),
+    ...(rsvp ? { rsvp } : {}),
+    ...(query.checkedIn === 'yes' ? { checkedIn: true } : query.checkedIn === 'no' ? { checkedIn: false } : {}),
+  };
+  const [counts, groups, event, listed, tables, report] = await Promise.all([
     countGuests(ctx.actor, id, access),
-    listGuests(
-      ctx.actor,
-      {
-        eventId: id,
-        ...(query.q ? { search: query.q } : {}),
-        ...(query.group ? { groupId: query.group } : {}),
-        ...(rsvp ? { rsvp } : {}),
-        ...(query.checkedIn === 'yes' ? { checkedIn: true } : query.checkedIn === 'no' ? { checkedIn: false } : {}),
-      },
-      access,
-    ),
     listGroups(ctx.actor, id, access),
-    listTables(ctx.actor, id, access),
-    canManage ? headcount(ctx.actor, id, access) : Promise.resolve(null),
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } }),
+    tab === 'list' || tab === 'tables' ? listGuests(ctx.actor, listFilter, access) : Promise.resolve(null),
+    tab === 'tables' ? listTables(ctx.actor, id, access) : Promise.resolve(null),
+    tab === 'headcount' && canManage ? headcount(ctx.actor, id, access) : Promise.resolve(null),
   ]);
+  const guests = listed?.guests ?? [];
 
   return (
     <EventFrame
@@ -74,6 +75,7 @@ export default async function GuestsPage({
       access={access}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
       active="guests"
       title={event.name}
     >
@@ -81,9 +83,9 @@ export default async function GuestsPage({
         eventId={id}
         canManage={canManage}
         counts={counts}
-        guests={listed.guests}
-        total={listed.total}
-        redacted={listed.redacted}
+        guests={guests}
+        total={listed?.total ?? 0}
+        redacted={listed?.redacted ?? false}
         groups={groups}
         filters={{
           q: query.q ?? '',
@@ -91,8 +93,8 @@ export default async function GuestsPage({
           rsvp: query.rsvp ?? '',
           checkedIn: query.checkedIn ?? '',
         }}
-        tab={query.tab === 'groups' || query.tab === 'tables' || query.tab === 'headcount' ? query.tab : 'list'}
-        tables={tables}
+        tab={tab}
+        tables={tables ?? []}
         report={report}
         appUrl={env.APP_URL.replace(/\/$/, '')}
       />

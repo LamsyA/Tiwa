@@ -371,3 +371,15 @@ Template:
 - Decision: A business can publish its public profile at any time, even with an empty profile; `publishProfile` no longer enforces profile + 6 photos + 1 package (replaces the UF-13-1 publish gate). The checklist stays as guidance ("finish these any time; complete profiles get more enquiries"). Sign-out is also in the marketplace top bar (avatar menu for signed-in users, "Sign in" link otherwise).
 - Why: owner request so new vendors can go live straight away.
 - Affects: packages/core marketplace/profile.ts (+ tests), apps/web business profile copy, marketplace-frame.
+
+- ID: D-X35
+- Status: LOCKED (owner, 2026-11-02)
+- Decision: Orders are tracked as one list for both sides. `packages/core/src/orders/tracker.ts` folds quote requests, quotes and bookings into one row per order at its furthest stage (requested → quoted → booked (payment due) → confirmed → delivered → completed; cancelled/declined/expired = closed). Vendors see their clients (`vendorOrders`); hosts and planners see the businesses across their events (`myEventOrders`, `eventOrders`). Shown on /orders (new nav item for every role; vendor tab bar swaps Bookings for Orders), on every home dashboard, on the event vendors page and the event overview. Businesses are findable by name or @handle (slug) in marketplace search and in a new inbox "New chat" lookup (`findBusinesses`), so anyone can message a vendor without browsing the marketplace; ties in the default sort go to the newest business and a "Just joined" strip surfaces new listings.
+- Why: owner request: vendors could not see who asked or booked them, booking status was hard to follow, and vendors were hard to find and message.
+- Affects: packages/core orders + marketplace/search + shortlist, packages/ui shell nav, apps/web /orders, /home, /inbox, event vendors, compare, overview.
+
+- ID: D-X36
+- Status: LOCKED (owner, 2026-11-02)
+- Decision: A guest added by hand must have a valid email; phone is optional. Anyone RSVPing through the shared link gives name + email (phone optional) and the email is stored on the guest. Bulk paste/CSV/contacts still import rows without email (with warnings) so long lists never drop people; the invites page flags guests with no email or phone. Locally (EMAIL_PROVIDER=fake) invite emails go to Mailpit and the invites page says so; real delivery needs EMAIL_PROVIDER=resend + RESEND_API_KEY.
+- Why: owner request so invitations and updates can always reach guests.
+- Affects: packages/core guests.ts + invites.ts (+ tests), add-guest dialog, public RSVP form, invites page, e2e guests/invites specs.
