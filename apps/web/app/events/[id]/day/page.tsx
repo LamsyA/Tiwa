@@ -1,9 +1,12 @@
-import { authorize, dayContacts, dayIncidents, runOfShow } from '@tiwa/core';
+import { env } from '@tiwa/config';
+import { authorize, dayContacts, dayIncidents, runOfShow, utcToZoned } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Card } from '@tiwa/ui';
-import { AlertTriangle, CheckCircle2, Clock, Radio, Truck } from 'lucide-react';
+import { Card, buttonClasses } from '@tiwa/ui';
+import { AlertTriangle, CheckCircle2, Clock, ExternalLink, Eye, ListChecks, Radio, Truck } from 'lucide-react';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
+import { CopyLink } from './copy-link.js';
 import { DayEditor } from './day-editor.js';
 
 /** Request time, outside render so the purity lint is satisfied. */
@@ -62,7 +65,21 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
       select: { id: true, name: true },
     }),
   ]);
-  const event = await prisma.event.findUniqueOrThrow({ where: { id }, select: { timezone: true } });
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id },
+    select: {
+      timezone: true,
+      slug: true,
+      startsAt: true,
+      days: { orderBy: { date: 'asc' }, take: 1, select: { date: true } },
+    },
+  });
+  const agendaUrl = `${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}/agenda`;
+  const agendaOpensOn = event.days[0]?.date ?? event.startsAt;
+  const agendaOpen =
+    agendaOpensOn !== null &&
+    utcToZoned(new Date(currentTime()), event.timezone).date >=
+      (event.days[0] ? event.days[0].date.toISOString().slice(0, 10) : utcToZoned(agendaOpensOn, event.timezone).date);
   const items = day?.items ?? [];
   const nowMs = currentTime();
   const live = items.find((row) => row.status === 'STARTED');
@@ -105,6 +122,70 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
       title={t('title')}
     >
       <div className="flex flex-col gap-4 py-2">
+        {items.length === 0 && (
+          <section className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-5 sm:p-7">
+            <div aria-hidden className="bg-brand/10 absolute -top-20 -right-20 size-56 rounded-full blur-3xl" />
+            <span className="bg-brand-soft text-brand-strong flex size-11 items-center justify-center rounded-2xl">
+              <ListChecks aria-hidden className="size-5" />
+            </span>
+            <h2 className="font-display mt-3 text-2xl font-bold">{t('guide.heading')}</h2>
+            <p className="text-muted mt-1 max-w-2xl text-sm">{t('guide.body')}</p>
+            <ol className="mt-4 grid gap-2 sm:grid-cols-3">
+              {(['step1', 'step2', 'step3'] as const).map((key, index) => (
+                <li key={key} className="bg-bg ring-border/70 flex gap-3 rounded-2xl p-3 text-sm ring-1">
+                  <span className="bg-text text-bg flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                    {index + 1}
+                  </span>
+                  {t(`guide.${key}`)}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+        <section className="border-border/70 bg-surface flex flex-col gap-3 rounded-3xl border p-4 sm:flex-row sm:items-center sm:p-5">
+          <span className="bg-brand-soft text-brand-strong flex size-11 shrink-0 items-center justify-center rounded-2xl">
+            <Eye aria-hidden className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display flex items-center gap-2 font-bold">
+              {t('share.heading')}
+              {agendaOpen && (
+                <span className="bg-danger inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white">
+                  <span className="size-1.5 animate-pulse rounded-full bg-white" />
+                  LIVE
+                </span>
+              )}
+            </h2>
+            <p className="text-muted text-sm">
+              {agendaOpen
+                ? t('share.bodyOpen')
+                : agendaOpensOn
+                  ? t('share.body', {
+                      date: new Intl.DateTimeFormat('en', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        timeZone: event.days[0] ? 'UTC' : event.timezone,
+                      }).format(agendaOpensOn),
+                    })
+                  : t('share.bodyNoDate')}
+            </p>
+            <p className="text-brand-strong mt-1 text-xs font-medium">
+              {t('share.count', { count: items.filter((row) => row.isPublic).length })}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <CopyLink url={agendaUrl} />
+            <Link
+              href={`/e/${event.slug}/agenda`}
+              target="_blank"
+              className={buttonClasses({ variant: 'secondary', size: 'sm' })}
+            >
+              <ExternalLink aria-hidden className="size-4" />
+              {t('share.open')}
+            </Link>
+          </div>
+        </section>
         {items.length > 0 && (
           <section
             className="relative overflow-hidden rounded-3xl p-5 text-white shadow-[var(--shadow-2)] sm:p-7"

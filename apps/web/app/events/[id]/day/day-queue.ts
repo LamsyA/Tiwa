@@ -23,7 +23,7 @@ import {
 export type DayMutation =
   | { kind: 'status'; itemId: string; status: 'PLANNED' | 'STARTED' | 'DONE' | 'SKIPPED' }
   | { kind: 'late'; itemId: string; lateByMin: number }
-  | { kind: 'item-create'; title: string; startsAt: string; durationMin: number }
+  | { kind: 'item-create'; title: string; startsAt: string; durationMin: number; isPublic?: boolean }
   | {
       kind: 'item-update';
       itemId: string;
@@ -32,6 +32,7 @@ export type DayMutation =
       durationMin: number;
       ownerUserId: string | null;
       ownerOrgId: string | null;
+      isPublic?: boolean;
     }
   | { kind: 'item-delete'; itemId: string }
   | { kind: 'dep-add'; itemId: string; dependsOnId: string }
@@ -122,6 +123,7 @@ async function runMutation(eventId: string, mutation: DayMutation): Promise<bool
           title: mutation.title,
           startsAt: mutation.startsAt,
           durationMin: mutation.durationMin,
+          ...(mutation.isPublic !== undefined ? { isPublic: mutation.isPublic } : {}),
         })
       ).ok;
     case 'item-update':
@@ -134,6 +136,7 @@ async function runMutation(eventId: string, mutation: DayMutation): Promise<bool
           durationMin: mutation.durationMin,
           ownerUserId: mutation.ownerUserId,
           ownerOrgId: mutation.ownerOrgId,
+          ...(mutation.isPublic !== undefined ? { isPublic: mutation.isPublic } : {}),
         })
       ).ok;
     case 'item-delete':

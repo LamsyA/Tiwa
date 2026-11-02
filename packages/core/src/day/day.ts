@@ -25,6 +25,7 @@ export const createRunItemSchema = z.object({
   durationMin: z.number().int().min(5).max(1440).optional(),
   ownerUserId: userIdSchema.nullable().optional(),
   ownerOrgId: z.string().uuid().nullable().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 async function checkOwner(eventId: string, ownerUserId?: string | null, ownerOrgId?: string | null): Promise<void> {
@@ -61,6 +62,7 @@ export async function createRunItem(actor: UserActor, raw: z.input<typeof create
         durationMin: input.durationMin ?? 15,
         ownerUserId: input.ownerUserId ?? null,
         ownerOrgId: input.ownerOrgId ?? null,
+        isPublic: input.isPublic ?? false,
         sortOrder: (last?.sortOrder ?? -1) + 1,
       },
       select: { id: true },
@@ -85,6 +87,7 @@ export const updateRunItemSchema = z.object({
   durationMin: z.number().int().min(5).max(1440).optional(),
   ownerUserId: userIdSchema.nullable().optional(),
   ownerOrgId: z.string().uuid().nullable().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 export async function updateRunItem(actor: UserActor, raw: z.input<typeof updateRunItemSchema>) {
@@ -102,6 +105,7 @@ export async function updateRunItem(actor: UserActor, raw: z.input<typeof update
         ...(input.durationMin !== undefined ? { durationMin: input.durationMin } : {}),
         ...(input.ownerUserId !== undefined ? { ownerUserId: input.ownerUserId } : {}),
         ...(input.ownerOrgId !== undefined ? { ownerOrgId: input.ownerOrgId } : {}),
+        ...(input.isPublic !== undefined ? { isPublic: input.isPublic } : {}),
       },
     });
     await audit(tx, {
@@ -169,6 +173,8 @@ export async function createFromProgramme(actor: UserActor, eventId: string) {
             item.endsAt && item.startsAt
               ? Math.max(5, Math.round((item.endsAt.getTime() - item.startsAt.getTime()) / 60_000))
               : 15,
+          // The programme is the public agenda already, so its items stay public.
+          isPublic: item.isPublic,
           sortOrder: order++,
         },
         select: { id: true },
@@ -742,6 +748,7 @@ export interface RunOfShow {
     ownerOrgId: string | null;
     ownerName: string | null;
     sortOrder: number;
+    isPublic: boolean;
   }[];
   dependencies: { itemId: string; dependsOnId: string }[];
   checkins: { id: string; bookingId: string; userName: string; orgName: string | null; at: Date }[];
@@ -814,6 +821,7 @@ export async function runOfShow(actor: UserActor, eventId: string): Promise<RunO
         (row.ownerOrgId ? orgNames.get(row.ownerOrgId) : undefined) ??
         null,
       sortOrder: row.sortOrder,
+      isPublic: row.isPublic,
     })),
     dependencies: deps,
     checkins: checkins.map((row) => ({

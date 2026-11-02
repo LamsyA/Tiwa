@@ -241,6 +241,21 @@ export default async function InvitePage({
           </div>
         )}
 
+        {page.guest.rsvp !== 'NO' && (
+          <a
+            href={`${base}/e/${page.event.slug}/agenda`}
+            className="bg-surface border-border hover:border-brand flex items-center justify-between gap-3 rounded-lg border p-4 transition"
+          >
+            <span>
+              <span className="block font-medium">{t('agendaTitle')}</span>
+              <span className="text-muted block text-sm">{t('agendaHint')}</span>
+            </span>
+            <span aria-hidden className="text-brand-strong text-lg">
+              →
+            </span>
+          </a>
+        )}
+
         {page.event.allowForwarding && (
           <div className="bg-surface border-border rounded-lg border p-4">
             <p className="text-muted text-sm">{t('forwardHint')}</p>

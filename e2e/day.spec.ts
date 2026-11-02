@@ -62,7 +62,7 @@ async function newConcertEvent(page: Page, name: string): Promise<string> {
 /** Timeline row by its title chip (options in other rows' selects share
  * the same words, so scope to the title span, not the whole row text). */
 function itemRow(page: Page, title: string): Locator {
-  return page.locator('li').filter({ has: page.locator('span.font-medium', { hasText: title }) });
+  return page.locator('li').filter({ has: page.locator('p.font-medium', { hasText: title }) });
 }
 
 async function openSecondPage(context: BrowserContext, url: string, readyText: string): Promise<Page> {
@@ -97,7 +97,7 @@ test('UF-24 run-of-show: edit, late dependants, incidents, contacts, live, offli
 
   // Link: doors wait on sound check (link controls live behind the edit toggle).
   const doors = itemRow(page, 'Doors open');
-  await doors.getByRole('button', { name: 'Owner', exact: true }).click();
+  await doors.getByRole('button', { name: 'Edit', exact: true }).click();
   await doors.getByLabel('Waits on', { exact: true }).selectOption({ label: 'Sound check' });
   await doors.getByRole('button', { name: 'Link', exact: true }).click();
   await expect(doors.getByText('Waits on:')).toContainText('Sound check');
@@ -107,7 +107,7 @@ test('UF-24 run-of-show: edit, late dependants, incidents, contacts, live, offli
   await sound.getByLabel('Minutes late', { exact: true }).fill('20');
   await sound.getByRole('button', { name: 'Mark late', exact: true }).click();
   await expect(page.getByText('Dependants are highlighted')).toBeVisible({ timeout: 30_000 });
-  await expect(sound.getByText('LATE +20m')).toBeVisible();
+  await expect(sound.getByText('Running late +20m')).toBeVisible();
 
   // Incidents + contacts tabs (DAY-04/DAY-05).
   await page.getByRole('tab', { name: 'Incidents' }).click();
@@ -129,7 +129,7 @@ test('UF-24 run-of-show: edit, late dependants, incidents, contacts, live, offli
   const other = await openSecondPage(context, `/events/${eventId}/day`, 'Doors open');
   const otherDoors = itemRow(other, 'Doors open');
   await otherDoors.getByRole('button', { name: 'Done', exact: true }).click();
-  await expect(doors.getByText('DONE', { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(doors.getByText('Done', { exact: true })).toBeVisible({ timeout: 10_000 });
   await other.close();
 
   // Offline: pin the data, then wait until the SW shell actually holds the

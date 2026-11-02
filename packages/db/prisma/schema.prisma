@@ -882,6 +882,8 @@ model RunItem {
   status      RunStatus @default(PLANNED)
   lateByMin   Int       @default(0)
   sortOrder   Int       @default(0)
+  /// Shown to guests on the event's live agenda page (/e/{slug}/agenda) on the day.
+  isPublic    Boolean   @default(false)
   event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   dependents  RunDependency[] @relation("RunDependents")
   dependsOn   RunDependency[] @relation("RunDependsOn")

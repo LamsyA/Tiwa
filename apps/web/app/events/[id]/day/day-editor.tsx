@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Card, Input } from '@tiwa/ui';
+import { Button, Card, Input, Switch } from '@tiwa/ui';
+import { Eye, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
@@ -29,7 +30,16 @@ export interface DayItem {
   ownerOrgId: string | null;
   ownerName: string | null;
   sortOrder: number;
+  isPublic: boolean;
 }
+
+const STATUS_TONE: Record<string, string> = {
+  PLANNED: 'bg-surface-2 text-muted',
+  STARTED: 'bg-brand text-white',
+  DONE: 'bg-success-soft text-success',
+  LATE: 'bg-danger-soft text-danger',
+  SKIPPED: 'bg-surface-2 text-muted line-through',
+};
 
 interface Owner {
   id: string;
@@ -87,6 +97,7 @@ export function DayEditor(props: {
   const [title, setTitle] = useState('');
   const [starts, setStarts] = useState('');
   const [duration, setDuration] = useState('15');
+  const [addPublic, setAddPublic] = useState(true);
   const [justMarked, setJustMarked] = useState<string[]>([]);
   const [now] = useState(() => Date.now());
   const nowRef = useRef<HTMLLIElement | null>(null);
@@ -313,6 +324,10 @@ export function DayEditor(props: {
       {tab === 'mine' && mine.length === 0 && <p className="text-muted text-sm">{t('noMine')}</p>}
       {(tab === 'timeline' || tab === 'mine') && props.canManage && (
         <Card className="flex flex-col gap-3 p-4">
+          <div>
+            <h3 className="font-display text-base font-bold">{t('add.heading')}</h3>
+            <p className="text-muted text-sm">{t('add.sub')}</p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Input
               aria-label={t('itemTitle')}
@@ -342,6 +357,7 @@ export function DayEditor(props: {
                   title: title.trim(),
                   startsAt: new Date(starts).toISOString(),
                   durationMin: /^\d+$/.test(duration) ? Number(duration) : 15,
+                  isPublic: addPublic,
                 };
                 submit({ kind: 'item-create', ...payload }, () =>
                   createItemAction({ eventId: props.eventId, ...payload }),
@@ -351,6 +367,13 @@ export function DayEditor(props: {
               {t('addItem')}
             </Button>
           </div>
+          <label className="flex cursor-pointer items-center gap-3">
+            <Switch checked={addPublic} onCheckedChange={setAddPublic} aria-label={t('add.public')} />
+            <span>
+              <span className="block text-sm font-medium">{t('add.public')}</span>
+              <span className="text-muted block text-xs">{addPublic ? t('add.publicHint') : t('add.privateHint')}</span>
+            </span>
+          </label>
           <div>
             <Button
               variant="secondary"
@@ -443,16 +466,54 @@ function ItemRow(props: {
     <li
       className={`border-border bg-bg rounded-xl border p-3 text-sm ${row.status === 'LATE' ? 'border-danger' : props.affected ? 'border-warning bg-warning-soft' : ''}`}
     >
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="text-muted font-mono">
-          {new Date(row.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {row.durationMin}m
-        </span>
-        <span className="font-medium">{row.title}</span>
-        <span className="text-muted">{row.ownerName ?? t('unassigned')}</span>
-        <span className="ml-auto rounded-full border px-2 py-0.5 text-xs">
-          {row.status}
-          {row.status === 'LATE' ? ` +${row.lateByMin}m` : ''}
-        </span>
+      <div className="flex items-start gap-3">
+        <div className="bg-surface-2 flex w-16 shrink-0 flex-col items-center rounded-xl py-1.5">
+          <span className="font-display text-base font-bold tabular-nums">
+            {new Date(row.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <span className="text-muted text-[11px]">{t('minutes', { count: row.durationMin })}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{row.title}</p>
+          <p className="text-muted text-xs">{row.ownerName ?? t('unassigned')}</p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_TONE[row.status] ?? ''}`}>
+            {t(`status.${row.status}` as 'status.PLANNED')}
+            {row.status === 'LATE' ? ` +${row.lateByMin}m` : ''}
+          </span>
+          {props.canManage ? (
+            <button
+              type="button"
+              disabled={props.pending}
+              aria-pressed={row.isPublic}
+              onClick={() => {
+                const payload = {
+                  title: row.title,
+                  startsAt: row.startsAt,
+                  durationMin: row.durationMin,
+                  ownerUserId: row.ownerUserId,
+                  ownerOrgId: row.ownerOrgId,
+                  isPublic: !row.isPublic,
+                };
+                props.submit({ kind: 'item-update', itemId: row.id, ...payload }, () =>
+                  updateItemAction({ eventId: props.eventId, itemId: row.id, ...payload }),
+                );
+              }}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 transition ${row.isPublic ? 'bg-brand-soft text-brand-strong ring-brand/30' : 'text-muted ring-border hover:text-text'}`}
+            >
+              {row.isPublic ? <Eye aria-hidden className="size-3" /> : <EyeOff aria-hidden className="size-3" />}
+              {row.isPublic ? t('visibility.public') : t('visibility.team')}
+            </button>
+          ) : (
+            row.isPublic && (
+              <span className="text-brand-strong inline-flex items-center gap-1 text-[11px]">
+                <Eye aria-hidden className="size-3" />
+                {t('visibility.public')}
+              </span>
+            )
+          )}
+        </div>
       </div>
       {props.dependsOn.length > 0 && (
         <p className="text-muted mt-1 text-xs">
@@ -506,7 +567,7 @@ function ItemRow(props: {
         {props.canManage && (
           <>
             <Button variant="ghost" disabled={props.pending} onClick={() => setEditing((open) => !open)}>
-              {t('owner')}
+              {editing ? t('closeEdit') : t('edit')}
             </Button>
             <Button
               variant="ghost"
@@ -571,7 +632,7 @@ function ItemRow(props: {
               );
             }}
           >
-            {t('owner')}
+            {t('save')}
           </Button>
           <select
             aria-label={t('dependsOn')}
