@@ -396,7 +396,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** run-of-show with dependencies, vendor check-ins, incidents, delivery sign-off, offline. → **Milestone M3**
 **Read first:** `PRD.md DAY-*`, `UF-24`, `Backend.md §3 (event day)`, `Frontend.md §6.3 (day), §7.6`.
 
-- [ ] P12-T01 Prisma: RunItem, RunDependency, VendorCheckIn, Incident, EmergencyContact.
+- [x] P12-T01 Prisma: RunItem, RunDependency, VendorCheckIn, Incident, EmergencyContact.
 - [ ] P12-T02 Run-of-show editor (create from the event's programme items, owners, durations, dependencies).
 - [ ] P12-T03 Day view: timeline with now-line, statuses, mark late → transitive dependants highlighted + owners alerted.
 - [ ] P12-T04 Vendor "My tasks" and one-tap arrival check-in (optional location).

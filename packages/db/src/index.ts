@@ -15,6 +15,7 @@ export type {
   BookingStatus,
   CheckInResult,
   TicketOrderStatus,
+  RunStatus,
   OrgKind,
   OrgRole,
   PaymentMode,

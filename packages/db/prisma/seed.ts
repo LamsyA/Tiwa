@@ -97,6 +97,11 @@ async function wipeDemoEvents(userId: string) {
   await prisma.waitlistEntry.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.promoCode.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.ticketType.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.runDependency.deleteMany({ where: { item: { eventId: { in: ids } } } });
+  await prisma.runItem.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.vendorCheckIn.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.incident.deleteMany({ where: { eventId: { in: ids } } });
+  await prisma.emergencyContact.deleteMany({ where: { eventId: { in: ids } } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: ids } } });
   // P5-T13: gallery universe (media, guestbook, sessions, zips + media outbox rows).
   const galleryIds = (await prisma.gallery.findMany({ where: { eventId: { in: ids } }, select: { id: true } })).map(
@@ -282,6 +287,38 @@ async function seedEvent(userId: string, spec: SeedEvent, now: Date) {
     await prisma.promoCode.create({
       data: { eventId: event.id, code: 'SEED10', percentOff: 10, maxUses: 50 },
     });
+  }
+
+  // P12: run-of-show mirrors the public programme (backstage items with
+  // owners come from the editor); one chain of dependencies for the demo.
+  const programme = await prisma.programmeItem.findMany({
+    where: { eventId: event.id, startsAt: { not: null } },
+    orderBy: { sortOrder: 'asc' },
+  });
+  if (programme.length > 0) {
+    await prisma.runItem.createMany({
+      data: programme.map((item, index) => ({
+        eventId: event.id,
+        dayId: item.dayId,
+        title: item.title,
+        startsAt: item.startsAt!,
+        durationMin:
+          item.endsAt && item.startsAt
+            ? Math.max(5, Math.round((item.endsAt.getTime() - item.startsAt.getTime()) / 60_000))
+            : 15,
+        sortOrder: index,
+      })),
+    });
+    const runItems = await prisma.runItem.findMany({
+      where: { eventId: event.id },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true },
+    });
+    if (runItems.length > 1) {
+      await prisma.runDependency.createMany({
+        data: runItems.slice(1).map((row, index) => ({ itemId: row.id, dependsOnId: runItems[index]!.id })),
+      });
+    }
   }
 
   return event.id;

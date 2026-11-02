@@ -173,6 +173,10 @@ model Event {
   ticketOrders           TicketOrder[]
   checkIns               CheckIn[]
   waitlist               WaitlistEntry[]
+  runItems               RunItem[]
+  vendorCheckIns         VendorCheckIn[]
+  incidents              Incident[]
+  emergencyContacts      EmergencyContact[]
 
   @@index([status, startsAt])
   @@index([createdById])
@@ -855,6 +859,87 @@ model WaitlistEntry {
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId, createdAt])
+}
+
+// ───────────── Event day (Backend.md §3, P12-T01) ─────────────
+// Backstage run-of-show. The public agenda is ProgrammeItem (D-D04);
+// RunItems are created from it (or from scratch) with owners and links.
+
+model RunItem {
+  id          String    @id @default(uuid(7))
+  eventId     String
+  dayId       String?
+  title       String
+  startsAt    DateTime
+  durationMin Int       @default(15)
+  ownerUserId String?
+  ownerOrgId  String?
+  status      RunStatus @default(PLANNED)
+  lateByMin   Int       @default(0)
+  sortOrder   Int       @default(0)
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  dependents  RunDependency[] @relation("RunDependents")
+  dependsOn   RunDependency[] @relation("RunDependsOn")
+
+  @@index([eventId, startsAt])
+}
+
+enum RunStatus {
+  PLANNED
+  STARTED
+  DONE
+  LATE
+  SKIPPED
+}
+
+model RunDependency {
+  itemId      String
+  dependsOnId String
+  item        RunItem @relation("RunDependents", fields: [itemId], references: [id], onDelete: Cascade)
+  dependsOn   RunItem @relation("RunDependsOn", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, dependsOnId])
+  @@index([dependsOnId])
+}
+
+model VendorCheckIn {
+  id        String   @id @default(uuid(7))
+  eventId   String
+  bookingId String
+  userId    String
+  at        DateTime @default(now())
+  lat       Float?
+  lng       Float?
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, at])
+}
+
+model Incident {
+  id          String    @id @default(uuid(7))
+  eventId     String
+  title       String
+  details     String?
+  severity    String    @default("normal") // low | normal | high
+  ownerUserId String?
+  resolvedAt  DateTime?
+  resolution  String?
+  createdAt   DateTime  @default(now())
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+}
+
+model EmergencyContact {
+  id             String  @id @default(uuid(7))
+  eventId        String
+  name           String
+  role           String
+  phone          String
+  isBackupVendor Boolean @default(false)
+  event          Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }
 
 // ───────────── Marketplace (Backend.md §3, P6-T01) ─────────────
