@@ -440,7 +440,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P14-T01 Prisma: Review (if not created yet); rating roll-up job.
 - [x] P14-T02 Close-event flow: confirm deliveries, final reconciliation summary, review cards per vendor (scores, text, photos from Moments).
 - [x] P14-T03 Vendor reply (once), report review; profile shows score only after 5 reviews.
-- [ ] P14-T04 Portfolio: vendor can add host-approved Moments photos tagged to a verified event.
+- [x] P14-T04 Portfolio: vendor can add host-approved Moments photos tagged to a verified event.
 - [ ] P14-T05 e2e UF-25.
 
 **GATE P14**

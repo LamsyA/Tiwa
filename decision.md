@@ -267,7 +267,7 @@ Template:
 
 ### 2026-11-02 — Ratings computed on read, no roll-up job
 - ID: D-X39
-- Status: AGENT (plan P14-T01 said "rating roll-up job")
-- Decision: `vendorRating()` computes count + mean live from indexed review rows (average only surfaces at 5+ reviews per REV-05). No cached column and no scheduled job: the read is a single indexed query and can never go stale.
-- Why: a roll-up job adds write amplification and staleness windows for no benefit at this scale.
-- Affects: packages/core/src/reviews, BUILD_PLAN P14-T01.
+- Status: AGENT (corrected: plan P14-T01 said "rating roll-up job" for a reason)
+- Decision: Hourly `reviews/rollup-ratings` writes the cached profile columns (`ratingAvg` only at 5+ reviews per REV-05, plus `ratingCount`/`completedBookings`) that marketplace search sort/filter and the public score read; `vendorRating()` stays as the shared computation the job calls. On-read alone would have left search permanently unrated.
+- Why: the search and public profile read cached columns, so the cache must be fed; hourly is fresh enough for reputation.
+- Affects: packages/core/src/reviews, apps/worker rollup-ratings, marketplace search/profile, BUILD_PLAN P14-T01.
