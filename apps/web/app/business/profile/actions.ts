@@ -1,6 +1,8 @@
 'use server';
 
 import {
+  addMomentsSchema,
+  addMomentsToPortfolio,
   archivePackage,
   archivePackageSchema,
   blockAvailability,
@@ -55,6 +57,13 @@ export const archiveBusinessPackage = userAction(archivePackageSchema, async (in
 
 export const startPortfolioItem = userAction(startPortfolioUploadSchema, async (input, ctx) => {
   return startPortfolioUpload(privateStorage(), ctx.actor, input);
+});
+
+/** Tag Moments photos from verified events (P14-T04): pending host approval. */
+export const addMomentsToPortfolioAction = userAction(addMomentsSchema, async (input, ctx) => {
+  const result = await addMomentsToPortfolio(ctx.actor, input);
+  refreshBusiness(input.orgId);
+  return result;
 });
 
 export const completePortfolioItem = userAction(portfolioItemSchema, async (input, ctx) => {

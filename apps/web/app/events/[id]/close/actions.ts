@@ -1,12 +1,15 @@
 'use server';
 
 import {
+  approvePortfolioItem,
+  approvePortfolioSchema,
   closeEvent,
   closeEventSchema,
   confirmDelivery,
   confirmDeliverySchema,
   createReview,
   createReviewSchema,
+  declinePortfolioItem,
   reportReview,
   reportReviewSchema,
 } from '@tiwa/core';
@@ -38,5 +41,25 @@ export const createReviewAction = userAction(createReviewSchema, async (input, c
 
 export const reportReviewAction = userAction(reportReviewSchema, async (input, ctx) => {
   const result = await reportReview(ctx.actor, input);
+  return result;
+});
+
+async function portfolioEventId(itemId: string): Promise<string | null> {
+  const { prisma } = await import('@tiwa/db');
+  const item = await prisma.portfolioItem.findUnique({ where: { id: itemId }, select: { eventId: true } });
+  return item?.eventId ?? null;
+}
+
+export const approvePortfolioAction = userAction(approvePortfolioSchema, async (input, ctx) => {
+  const eventId = await portfolioEventId(input.itemId);
+  const result = await approvePortfolioItem(ctx.actor, input);
+  if (eventId) revalidate(eventId);
+  return result;
+});
+
+export const declinePortfolioAction = userAction(approvePortfolioSchema, async (input, ctx) => {
+  const eventId = await portfolioEventId(input.itemId);
+  const result = await declinePortfolioItem(ctx.actor, input);
+  if (eventId) revalidate(eventId);
   return result;
 });

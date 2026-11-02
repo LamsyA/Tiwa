@@ -1,4 +1,11 @@
-import { getBusinessProfile, getChecklist, getVerification, listMyOrgs } from '@tiwa/core';
+import {
+  getBusinessProfile,
+  getChecklist,
+  getVerification,
+  listMyOrgs,
+  listVendorPortfolio,
+  momentsSourceEvents,
+} from '@tiwa/core';
 import { Banner, Card, EmptyState, StatusPill } from '@tiwa/ui';
 import { Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -9,6 +16,7 @@ import { privateStorage } from '@/lib/storage.js';
 import { AvailabilityManager } from './availability-manager.js';
 import { PackagesEditor } from './packages-editor.js';
 import { PortfolioManager } from './portfolio-manager.js';
+import { MomentsSourcePicker } from './moments-source.js';
 import { ProfileForm } from './profile-form.js';
 import { PublishManager } from './publish-manager.js';
 
@@ -51,6 +59,27 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
       id: item.id,
       url: await storage.getSignedUrl(item.key, 3600),
       caption: item.caption,
+    })),
+  );
+  const [sourceEvents, vendorItems] = await Promise.all([
+    momentsSourceEvents(current.org.id),
+    listVendorPortfolio(ctx.actor, current.org.id).catch(() => []),
+  ]);
+  const pendingIds = new Set(
+    vendorItems.filter((row) => row.mediaItemId && !row.approvedAt).map((row) => row.mediaItemId as string),
+  );
+  const sources = await Promise.all(
+    sourceEvents.map(async (event) => ({
+      eventId: event.eventId,
+      eventName: event.eventName,
+      items: await Promise.all(
+        event.items
+          .filter((item) => !vendorItems.some((row) => row.mediaItemId === item.id && row.approvedAt))
+          .map(async (item) => ({
+            id: item.id,
+            thumbUrl: item.thumbKey ? await storage.getSignedUrl(item.thumbKey, 3600) : null,
+          })),
+      ),
     })),
   );
 
@@ -132,6 +161,11 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               orgId={current.org.id}
               photos={photos}
               needed={Math.max(0, 6 - checklist.portfolioCount)}
+            />
+            <MomentsSourcePicker
+              orgId={current.org.id}
+              events={sources.filter((event) => event.items.length > 0)}
+              pendingIds={[...pendingIds]}
             />
             <PackagesEditor
               orgId={current.org.id}

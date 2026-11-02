@@ -50,6 +50,7 @@ export * from './marketplace/public.js';
 export * from './marketplace/event-vendors.js';
 export * from './marketplace/search.js';
 export * from './marketplace/shortlist.js';
+export * from './marketplace/rollup.js';
 export * from './marketplace/spaces.js';
 export * from './marketplace/venues.js';
 export * from './marketplace/verification.js';

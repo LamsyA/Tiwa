@@ -1,4 +1,4 @@
-import { authorize, budgetSummary, closePack, listPaymentSchedule } from '@tiwa/core';
+import { authorize, budgetSummary, closePack, listPaymentSchedule, pendingPortfolioItems } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Card, MoneyText } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -53,13 +53,14 @@ export default async function ClosePage({ params }: { params: Promise<{ id: stri
       </EventFrame>
     );
   }
-  const [pack, money, gallery] = await Promise.all([
+  const [pack, money, gallery, pendingPortfolio] = await Promise.all([
     closePack(ctx.actor, id).catch(() => null),
     Promise.all([
       budgetSummary(ctx.actor, { eventId: id }, access),
       listPaymentSchedule(ctx.actor, { eventId: id }, access),
     ]).catch(() => null),
     prisma.gallery.findUnique({ where: { eventId: id }, select: { id: true } }),
+    pendingPortfolioItems(ctx.actor, id).catch(() => []),
   ]);
   const photos = gallery
     ? await prisma.mediaItem.findMany({
@@ -73,6 +74,12 @@ export default async function ClosePage({ params }: { params: Promise<{ id: stri
   const thumbs = await Promise.all(
     photos.map(async (row) => ({
       id: row.id,
+      thumbUrl: row.thumbKey ? await storage.getSignedUrl(row.thumbKey, 3600) : null,
+    })),
+  );
+  const pendingThumbs = await Promise.all(
+    pendingPortfolio.map(async (row) => ({
+      ...row,
       thumbUrl: row.thumbKey ? await storage.getSignedUrl(row.thumbKey, 3600) : null,
     })),
   );
@@ -119,7 +126,13 @@ export default async function ClosePage({ params }: { params: Promise<{ id: stri
             <p className="text-muted text-sm">{t('noBookings')}</p>
           </Card>
         ) : (
-          <CloseManager eventId={id} eventStatus={pack.event.status} bookings={pack.bookings} photos={thumbs} />
+          <CloseManager
+            eventId={id}
+            eventStatus={pack.event.status}
+            bookings={pack.bookings}
+            photos={thumbs}
+            pendingPortfolio={pendingThumbs}
+          />
         )}
       </div>
     </EventFrame>

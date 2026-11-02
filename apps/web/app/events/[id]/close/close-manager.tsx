@@ -4,7 +4,13 @@ import { Button, Card, Input } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { ReviewReportButton } from '@/components/marketplace/review-report.js';
-import { closeEventAction, confirmDeliveryAction, createReviewAction } from './actions.js';
+import {
+  approvePortfolioAction,
+  closeEventAction,
+  confirmDeliveryAction,
+  createReviewAction,
+  declinePortfolioAction,
+} from './actions.js';
 
 export interface CloseBooking {
   bookingId: string;
@@ -37,11 +43,20 @@ const SCORE_KEYS = ['quality', 'communication', 'punctuality', 'value', 'scope']
 
 /** Close flow (P14-T02, UF-25): confirm deliveries, reconcile, review each
  * vendor, then finish. Review forms unlock only on COMPLETED bookings. */
+export interface PendingPortfolioItem {
+  id: string;
+  orgId: string;
+  orgName: string;
+  caption: string | null;
+  thumbUrl: string | null;
+}
+
 export function CloseManager(props: {
   eventId: string;
   eventStatus: string;
   bookings: CloseBooking[];
   photos: ClosePhoto[];
+  pendingPortfolio: PendingPortfolioItem[];
 }) {
   const t = useTranslations('close');
   const [pending, start] = useTransition();
@@ -106,6 +121,43 @@ export function CloseManager(props: {
           ))}
         </ul>
       </section>
+
+      {props.pendingPortfolio.length > 0 && (
+        <section className="flex flex-col gap-2" aria-label={t('portfolioHeading')}>
+          <h2 className="font-display text-lg font-bold">{t('portfolioHeading')}</h2>
+          <p className="text-muted text-sm">{t('portfolioBody')}</p>
+          <ul className="flex flex-wrap gap-2">
+            {props.pendingPortfolio.map((row) => (
+              <li key={row.id} className="border-border bg-bg flex items-center gap-2 rounded-xl border p-2 text-sm">
+                {row.thumbUrl ? (
+                  <img
+                    src={row.thumbUrl}
+                    alt={t('reviewPhotoAlt')}
+                    width={64}
+                    height={64}
+                    className="rounded-lg object-cover"
+                  />
+                ) : null}
+                <span className="font-medium">{row.orgName}</span>
+                <Button
+                  variant="secondary"
+                  disabled={pending}
+                  onClick={() => run(() => approvePortfolioAction({ itemId: row.id }))}
+                >
+                  {t('approve')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => run(() => declinePortfolioAction({ itemId: row.id }))}
+                >
+                  {t('decline')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {props.eventStatus !== 'COMPLETED' && (
         <div className="flex flex-col gap-2">

@@ -1017,10 +1017,16 @@ model PortfolioItem {
   key       String
   thumbKey  String?
   caption   String?
-  eventId   String? // verified Tiwa event (if from Moments)
   sortOrder Int       @default(0)
+  // T04: Moments photos tagged to a verified event (if from Moments).
+  // mediaItemId links the source; approvedAt is set by the event host (null = pending).
+  mediaItemId String?   @unique
+  eventId     String?
+  approvedAt  DateTime?
+  approvedById String?
 
   @@index([orgId])
+  @@index([eventId])
 }
 
 model ServicePackage {

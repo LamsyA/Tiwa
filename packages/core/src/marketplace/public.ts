@@ -28,7 +28,13 @@ export async function getPublicProfileForOrg(orgId: string, kind: PublicProfileK
   if (!profile?.published) throw new NotFoundError('Profile not found');
   const [packages, portfolio, verification, spaces] = await Promise.all([
     prisma.servicePackage.findMany({ where: { orgId: org.id, active: true }, orderBy: { name: 'asc' } }),
-    prisma.portfolioItem.findMany({ where: { orgId: org.id }, orderBy: { sortOrder: 'asc' } }),
+    prisma.portfolioItem.findMany({
+      where: {
+        orgId: org.id,
+        OR: [{ approvedAt: { not: null } }, { mediaItemId: null }],
+      },
+      orderBy: { sortOrder: 'asc' },
+    }),
     prisma.businessVerification.findFirst({ where: { orgId: org.id }, orderBy: { createdAt: 'desc' } }),
     prisma.venueSpace.findMany({ where: { profileId: profile.id, active: true }, orderBy: { name: 'asc' } }),
   ]);
