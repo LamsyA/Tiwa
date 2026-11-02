@@ -1,0 +1,16 @@
+{
+  "$comment": "P13 gate (BUILD_PLAN.md GATE P13). Table-driven channel matrix is packages/core/src/messaging/notify.test.ts; worker fan-out (incl. dead-subscription cleanup and stub replacement) is apps/worker notify*.test.ts; the prefs/bell/push-settings UI is e2e/notifications.spec.ts at 390 + 1280 px. The iOS home-screen push check is manual (logged in PROGRESS).",
+  "phase": 13,
+  "name": "Notifications and event-team chat",
+  "checks": [
+    {
+      "id": "unit",
+      "run": "pnpm --filter @tiwa/db exec dotenv -e ../../.env -- pnpm --filter @tiwa/core exec vitest run src/messaging/notify.test.ts src/chat/nudges.test.ts src/chat/decisions.test.ts src/events/activity.test.ts"
+    },
+    {
+      "id": "unit-worker",
+      "run": "pnpm --filter @tiwa/db exec dotenv -e ../../.env -- pnpm --filter @tiwa/worker exec vitest run src/jobs/notify.test.ts src/jobs/notify-topics.test.ts src/jobs/chat-nudges.test.ts src/jobs/deadline-alerts.test.ts"
+    },
+    { "id": "e2e-notifications", "run": "pnpm e2e e2e/notifications.spec.ts" }
+  ]
+}

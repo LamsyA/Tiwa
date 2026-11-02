@@ -423,7 +423,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 - [x] P13-T03 `notify()` pipeline: in-app bell, web push (VAPID), email, SMS, WhatsApp; preferences matrix; quiet hours; urgent override for event-day and payment failures.
 - [x] P13-T04 Replace earlier notification stubs (P3 deadlines, P4 invites, P8 payments, P12 alerts) with `notify()`.
 - [x] P13-T05 Move chat nudges (P6-T18) onto `notify()` so chat follows the same preferences and quiet hours; in-app notification bell.
-- [ ] P13-T06 Tests: preference and quiet-hour rules; push subscription lifecycle.
+- [x] P13-T06 Tests: preference and quiet-hour rules; push subscription lifecycle.
 
 **GATE P13**
 

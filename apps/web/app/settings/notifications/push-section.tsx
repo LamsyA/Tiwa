@@ -91,10 +91,10 @@ export function PushSection() {
       {error && <p className="text-danger text-sm">{t(error)}</p>}
       {enabled === true && <p>{t('pushOn')}</p>}
       <div className="flex flex-wrap gap-2">
-        <Button disabled={pending || !supported} onClick={enable}>
+        <Button disabled={pending} onClick={enable}>
           {t('pushEnable')}
         </Button>
-        <Button variant="secondary" disabled={pending || !supported} onClick={disable}>
+        <Button variant="secondary" disabled={pending} onClick={disable}>
           {t('pushDisable')}
         </Button>
       </div>
