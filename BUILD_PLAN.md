@@ -371,10 +371,10 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** public events sell or give out tickets safely; door check-in works online and offline.
 **Read first:** `PRD.md TKT-*, DAY-07`, `UF-22`, `UF-23`, `Backend.md §3 (tickets), §5.7`, `Frontend.md §6.2 (/e, /t), §6.3 (tickets, check-in), §7.6`.
 
-- [ ] P11-T01 Prisma: TicketType, PromoCode, TicketOrder, Ticket, CheckIn (the agenda uses ProgrammeItem from P3).
-- [ ] P11-T02 Tickets admin page (types, promo codes, questions, agenda list, publish).
-- [ ] P11-T03 Public event page `/e/[slug]` (ISR) with ticket selector island.
-- [ ] P11-T04 Registration and checkout: reservation in a transaction (`SELECT … FOR UPDATE` on ticket type), 10-minute hold, payment via P8, free tickets instant; expiry job; waitlist.
+- [x] P11-T01 Prisma: TicketType, PromoCode, TicketOrder, Ticket, CheckIn (the agenda uses ProgrammeItem from P3).
+- [x] P11-T02 Tickets admin page (types, promo codes, questions, agenda list, publish).
+- [x] P11-T03 Public event page `/e/[slug]` (ISR) with ticket selector island.
+- [x] P11-T04 Registration and checkout: reservation in a transaction (`SELECT … FOR UPDATE` on ticket type), 10-minute hold, payment via P8, free tickets instant; expiry job; waitlist.
 - [ ] P11-T05 Ticket issue: signed QR token, `/t/[ticketId]`, email + WhatsApp link delivery; ticket revenue → budget income line.
 - [ ] P11-T06 Check-in scanner page (lazy QR scanner, result overlay, haptics/sound, manual search), live counter via SSE.
 - [ ] P11-T07 Offline check-in: download signed list to IndexedDB, queue scans, sync endpoint, duplicate detection across devices.

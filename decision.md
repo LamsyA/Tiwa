@@ -202,7 +202,7 @@ Template:
 - Affects: packages/config (vendor categories, templates), packages/db seed, marketplace filters.
 
 ### 2026-11-02 — Lean P11: tickets on offline confirmation, public page dynamic
-- ID: D-X30
+- ID: D-X31
 - Status: AGENT (follows D-X27, D-X18)
 - Decision: Tickets ship without a payment provider: free orders (total 0) issue instantly; paid orders reserve seats for 10 minutes and the organiser confirms with `confirmTicketOrderOffline` ("Mark as paid") once paid outside Tiwa; only PAID orders count as ticket income in the budget. `/e/[slug]` renders dynamically, not ISR (same root-layout theme-cookie limit as D-X18, and availability must never be stale). Organiser payouts (P11-T09) stay behind `payments.payouts` as a note only. Ticket delivery is the `/t/[ticketId]` page plus an inline email for free orders; WhatsApp delivery arrives with the messaging providers.
 - Why: D-X27 keeps Tiwa moving no real money on the $0 deployment; Q-005 (escrow/legal + provider accounts) is still open.
