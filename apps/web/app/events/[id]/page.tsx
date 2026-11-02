@@ -3,6 +3,8 @@ import {
   authorize,
   budgetAlerts,
   budgetSummary,
+  eventActivity,
+  eventDecisions,
   eventOrders,
   galleryCodeForEvent,
   getEventOverview,
@@ -27,6 +29,14 @@ import Link from 'next/link';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
 
 /** EVT-05 / Frontend.md §6.3: header, progress, next deadlines, money, vendors, guests, moments, team. */
+
+/** Human-readable audit action ("day.item.late" -> "Item late"). Runtime
+ * transform, so no per-action catalogue strings to maintain. */
+function prettyAction(action: string): string {
+  const last = action.split('.').pop() ?? action;
+  const words = last.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 export default async function EventOverviewPage({
   params,
   searchParams,
@@ -58,7 +68,7 @@ export default async function EventOverviewPage({
       return false;
     }
   })();
-  const [galleryCode, money, orders, replies] = await Promise.all([
+  const [galleryCode, money, orders, replies, decisions, activity] = await Promise.all([
     event.momentsEnabled ? galleryCodeForEvent(id) : Promise.resolve(null),
     canSeeMoney
       ? Promise.all([
@@ -68,6 +78,8 @@ export default async function EventOverviewPage({
       : Promise.resolve(null),
     eventOrders(ctx.actor, { eventId: id }).catch(() => null),
     prisma.guest.groupBy({ by: ['rsvp'], where: { eventId: id, deletedAt: null }, _count: { _all: true } }),
+    eventDecisions(ctx.actor, id, 5).catch(() => []),
+    eventActivity(ctx.actor, id, 10).catch(() => ({ entries: [] })),
   ]);
   const replyCount = (key: string) => replies.find((row) => row.rsvp === key)?._count._all ?? 0;
   const guestTotal = replies.reduce((sum, row) => sum + row._count._all, 0);
@@ -344,6 +356,52 @@ export default async function EventOverviewPage({
               )}
             </Card>
           )}
+
+          <Card className="flex flex-col gap-3 p-5 lg:col-span-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-lg font-bold">{t('overview.decisionsHeading')}</h2>
+              <Link href={`/events/${id}/chat`} className="text-brand-strong text-sm font-medium">
+                {t('overview.decisionsOpen')}
+              </Link>
+            </div>
+            {decisions.length === 0 ? (
+              <p className="text-muted text-sm">{t('overview.decisionsEmpty')}</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {decisions.map((row) => (
+                  <li key={row.id} className="border-border border-l-2 pl-3 text-sm">
+                    <p className="font-medium">{row.body ?? '—'}</p>
+                    <p className="text-muted text-xs">
+                      {row.authorName ? t('overview.decisionsBy', { name: row.authorName }) : ''}
+                      {row.authorName ? ' · ' : ''}
+                      <RelativeTime value={row.createdAt} />
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-3 p-5 lg:col-span-4">
+            <h2 className="font-display text-lg font-bold">{t('overview.activityHeading')}</h2>
+            {activity.entries.length === 0 ? (
+              <p className="text-muted text-sm">{t('overview.activityEmpty')}</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {activity.entries.map((row) => (
+                  <li key={row.id} className="flex items-baseline justify-between gap-2 text-sm">
+                    <span className="min-w-0 truncate">
+                      {prettyAction(row.action)}
+                      {row.actorName ? ` · ${row.actorName}` : ''}
+                    </span>
+                    <span className="text-muted shrink-0 text-xs">
+                      <RelativeTime value={row.createdAt} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
 
           <Card className="flex flex-col gap-3 p-5 lg:col-span-8">
             <div className="flex items-center justify-between gap-2">

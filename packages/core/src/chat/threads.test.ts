@@ -270,6 +270,19 @@ describe('event-team threads', () => {
     await expect(sendMessage(cohost, { threadId, clientMessageId: cid(), body: 'still here?' })).rejects.toBeInstanceOf(
       NotFoundError,
     );
+
+    // A returning member rejoins on the next sync (P13-T02).
+    await prisma.eventParticipant.create({
+      data: { eventId, userId: cohost.userId, role: 'CO_HOST', permissions: toStoredPermissions(PRESETS.contributor) },
+    });
+    const resynced = await syncEventTeamThread(eventId);
+    expect(resynced.threadId).toBe(threadId);
+    const { messageId: backId } = await sendMessage(cohost, {
+      threadId,
+      clientMessageId: cid(),
+      body: 'back again',
+    });
+    expect(backId).toBeTruthy();
   });
 });
 
