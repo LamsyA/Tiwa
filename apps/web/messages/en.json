@@ -1756,7 +1756,12 @@
     "confirmLabel": "Confirmed time",
     "completeVisit": "Mark done",
     "cancelVisit": "Cancel visit",
-    "hiddenByPlanner": "Hidden by planner"
+    "hiddenByPlanner": "Hidden by planner",
+    "briefDate": "Date",
+    "briefVenue": "Venue",
+    "briefGuests": "Guests",
+    "briefFrom": "Request from {name}",
+    "briefBudget": "Their budget"
   },
   "bookings": {
     "title": "Booking",
@@ -1800,7 +1805,35 @@
     "serviceDateLabel": "Service date",
     "waitingBody": "Version {version} is with the vendor for a decision.",
     "notesLabel": "Notes",
-    "hiddenByPlanner": "Hidden by planner"
+    "hiddenByPlanner": "Hidden by planner",
+    "mode": {
+      "DIRECT": "Paid through Tiwa",
+      "HELD": "Held by Tiwa until delivery",
+      "OFFLINE": "Paid directly to the vendor"
+    },
+    "status": {
+      "ACCEPTED": "Accepted",
+      "DEPOSIT_DUE": "Deposit due",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In progress",
+      "DELIVERED": "Delivered",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "DISPUTED": "Disputed"
+    },
+    "outstandingShort": "Still to pay",
+    "milestone": {
+      "SCHEDULED": "Scheduled",
+      "PENDING_PAYMENT": "Due",
+      "PAID_DIRECT": "Paid",
+      "HELD": "Paid (held)",
+      "RELEASED": "Released",
+      "REFUNDED": "Refunded",
+      "PARTLY_REFUNDED": "Partly refunded",
+      "DISPUTED": "Disputed",
+      "RECORDED_OFFLINE": "Awaiting vendor confirmation",
+      "CONFIRMED_OFFLINE": "Paid"
+    }
   },
   "payments": {
     "secured": "Paid",
@@ -2449,6 +2482,27 @@
         "delivered": "Sign off",
         "completed": "Done",
         "closed": "Closed"
+      }
+    },
+    "timeline": {
+      "closed": "This order is closed: it was declined, withdrawn, expired or cancelled.",
+      "vendor": {
+        "requested": "Look at the brief below and send an itemised quote. Fast replies win more bookings.",
+        "quoted": "Your quote is with the client. You'll be notified when they accept or ask for changes.",
+        "booked": "The client accepted. The booking confirms once the deposit is paid or recorded.",
+        "confirmed": "You're booked. Keep in touch with the client in the inbox and deliver on the day.",
+        "delivered": "Delivered. The client signs off, then any held payment is released.",
+        "completed": "All done. Thanks for a great job!",
+        "closed": ""
+      },
+      "client": {
+        "requested": "The vendor is preparing a quote. You'll get a notification when it arrives.",
+        "quoted": "Review the quote, ask for changes or accept it to book.",
+        "booked": "Pay or record the deposit to confirm the booking and hold the date.",
+        "confirmed": "The vendor is booked for your event. Message them any time.",
+        "delivered": "The vendor marked the job delivered. Sign off if everything was right.",
+        "completed": "All done. Leave a review to help other hosts.",
+        "closed": ""
       }
     }
   }

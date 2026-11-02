@@ -1,10 +1,11 @@
-import { bookingMoney, diffScopes, getBooking, listBookingPayments } from '@tiwa/core';
+import { bookingMoney, diffScopes, getBooking, listBookingPayments, stageForBooking } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, MoneyText, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
+import { OrderTimeline } from '@/components/orders/order-timeline.js';
 import { BookingTabbar } from './booking-tabbar.js';
 import { ChangeRequestDialog, PendingDecision } from './change-dialog.js';
 import { PaymentsPanel } from './payments-panel.js';
@@ -26,7 +27,7 @@ export default async function BookingPage({
 }) {
   const { id: eventId, bookingId } = await params;
   const { tab } = await searchParams;
-  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(eventId, '/vendors');
+  const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(eventId, '/vendors');
   const t = await getTranslations('bookings');
   if (!allowed) {
     return (
@@ -38,6 +39,7 @@ export default async function BookingPage({
         title={t('title')}
         invitesOn={invitesOn}
         momentsOn={momentsOn}
+        ticketsOn={ticketsOn}
       >
         <Banner tone="warning">{t('errors.FORBIDDEN')}</Banner>
       </EventFrame>
@@ -51,9 +53,8 @@ export default async function BookingPage({
   const current =
     booking.versions.find((row) => row.status === 'ACCEPTED') ?? booking.versions[booking.versions.length - 1]!;
   const pending = booking.versions.find((row) => row.status === 'PROPOSED');
-  const scope = (
-    pricesHidden ? null : (current.scope as unknown as ScopeView & { totalMinor?: string })
-  ) as (ScopeView & { totalMinor?: string }) | null;
+  const scope = (pricesHidden ? null : (current.scope as unknown as ScopeView & { totalMinor?: string })) as
+    (ScopeView & { totalMinor?: string }) | null;
   const files = await prisma.document.findMany({
     where: { bookingId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
@@ -83,24 +84,42 @@ export default async function BookingPage({
       title={`${t('title')} · ${vendor?.name ?? ''}`}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
     >
       <div className="flex flex-col gap-4 py-4">
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <StatusPill tone={booking.status === 'CONFIRMED' ? 'success' : 'neutral'}>{booking.status}</StatusPill>
-          <span className="font-medium">
-            {booking.totalMinor == null ? (
-              <span className="text-muted text-sm">{t('hiddenByPlanner')}</span>
-            ) : (
-              <MoneyText value={booking.totalMinor} currency={booking.currency} />
-            )}
-          </span>
-          <span className="text-muted">{booking.paymentMode}</span>
-          {booking.holdExpiresAt && booking.status === 'DEPOSIT_DUE' && (
-            <span className="text-muted">
-              {t('holdLabel', { date: new Date(booking.holdExpiresAt).toLocaleString() })}
+        <OrderTimeline
+          stage={stageForBooking(booking.status)}
+          side="client"
+          title={vendor?.name ?? t('title')}
+          subtitle={
+            <span className="flex flex-wrap items-center gap-x-2">
+              <span>{t(`mode.${booking.paymentMode}`)}</span>
+              {booking.holdExpiresAt && booking.status === 'DEPOSIT_DUE' && (
+                <span>· {t('holdLabel', { date: new Date(booking.holdExpiresAt).toLocaleString() })}</span>
+              )}
             </span>
-          )}
-        </div>
+          }
+          aside={
+            <>
+              <span className="font-display text-2xl font-bold">
+                {booking.totalMinor == null ? (
+                  <span className="text-muted text-sm">{t('hiddenByPlanner')}</span>
+                ) : (
+                  <MoneyText value={booking.totalMinor} currency={booking.currency} />
+                )}
+              </span>
+              {!pricesHidden && money.outstandingMinor > 0n && (
+                <span className="text-muted text-xs">
+                  {t('outstandingShort')}{' '}
+                  <MoneyText value={money.outstandingMinor.toString()} currency={booking.currency} />
+                </span>
+              )}
+              <StatusPill tone={booking.status === 'CONFIRMED' ? 'success' : 'neutral'}>
+                {t(`status.${booking.status}`)}
+              </StatusPill>
+            </>
+          }
+        />
         {pending && (
           <PendingDecision
             versionId={pending.id}
@@ -131,10 +150,26 @@ export default async function BookingPage({
               <h3 className="font-medium">{t('termsHeading')}</h3>
               <p className="text-muted">{current.terms}</p>
               <h3 className="font-medium">{t('scheduleHeading')}</h3>
-              <ul className="text-muted flex flex-col gap-0.5">
+              <ul className="divide-border/60 border-border/70 flex flex-col divide-y rounded-2xl border">
                 {booking.milestones.map((row) => (
-                  <li key={row.id}>
-                    {row.label} · {row.amountMinor ?? t('hiddenByPlanner')} {row.currency} · {row.state}
+                  <li key={row.id} className="flex items-center gap-3 px-4 py-3">
+                    <span className="min-w-0 flex-1 truncate font-medium">{row.label}</span>
+                    <span className="font-semibold">
+                      {row.amountMinor == null ? (
+                        <span className="text-muted">{t('hiddenByPlanner')}</span>
+                      ) : (
+                        <MoneyText value={row.amountMinor} currency={row.currency} />
+                      )}
+                    </span>
+                    <StatusPill
+                      tone={
+                        ['RELEASED', 'PAID_DIRECT', 'CONFIRMED_OFFLINE', 'HELD'].includes(row.state)
+                          ? 'success'
+                          : 'neutral'
+                      }
+                    >
+                      {t.has(`milestone.${row.state}`) ? t(`milestone.${row.state}`) : row.state}
+                    </StatusPill>
                   </li>
                 ))}
               </ul>
