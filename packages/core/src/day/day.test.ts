@@ -6,7 +6,15 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { permissionsFor, toStoredPermissions } from '../events/access.js';
 import { uuidv7 } from '../shared/ids.js';
-import { addDependency, createFromProgramme, createRunItem, dependants, removeDependency, runOfShow } from './day.js';
+import {
+  addDependency,
+  createFromProgramme,
+  createRunItem,
+  dependants,
+  markLate,
+  removeDependency,
+  runOfShow,
+} from './day.js';
 import { updateRunStatus } from './day.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
@@ -135,6 +143,25 @@ describe('dependencies (DAY-02, UF-24-2)', () => {
     await expect(addDependency(host, { eventId, itemId: doors!.id, dependsOnId: sound.id })).rejects.toThrow();
     await removeDependency(host, { eventId, itemId: keynote!.id, dependsOnId: doors!.id });
     expect(await dependants(sound.id)).toEqual([doors!.id]);
+  });
+});
+
+describe('mark late (DAY-02, UF-24-2)', () => {
+  it('flags the item LATE, returns transitive dependants, and queues owner alerts', async () => {
+    const day = await runOfShow(host, eventId);
+    const byTitle = new Map(day.items.map((row) => [row.title, row]));
+    const sound = byTitle.get('Sound check')!;
+    const result = await markLate(host, { eventId, itemId: sound.id, lateByMin: 20 });
+    expect(result.lateByMin).toBe(20);
+    expect(result.dependantIds).toEqual(expect.arrayContaining([byTitle.get('Doors open')!.id]));
+    const after = await runOfShow(host, eventId);
+    expect(after.items.find((row) => row.id === sound.id)?.status).toBe('LATE');
+    const queued = await prisma.outboxEvent.findFirst({
+      where: { topic: 'day.item_late' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(queued).toBeTruthy();
+    expect((queued!.payload as { itemId: string }).itemId).toBe(sound.id);
   });
 });
 

@@ -5,7 +5,7 @@ import { loadEventAccess, requireEventAccess } from '../events/access.js';
 import { userIdSchema } from '../shared/schemas.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
-import { audit } from '../shared/outbox.js';
+import { audit, enqueue } from '../shared/outbox.js';
 
 // Run-of-show (P12-T02; DAY-01–DAY-02, UF-24). Backstage timeline items with
 // owners and dependencies. The public agenda is ProgrammeItem (D-D04); items
@@ -266,6 +266,48 @@ export async function removeDependency(actor: UserActor, raw: z.input<typeof dep
     });
   });
   return { ok: true as const };
+}
+
+export const markLateSchema = z.object({
+  eventId: z.string().uuid(),
+  itemId: z.string().uuid(),
+  lateByMin: z.number().int().min(1).max(1440),
+});
+
+/** Mark an item late (P12-T03, DAY-02): status LATE with the delay, and the
+ * transitive dependants come back for highlighting. Owner alerting rides the
+ * outbox stub `day.item_late` — P13 `notify()` delivers it (push/SMS). */
+export async function markLate(actor: UserActor, raw: z.input<typeof markLateSchema>) {
+  const input = markLateSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'runofshow.edit');
+  const item = await prisma.runItem.findFirst({ where: { id: input.itemId, eventId: input.eventId } });
+  if (!item) throw new NotFoundError('Run item not found');
+  const dependantIds = await dependants(item.id);
+  const dependantItems =
+    dependantIds.length > 0
+      ? await prisma.runItem.findMany({ where: { id: { in: dependantIds } }, select: { ownerUserId: true, ownerOrgId: true } })
+      : [];
+  const ownerUserIds = [...new Set(dependantItems.map((row) => row.ownerUserId).filter((id): id is string => id !== null))];
+  const ownerOrgIds = [...new Set(dependantItems.map((row) => row.ownerOrgId).filter((id): id is string => id !== null))];
+  await prisma.$transaction(async (tx) => {
+    await tx.runItem.update({ where: { id: item.id }, data: { status: 'LATE', lateByMin: input.lateByMin } });
+    await enqueue(tx, 'day.item_late', {
+      eventId: input.eventId,
+      itemId: item.id,
+      lateByMin: input.lateByMin,
+      dependantIds,
+      ownerUserIds,
+      ownerOrgIds,
+    });
+    await audit(tx, {
+      actor,
+      action: 'day.item.late',
+      targetType: 'RunItem',
+      targetId: item.id,
+      data: { eventId: input.eventId, lateByMin: input.lateByMin, dependants: dependantIds.length },
+    });
+  });
+  return { itemId: item.id, lateByMin: input.lateByMin, dependantIds };
 }
 
 export const updateRunStatusSchema = z.object({

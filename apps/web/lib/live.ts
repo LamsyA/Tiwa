@@ -6,7 +6,7 @@ import { Redis } from 'ioredis';
 // clients refetch through normal, permission-checked reads.
 
 export interface LiveMessage {
-  kind: 'tasks' | 'event' | 'members' | 'documents' | 'guests' | 'invites' | 'gallery' | 'checkin';
+  kind: 'tasks' | 'event' | 'members' | 'documents' | 'guests' | 'invites' | 'gallery' | 'checkin' | 'day';
   at: number;
 }
 
@@ -29,6 +29,9 @@ export const galleryChannel = (galleryId: string) => `gallery:${galleryId}`;
 
 /** Live check-in counter channel (P11-T06, UF-23): staff scans publish here. */
 export const checkinChannel = (eventId: string) => `checkin:${eventId}`;
+
+/** Live run-of-show channel (P12-T03, UF-24): item edits publish here. */
+export const dayChannel = (eventId: string) => `day:${eventId}`;
 
 /** Fire-and-forget: clients fall back to polling if a message is lost. */
 export async function publishLive(channel: string, kind: LiveMessage['kind']): Promise<void> {

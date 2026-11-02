@@ -8,6 +8,8 @@ import {
   deleteRunItem,
   deleteRunItemSchema,
   dependencySchema,
+  markLate,
+  markLateSchema,
   removeDependency,
   updateRunItem,
   updateRunItemSchema,
@@ -17,51 +19,63 @@ import {
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { userAction } from '@/lib/ctx.js';
+import { dayChannel, publishLive } from '@/lib/live.js';
 
 function revalidate(eventId: string) {
   revalidatePath(`/events/${eventId}/day`);
+}
+
+async function announce(eventId: string) {
+  await publishLive(dayChannel(eventId), 'day');
+  revalidate(eventId);
 }
 
 const fromProgrammeSchema = z.object({ eventId: z.string().uuid() });
 
 export const createItemAction = userAction(createRunItemSchema, async (input, ctx) => {
   const result = await createRunItem(ctx.actor, input);
-  revalidate(input.eventId);
+  await announce(input.eventId);
   return result;
 });
 
 export const updateItemAction = userAction(updateRunItemSchema, async (input, ctx) => {
   const result = await updateRunItem(ctx.actor, input);
-  revalidate(input.eventId);
+  await announce(input.eventId);
   return result;
 });
 
 export const deleteItemAction = userAction(deleteRunItemSchema, async (input, ctx) => {
   const result = await deleteRunItem(ctx.actor, input);
-  revalidate(input.eventId);
+  await announce(input.eventId);
   return result;
 });
 
 export const fromProgrammeAction = userAction(fromProgrammeSchema, async (input, ctx) => {
   const result = await createFromProgramme(ctx.actor, input.eventId);
-  revalidate(input.eventId);
+  await announce(input.eventId);
   return result;
 });
 
 export const addDepAction = userAction(dependencySchema, async (input, ctx) => {
   const result = await addDependency(ctx.actor, input);
-  revalidate(input.eventId);
+  await announce(input.eventId);
   return result;
 });
 
 export const removeDepAction = userAction(dependencySchema, async (input, ctx) => {
   const result = await removeDependency(ctx.actor, input);
-  revalidate(input.eventId);
+  await announce(input.eventId);
   return result;
 });
 
 export const updateStatusAction = userAction(updateRunStatusSchema, async (input, ctx) => {
   const result = await updateRunStatus(ctx.actor, input);
-  revalidate(input.eventId);
+  await announce(input.eventId);
+  return result;
+});
+
+export const markLateAction = userAction(markLateSchema, async (input, ctx) => {
+  const result = await markLate(ctx.actor, input);
+  await announce(input.eventId);
   return result;
 });

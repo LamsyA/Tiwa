@@ -2,12 +2,14 @@
 
 import { Button, Card, Input } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   addDepAction,
   createItemAction,
   deleteItemAction,
   fromProgrammeAction,
+  markLateAction,
   removeDepAction,
   updateItemAction,
   updateStatusAction,
@@ -39,8 +41,28 @@ function toLocalInput(iso: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-/** Run-of-show editor (P12-T02): add items, create from programme, owners,
- * durations, dependency links, status moves. Late flow arrives in P12-T03. */
+/** Transitive dependants of a set of items, from the dependency links. */
+function closure(roots: string[], dependencies: { itemId: string; dependsOnId: string }[]): Set<string> {
+  const children = new Map<string, string[]>();
+  for (const dep of dependencies) {
+    const list = children.get(dep.dependsOnId) ?? [];
+    list.push(dep.itemId);
+    children.set(dep.dependsOnId, list);
+  }
+  const out = new Set<string>();
+  const queue = [...roots];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (out.has(current)) continue;
+    out.add(current);
+    for (const child of children.get(current) ?? []) queue.push(child);
+  }
+  for (const root of roots) out.delete(root);
+  return out;
+}
+
+/** Run-of-show timeline (P12-T02/T03): editor for managers, now-line with
+ * auto-scroll, mark-late with dependant highlighting, live refresh. */
 export function DayEditor(props: {
   eventId: string;
   canManage: boolean;
@@ -49,11 +71,35 @@ export function DayEditor(props: {
   owners: Owner[];
 }) {
   const t = useTranslations('day');
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [starts, setStarts] = useState('');
   const [duration, setDuration] = useState('15');
+  const [justMarked, setJustMarked] = useState<string[]>([]);
+  const [now] = useState(() => Date.now());
+  const nowRef = useRef<HTMLLIElement | null>(null);
+
+  useEffect(() => {
+    nowRef.current?.scrollIntoView({ block: 'center' });
+  }, []);
+
+  useEffect(() => {
+    const source = new EventSource(`/api/sse/day/${props.eventId}`);
+    source.addEventListener('change', () => router.refresh());
+    return () => source.close();
+  }, [props.eventId, router]);
+
+  const lateIds = useMemo(() => props.items.filter((row) => row.status === 'LATE').map((row) => row.id), [props.items]);
+  const affected = useMemo(
+    () => new Set([...closure(lateIds, props.dependencies), ...justMarked]),
+    [lateIds, props.dependencies, justMarked],
+  );
+  const nowIndex = useMemo(() => {
+    const index = props.items.findIndex((row) => new Date(row.startsAt).getTime() > now);
+    return index === -1 ? props.items.length : index;
+  }, [props.items, now]);
 
   const run = (fn: () => Promise<{ ok: boolean } | Promise<unknown>>) => {
     setError(null);
@@ -65,9 +111,20 @@ export function DayEditor(props: {
     });
   };
 
+  const rows: { key: string; item?: DayItem; now?: boolean }[] = props.items.map((item) => ({
+    key: item.id,
+    item,
+  }));
+  rows.splice(nowIndex, 0, { key: '__now', now: true });
+
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="text-danger text-sm">{error}</p>}
+      {justMarked.length > 0 && (
+        <Card className="border-warning bg-warning-soft text-warning p-3 text-sm" role="status">
+          {t('lateNote')}
+        </Card>
+      )}
       {props.canManage && (
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex flex-wrap gap-2">
@@ -121,19 +178,29 @@ export function DayEditor(props: {
       )}
       {props.items.length === 0 && <p className="text-muted text-sm">{t('noItems')}</p>}
       <ul className="flex flex-col gap-2">
-        {props.items.map((row) => (
-          <ItemRow
-            key={row.id}
-            eventId={props.eventId}
-            row={row}
-            canManage={props.canManage}
-            owners={props.owners}
-            dependsOn={props.dependencies.filter((dep) => dep.itemId === row.id)}
-            items={props.items}
-            pending={pending}
-            run={run}
-          />
-        ))}
+        {rows.map((row) =>
+          row.now || !row.item ? (
+            <li key={row.key} ref={nowRef} aria-hidden className="border-brand-strong relative my-1 border-t-2">
+              <span className="bg-brand-strong absolute -top-2.5 left-0 rounded-full px-2 text-[11px] font-medium text-white">
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </li>
+          ) : (
+            <ItemRow
+              key={row.item.id}
+              eventId={props.eventId}
+              row={row.item}
+              canManage={props.canManage}
+              owners={props.owners}
+              dependsOn={props.dependencies.filter((dep) => dep.itemId === row.item!.id)}
+              items={props.items}
+              pending={pending}
+              run={run}
+              affected={affected.has(row.item.id)}
+              onMarked={(dependantIds) => setJustMarked(dependantIds)}
+            />
+          ),
+        )}
       </ul>
     </div>
   );
@@ -148,6 +215,8 @@ function ItemRow(props: {
   items: DayItem[];
   pending: boolean;
   run: (fn: () => Promise<{ ok: boolean } | Promise<unknown>>) => void;
+  affected: boolean;
+  onMarked: (dependantIds: string[]) => void;
 }) {
   const t = useTranslations('day');
   const { row } = props;
@@ -157,6 +226,8 @@ function ItemRow(props: {
   const [duration, setDuration] = useState(String(row.durationMin));
   const [owner, setOwner] = useState(row.ownerUserId ?? row.ownerOrgId ?? '');
   const [link, setLink] = useState('');
+  const [lateBy, setLateBy] = useState('15');
+  const [lating, setLating] = useState(false);
 
   const ownerValue = (id: string): { ownerUserId: string | null; ownerOrgId: string | null } => {
     const found = props.owners.find((entry) => entry.id === id);
@@ -164,15 +235,34 @@ function ItemRow(props: {
     return found.kind === 'user' ? { ownerUserId: id, ownerOrgId: null } : { ownerUserId: null, ownerOrgId: id };
   };
 
+  const markLate = () => {
+    if (!/^\d+$/.test(lateBy)) return;
+    props.run(async () => {
+      setLating(true);
+      try {
+        const result = await markLateAction({ eventId: props.eventId, itemId: row.id, lateByMin: Number(lateBy) });
+        if (result.ok) props.onMarked(result.data?.dependantIds ?? []);
+        return result;
+      } finally {
+        setLating(false);
+      }
+    });
+  };
+
   return (
-    <li className="border-border bg-bg rounded-xl border p-3 text-sm">
+    <li
+      className={`border-border bg-bg rounded-xl border p-3 text-sm ${row.status === 'LATE' ? 'border-danger' : props.affected ? 'border-warning bg-warning-soft' : ''}`}
+    >
       <div className="flex flex-wrap items-baseline gap-2">
         <span className="text-muted font-mono">
           {new Date(row.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {row.durationMin}m
         </span>
         <span className="font-medium">{row.title}</span>
         <span className="text-muted">{row.ownerName ?? t('unassigned')}</span>
-        <span className="ml-auto rounded-full border px-2 py-0.5 text-xs">{row.status}</span>
+        <span className="ml-auto rounded-full border px-2 py-0.5 text-xs">
+          {row.status}
+          {row.status === 'LATE' ? ` +${row.lateByMin}m` : ''}
+        </span>
       </div>
       {props.dependsOn.length > 0 && (
         <p className="text-muted mt-1 text-xs">
@@ -183,7 +273,7 @@ function ItemRow(props: {
         </p>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
-        {row.status === 'PLANNED' && (
+        {(row.status === 'PLANNED' || row.status === 'SKIPPED') && (
           <Button
             variant="secondary"
             disabled={props.pending}
@@ -204,6 +294,20 @@ function ItemRow(props: {
           >
             {t('done')}
           </Button>
+        )}
+        {props.canManage && (row.status === 'PLANNED' || row.status === 'STARTED') && (
+          <>
+            <Input
+              aria-label={t('lateBy')}
+              value={lateBy}
+              onChange={(event) => setLateBy(event.target.value)}
+              inputMode="numeric"
+              className="w-20"
+            />
+            <Button variant="secondary" disabled={props.pending || lating || !/^\d+$/.test(lateBy)} onClick={markLate}>
+              {t('markLate')}
+            </Button>
+          </>
         )}
         {props.canManage && (
           <>
