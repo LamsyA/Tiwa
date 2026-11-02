@@ -1595,7 +1595,14 @@
     "cardQuote": "Quote from {vendor}",
     "cardBooking": "Booking · {category}",
     "cardChange": "Change request v{version}",
-    "cardVisit": "Site visit confirmed"
+    "cardVisit": "Site visit confirmed",
+    "newChat": "New chat",
+    "newChatBody": "Message a vendor or planner by name or @handle.",
+    "newChatSearch": "Business name or @handle",
+    "newChatEmpty": "No business called “{q}” yet.",
+    "newChatHint": "Type at least 2 letters, e.g. @bisi-chops",
+    "kindPlanner": "Planner",
+    "kindVendor": "Vendor"
   },
   "quotes": {
     "categoryTitle": "{category} quotes",

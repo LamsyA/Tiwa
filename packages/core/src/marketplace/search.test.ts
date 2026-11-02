@@ -4,7 +4,7 @@ import type { Actor } from '../auth/authorize.js';
 import { savePackage } from './packages.js';
 import { blockAvailability } from './availability.js';
 import { publishProfile, upsertBusinessProfile } from './profile.js';
-import { searchMarketplace } from './search.js';
+import { findBusinesses, searchMarketplace } from './search.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 const users: string[] = [];
@@ -122,5 +122,18 @@ describe('searchMarketplace', () => {
     expect(free.hits.map((hit) => hit.orgId)).not.toContain(blocked);
     const anyDay = await searchMarketplace(admin, { kind: 'VENDOR', q: tag, freeOn: '2027-06-02' });
     expect(anyDay.hits.map((hit) => hit.orgId)).toContain(blocked);
+  });
+});
+
+describe('findBusinesses (inbox New chat)', () => {
+  it('finds published businesses by name or @handle, exact handle first; ignores unpublished', async () => {
+    const id = await makePublished('VENDOR', 'Handle', 'Lagos', null);
+    const byName = await findBusinesses({ q: `Handle ${RUN}` });
+    expect(byName.map((hit) => hit.orgId)).toContain(id);
+    const byHandle = await findBusinesses({ q: `@handle-${RUN}` });
+    expect(byHandle[0]?.orgId).toBe(id);
+    await publishProfile(admin, { orgId: id, published: false });
+    expect((await findBusinesses({ q: `@handle-${RUN}` })).map((hit) => hit.orgId)).not.toContain(id);
+    expect(await findBusinesses({ q: 'a' })).toEqual([]);
   });
 });

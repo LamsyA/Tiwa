@@ -149,3 +149,53 @@ export async function searchMarketplace(
     nextCursor: rows.length > input.take ? page[page.length - 1]!.id : null,
   };
 }
+
+export interface BusinessLookupHit {
+  orgId: string;
+  slug: string;
+  name: string;
+  kind: 'VENDOR' | 'PLANNER';
+  city: string;
+  categoryLabel: string | null;
+  verified: boolean;
+}
+
+/**
+ * Find a published vendor or planner by name or @handle to message them
+ * straight from the inbox (no marketplace detour). Exact handle first.
+ */
+export async function findBusinesses(raw: { q: string; take?: number }): Promise<BusinessLookupHit[]> {
+  const q = raw.q.trim().replace(/^@/, '');
+  if (q.length < 2) return [];
+  const rows = await prisma.organization.findMany({
+    where: {
+      kind: { in: ['VENDOR', 'PLANNER'] },
+      deletedAt: null,
+      profile: { published: true },
+      OR: [{ name: { contains: q, mode: 'insensitive' } }, { slug: { contains: q.toLowerCase() } }],
+    },
+    orderBy: [{ name: 'asc' }],
+    take: Math.min(raw.take ?? 12, 25),
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      kind: true,
+      verification: true,
+      profile: { select: { city: true, categories: true } },
+    },
+  });
+  return rows
+    .map((row) => ({
+      orgId: row.id,
+      slug: row.slug,
+      name: row.name,
+      kind: row.kind as 'VENDOR' | 'PLANNER',
+      city: row.profile?.city ?? '',
+      categoryLabel: row.profile?.categories[0]
+        ? (VENDOR_CATEGORIES[row.profile.categories[0] as keyof typeof VENDOR_CATEGORIES] ?? null)
+        : null,
+      verified: row.verification === 'APPROVED',
+    }))
+    .sort((a, b) => Number(b.slug === q.toLowerCase()) - Number(a.slug === q.toLowerCase()));
+}

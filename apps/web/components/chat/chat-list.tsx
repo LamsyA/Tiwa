@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
+import { NewChat } from './new-chat.js';
 import { useInboxStream } from '@/hooks/use-chat.js';
 
 const FILTERS: {
@@ -51,27 +52,30 @@ export function ChatList({ rows, filter, activeId }: { rows: InboxRow[]; filter:
 
   return (
     <div className="flex h-full flex-col">
-      <form
-        role="search"
-        className="relative px-3 pt-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          router.replace(href({ q: query.trim() }));
-        }}
-      >
-        <Search
-          aria-hidden
-          className="text-muted pointer-events-none absolute top-1/2 left-7 mt-1.5 size-4 -translate-y-1/2"
-        />
-        <Input
-          type="search"
-          aria-label={t('search')}
-          placeholder={t('search')}
-          className="h-10 rounded-xl border-transparent bg-[var(--chat-panel)] pl-11 shadow-none focus:border-transparent"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </form>
+      <div className="flex items-center gap-2 px-3 pt-3">
+        <form
+          role="search"
+          className="relative min-w-0 flex-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            router.replace(href({ q: query.trim() }));
+          }}
+        >
+          <Search
+            aria-hidden
+            className="text-muted pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
+          />
+          <Input
+            type="search"
+            aria-label={t('search')}
+            placeholder={t('search')}
+            className="h-10 rounded-xl border-transparent bg-[var(--chat-panel)] pl-11 shadow-none focus:border-transparent"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </form>
+        <NewChat />
+      </div>
       <nav aria-label={t('filters')} className="scrollbar-none flex gap-2 overflow-x-auto px-3 py-3">
         {FILTERS.map((item) => (
           <Link

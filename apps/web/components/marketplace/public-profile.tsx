@@ -57,6 +57,7 @@ export async function PublicProfileView({
             <Avatar name={profile.org.name} />
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold">{profile.org.name}</h1>
+              <p className="text-brand-strong text-sm font-medium">@{profile.org.slug}</p>
               <p className="text-muted text-sm">
                 {t('serviceArea', { city: profile.profile.city, km: profile.profile.serviceAreaKm })}
               </p>
