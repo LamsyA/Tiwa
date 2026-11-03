@@ -34,7 +34,6 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       <div className="flex flex-col gap-5 py-2">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-bold tracking-tight">{t('clientsTitle')}</h1>
             <p className="text-muted text-sm">{t('clientsBody', { count: clients.length })}</p>
           </div>
           <div className="flex flex-wrap gap-2">
