@@ -214,3 +214,46 @@ test('UF-08: personal link one-tap RSVP, no account; plain GET records nothing',
   await expect(anon.getByText('Download .ics')).toBeVisible();
   await anon.context().close();
 });
+
+// P15-T07 / UF-27 step 3 (D-X41): one prompt → draft → review → one Send tap. Runs on the Fake LLM.
+test('UF-27: one prompt drafts an update, nothing is sent until Send, then it goes to everyone reachable', async ({
+  page,
+}) => {
+  await newHost(page);
+  const eventUrl = await quickEvent(page, 'AI Invite Party');
+  await seedTwoGuests(page, eventUrl);
+  await gotoSettled(page, `${eventUrl}/invites`);
+  const invitesSwitch = page.getByRole('switch', { name: /Turn (on|off) invitations/ });
+  if ((await invitesSwitch.getAttribute('aria-label')) === 'Turn on invitations') {
+    await invitesSwitch.click();
+    await page.waitForTimeout(1500);
+  }
+
+  await page.getByRole('button', { name: 'Write with AI' }).click();
+  const dialog = page.getByRole('dialog');
+  // Both safety rules are stated up front.
+  await expect(dialog.getByText('Nothing is sent until you tap Send.')).toBeVisible();
+  await expect(dialog.getByText(/never sees guests' names, phone numbers or emails/)).toBeVisible();
+
+  await dialog.getByLabel('What should we tell your guests?').fill('Invite everyone and ask them to reply soon');
+  await dialog.getByRole('button', { name: 'Draft message' }).click();
+
+  // Review card: personalised preview for the first guest, audience, type, channels.
+  await expect(dialog.getByText(/How .+ will see it/)).toBeVisible({ timeout: 30_000 });
+  await expect(dialog.getByRole('button', { name: /Everyone/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(dialog.getByRole('radio', { name: 'Invitation' })).toHaveAttribute('aria-checked', 'true');
+  await expect(dialog.getByRole('button', { name: 'Send to 2 guests' })).toBeVisible();
+
+  // Nothing went out yet: tracking still shows zero sent.
+  await expect(page.getByText('Delivered').first()).toHaveCount(0);
+
+  // Rewrite keeps the audience; edit the text, then Send once.
+  await dialog.getByRole('button', { name: 'More formal' }).click();
+  await expect(dialog.getByText(/Dear/)).toBeVisible({ timeout: 30_000 });
+  await dialog.getByRole('button', { name: 'Edit text' }).click();
+  await dialog.getByLabel('Message text').fill('Dear {name}, please join us for AI Invite Party. Reply here: {link}');
+  await dialog.getByRole('button', { name: 'Done' }).click();
+  await expect(dialog.getByText('please join us for AI Invite Party')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Send to 2 guests' }).click();
+  await expect(dialog.getByText('Sent to 2 guests')).toBeVisible({ timeout: 30_000 });
+});

@@ -1,8 +1,16 @@
 'use server';
 
+import { messageDrafterFromEnv } from '@tiwa/ai';
+import { env } from '@tiwa/config';
 import {
   createInviteBatch,
   createInviteBatchSchema,
+  draftGuestMessage,
+  draftGuestMessageSchema,
+  estimateDraft,
+  estimateDraftSchema,
+  sendDraftedMessage,
+  sendDraftedMessageSchema,
   enableInvites,
   enableInvitesSchema,
   markSentManually,
@@ -70,6 +78,23 @@ export const setForwarding = userAction(toggleForwardingSchema, async (input, ct
 
 export const revokeInviteAction = userAction(revokeInviteSchema, async (input, ctx) => {
   const result = await revokeInvite(ctx.actor, input);
+  revalidate(input.eventId);
+  return result;
+});
+
+/** One-prompt AI (D-X41): drafts and counts only — nothing is sent here (AI-06). */
+export const draftAiMessageAction = userAction(draftGuestMessageSchema, async (input, ctx) =>
+  draftGuestMessage(messageDrafterFromEnv(env), ctx.actor, input),
+);
+
+export const estimateAiMessageAction = userAction(estimateDraftSchema, async (input, ctx) =>
+  estimateDraft(ctx.actor, input),
+);
+
+/** The host's one Send tap: sends exactly the reviewed text. */
+export const sendAiMessageAction = userAction(sendDraftedMessageSchema, async (input, ctx) => {
+  const result = await sendDraftedMessage(ctx.actor, input);
+  await publishLive(`invites:${input.eventId}`, 'invites');
   revalidate(input.eventId);
   return result;
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FakePlanDrafter, MusePlanDrafter, planDrafterFromEnv } from './index.js';
+import { FakeMessageDrafter, FakePlanDrafter, MusePlanDrafter, planDrafterFromEnv } from './index.js';
 
 const context = {
   eventType: 'Birthday',
@@ -58,5 +58,36 @@ describe('MusePlanDrafter', () => {
     } finally {
       globalThis.fetch = original;
     }
+  });
+});
+
+describe('FakeMessageDrafter (D-X41)', () => {
+  const base = {
+    eventName: 'Tolu at 40',
+    eventType: 'Birthday',
+    whenText: 'Saturday, 14 November at 6:00 PM',
+    venue: 'Eko Hotel',
+    daysUntilEvent: 10,
+    invitesSent: false,
+    guestCounts: { total: 10, notReplied: 4, attending: 5, maybe: 1, declined: 0 },
+    groups: ['Family'],
+    language: 'en' as const,
+    previous: null,
+    style: null,
+  };
+
+  it('reads intent and audience from one prompt and keeps the placeholders', async () => {
+    const drafter = new FakeMessageDrafter();
+    const invite = await drafter.draftMessage({ ...base, prompt: 'Invite everyone' });
+    expect(invite.kind).toBe('INVITE');
+    expect(invite.audience).toBe('all');
+    expect(invite.message).toContain('{name}');
+    expect(invite.message).toContain('{link}');
+    const remind = await drafter.draftMessage({ ...base, prompt: "Remind people who haven't replied" });
+    expect(remind.kind).toBe('REMINDER');
+    expect(remind.audience).toBe('not_replied');
+    const family = await drafter.draftMessage({ ...base, prompt: 'Tell family the venue moved' });
+    expect(family.audience).toBe('group');
+    expect(family.groupName).toBe('Family');
   });
 });

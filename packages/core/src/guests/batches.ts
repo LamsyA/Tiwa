@@ -23,7 +23,10 @@ const audienceSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('group'), groupId: z.string().uuid() }),
   z.object({ type: z.literal('ids'), guestIds: z.array(z.string().uuid()).min(1).max(5000) }),
   z.object({ type: z.literal('attending') }),
+  z.object({ type: z.literal('not_replied') }),
 ]);
+
+export type InviteAudience = z.infer<typeof audienceSchema>;
 
 export const createInviteBatchSchema = z.object({
   eventId: z.string().uuid(),
@@ -66,6 +69,13 @@ async function resolveAudience(
   if (audience.type === 'ids') {
     return prisma.guest.findMany({
       where: { ...base, id: { in: audience.guestIds } },
+      select: { id: true, name: true, phone: true, email: true, inviteToken: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+  if (audience.type === 'not_replied') {
+    return prisma.guest.findMany({
+      where: { ...base, rsvp: 'NONE' },
       select: { id: true, name: true, phone: true, email: true, inviteToken: true },
       orderBy: { name: 'asc' },
     });
@@ -127,6 +137,53 @@ function segments(text: string): number {
   const units = [...text].length;
   if (units <= 70) return 1;
   return Math.ceil(units / 67);
+}
+
+export interface BatchEstimate {
+  counts: Record<ComposerChannel, number>;
+  total: number;
+  /** In the audience but with no phone or email: they are not messaged. */
+  unreachable: number;
+  smsEstimateMinor: number;
+  /** First reachable guest, for the "how it looks" preview (shown to the host only). */
+  sample: { firstName: string } | null;
+}
+
+/** Who a message would reach and what SMS would cost — reads only, creates nothing. */
+export async function estimateInviteBatch(
+  actor: UserActor,
+  input: {
+    eventId: string;
+    audience: InviteAudience;
+    kind: 'INVITE' | 'UPDATE' | 'REMINDER';
+    channels: ComposerChannel[];
+    message: string;
+  },
+  preloaded?: EventAccess,
+): Promise<BatchEstimate> {
+  await resolveEventAccess(actor, input.eventId, 'guests.manage', preloaded);
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: input.eventId },
+    select: { countryCode: true },
+  });
+  const guests = await resolveAudience(input.eventId, input.audience, input.kind);
+  const counts: Record<ComposerChannel, number> = { WHATSAPP: 0, EMAIL: 0, SMS: 0, LINK: 0 };
+  let first: AudienceGuest | null = null;
+  for (const guest of guests) {
+    const channel = pickChannel(guest, input.channels, true);
+    if (!channel) continue;
+    counts[channel] += 1;
+    first ??= guest;
+  }
+  const total = counts.WHATSAPP + counts.EMAIL + counts.SMS + counts.LINK;
+  const renderedLength = input.message.length + 44;
+  return {
+    counts,
+    total,
+    unreachable: guests.length - total,
+    smsEstimateMinor: counts.SMS * segments('x'.repeat(renderedLength)) * smsSegmentCostMinor(event.countryCode),
+    sample: first ? { firstName: first.name.trim().split(/\s+/)[0] ?? first.name } : null,
+  };
 }
 
 export async function createInviteBatch(

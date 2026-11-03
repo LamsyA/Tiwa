@@ -1104,7 +1104,79 @@
         "send": "Send invites",
         "track": "Track replies"
       },
-      "settingsHeading": "Invitation settings"
+      "settingsHeading": "Invitation settings",
+      "ai": {
+        "trigger": "Write with AI",
+        "title": "Write with AI",
+        "subtitle": "Say what you want in one line. We'll write it, pick who gets it, and you send it with one tap.",
+        "promptLabel": "What should we tell your guests?",
+        "promptPlaceholder": "e.g. Invite everyone to my 40th, Saturday 6pm, dress code all white",
+        "languageLabel": "Language",
+        "language": {
+          "en": "English",
+          "pcm": "Pidgin"
+        },
+        "draft": "Draft message",
+        "drafting": "Drafting…",
+        "draftingHint": "Writing your message and working out who should get it…",
+        "tryOne": "Try one",
+        "examples": {
+          "invite": "Invite all my guests and ask them to reply by Friday",
+          "remind": "Remind everyone who hasn't replied that RSVP closes this week",
+          "change": "Tell guests the venue has moved and we now start one hour later",
+          "thanks": "Thank everyone who came and say photos are coming soon"
+        },
+        "readyTitle": "Your message is ready",
+        "readyBody": "Check it, change anything you like, then send.",
+        "previewLabel": "Message preview",
+        "previewFor": "How {name} will see it",
+        "sampleName": "Ada",
+        "edit": "Edit text",
+        "doneEditing": "Done",
+        "editLabel": "Message text",
+        "placeholdersHint": "Keep {name} and {link}: each guest gets their own name and personal link.",
+        "styles": {
+          "shorter": "Shorter",
+          "formal": "More formal",
+          "warmer": "Warmer",
+          "pidgin": "Pidgin"
+        },
+        "whoLabel": "Who gets it",
+        "audience": {
+          "all": "Everyone",
+          "not_replied": "Not replied yet",
+          "attending": "Coming"
+        },
+        "kindLabel": "Type",
+        "kinds": {
+          "INVITE": "Invitation",
+          "UPDATE": "Update",
+          "REMINDER": "Reminder"
+        },
+        "email": "Email",
+        "unreachable": "{count, plural, one {# guest has} other {# guests have}} no phone or email and won't get it.",
+        "smsCost": "SMS cost about",
+        "back": "Edit prompt",
+        "send": "{count, plural, one {Send to # guest} other {Send to # guests}}",
+        "nobody": "Nobody to send to",
+        "sentTitle": "{count, plural, one {Sent to # guest} other {Sent to # guests}}",
+        "sentBody": "Messages are going out now. Track who opened and replied below.",
+        "another": "Write another",
+        "done": "Done",
+        "ruleSendTitle": "Nothing is sent until you tap Send.",
+        "ruleSendBody": "The AI only writes a draft for you to check.",
+        "rulePrivacyTitle": "Your guests stay private.",
+        "rulePrivacyBody": "Only people who manage guests can use this, and the AI never sees guests' names, phone numbers or emails, just your event details and guest counts.",
+        "rulePrivacyShort": "The AI never sees guests' phone numbers or emails.",
+        "errors": {
+          "generic": "Something went wrong. Try again.",
+          "VALIDATION": "We couldn't write that. Try saying it another way.",
+          "RATE_LIMITED": "You've drafted a lot this hour. Try again in a little while.",
+          "FORBIDDEN": "Only people who manage guests can use this.",
+          "FEATURE_DISABLED": "Writing with AI isn't available right now.",
+          "INVALID_TRANSITION": "Turn invitations on first."
+        }
+      }
     },
     "momentsPage": {
       "title": "Moments",

@@ -1,5 +1,5 @@
 import { env } from '@tiwa/config';
-import { authorize, batchDeliveries, freeModeQueue, listBatches, listGroups, listGuests } from '@tiwa/core';
+import { authorize, batchDeliveries, isEnabled, freeModeQueue, listBatches, listGroups, listGuests } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, buttonClasses } from '@tiwa/ui';
 import { CheckCircle2, CircleHelp, Mail, MailWarning, Send, Users, XCircle } from 'lucide-react';
@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type * as React from 'react';
 import { getTranslations } from 'next-intl/server';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
+import { AiComposer } from './ai-composer.js';
 import { Composer } from './composer.js';
 import { FreeQueue } from './free-queue.js';
 import { InvitesSwitch } from './invites-switch.js';
@@ -58,6 +59,7 @@ export default async function InvitesPage({
       slug: true,
       currency: true,
       sharedLinkEnabled: true,
+      countryCode: true,
       remindersEnabled: true,
       allowForwarding: true,
       startsAt: true,
@@ -76,6 +78,19 @@ export default async function InvitesPage({
         timeZone: event.timezone,
       }).format(event.startsAt)
     : '';
+  // UF-27-3 / UF-27-6: AI shows only when the flag is on and the user may manage guests and use AI.
+  const aiOn =
+    invitesOn &&
+    canManage &&
+    (await isEnabled('ai.enabled', event.countryCode).catch(() => false)) &&
+    (() => {
+      try {
+        authorize(ctx.actor, 'ai.draftMessage', { eventId: id, access });
+        return true;
+      } catch {
+        return false;
+      }
+    })();
   const shareUrl = `${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}/rsvp`;
   const [listed, groups, batches, queue] =
     invitesOn && canManage
@@ -127,6 +142,7 @@ export default async function InvitesPage({
             </div>
             {invitesOn && canManage && (
               <div className="flex flex-wrap items-center gap-2 [&_button]:rounded-full">
+                {aiOn && <AiComposer eventId={id} currency={event.currency} appUrl={env.APP_URL.replace(/\/$/, '')} />}
                 <Composer
                   eventId={id}
                   eventName={event.name}

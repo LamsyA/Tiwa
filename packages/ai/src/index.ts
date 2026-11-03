@@ -220,3 +220,240 @@ export function planDrafterFromEnv(env: {
   }
   return new FakePlanDrafter();
 }
+
+// ───────────── Guest messages (AI-04, UF-27 step 3; D-X41) ─────────────
+// One prompt → a ready message plus who it is for. The model never sees a
+// guest's name, phone or email: only counts, group names and event facts.
+// `{name}` and `{link}` stay as placeholders and are filled per guest at send.
+
+export type MessageKind = 'INVITE' | 'UPDATE' | 'REMINDER';
+export type MessageAudience = 'all' | 'not_replied' | 'attending' | 'group';
+export type MessageStyle = 'shorter' | 'formal' | 'warmer' | 'pidgin';
+
+export interface MessageDraftContext {
+  eventName: string;
+  eventType: string;
+  whenText: string | null;
+  venue: string | null;
+  daysUntilEvent: number | null;
+  invitesSent: boolean;
+  guestCounts: { total: number; notReplied: number; attending: number; maybe: number; declined: number };
+  groups: string[];
+  language: 'en' | 'pcm';
+  prompt: string;
+  /** Set when rewriting an earlier draft. */
+  previous: string | null;
+  style: MessageStyle | null;
+}
+
+export interface MessageDraft {
+  message: string;
+  kind: MessageKind;
+  audience: MessageAudience;
+  groupName: string | null;
+  /** A few words for the review card, e.g. "Venue change for everyone". */
+  headline: string;
+}
+
+export interface MessageDrafter {
+  draftMessage(context: MessageDraftContext): Promise<MessageDraft | null>;
+}
+
+const draftSchema = z.object({
+  message: z.string().min(1).max(2000),
+  kind: z.enum(['INVITE', 'UPDATE', 'REMINDER']),
+  audience: z.enum(['all', 'not_replied', 'attending', 'group']),
+  groupName: z.string().nullable(),
+  headline: z.string().max(120),
+});
+
+const MESSAGE_SCHEMA = {
+  type: 'object',
+  properties: {
+    message: {
+      type: 'string',
+      description:
+        'The message to send. Must contain {name} where the guest name goes and {link} where their personal link goes. Max 600 characters. No phone numbers, emails or URLs.',
+    },
+    kind: {
+      type: 'string',
+      enum: ['INVITE', 'UPDATE', 'REMINDER'],
+      description:
+        'INVITE for a first invitation, UPDATE for news or changes, REMINDER to nudge replies or attendance.',
+    },
+    audience: {
+      type: 'string',
+      enum: ['all', 'not_replied', 'attending', 'group'],
+      description:
+        'Who it is for. all = everyone; not_replied = no reply yet; attending = said yes; group = one guest group.',
+    },
+    groupName: { type: ['string', 'null'], description: 'The exact group name when audience is group, else null.' },
+    headline: { type: 'string', description: 'Three to seven words summarising the message for the host.' },
+  },
+  required: ['message', 'kind', 'audience', 'groupName', 'headline'],
+  additionalProperties: false,
+} as const;
+
+export const MESSAGE_PROMPT_VERSION = 'guest-message@1';
+const MESSAGE_SYSTEM = [
+  'You write short, warm messages that an event host sends to their guests by WhatsApp, SMS or email.',
+  'The host gives one instruction. Decide the message, whether it is a first invitation, an update or a reminder, and who should get it.',
+  'Use the event facts you are given; never invent dates, times, venues, prices or names.',
+  'Always include the placeholders {name} (guest first name) and {link} (their personal RSVP link) exactly once each.',
+  'Keep it under 600 characters, friendly and clear, no hashtags, at most one emoji.',
+  'If the language is pcm, write in natural Nigerian Pidgin English.',
+  'Never include phone numbers, email addresses or web links other than {link}.',
+].join(' ');
+
+function describeMessage(context: MessageDraftContext): string {
+  const c = context.guestCounts;
+  return [
+    `Event: ${context.eventName} (${context.eventType})`,
+    context.whenText ? `When: ${context.whenText}` : 'When: not set yet',
+    context.venue ? `Where: ${context.venue}` : null,
+    context.daysUntilEvent !== null ? `Days until the event: ${context.daysUntilEvent}` : null,
+    `Invitations already sent: ${context.invitesSent ? 'yes' : 'no'}`,
+    `Guests: ${c.total} total, ${c.notReplied} not replied, ${c.attending} coming, ${c.maybe} maybe, ${c.declined} not coming`,
+    context.groups.length > 0 ? `Guest groups: ${context.groups.join(', ')}` : null,
+    `Language: ${context.language === 'pcm' ? 'Nigerian Pidgin' : 'English'}`,
+    context.previous ? `Earlier draft:\n${context.previous}` : null,
+    context.style
+      ? `Rewrite the earlier draft to be: ${context.style === 'pidgin' ? 'in Nigerian Pidgin' : context.style}`
+      : null,
+    `Host's instruction:\n${context.prompt}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+export class ClaudeMessageDrafter implements MessageDrafter {
+  private readonly client: Anthropic;
+
+  constructor(
+    apiKey: string,
+    private readonly model = 'claude-opus-5-5',
+  ) {
+    this.client = new Anthropic({ apiKey });
+  }
+
+  async draftMessage(context: MessageDraftContext): Promise<MessageDraft | null> {
+    const response = await this.client.messages.parse({
+      model: this.model,
+      max_tokens: 4000,
+      output_config: { effort: 'low', format: jsonSchemaOutputFormat(MESSAGE_SCHEMA) },
+      system: MESSAGE_SYSTEM,
+      messages: [{ role: 'user', content: describeMessage(context) }],
+    });
+    console.info(
+      `[ai] ${MESSAGE_PROMPT_VERSION} model=${this.model} in=${response.usage.input_tokens} out=${response.usage.output_tokens}`,
+    );
+    if (response.stop_reason === 'refusal') return null;
+    const parsed = draftSchema.safeParse(response.parsed_output);
+    return parsed.success ? parsed.data : null;
+  }
+}
+
+export class MuseMessageDrafter implements MessageDrafter {
+  constructor(
+    private readonly apiKey: string,
+    private readonly model = 'muse-spark-1.3-contributor',
+    private readonly baseUrl = MUSE_BASE_URL,
+  ) {}
+
+  async draftMessage(context: MessageDraftContext): Promise<MessageDraft | null> {
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
+      signal: AbortSignal.timeout(60_000),
+      body: JSON.stringify({
+        model: this.model,
+        reasoning_effort: 'low',
+        max_tokens: 4000,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `${MESSAGE_SYSTEM} Reply with JSON only, exactly this shape: {"message":string,"kind":"INVITE"|"UPDATE"|"REMINDER","audience":"all"|"not_replied"|"attending"|"group","groupName":string|null,"headline":string}.`,
+          },
+          { role: 'user', content: describeMessage(context) },
+        ],
+      }),
+    });
+    if (!response.ok) throw new Error(`Muse request failed (${response.status})`);
+    const body = (await response.json()) as {
+      choices?: { message?: { content?: string | null } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    console.info(
+      `[ai] ${MESSAGE_PROMPT_VERSION} model=${this.model} in=${body.usage?.prompt_tokens ?? 0} out=${body.usage?.completion_tokens ?? 0}`,
+    );
+    const content = body.choices?.[0]?.message?.content;
+    if (!content) return null;
+    const match = /\{[\s\S]*\}/.exec(content);
+    let json: unknown;
+    try {
+      json = JSON.parse(match ? match[0] : content);
+    } catch {
+      return null;
+    }
+    const parsed = draftSchema.safeParse(json);
+    return parsed.success ? parsed.data : null;
+  }
+}
+
+/** Deterministic drafter for tests and keyless local work: reads intent from keywords. */
+export class FakeMessageDrafter implements MessageDrafter {
+  async draftMessage(context: MessageDraftContext): Promise<MessageDraft> {
+    const prompt = context.prompt.toLowerCase();
+    const pidgin = context.language === 'pcm' || context.style === 'pidgin';
+    const reminder = /(remind|reply|rsvp|haven'?t|not replied|nudge)/.test(prompt);
+    const update =
+      !reminder &&
+      (context.invitesSent || /(moved|change|update|now|later|earlier|cancel|new time|new venue)/.test(prompt));
+    const kind: MessageKind = reminder ? 'REMINDER' : update ? 'UPDATE' : 'INVITE';
+    const group = context.groups.find((name) => prompt.includes(name.toLowerCase())) ?? null;
+    const audience: MessageAudience = group
+      ? 'group'
+      : reminder || /(not replied|haven'?t replied|no reply)/.test(prompt)
+        ? 'not_replied'
+        : /(coming|attending|confirmed|said yes)/.test(prompt)
+          ? 'attending'
+          : 'all';
+    const when = context.whenText ? ` on ${context.whenText}` : '';
+    const where = context.venue ? ` at ${context.venue}` : '';
+    const detail = context.prompt.trim().replace(/\s+/g, ' ').slice(0, 200);
+    let message =
+      kind === 'INVITE'
+        ? pidgin
+          ? `Hello {name}! You dey invited to ${context.eventName}${when}${where}. Abeg tell us if you go come: {link}`
+          : `Hi {name}, you're invited to ${context.eventName}${when}${where}. We'd love to see you there. Please reply here: {link}`
+        : kind === 'REMINDER'
+          ? pidgin
+            ? `Hello {name}, abeg no forget to tell us if you go come for ${context.eventName}${when}. Reply here: {link}`
+            : `Hi {name}, a quick reminder to let us know if you can make it to ${context.eventName}${when}. Reply here: {link}`
+          : pidgin
+            ? `Hello {name}, small update for ${context.eventName}: ${detail}. See everything here: {link}`
+            : `Hi {name}, an update about ${context.eventName}: ${detail}. All the details are here: {link}`;
+    if (context.style === 'shorter') message = message.split('. ')[0]!.replace(/\.?$/, '') + ': {link}';
+    if (context.style === 'formal') message = message.replace(/^Hi \{name\},/, 'Dear {name},');
+    if (context.style === 'warmer') message = message.replace(/^Hi \{name\},/, 'Hi {name} 💛,');
+    const headline =
+      kind === 'INVITE'
+        ? 'Invitation to your guests'
+        : kind === 'REMINDER'
+          ? 'Reminder to reply'
+          : 'Update for your guests';
+    return { message, kind, audience, groupName: group, headline };
+  }
+}
+
+/** Same provider choice as `planDrafterFromEnv`. */
+export function messageDrafterFromEnv(env: Parameters<typeof planDrafterFromEnv>[0]): MessageDrafter {
+  if (env.TIWA_MUSE_API) {
+    return new MuseMessageDrafter(env.TIWA_MUSE_API, env.TIWA_MUSE_MODEL || 'muse-spark-1.3-contributor');
+  }
+  if (env.LLM_PROVIDER === 'anthropic' && env.LLM_API_KEY) {
+    return new ClaudeMessageDrafter(env.LLM_API_KEY, env.LLM_MODEL_DRAFT || 'claude-opus-5-5');
+  }
+  return new FakeMessageDrafter();
+}
