@@ -324,7 +324,7 @@ Chat is a core MVP feature: clients, planners, vendors and guests talk inside Ti
 | AI-01 | Draft checklist and budget split from event details | MVP (flag `ai.enabled`) |
 | AI-02 | Compare quotes: highlight missing items, unclear terms, extra fees | MVP (flag) |
 | AI-03 | Guest-count change impact list | MVP (flag) |
-| AI-04 | Draft messages (invites, vendor briefs, client updates) in English and Nigerian Pidgin | MVP (flag) |
+| AI-04 | One-prompt invites and updates: the host or planner types one prompt; AI drafts the message (with `{name}`/`{link}` placed), proposes the audience and channel, and the host sends it with one **Send** tap. Also vendor briefs and client updates. English and Nigerian Pidgin (D-X41) | MVP (flag) |
 | AI-05 | Auto alt-text captions for Moments | MVP (flag) |
 | AI-06 | AI never changes data without the user pressing a confirm button | MVP |
 

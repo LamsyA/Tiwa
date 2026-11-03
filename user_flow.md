@@ -470,11 +470,21 @@ flowchart LR
 
 1. On a new event overview: card "Want a head start? `[Draft my plan]`" → AI proposes tasks and budget split → review list with checkboxes → `[Add selected]`.
 2. Quote comparison: `[Ask AI to compare]` → summary: differences, missing items, unclear terms → nothing changes automatically.
+3. One-prompt invite or update (AI-04, D-X41): on Invites, tap `[Write with AI]` → type one prompt ("Remind everyone who hasn't replied that RSVP closes Friday") → review card:
+   - the drafted message, previewed with the first guest's name and link;
+   - the audience chips ("Not replied · 38 guests");
+   - the type (Invite / Update);
+   - the channel and cost.
+
+   `[Rewrite ▾]` offers shorter, more formal or Pidgin. The host can edit the text or audience. `[Send to 38 guests]` sends through the normal invite/update batch, and the progress shows on the Invites page.
 
 **Acceptance checks**
 - [ ] UF-27-1 AI output is never saved without the user tapping Add/Apply.
 - [ ] UF-27-2 The AI context contains only data the user may see (test with a co-host lacking money permission: no amounts in prompt).
 - [ ] UF-27-3 With `ai.enabled` off, all AI buttons are hidden.
+- [ ] UF-27-4 One prompt produces a message, audience and type; nothing is sent until the user taps Send, and the sent text is exactly what was shown.
+- [ ] UF-27-5 Every message carries each guest's own `{link}`; guests who opted out or have no reachable channel are excluded, and the count says so.
+- [ ] UF-27-6 Only users with `guests.manage` see `[Write with AI]`; the AI context has no guest phone numbers or emails (names only for the preview).
 
 ---
 
