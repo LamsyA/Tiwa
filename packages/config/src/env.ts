@@ -55,7 +55,8 @@ const envSchema = z
     SMTP_HOST: z.string().default('smtp.gmail.com'),
     SMTP_PORT: z.coerce.number().int().default(465),
     SMTP_USER: optString(),
-    SMTP_PASSWORD: optString(),
+    // Gmail shows app passwords in groups of four; spaces are not part of it.
+    SMTP_PASSWORD: optString().transform((value) => value?.replace(/\s+/g, '')),
     RESEND_API_KEY: optString(),
     EMAIL_FROM: z.string().default('Tiwa <hello@tiwa.app>'),
     SMS_PROVIDER: provider(['fake', 'termii'] as const, 'fake'),

@@ -228,3 +228,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X50: username + password sign-up/sign-in (default), Google behind AUTH_GOOGLE_ENABLED. password-auth + accounts e2e 10/10 at 1280 px; passwords stored as scrypt hashes.
 - D-X51: new Google/password sign-ups now pick a role (onboardedAt); forgot/reset password by username or email. Core 900/900, web 60/60, messaging templates 3/3, password-auth e2e 2/2 + accounts 9/9.
 - D-X52: SMTP (Gmail) email provider via Nodemailer for web + worker; typecheck/lint clean. Real send pending the Gmail app password.
+- D-X52: real send confirmed — Gmail SMTP login OK, branded sign-in email sent to a non-owner address through the app; app password spaces are stripped.
