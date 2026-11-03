@@ -221,3 +221,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X44: sign-up creates a draft profile; planners get Business profile (publish/unpublish at top, specialties, about, fees, terms; only city required); DateText hydration fix. Core marketplace/accounts 37/37 + profile 5/5, ui 102/102.
 - D-X45: host next-steps checklist on the event overview (self-ticking) and side-by-side quote compare with pins. Core readiness 2/2; web typecheck + lint clean.
 - D-X46: vendor earnings panel (this month/upcoming/overdue/6-month trend), payout bank account (owner only, last 4 stored), quotes start from saved packages. Core payments/orgs/marketplace green; web typecheck + lint clean.
+- D-X47: planner events linked to the planner org (+backfill), client → event, planning fee on Money, /today across events, logo upload + branded proposals/invoices with PDF. Core 900/900, web 58/58, typecheck + lint clean.

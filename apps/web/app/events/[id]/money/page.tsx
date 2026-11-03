@@ -5,6 +5,7 @@ import {
   listExpenses,
   listPaymentSchedule,
   OTHER_KEY,
+  plannerFeeMinor,
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill, buttonClasses } from '@tiwa/ui';
@@ -24,6 +25,7 @@ import {
   SuggestedBudgetButton,
 } from './money-editors.js';
 import { MoneyTabbar } from './money-tabbar.js';
+import { PlannerFeeCard } from './planner-fee.js';
 
 const TABS = ['budget', 'payments', 'contributions', 'expenses', 'income'] as const;
 type Tab = (typeof TABS)[number];
@@ -80,13 +82,25 @@ export default async function EventMoneyPage({
       <MoneyText value={value.toString()} currency={currency} />
     );
 
-  const [schedule, expenses, contributions] = await Promise.all([
+  const [schedule, expenses, contributions, fee, plannerSeat] = await Promise.all([
     listPaymentSchedule(ctx.actor, { eventId: id }, access),
     active === 'expenses' ? listExpenses(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
     active === 'contributions' || active === 'income'
       ? listContributions(ctx.actor, { eventId: id }, access)
       : Promise.resolve([]),
+    prisma.event.findUniqueOrThrow({
+      where: { id },
+      select: { plannerFeeBps: true, plannerFeeMinor: true, plannerFeeNote: true, plannedBudgetMinor: true },
+    }),
+    prisma.eventParticipant.findFirst({
+      where: { eventId: id, userId: ctx.actor.userId, removedAt: null, orgId: { not: null } },
+      select: { orgId: true },
+    }),
   ]);
+  const plannerOrg = plannerSeat?.orgId
+    ? await prisma.organization.findFirst({ where: { id: plannerSeat.orgId, kind: 'PLANNER' }, select: { id: true } })
+    : null;
+  const feeTotal = plannerFeeMinor(fee);
 
   const alerts = budgetAlerts(summary, schedule);
 
@@ -128,6 +142,17 @@ export default async function EventMoneyPage({
           {...(totals.uncommittedMinor < 0n ? { delta: { tone: 'danger' as const, text: t('overBudget') } } : {})}
         />
       </div>
+
+      <PlannerFeeCard
+        eventId={id}
+        currency={currency}
+        budgetMinor={fee.plannedBudgetMinor.toString()}
+        feeBps={fee.plannerFeeBps}
+        feeMinor={fee.plannerFeeMinor?.toString() ?? null}
+        note={fee.plannerFeeNote}
+        totalMinor={feeTotal?.toString() ?? null}
+        canEdit={plannerOrg !== null && canEdit}
+      />
 
       <Card className="flex flex-col gap-3 p-5" aria-label={t('barLabel')}>
         <div className="flex flex-wrap items-center justify-between gap-2">

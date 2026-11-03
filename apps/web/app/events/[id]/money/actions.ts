@@ -27,8 +27,11 @@ import {
   startExpenseReceiptSchema,
   draftBudgetSplit,
   draftBudgetSplitSchema,
+  plannerFeeSchema,
+  setPlannerFee,
 } from '@tiwa/core';
 import { assistantFor } from '@/lib/ai.js';
+import { revalidatePath } from 'next/cache';
 import { userAction } from '@/lib/ctx.js';
 import { privateStorage } from '@/lib/storage.js';
 
@@ -80,3 +83,9 @@ export const applySuggestedBudgetAction = userAction(eventIdSchema, (input, ctx)
 export const draftBudgetSplitAction = userAction(draftBudgetSplitSchema, async (input, ctx) =>
   draftBudgetSplit(await assistantFor(ctx.actor.userId, input.eventId), ctx.actor, input),
 );
+
+/** D-X47: the planner's fee agreement on this event (planner only, enforced in core). */
+export const savePlannerFee = userAction(plannerFeeSchema, async (input, ctx) => {
+  await setPlannerFee(ctx.actor, input);
+  revalidatePath(`/events/${input.eventId}/money`);
+});

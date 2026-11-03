@@ -99,7 +99,15 @@ export async function createEventDraft(actor: UserActor, input: z.infer<typeof c
   if (template.custom && !custom)
     throw new ValidationError('Name your event type', { field: 'customLabel', key: 'typeTooShort' });
   const label = input.customLabel ?? template.label;
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { countryCode: true } });
+  const [user, plannerMembership] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: actor.userId }, select: { countryCode: true } }),
+    // D-X47: a planner's own events belong to their planner org too, so the
+    // planner dashboard, Today view and team assignment see them.
+    prisma.membership.findFirst({
+      where: { userId: actor.userId, org: { kind: 'PLANNER', deletedAt: null } },
+      select: { orgId: true },
+    }),
+  ]);
   const rules = FORMAT_RULES[template.format];
   return prisma.$transaction(async (tx) => {
     const event = await tx.event.create({
@@ -125,6 +133,7 @@ export async function createEventDraft(actor: UserActor, input: z.infer<typeof c
       data: {
         eventId: event.id,
         userId: actor.userId,
+        orgId: plannerMembership?.orgId ?? null,
         role: 'HOST',
         permissions: toStoredPermissions(permissionsFor('HOST')),
         acceptedAt: new Date(),

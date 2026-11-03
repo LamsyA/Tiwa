@@ -10,6 +10,7 @@ import {
   Layers,
   MoreHorizontal,
   Settings,
+  Sun,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -43,6 +44,7 @@ const ICON = {
   settings: <Settings className="size-5" aria-hidden />,
   overview: <LayoutGrid className="size-5" aria-hidden />,
   orders: <ClipboardList className="size-5" aria-hidden />,
+  today: <Sun className="size-5" aria-hidden />,
 };
 
 /** Navigation config by role (Frontend.md §5.4). Single source of truth. */
@@ -59,6 +61,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
         ],
         sidebar: [
           item('home', 'Home', '/home', ICON.home),
+          item('today', 'Today', '/today', ICON.today),
           item('events', 'Events', '/events', ICON.events),
           item('clients', 'Clients', '/clients', ICON.clients),
           item('orders', 'Vendor orders', '/orders', ICON.orders),
@@ -88,7 +91,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
           item('bookings', 'Bookings', '/bookings', ICON.bookings),
           item('calendar', 'Calendar', '/calendar', ICON.events),
           item('business', 'Business profile', '/business', ICON.overview),
-          item('payouts', 'Payouts', '/payouts', ICON.money),
+          item('payouts', 'Payouts', '/business/profile#payouts', ICON.money),
           item('settings', 'Settings', '/settings', ICON.settings),
         ],
       };

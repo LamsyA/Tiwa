@@ -13,6 +13,8 @@ import {
   moveLeadSchema,
   sendProposal,
   proposalIdSchema,
+  startClientEvent,
+  startClientEventSchema,
 } from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -62,3 +64,11 @@ export const addVendorBookAction = userAction(addVendorBookSchema, async (input,
 });
 
 export { listVendorBook };
+
+/** D-X47: create the client's event as a draft and continue in the wizard. */
+export const startClientEventAction = userAction(startClientEventSchema, async (input, ctx) => {
+  const result = await startClientEvent(ctx.actor, input);
+  revalidatePath('/clients');
+  revalidatePath('/home');
+  return result;
+});

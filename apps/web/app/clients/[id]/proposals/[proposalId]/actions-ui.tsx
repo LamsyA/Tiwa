@@ -1,40 +1,64 @@
 'use client';
 
+import { Banner, Button } from '@tiwa/ui';
+import { Check, Send, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import * as React from 'react';
 import { decideProposalAction, sendProposalAction } from '../../../actions.js';
 
+/** Send a draft; record the client's yes or no once sent. */
 export function ProposalActions({ proposalId, status }: { proposalId: string; status: string }) {
   const t = useTranslations('planner');
-  if (status === 'DRAFT') {
-    return (
-      <button
-        type="button"
-        onClick={() => sendProposalAction({ proposalId })}
-        className="bg-brand-strong text-on-brand rounded-md px-4 py-2 text-sm font-medium"
-      >
-        {t('send')}
-      </button>
-    );
+  const router = useRouter();
+  const [busy, setBusy] = React.useState<string | null>(null);
+  const [error, setError] = React.useState(false);
+
+  async function run(key: string, action: () => Promise<{ ok: boolean }>) {
+    setBusy(key);
+    setError(false);
+    const result = await action();
+    setBusy(null);
+    if (!result.ok) setError(true);
+    else router.refresh();
   }
-  if (status === 'SENT') {
-    return (
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => decideProposalAction({ proposalId, accepted: true })}
-          className="bg-brand-strong text-on-brand rounded-md px-4 py-2 text-sm font-medium"
-        >
-          {t('accept')}
-        </button>
-        <button
-          type="button"
-          onClick={() => decideProposalAction({ proposalId, accepted: false })}
-          className="border-border rounded-md border px-4 py-2 text-sm font-medium"
-        >
-          {t('decline')}
-        </button>
+
+  if (status !== 'DRAFT' && status !== 'SENT') return null;
+  return (
+    <div className="flex flex-col gap-2 print:hidden">
+      {error && <Banner tone="danger">{t('errors.generic')}</Banner>}
+      <div className="flex flex-wrap gap-2">
+        {status === 'DRAFT' ? (
+          <Button
+            className="rounded-full"
+            loading={busy === 'send'}
+            onClick={() => void run('send', () => sendProposalAction({ proposalId }))}
+          >
+            <Send aria-hidden className="size-4" />
+            {t('send')}
+          </Button>
+        ) : (
+          <>
+            <Button
+              className="rounded-full"
+              loading={busy === 'yes'}
+              onClick={() => void run('yes', () => decideProposalAction({ proposalId, accepted: true }))}
+            >
+              <Check aria-hidden className="size-4" />
+              {t('accept')}
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-full"
+              loading={busy === 'no'}
+              onClick={() => void run('no', () => decideProposalAction({ proposalId, accepted: false }))}
+            >
+              <X aria-hidden className="size-4" />
+              {t('decline')}
+            </Button>
+          </>
+        )}
       </div>
-    );
-  }
-  return null;
+    </div>
+  );
 }

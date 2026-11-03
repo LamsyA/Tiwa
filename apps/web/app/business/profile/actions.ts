@@ -7,6 +7,8 @@ import {
   archivePackageSchema,
   blockAvailability,
   blockAvailabilitySchema,
+  completeLogoUpload,
+  completeLogoUploadSchema,
   completePortfolioUpload,
   confirmAvailability,
   confirmAvailabilitySchema,
@@ -21,6 +23,8 @@ import {
   savePackageSchema,
   setupBankAccount,
   setupBankAccountSchema,
+  startLogoUpload,
+  startLogoUploadSchema,
   startPortfolioUpload,
   startPortfolioUploadSchema,
   startVerificationUpload,
@@ -125,4 +129,14 @@ export const savePayoutAccount = userAction(setupBankAccountSchema, async (input
 export const removePayoutAccount = userAction(removeBankAccountSchema, async (input, ctx) => {
   await removeBankAccount(ctx.actor, input);
   revalidatePath('/business/profile');
+});
+
+/** D-X47: business logo for documents and the public profile (ADMIN+). */
+export const startBusinessLogo = userAction(startLogoUploadSchema, async (input, ctx) => {
+  return startLogoUpload(privateStorage(), ctx.actor, input);
+});
+
+export const completeBusinessLogo = userAction(completeLogoUploadSchema, async (input, ctx) => {
+  await completeLogoUpload(privateStorage(), ctx.actor, input);
+  refreshBusiness(input.orgId);
 });

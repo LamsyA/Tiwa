@@ -151,6 +151,12 @@ model Event {
   allowForwarding        Boolean            @default(true)
   remindersEnabled       Boolean            @default(true)
   hostCanSeeVendorPrices Boolean            @default(true)
+  // Planner engagement (D-X47): the CRM client this event is for, and the
+  // planner's fee agreement — a share of the budget (bps) and/or a fixed fee.
+  clientId               String?
+  plannerFeeBps          Int?
+  plannerFeeMinor        BigInt?
+  plannerFeeNote         String?
   wizardStep             String?
   createdById            String
   createdBy              User               @relation(fields: [createdById], references: [id])
@@ -185,6 +191,7 @@ model Event {
 
   @@index([status, startsAt])
   @@index([createdById])
+  @@index([clientId])
 }
 
 enum EventFormat {

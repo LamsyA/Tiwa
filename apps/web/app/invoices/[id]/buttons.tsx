@@ -1,7 +1,7 @@
 'use client';
 
 import { Banner, Button } from '@tiwa/ui';
-import { CheckCircle2, Printer, Send, XCircle } from 'lucide-react';
+import { CheckCircle2, Send, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -58,10 +58,6 @@ export function InvoiceButtons({ invoiceId, status }: { invoiceId: string; statu
             </Button>
           </>
         )}
-        <Button variant="ghost" className="rounded-full" onClick={() => window.print()}>
-          <Printer className="size-4" aria-hidden />
-          {t('print')}
-        </Button>
       </div>
     </div>
   );

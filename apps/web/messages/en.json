@@ -577,7 +577,24 @@
       "lineNamePlaceholder": "e.g. Aso-ebi and outfits",
       "lineAmount": "Amount for {line}",
       "removeLine": "Remove {line}",
-      "addLine": "Add a line"
+      "addLine": "Add a line",
+      "plannerFee": {
+        "heading": "Planning fee",
+        "empty": "No fee agreed yet. Set a share of the budget, a fixed fee, or both.",
+        "share": "{percent}% of the budget",
+        "plusFixed": "plus a fixed fee",
+        "set": "Set the fee",
+        "edit": "Edit the fee",
+        "percentLabel": "Share of budget",
+        "fixedLabel": "Fixed fee",
+        "noteLabel": "Terms (optional)",
+        "notePlaceholder": "e.g. 50% on signing, 50% a week before",
+        "preview": "Fee on the current budget",
+        "save": "Save fee",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "error": "Could not save the fee. Try again."
+      }
     },
     "plan": {
       "heading": "Plan",
@@ -1605,7 +1622,19 @@
         "accountNameRequired": "Enter the name on the account."
       }
     },
-    "checklistProgress": "{done} of {total} steps done"
+    "checklistProgress": "{done} of {total} steps done",
+    "logo": {
+      "heading": "Your logo",
+      "body": "Shown on your proposals, invoices and public profile. PNG, JPG or WebP, up to 2 MB.",
+      "add": "Add your logo",
+      "change": "Change your logo",
+      "errors": {
+        "generic": "Could not upload the logo. Try again.",
+        "typeNotAllowed": "Use a PNG, JPG or WebP image.",
+        "tooLarge": "That image is over 2 MB.",
+        "emptyFile": "That file is empty."
+      }
+    }
   },
   "marketplace": {
     "about": "About",
@@ -2388,7 +2417,51 @@
     "billTo": "Bill to",
     "issued": "Issued",
     "unitLabel": "Price",
-    "amountLabel": "Amount"
+    "amountLabel": "Amount",
+    "clientEvents": "Their events",
+    "clientEventsEmpty": "No event yet. Start one when they say yes: it opens as a draft you can finish later.",
+    "noDateYet": "Date not set",
+    "draft": "Draft",
+    "proposalStatus": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "ACCEPTED": "Accepted",
+      "DECLINED": "Declined"
+    },
+    "startEvent": {
+      "button": "Start their event",
+      "title": "Start an event for {name}",
+      "body": "Pick the kind of event. It opens as a draft linked to this client, and they move to Won.",
+      "continue": "Continue to details",
+      "working": "Creating…",
+      "error": "Could not create the event. Try again."
+    },
+    "today": {
+      "title": "Today",
+      "plannerOnly": "Today is for planners. Set up a planner business to use it.",
+      "heading": "{count, plural, one {# thing} other {# things}} need you today",
+      "clearHeading": "A clear day",
+      "stat": {
+        "tasks": "Tasks",
+        "run": "On stage",
+        "payments": "Payments"
+      },
+      "overdue": "{count} overdue",
+      "clearTitle": "Nothing due today",
+      "clearBody": "No tasks, run-of-show cues or payments are due across your events.",
+      "tasksHeading": "Tasks due",
+      "tasksEmpty": "No tasks due today.",
+      "runHeading": "Today’s run-of-show",
+      "runEmpty": "No events running today.",
+      "paymentsHeading": "Payments due this week",
+      "paymentsEmpty": "No payments due.",
+      "overdueTag": "Overdue",
+      "lateTag": "Late"
+    },
+    "downloadPdf": "Download PDF",
+    "proposalWord": "Proposal",
+    "preparedFor": "Prepared for",
+    "preparedBy": "Prepared by"
   },
   "vendor": {
     "title": "Vendor workspace",

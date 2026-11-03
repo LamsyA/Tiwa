@@ -7,6 +7,7 @@ import {
   momentsSourceEvents,
   payoutAccount,
 } from '@tiwa/core';
+import { prisma } from '@tiwa/db';
 import { ACCOUNT_NUMBER_PATTERN, bankName, banksFor } from '@tiwa/config';
 import { Banner, Card, EmptyState, StatusPill } from '@tiwa/ui';
 import { Check, Circle, Users } from 'lucide-react';
@@ -17,6 +18,7 @@ import { requirePageUser } from '@/lib/ctx.js';
 import { privateStorage } from '@/lib/storage.js';
 import { AvailabilityManager } from './availability-manager.js';
 import { PackagesEditor } from './packages-editor.js';
+import { LogoUploader } from './logo-uploader.js';
 import { PayoutAccount } from './payout-account.js';
 import { PortfolioManager } from './portfolio-manager.js';
 import { MomentsSourcePicker } from './moments-source.js';
@@ -58,6 +60,9 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
     payoutAccount(ctx.actor, current.org.id).catch(() => null),
   ]);
   const country = current.org.countryCode;
+  const hasLogo = Boolean(
+    (await prisma.organization.findUnique({ where: { id: current.org.id }, select: { logoKey: true } }))?.logoKey,
+  );
   const numberPattern = ACCOUNT_NUMBER_PATTERN[country]?.source.match(/\{(\d+)\}/)?.[1];
   const storage = privateStorage();
   const photos = await Promise.all(
@@ -190,6 +195,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
         {!canManage && <Banner tone="warning">{t('forbiddenBody')}</Banner>}
         {canManage && (
           <>
+            <LogoUploader orgId={current.org.id} orgName={current.org.name} hasLogo={hasLogo} />
             <PublishManager
               orgId={current.org.id}
               published={profile.profile?.published ?? false}
