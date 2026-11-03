@@ -340,3 +340,10 @@ Template:
 - Decision: Email magic link is the only live sign-in for now. Phone codes and Google stay on the login/signup page but are disabled with a "Coming soon" label, and email is the default. The server decides (`/api/auth/providers` via `authMethods`): phone needs `AUTH_PHONE_ENABLED=1`, Google needs `AUTH_GOOGLE_ENABLED=1` plus its credentials; `/api/auth/otp/send` refuses with FEATURE_DISABLED while phone is off. The e2e server (fake providers + test hooks) keeps phone on so the suites still sign in. Termii was tightened for later: `TERMII_CHANNEL` (default `dnd`, reaches DND numbers) and Termii's own refusal reason is surfaced; the account has ₦30 and no sender ID, so it stays off. WhatsApp Cloud API codes are the chosen next step once a real number and business verification are ready.
 - Why: owner request; no OTP channel with enough credit or a public-capable sender yet.
 - Affects: packages/config env; packages/messaging sms (+test); apps/worker providers; apps/web auth-form, lib/auth-methods (+test), lib/senders, api/auth/providers, api/auth/otp/send, messages; .env.example.
+
+### 2026-11-03 — Branded sign-in email
+- ID: D-X49
+- Status: LOCKED (owner, 2026-11-03)
+- Decision: The magic-link email is a react-email template (`SignInEmail` in packages/messaging): Tiwa wordmark, brand gradient bar, one large button, expiry ("15 minutes, works once"), the raw link as a fallback, a "Didn't ask for this?" note, and a footer saying why it was sent. New addresses get "Welcome to Tiwa" / "Create my account"; existing ones get "Your sign-in link". Both HTML and plain-text parts are sent (better inbox placement). Table layout, inline styles and system/Georgia fonts only, so it renders the same in Gmail, Outlook and Apple Mail. Resend errors now include Resend's reason. Until a domain is verified in Resend, `onboarding@resend.dev` only delivers to the Resend account owner (olamide.adetula.1@gmail.com).
+- Why: owner request for a premium, trustworthy login email.
+- Affects: packages/messaging templates/sign-in (+test), index; apps/web lib/auth, lib/senders.

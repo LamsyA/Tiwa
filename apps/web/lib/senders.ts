@@ -17,6 +17,8 @@ export interface EmailMessage {
   to: string;
   subject: string;
   html: string;
+  /** Plain-text part; improves inbox placement when present. */
+  text?: string | undefined;
 }
 
 export interface EmailSender {
@@ -110,12 +112,18 @@ export class ResendEmailSender implements EmailSender {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: env.EMAIL_FROM, to: [message.to], subject: message.subject, html: message.html }),
+      body: JSON.stringify({
+        from: env.EMAIL_FROM,
+        to: [message.to],
+        subject: message.subject,
+        html: message.html,
+        ...(message.text ? { text: message.text } : {}),
+      }),
     });
+    const data = (await response.json().catch(() => ({}))) as { id?: string; message?: string };
     if (!response.ok) {
-      throw new Error(`Resend send failed: HTTP ${response.status}`);
+      throw new Error(`Resend send failed (HTTP ${response.status}): ${data.message ?? 'no details'}`);
     }
-    const data = (await response.json()) as { id?: string };
     return { providerRef: data.id };
   }
 }

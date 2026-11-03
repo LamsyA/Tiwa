@@ -3,6 +3,7 @@ import { env } from '@tiwa/config';
 import { uuidv7 } from '@tiwa/core';
 import { betterAuth, type Auth, type BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { renderSignInEmail } from '@tiwa/messaging';
 import { magicLink } from 'better-auth/plugins/magic-link';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
 import {
@@ -55,11 +56,16 @@ const options = {
     }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        await emailSender.send({
-          to: email,
-          subject: 'Sign in to Tiwa',
-          html: `<p>Click the link below to sign in to Tiwa. It expires in 15 minutes.</p><p><a href="${url}">Sign in</a></p>`,
+        // D-X49: branded email; new addresses get the welcome wording.
+        const existing = await prisma.user.findFirst({ where: { email }, select: { id: true } });
+        const message = await renderSignInEmail({
+          url,
+          email,
+          appUrl: env.APP_URL,
+          expiresInMinutes: 15,
+          isNewAccount: !existing,
         });
+        await emailSender.send({ to: email, ...message });
       },
       expiresIn: 900,
     }),

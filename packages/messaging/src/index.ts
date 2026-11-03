@@ -28,3 +28,4 @@ export type {
   WebPushConfig,
 } from './push.js';
 export { FakePush, WebPush } from './push.js';
+export { SignInEmail, renderSignInEmail, type SignInEmailProps } from './templates/sign-in.js';
