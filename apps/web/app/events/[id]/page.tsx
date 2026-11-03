@@ -6,6 +6,7 @@ import {
   eventActivity,
   eventDecisions,
   eventOrders,
+  eventReadiness,
   galleryCodeForEvent,
   getEventOverview,
   listPaymentSchedule,
@@ -34,6 +35,7 @@ import {
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import type * as React from 'react';
+import { ReadinessCard } from './readiness-card.js';
 import { EventFrame, loadEventPage, visibleSections, type EventSection } from '@/components/event-frame.js';
 
 const SECTION_ICONS: Record<EventSection, typeof Users> = {
@@ -91,7 +93,7 @@ export default async function EventOverviewPage({
       return false;
     }
   })();
-  const [galleryCode, money, orders, replies, decisions, activity] = await Promise.all([
+  const [galleryCode, money, orders, replies, decisions, activity, readiness] = await Promise.all([
     event.momentsEnabled ? galleryCodeForEvent(id) : Promise.resolve(null),
     canSeeMoney
       ? Promise.all([
@@ -103,6 +105,7 @@ export default async function EventOverviewPage({
     prisma.guest.groupBy({ by: ['rsvp'], where: { eventId: id, deletedAt: null }, _count: { _all: true } }),
     eventDecisions(ctx.actor, id, 5).catch(() => []),
     eventActivity(ctx.actor, id, 10).catch(() => ({ entries: [] })),
+    eventReadiness(ctx.actor, id),
   ]);
   const replyCount = (key: string) => replies.find((row) => row.rsvp === key)?._count._all ?? 0;
   const guestTotal = replies.reduce((sum, row) => sum + row._count._all, 0);
@@ -210,6 +213,10 @@ export default async function EventOverviewPage({
             ))}
           </ul>
         </nav>
+
+        {event.status !== 'CANCELLED' && event.status !== 'COMPLETED' && readiness.done < readiness.total && (
+          <ReadinessCard eventId={id} readiness={readiness} />
+        )}
 
         <div className="grid items-start gap-4 lg:grid-cols-3">
           <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">

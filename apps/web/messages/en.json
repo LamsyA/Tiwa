@@ -1291,7 +1291,39 @@
     "basicsBody": "Name it and set the date. You can change these any time.",
     "venueBody": "Add the venue for each day, or leave it for later.",
     "guestsBody": "A rough number and budget is fine to start.",
-    "featuresBody": "Turn on what you need. You can switch these later in settings."
+    "featuresBody": "Turn on what you need. You can switch these later in settings.",
+    "readiness": {
+      "eyebrow": "Get ready",
+      "heading": "Your next steps",
+      "body": "{done} of {total} done. Each one ticks itself as you go.",
+      "percent": "{percent}% ready",
+      "steps": {
+        "budget": {
+          "title": "Set your budget",
+          "body": "A total and a few categories keep spending honest"
+        },
+        "plan": {
+          "title": "Build your plan",
+          "body": "Add tasks, or let suggestions start it for you"
+        },
+        "vendors": {
+          "title": "Find your vendors",
+          "body": "Request quotes and compare them side by side"
+        },
+        "guests": {
+          "title": "Add your guests",
+          "body": "Import a list or add people one by one"
+        },
+        "invites": {
+          "title": "Send your invites",
+          "body": "One tap; reminders follow up on their own"
+        },
+        "day": {
+          "title": "Plan the day",
+          "body": "A run-of-show keeps everyone on time"
+        }
+      }
+    }
   },
   "shared": {
     "headcount": {
@@ -1980,6 +2012,33 @@
         "DECLINED_BY_VENDOR": "Declined",
         "CLOSED": "Closed"
       }
+    },
+    "requestStatus": {
+      "OPEN": "Waiting for quote",
+      "QUOTED": "Quote in",
+      "DECLINED_BY_VENDOR": "Vendor declined",
+      "CLOSED": "Closed"
+    },
+    "compare": {
+      "heading": "Compare side by side",
+      "body": "Pin the ones you like, then narrow the view to just those.",
+      "filter": "Which quotes to show",
+      "all": "All {count}",
+      "pinned": "Pinned {count}",
+      "row": "Detail",
+      "lowest": "Lowest total",
+      "pin": "Pin {vendor}",
+      "unpin": "Unpin {vendor}",
+      "total": "Total",
+      "deposit": "First payment",
+      "payments": "Payments",
+      "instalments": "{count, plural, one {# payment} other {# payments}}",
+      "included": "Included",
+      "notIncluded": "Not listed",
+      "cancellation": "Cancellation",
+      "expires": "Valid until",
+      "hidden": "Hidden",
+      "footnote": "Pins stay on this device. Accepting a quote still happens on its card below."
     }
   },
   "bookings": {
