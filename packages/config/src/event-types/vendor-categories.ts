@@ -58,3 +58,26 @@ export function budgetKeyFor(vendorCategory: string, eventBudgetKeys: readonly s
   for (const key of VENDOR_BUDGET_KEYS[vendorCategory as VendorCategory] ?? []) if (keys.has(key)) return key;
   return keys.has('misc') ? 'misc' : null;
 }
+
+/**
+ * Services that can only do one event at a time (D-X43): accepting a booking
+ * blocks their calendar for that date, and a second booking on the same date
+ * is refused. Others (caterers, drinks, printing…) can serve several events a day.
+ */
+export const DATE_EXCLUSIVE_CATEGORIES: readonly VendorCategory[] = [
+  'venue',
+  'photography',
+  'videography',
+  'dj',
+  'live_band',
+  'mc',
+  'makeup',
+  'sound_lighting',
+  'av_production',
+  'speakers',
+  'entertainment',
+];
+
+export function isDateExclusive(category: string): boolean {
+  return (DATE_EXCLUSIVE_CATEGORIES as readonly string[]).includes(category);
+}

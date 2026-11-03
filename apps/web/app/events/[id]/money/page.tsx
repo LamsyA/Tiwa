@@ -7,8 +7,8 @@ import {
   OTHER_KEY,
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill } from '@tiwa/ui';
-import { Wallet } from 'lucide-react';
+import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill, buttonClasses } from '@tiwa/ui';
+import { Download, Printer, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
@@ -129,31 +129,46 @@ export default async function EventMoneyPage({
         />
       </div>
 
-      <Card className="flex flex-col gap-2 p-4" aria-label={t('barLabel')}>
+      <Card className="flex flex-col gap-3 p-5" aria-label={t('barLabel')}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-lg font-bold">{t('barLabel')}</h2>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`/events/${id}/money/export`}
+              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'rounded-full' })}
+            >
+              <Download className="size-4" aria-hidden />
+              {t('exportCsv')}
+            </a>
+            <Link
+              href={`/events/${id}/money/print`}
+              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'rounded-full' })}
+            >
+              <Printer className="size-4" aria-hidden />
+              {t('exportPdf')}
+            </Link>
+          </div>
+        </div>
         {(
           [
-            ['planned', totals.plannedMinor, 'bg-border'],
-            ['committed', totals.committedMinor, 'bg-brand-soft'],
+            ['planned', totals.plannedMinor, 'bg-muted/40'],
+            ['committed', totals.committedMinor, 'bg-[var(--accent)]'],
             ['paid', totals.paidMinor, 'bg-brand'],
           ] as const
         ).map(([key, value, tone]) => (
-          <div key={key} className="flex items-center gap-3 text-sm">
-            <span className="text-muted w-24 shrink-0">{t(key)}</span>
-            <div className="bg-surface-2 h-3 flex-1 overflow-hidden rounded-full">
-              <div className={`${tone} h-full rounded-full`} style={{ width: `${pct(value)}%` }} />
+          <div key={key} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3 text-sm">
+            <span className="text-muted truncate">{t(key)}</span>
+            <div className="bg-surface-2 h-2.5 overflow-hidden rounded-full">
+              <div
+                className={`${tone} h-full rounded-full transition-[width] duration-700`}
+                style={{ width: `${value > 0n ? Math.max(pct(value), 2) : 0}%` }}
+              />
             </div>
+            <span className="w-28 text-right font-medium tabular-nums">{money(value)}</span>
           </div>
         ))}
       </Card>
 
-      <div className="flex flex-wrap justify-end gap-2 text-sm">
-        <a href={`/events/${id}/money/export`} className="underline">
-          {t('exportCsv')}
-        </a>
-        <Link href={`/events/${id}/money/print`} className="underline">
-          {t('exportPdf')}
-        </Link>
-      </div>
       <MoneyTabbar eventId={id} active={active} items={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))} />
 
       {active === 'budget' && canEdit && categoryOptions.length > 0 && (

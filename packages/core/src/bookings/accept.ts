@@ -1,3 +1,4 @@
+import { isDateExclusive } from '@tiwa/config';
 import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize, type Actor } from '../auth/authorize.js';
@@ -68,7 +69,7 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
 
   const event = await prisma.event.findUniqueOrThrow({
     where: { id: quote.eventId },
-    select: { countryCode: true, startsAt: true, currency: true },
+    select: { countryCode: true, startsAt: true, currency: true, timezone: true },
   });
   if (quote.currency !== event.currency) {
     throw new ValidationError('Quote currency does not match the event', { key: 'currencyMismatch' });
@@ -113,6 +114,14 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
     where: { orgId: quote.vendorOrgId },
     select: { holdHours: true },
   });
+  // The day this vendor works (D-X43): the quote's date, else the event's
+  // start date in the event's own time zone.
+  const serviceDate =
+    quote.serviceDate ??
+    (event.startsAt
+      ? new Date(`${new Intl.DateTimeFormat('en-CA', { timeZone: event.timezone }).format(event.startsAt)}T00:00:00Z`)
+      : null);
+  const blocksDate = serviceDate !== null && (quote.spaceId !== null || isDateExclusive(category));
 
   return prisma
     .$transaction(async (tx) => {
@@ -123,7 +132,7 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
           quoteId: quote.id,
           category,
           spaceId: quote.spaceId,
-          serviceDate: quote.serviceDate,
+          serviceDate,
           slot: quote.slot,
           status: depositDue ? 'DEPOSIT_DUE' : 'ACCEPTED',
           paymentMode: input.paymentMode,
@@ -177,21 +186,23 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
       if (quote.requestId) {
         await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'CLOSED' } });
       }
-      if (quote.spaceId && quote.serviceDate && quote.slot) {
-        // Venue quotes hold the date the moment they are accepted (P7-T10).
+      if (blocksDate) {
+        // Venues and one-event-a-day services hold the date the moment the
+        // quote is accepted (P7-T10, D-X43); a clash refuses the booking.
+        const slot = quote.slot ?? 'FULL_DAY';
         await checkVenueAvailability(tx, {
           vendorOrgId: quote.vendorOrgId,
           spaceId: quote.spaceId,
-          date: quote.serviceDate,
-          slot: quote.slot,
+          date: serviceDate,
+          slot,
         });
         try {
           await tx.availabilityBlock.create({
             data: {
               orgId: quote.vendorOrgId,
               spaceId: quote.spaceId,
-              date: quote.serviceDate,
-              slot: quote.slot,
+              date: serviceDate,
+              slot,
               bookingId: booking.id,
             },
           });

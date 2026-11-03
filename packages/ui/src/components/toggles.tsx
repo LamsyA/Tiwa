@@ -64,6 +64,11 @@ export const RadioItem = React.forwardRef<
   );
 });
 
+/**
+ * A slim, iOS-style switch: 44×26 track, white thumb with a soft shadow,
+ * brand fill when on. The visible control stays small; an invisible inset
+ * keeps the touch target at 44 px.
+ */
 export const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>
@@ -72,15 +77,24 @@ export const Switch = React.forwardRef<
     <SwitchPrimitive.Root
       ref={ref}
       className={cn(
-        'bg-surface-2 border-border flex h-7 min-h-11 min-w-11 items-center rounded-full border px-1.5',
-        'data-[state=checked]:border-brand-strong data-[state=checked]:bg-brand-strong',
+        'group relative inline-flex h-[26px] w-11 shrink-0 cursor-pointer items-center rounded-full p-[3px]',
+        "before:absolute before:-inset-[9px] before:content-['']",
+        'bg-border/90 shadow-[inset_0_1px_2px_rgb(0_0_0/0.12)] transition-colors duration-200 ease-out',
+        'hover:bg-border data-[state=checked]:bg-brand-strong data-[state=checked]:hover:bg-brand-strong/90',
         'focus-visible:outline-2 focus-visible:outline-focus focus-visible:outline-offset-2',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...rest}
     >
-      <SwitchPrimitive.Thumb className="bg-text block size-5 rounded-full transition-transform data-[state=checked]:translate-x-5 data-[state=checked]:bg-on-brand" />
+      <SwitchPrimitive.Thumb
+        className={cn(
+          'pointer-events-none block size-5 rounded-full bg-white',
+          'shadow-[0_1px_3px_rgb(0_0_0/0.25),0_1px_1px_rgb(0_0_0/0.06)]',
+          'transition-[transform,width] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+          'data-[state=checked]:translate-x-[18px] group-active:w-6 data-[state=checked]:group-active:translate-x-[14px]',
+        )}
+      />
     </SwitchPrimitive.Root>
   );
 });

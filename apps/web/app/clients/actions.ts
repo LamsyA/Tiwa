@@ -21,6 +21,7 @@ import { userAction } from '@/lib/ctx.js';
 export const createClientAction = userAction(createClientSchema, async (input, ctx) => {
   const result = await createClient(ctx.actor, input);
   revalidatePath('/clients');
+  revalidatePath('/pipeline');
   revalidatePath('/home');
   return { id: result.id };
 });
@@ -28,6 +29,7 @@ export const createClientAction = userAction(createClientSchema, async (input, c
 export const moveLeadAction = userAction(moveLeadSchema, async (input, ctx) => {
   const result = await moveLead(ctx.actor, input);
   revalidatePath('/clients');
+  revalidatePath('/pipeline');
   revalidatePath('/home');
   return { stage: result.stage };
 });

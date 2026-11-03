@@ -75,6 +75,7 @@ export default async function VendorProfilePage({
             )
           : null,
         currency: profile.profile.currency,
+        date: row.startsAt ? new Intl.DateTimeFormat('en-CA', { timeZone: row.timezone }).format(row.startsAt) : null,
       }));
   }
   const offered = profile.profile.categories.filter((key) => key in VENDOR_CATEGORIES);
@@ -102,6 +103,8 @@ export default async function VendorProfilePage({
         availabilityRows={availabilityRows}
         reviews={reviews.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))}
         signedIn={ctx.actor !== null}
+        eventDate={quoteEvents.find((row) => row.id === eventId)?.date ?? null}
+        eventName={quoteEvents.find((row) => row.id === eventId)?.name ?? null}
         instantBook={
           canBook && eventId ? (
             <InstantBookDialog
@@ -123,6 +126,8 @@ export default async function VendorProfilePage({
             categories={quoteCategories}
             defaultEventId={eventId && quoteEvents.some((row) => row.id === eventId) ? eventId : undefined}
             signInHref={viewer.actor ? undefined : `/login?next=${encodeURIComponent(`/vendors/${slug}`)}`}
+            availability={availabilityRows}
+            spaces={profile.spaces.length}
           />
         }
         siteVisit={showVisit && eventId ? <SiteVisitDialog eventId={eventId} vendorOrgId={profile.org.id} /> : null}

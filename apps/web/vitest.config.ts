@@ -6,6 +6,10 @@ import { defineConfig } from 'vitest/config';
 // Server-side tests only (lib/**). Loads the root .env so integration tests
 // can reach Postgres/Redis like the apps do.
 process.loadEnvFile(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '.env'));
+// Tests never reach real providers, whatever the local .env selects.
+process.env.EMAIL_PROVIDER = 'fake';
+process.env.SMS_PROVIDER = 'fake';
+process.env.WHATSAPP_PROVIDER = 'fake';
 
 export default defineConfig({
   plugins: [tsconfigPaths()],

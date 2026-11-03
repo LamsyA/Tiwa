@@ -46,6 +46,8 @@ export interface VenueHit {
     sizeSqm: number | null;
     amenities: string[];
     slotPriceMinor: string | null;
+    photoIds: string[];
+    fromMinor: string | null;
   }[];
 }
 
@@ -109,6 +111,7 @@ export async function searchVenues(
           sizeSqm: true,
           amenities: true,
           slotPrices: true,
+          photoKeys: true,
         },
       },
     },
@@ -178,6 +181,12 @@ export async function searchVenues(
         sizeSqm: space.sizeSqm,
         amenities: space.amenities,
         slotPriceMinor: space.slotPriceMinor,
+        /** Last path segment of each uploaded photo, served by /api/space-photo (D-X43). */
+        photoIds: space.photoKeys.map((key) => key.split('/').pop() ?? key).slice(0, 6),
+        fromMinor:
+          Object.values(slotPricesOf(space))
+            .filter((value) => /^\d+$/.test(value))
+            .sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1))[0] ?? null,
       })),
     });
     if (hits.length >= input.take) break;

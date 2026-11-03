@@ -136,7 +136,8 @@ export function resolveChannels(type: string, input: ResolveInput = {}): Channel
 }
 
 export const notifySchema = z.object({
-  userId: z.string().uuid(),
+  // Better Auth user ids are 32-char tokens, not UUIDs: accept any id.
+  userId: z.string().min(1).max(64),
   type: z.string().min(1).max(80),
   title: z.string().trim().min(1, 'titleRequired').max(200, 'titleTooLong'),
   body: z.string().trim().min(1, 'titleRequired').max(1000, 'notesTooLong'),

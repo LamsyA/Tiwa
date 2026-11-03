@@ -480,6 +480,9 @@ export async function cancelEvent(actor: UserActor, input: z.infer<typeof eventI
       throw new InvalidTransitionError('Bookings or payments exist', { reason: 'money-activity' });
     }
     await tx.event.update({ where: { id: input.eventId }, data: { status: 'CANCELLED', cancelledAt: new Date() } });
+    // Free every vendor date this event was holding (D-X43).
+    const held = await tx.booking.findMany({ where: { eventId: input.eventId }, select: { id: true } });
+    await tx.availabilityBlock.deleteMany({ where: { bookingId: { in: held.map((row) => row.id) } } });
     await audit(tx, { actor, action: 'event.cancel', targetType: 'Event', targetId: input.eventId });
     await enqueue(tx, 'event.cancelled', { eventId: input.eventId });
   });

@@ -51,6 +51,7 @@ import planner2Img from '../../public/marketplace/planner-2.jpg';
 import planner3Img from '../../public/marketplace/planner-3.jpg';
 import planner4Img from '../../public/marketplace/planner-4.jpg';
 import heroImg from '../../public/landing/hero.jpg';
+import venueLandingImg from '../../public/landing/venue.jpg';
 
 export type MarketplaceSection = 'vendors' | 'planners' | 'venues';
 
@@ -92,6 +93,16 @@ function pick<T>(list: T[], seed: string | number): T {
 /** Planner cards: planning and styled-event photos, stable per planner. */
 export function plannerCover(seed: string | number): StaticImageData {
   return pick([planner1Img, planner2Img, planner3Img, planner4Img, decor1Img], seed);
+}
+
+/**
+ * Venue photos for a venue that hasn't uploaded its own yet (D-X43): the
+ * four event-venue pictures, rotated per venue so neighbours differ.
+ */
+export function venueGallery(seed: string | number): StaticImageData[] {
+  const all = [venue1Img, venue2Img, venue3Img, venueLandingImg];
+  const start = all.indexOf(pick(all, seed));
+  return [...all.slice(start), ...all.slice(0, start)];
 }
 
 /** A cover for a business card: a photo from its first category that has one; a celebration otherwise. */

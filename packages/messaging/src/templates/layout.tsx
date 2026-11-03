@@ -1,3 +1,4 @@
+/** @jsxRuntime automatic @jsxImportSource react */
 import { Body, Container, Head, Html, Preview, Section, Text } from '@react-email/components';
 import type * as React from 'react';
 

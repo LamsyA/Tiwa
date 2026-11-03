@@ -1,17 +1,20 @@
 'use client';
 
 import { Banner, Button, MoneyInput, ResponsiveDialog, Select, Textarea, buttonClasses } from '@tiwa/ui';
-import { CheckCircle2, FileText } from 'lucide-react';
+import { CalendarCheck, CalendarX, CheckCircle2, FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import * as React from 'react';
 import { requestQuoteAction } from './actions.js';
+import { dayStatus, type AvailabilityRow } from './availability-calendar.js';
 
 export interface QuoteEventOption {
   id: string;
   name: string;
   when: string | null;
   currency: string;
+  /** YYYY-MM-DD in the event's time zone, for the availability check. */
+  date?: string | null;
 }
 
 /**
@@ -26,6 +29,8 @@ export function QuoteRequestDialog({
   categories,
   defaultEventId,
   signInHref,
+  availability = [],
+  spaces = 0,
 }: {
   vendorOrgId: string;
   vendorName: string;
@@ -34,6 +39,9 @@ export function QuoteRequestDialog({
   defaultEventId?: string | undefined;
   /** Shown instead of the form when nobody is signed in. */
   signInHref?: string | undefined;
+  /** The vendor's booked dates, to say up front whether they're free on the event's date (D-X43). */
+  availability?: AvailabilityRow[];
+  spaces?: number;
 }) {
   const t = useTranslations('marketplace.quoteRequest');
   const te = useTranslations('quotes.errors');
@@ -45,7 +53,9 @@ export function QuoteRequestDialog({
   const [error, setError] = React.useState<string | null>(null);
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
-  const currency = events.find((row) => row.id === eventId)?.currency ?? 'NGN';
+  const selected = events.find((row) => row.id === eventId);
+  const currency = selected?.currency ?? 'NGN';
+  const free = selected?.date ? dayStatus(availability, selected.date, spaces) : null;
 
   if (signInHref) {
     return (
@@ -133,6 +143,22 @@ export function QuoteRequestDialog({
             onValueChange={setEventId}
             options={events.map((row) => ({ value: row.id, label: row.when ? `${row.name} · ${row.when}` : row.name }))}
           />
+          {free && (
+            <p
+              className={
+                free === 'booked'
+                  ? 'text-danger -mt-2 flex items-center gap-1.5 text-sm font-medium'
+                  : 'text-success -mt-2 flex items-center gap-1.5 text-sm font-medium'
+              }
+            >
+              {free === 'booked' ? (
+                <CalendarX className="size-4" aria-hidden />
+              ) : (
+                <CalendarCheck className="size-4" aria-hidden />
+              )}
+              {free === 'booked' ? t('dateBooked') : free === 'partial' ? t('datePartial') : t('dateFree')}
+            </p>
+          )}
           <Select
             label={t('service')}
             value={category}

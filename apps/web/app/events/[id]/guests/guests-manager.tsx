@@ -167,27 +167,29 @@ export function GuestsManager(props: GuestsManagerProps) {
                 prefix={<Search aria-hidden className="size-4" />}
               />
             </div>
-            <Select
-              aria-label={t('filters.allGroups')}
-              value={filters.group}
-              options={[
-                { value: '', label: t('filters.allGroups') },
-                ...groups.map((group) => ({ value: group.id, label: group.name })),
-              ]}
-              onValueChange={(value) => setFilter({ group: value })}
-            />
-            <Select
-              aria-label={t('filters.allRsvp')}
-              value={filters.rsvp}
-              options={[
-                { value: '', label: t('filters.allRsvp') },
-                { value: 'YES', label: t('rsvpLabels.YES') },
-                { value: 'NO', label: t('rsvpLabels.NO') },
-                { value: 'MAYBE', label: t('rsvpLabels.MAYBE') },
-                { value: 'NONE', label: t('rsvpLabels.NONE') },
-              ]}
-              onValueChange={(value) => setFilter({ rsvp: value })}
-            />
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:[&>*]:w-48">
+              <Select
+                aria-label={t('filters.allGroups')}
+                value={filters.group}
+                options={[
+                  { value: '', label: t('filters.allGroups') },
+                  ...groups.map((group) => ({ value: group.id, label: group.name })),
+                ]}
+                onValueChange={(value) => setFilter({ group: value })}
+              />
+              <Select
+                aria-label={t('filters.allRsvp')}
+                value={filters.rsvp}
+                options={[
+                  { value: '', label: t('filters.allRsvp') },
+                  { value: 'YES', label: t('rsvpLabels.YES') },
+                  { value: 'NO', label: t('rsvpLabels.NO') },
+                  { value: 'MAYBE', label: t('rsvpLabels.MAYBE') },
+                  { value: 'NONE', label: t('rsvpLabels.NONE') },
+                ]}
+                onValueChange={(value) => setFilter({ rsvp: value })}
+              />
+            </div>
             {(filters.q || filters.group || filters.rsvp || filters.checkedIn) && (
               <Button
                 variant="ghost"

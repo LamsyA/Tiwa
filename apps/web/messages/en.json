@@ -1360,7 +1360,15 @@
     },
     "extrasSave": "Save details",
     "agendaTitle": "Live agenda",
-    "agendaHint": "On the day, follow what’s happening now and what’s next."
+    "agendaHint": "On the day, follow what’s happening now and what’s next.",
+    "youreInvited": "You’re invited",
+    "dear": "Dear {name},",
+    "daysToGo": "{count, plural, one {# day to go} other {# days to go}}",
+    "dressCode": "Dress code",
+    "willYouCome": "Will you be there?",
+    "seeYouThere": "You’re coming, {name}! See you there.",
+    "yourPass": "Your entry pass",
+    "poweredBy": "Invitations by Tiwa"
   },
   "gallery": {
     "official": "Official",
@@ -1725,8 +1733,32 @@
       "close": "Done",
       "noEvents": "Create an event first, so the vendor knows the date and guest count.",
       "createEvent": "Create an event",
-      "alreadyAsked": "You already asked this vendor for this service on this event. Track it from the event’s Vendors tab."
-    }
+      "alreadyAsked": "You already asked this vendor for this service on this event. Track it from the event’s Vendors tab.",
+      "dateFree": "They're free on this date",
+      "datePartial": "Partly booked that day. Ask which times are open",
+      "dateBooked": "Already booked on this date. You can still ask"
+    },
+    "calendar": {
+      "previous": "Previous month",
+      "next": "Next month",
+      "label": "Availability for {month}",
+      "status": {
+        "free": "Free",
+        "partial": "Partly booked",
+        "booked": "Booked"
+      },
+      "yourDate": "Your event",
+      "freeOnYours": "Free on your date, {date}",
+      "partOnYours": "Partly booked on {date}. Some times or spaces are still open",
+      "bookedOnYours": "Booked on your date, {date}",
+      "freeHint": "Request a quote for {event}. Once you accept it, this date is held for you.",
+      "bookedHint": "Pick another vendor, or ask them in case they can make it work.",
+      "confirmed": "Calendar confirmed by the business on {date}.",
+      "autoNote": "Updates automatically when a booking is accepted."
+    },
+    "noVenuesBody": "Try another date, fewer guests or a nearby area.",
+    "upToGuests": "Up to {count} guests",
+    "venueStockNote": "Photos show the kind of space. The venue hasn’t added its own yet."
   },
   "inbox": {
     "title": "Inbox",
@@ -2213,7 +2245,50 @@
       "goVendorBook": "Go to Vendor book",
       "goInvoices": "Go to Invoices",
       "goInbox": "Go to Inbox"
-    }
+    },
+    "addClientBody": "A lead or a client. Only the name is required. You can add details later.",
+    "namePlaceholder": "e.g. Funmi & Dayo",
+    "notesPlaceholder": "What they're planning, budget, how they found you…",
+    "plannerOnly": "This page is for planning businesses.",
+    "clientsBody": "{count, plural, one {# client} other {# clients}} across your pipeline.",
+    "emptyClientsBody": "Add your first lead and track them from enquiry to booked.",
+    "activity": "{proposals, plural, one {# proposal} other {# proposals}}, {invoices, plural, one {# invoice} other {# invoices}}",
+    "pipelineSummary": "{open} open · {rate}% win rate",
+    "pipelineEmpty": "Your pipeline is empty",
+    "pipelineEmptyBody": "Add a lead and drag it across as the deal moves.",
+    "pipelineEmptyColumn": "Drag a client here",
+    "pipelineClosed": "Won and lost clients can only be reopened as New first.",
+    "moveTo": "Move to",
+    "moveCard": "Move {name}",
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "invalidEmail": "That email doesn't look right."
+    },
+    "invoicesBody": "Bill clients, track what's paid and what's still owed.",
+    "newInvoiceBody": "It's saved as a draft. Send it when you're ready.",
+    "clientLabel": "Client",
+    "noClient": "No client yet",
+    "itemsLabel": "Items",
+    "itemName": "Item {n} description",
+    "itemQty": "Item {n} quantity",
+    "itemPrice": "Item {n} price",
+    "itemPlaceholder": "e.g. Full planning and coordination",
+    "removeItem": "Remove item",
+    "addItem": "Add an item",
+    "invoiceNotesPlaceholder": "Payment details, terms or a thank-you note",
+    "createInvoice": "Create invoice",
+    "invoiceTotals": {
+      "outstanding": "Outstanding",
+      "paid": "Paid",
+      "drafts": "In drafts"
+    },
+    "emptyInvoicesBody": "Create your first invoice. It takes a minute.",
+    "dueOn": "Due {date}",
+    "invoiceWord": "Invoice",
+    "billTo": "Bill to",
+    "issued": "Issued",
+    "unitLabel": "Price",
+    "amountLabel": "Amount"
   },
   "vendor": {
     "title": "Vendor workspace",

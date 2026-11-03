@@ -60,8 +60,8 @@ export async function loadPublicProfile(slug: string, kind: PublicProfileKind) {
   }
   const now = new Date();
   const monthStart = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
-  const lastDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
-  const monthEnd = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  // Six months ahead for the availability calendar (D-X43).
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 6, 0)).toISOString().slice(0, 10);
   const [photos, availabilityRows] = await Promise.all([
     Promise.resolve(
       profile.portfolio.map((item) => ({ id: item.id, url: `/api/profile-photo/${item.id}`, caption: item.caption })),

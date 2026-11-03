@@ -1,3 +1,4 @@
+import { currencyForCountry } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { ConflictError } from '../shared/errors.js';
@@ -73,6 +74,18 @@ export async function completeBusinessOnboarding(
       },
     });
     await tx.membership.create({ data: { orgId: org.id, userId, role: 'OWNER' } });
+    // Live in the marketplace straight away (D-X34, D-X43): findable by name
+    // while the owner fills in the rest of the profile.
+    await tx.businessProfile.create({
+      data: {
+        orgId: org.id,
+        categories: [],
+        city: input.city,
+        currency: currencyForCountry(user.countryCode),
+        published: true,
+        searchText: [input.name, input.city].join(' ').toLowerCase(),
+      },
+    });
     if (input.ownerName) await tx.user.update({ where: { id: userId }, data: { name: input.ownerName } });
     return { orgId: org.id };
   });
