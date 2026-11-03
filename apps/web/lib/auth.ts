@@ -6,6 +6,8 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { renderSignInEmail } from '@tiwa/messaging';
 import { magicLink } from 'better-auth/plugins/magic-link';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
+import { username } from 'better-auth/plugins/username';
+import { authMethods } from './auth-methods.js';
 import {
   EmailSender,
   ResendEmailSender,
@@ -20,13 +22,22 @@ export const smsSender: SmsSender = env.SMS_PROVIDER === 'termii' ? new TermiiSm
 export const emailSender: EmailSender =
   env.EMAIL_PROVIDER === 'resend' ? new ResendEmailSender() : new FakeEmailSender();
 
-const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+// D-X50: Google is registered only when switched on and configured.
+const googleConfigured = authMethods().google;
 
 const options = {
   secret: env.AUTH_SECRET ?? 'dev-only-secret-change-me-in-production-000000',
   baseURL: env.APP_URL,
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
-  emailAndPassword: { enabled: false },
+  // D-X50: username/email + password for everyone. Passwords are hashed by
+  // Better Auth (scrypt); no email verification until a sending domain exists.
+  emailAndPassword: {
+    enabled: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+    requireEmailVerification: false,
+    autoSignIn: true,
+  },
   // D-A11: new users, sessions and accounts get UUID v7 ids like every other table.
   // (Accounts created before this keep Better Auth's 32-char ids; see core userIdSchema.)
   advanced: { database: { generateId: () => uuidv7() } },
@@ -39,6 +50,12 @@ const options = {
       }
     : {},
   plugins: [
+    username({
+      minUsernameLength: 3,
+      maxUsernameLength: 30,
+      // Letters, numbers, dots and underscores; no leading/trailing dot.
+      usernameValidator: (value: string) => /^(?!\.)[a-zA-Z0-9._]+(?<!\.)$/.test(value),
+    }),
     phoneNumber({
       sendOTP: async ({ phoneNumber, code }) => {
         await smsSender.send({

@@ -225,3 +225,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X45–47 e2e: quotes 3/3 + marketplace 3/3 + money 1/1 pass at 1280 px (fake messaging). Specs now target the portfolio input and package-form Save precisely; venue cards name matching spaces again (D-X43 regression). planner UF-21-1 fails on seed-date drift (wedding seeded for 08:41 today), not on code.
 - D-X48: phone + Google sign-in disabled as "Coming soon" (server-enforced, env flags); Termii channel configurable with real errors. Web 60/60, messaging sms green, accounts + money e2e 9/9 (1280 px); real-mode check: providers {phone:false, google:false}, OTP send refused.
 - D-X49: branded sign-in email (HTML + text, new vs returning wording); messaging 22/22; real Resend send to the account owner accepted.
+- D-X50: username + password sign-up/sign-in (default), Google behind AUTH_GOOGLE_ENABLED. password-auth + accounts e2e 10/10 at 1280 px; passwords stored as scrypt hashes.

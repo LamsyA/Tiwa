@@ -1,15 +1,29 @@
 'use client';
 
 import { Button, FieldShell, Input, cn } from '@tiwa/ui';
-import { ArrowRight, Mail, Smartphone } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, KeyRound, Mail, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 import { OtpInput } from './otp-input.js';
-import { signIn } from '@/lib/auth-client.js';
+import { signIn, signUp } from '@/lib/auth-client.js';
 
-type Method = 'phone' | 'email' | 'google';
+type Method = 'password' | 'email' | 'phone' | 'google';
+
+/** Better Auth error codes we explain in our own words (D-X50). */
+const PASSWORD_ERRORS = [
+  'USERNAME_IS_ALREADY_TAKEN',
+  'USER_ALREADY_EXISTS',
+  'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL',
+  'INVALID_USERNAME_OR_PASSWORD',
+  'INVALID_EMAIL_OR_PASSWORD',
+  'PASSWORD_TOO_SHORT',
+  'USERNAME_TOO_SHORT',
+  'USERNAME_TOO_LONG',
+  'INVALID_USERNAME',
+  'INVALID_EMAIL',
+] as const;
 type Step = 'method' | 'code' | 'sent-link';
 
 async function postJson(url: string, body: unknown): Promise<{ ok: boolean; error?: string; code?: string }> {
@@ -28,7 +42,12 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? undefined;
 
-  const [method, setMethod] = React.useState<Method>('email');
+  const [method, setMethod] = React.useState<Method>('password');
+  const [fullName, setFullName] = React.useState('');
+  const [username, setUsername] = React.useState('');
+  const [identifier, setIdentifier] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
   const [step, setStep] = React.useState<Step>('method');
   const [phone, setPhone] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -102,6 +121,45 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     }
   }
 
+  /** Username/email + password (D-X50). Signup needs a username and an
+   * 8+ character password; email is optional (a private placeholder keeps
+   * Better Auth's unique-email rule). Login takes a username or an email. */
+  async function submitPassword() {
+    setFormError(undefined);
+    if (password.length < 8) {
+      setFormError(t('passwordErrors.PASSWORD_TOO_SHORT'));
+      return;
+    }
+    setSending(true);
+    try {
+      const handle = username.trim();
+      const login = identifier.trim();
+      const result =
+        mode === 'signup'
+          ? await signUp.email({
+              email: email.trim() || `${handle.toLowerCase()}@user.tiwa.local`,
+              password,
+              name: fullName.trim() || handle,
+              username: handle,
+            })
+          : login.includes('@')
+            ? await signIn.email({ email: login, password })
+            : await signIn.username({ username: login, password });
+      if (result.error) {
+        const code = result.error.code as (typeof PASSWORD_ERRORS)[number] | undefined;
+        setFormError(
+          code && PASSWORD_ERRORS.includes(code)
+            ? t(`passwordErrors.${code}`)
+            : (result.error.message ?? t('passwordErrors.generic')),
+        );
+        return;
+      }
+      router.push(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ''}`);
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function sendLink() {
     setFormError(undefined);
     setSending(true);
@@ -119,7 +177,21 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
 
   const primary =
     step === 'method' ? (
-      method === 'phone' && !soon('phone') ? (
+      method === 'password' ? (
+        <Button
+          fullWidth
+          size="lg"
+          loading={sending}
+          onClick={() => void submitPassword()}
+          disabled={
+            mode === 'signup' ? username.trim().length < 3 || password.length === 0 : !identifier.trim() || !password
+          }
+          className="rounded-xl"
+        >
+          {mode === 'signup' ? t('createAccount') : t('signInAction')}
+          <ArrowRight className="size-4" aria-hidden />
+        </Button>
+      ) : method === 'phone' && !soon('phone') ? (
         <Button fullWidth size="lg" loading={sending} onClick={() => void sendCode()} className="rounded-xl">
           {t('sendCode')}
           <ArrowRight className="size-4" aria-hidden />
@@ -152,7 +224,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
 
       {step === 'method' && (
         <div className="flex flex-col gap-4" role="tablist" aria-label="Sign-in method">
-          {(Object.keys({ phone: 1, email: 1, google: 1 }) as Method[]).map((m) => (
+          {(['password', 'email', 'phone', 'google'] as Method[]).map((m) => (
             <button
               key={m}
               type="button"
@@ -170,7 +242,9 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
               )}
             >
               <span className="bg-surface-2 text-text grid size-9 shrink-0 place-items-center rounded-lg">
-                {m === 'phone' ? (
+                {m === 'password' ? (
+                  <KeyRound className="size-4" aria-hidden />
+                ) : m === 'phone' ? (
                   <Smartphone className="size-4" aria-hidden />
                 ) : m === 'email' ? (
                   <Mail className="size-4" aria-hidden />
@@ -184,11 +258,13 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
                 )}
               </span>
               <span className="font-medium">
-                {m === 'phone'
-                  ? t('continueWithPhone')
-                  : m === 'email'
-                    ? t('continueWithEmail')
-                    : t('continueWithGoogle')}
+                {m === 'password'
+                  ? t('continueWithPassword')
+                  : m === 'phone'
+                    ? t('continueWithPhone')
+                    : m === 'email'
+                      ? t('continueWithEmail')
+                      : t('continueWithGoogle')}
               </span>
               {soon(m) && (
                 <span className="bg-surface-2 text-muted ml-auto rounded-full px-2.5 py-0.5 text-xs font-semibold">
@@ -198,6 +274,108 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
             </button>
           ))}
 
+          {method === 'password' && (
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void submitPassword();
+              }}
+            >
+              {mode === 'signup' ? (
+                <>
+                  <FieldShell id="auth-name" label={t('nameLabel')}>
+                    {(describedBy) => (
+                      <Input
+                        id="auth-name"
+                        aria-describedby={describedBy}
+                        autoComplete="name"
+                        placeholder={t('namePlaceholder')}
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                      />
+                    )}
+                  </FieldShell>
+                  <FieldShell id="auth-username" label={t('usernameLabel')} hint={t('usernameHint')}>
+                    {(describedBy) => (
+                      <Input
+                        id="auth-username"
+                        aria-describedby={describedBy}
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        prefix={<span className="text-muted">@</span>}
+                        placeholder="ada.events"
+                        value={username}
+                        onChange={(event) =>
+                          setUsername(event.target.value.replace(/[^a-zA-Z0-9._]/g, '').slice(0, 30))
+                        }
+                      />
+                    )}
+                  </FieldShell>
+                  <FieldShell id="auth-signup-email" label={t('emailOptionalLabel')} hint={t('emailOptionalHint')}>
+                    {(describedBy) => (
+                      <Input
+                        id="auth-signup-email"
+                        aria-describedby={describedBy}
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                      />
+                    )}
+                  </FieldShell>
+                </>
+              ) : (
+                <FieldShell id="auth-identifier" label={t('identifierLabel')}>
+                  {(describedBy) => (
+                    <Input
+                      id="auth-identifier"
+                      aria-describedby={describedBy}
+                      autoComplete="username"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      placeholder={t('identifierPlaceholder')}
+                      value={identifier}
+                      onChange={(event) => setIdentifier(event.target.value)}
+                    />
+                  )}
+                </FieldShell>
+              )}
+              <FieldShell
+                id="auth-password"
+                label={t('passwordLabel')}
+                hint={mode === 'signup' ? t('passwordHint') : undefined}
+              >
+                {(describedBy) => (
+                  <Input
+                    id="auth-password"
+                    aria-describedby={describedBy}
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    suffix={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((value) => !value)}
+                        aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                        className="text-muted hover:text-text grid size-8 place-items-center rounded-lg"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-4" aria-hidden />
+                        ) : (
+                          <Eye className="size-4" aria-hidden />
+                        )}
+                      </button>
+                    }
+                  />
+                )}
+              </FieldShell>
+              <button type="submit" hidden aria-hidden tabIndex={-1} />
+            </form>
+          )}
           {method === 'phone' && !soon('phone') && (
             <FieldShell id="auth-phone" label={t('phoneLabel')} hint={t('phoneHint')}>
               {(describedBy) => (

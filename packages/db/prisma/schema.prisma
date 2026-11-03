@@ -40,6 +40,10 @@ model User {
   // phone/phoneVerified by our verify wrappers — see apps/web/lib/auth.ts).
   phoneNumber         String?            @unique
   phoneNumberVerified Boolean            @default(false)
+  // Better Auth username plugin (D-X50): lowercased handle for sign-in, and
+  // the casing the user typed for display.
+  username            String?            @unique
+  displayUsername     String?
   image               String?
   locale              String             @default("en")
   countryCode         String             @default("NG")
