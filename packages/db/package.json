@@ -25,7 +25,8 @@
     "build": "prisma generate && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:planner": "dotenv -e ../../.env -- tsx prisma/seed.ts --planner-only"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

@@ -230,3 +230,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X52: SMTP (Gmail) email provider via Nodemailer for web + worker; typecheck/lint clean. Real send pending the Gmail app password.
 - D-X52: real send confirmed — Gmail SMTP login OK, branded sign-in email sent to a non-owner address through the app; app password spaces are stripped.
 - D-X53: 10-minute reset links; unknown/no-email/send-failed errors; SMTP timeouts + retry. password-auth e2e 2/2; real Gmail resets sent to both owner addresses, unknown user → 404 in 0.4 s.
+- pnpm db:seed:planner refreshes only the planner demo (dates drift out of "this week"); planner e2e 2/2 again.

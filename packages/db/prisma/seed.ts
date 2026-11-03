@@ -532,6 +532,12 @@ async function seedChatEnquiry(demoUserId: string, now: Date) {
 
 async function main() {
   const now = new Date();
+  // `pnpm db:seed:planner`: refresh only the planner demo (its dates are
+  // relative to now, so they drift out of "this week"); nothing else is touched.
+  if (process.argv.includes('--planner-only')) {
+    await seedPlannerUniverse(now);
+    return;
+  }
   const user = await prisma.user.upsert({
     where: { email: DEMO_EMAIL },
     update: { name: 'Demo Host', countryCode: 'NG' },

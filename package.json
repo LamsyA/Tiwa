@@ -22,6 +22,7 @@
     "db:migrate": "pnpm --filter @tiwa/db wait && pnpm --filter @tiwa/db migrate",
     "db:migrate:deploy": "pnpm --filter @tiwa/db wait && pnpm --filter @tiwa/db migrate:deploy",
     "db:seed": "pnpm --filter @tiwa/db seed",
+    "db:seed:planner": "pnpm --filter @tiwa/db seed:planner",
     "db:seed:load": "pnpm --filter @tiwa/db seed:load",
     "seed:gallery": "pnpm --filter @tiwa/worker seed-gallery",
     "gate": "node scripts/gate.mjs"
