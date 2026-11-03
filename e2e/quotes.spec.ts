@@ -67,7 +67,7 @@ async function newCateringVendor(page: Page, suffix = ''): Promise<string> {
     buffer: pngBuffer(i),
   }));
   await gotoSettled(page, '/business/profile');
-  await page.locator('input[type="file"][accept*="image"]').first().setInputFiles(files);
+  await page.locator('input[type="file"][accept*="image"][multiple]').first().setInputFiles(files);
   await expect(page.locator('li img')).toHaveCount(6, { timeout: 90_000 });
 
   await page.getByRole('button', { name: 'Add package' }).click();
@@ -75,7 +75,7 @@ async function newCateringVendor(page: Page, suffix = ''): Promise<string> {
   const partyForm = page.locator('form', { has: page.getByLabel('Package name') });
   await partyForm.getByLabel('Starting price').fill('250000');
   await partyForm.getByLabel("What's included (one per line)").fill('100 portions\nSetup');
-  await page.getByRole('button', { name: 'Save' }).last().click();
+  await partyForm.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Party platters')).toBeVisible();
 
   await page.getByRole('button', { name: 'Publish profile' }).click();
@@ -141,7 +141,7 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
   await host.getByRole('checkbox', { name: new RegExp(vendorName) }).check();
   await host.getByLabel(/Notes for vendors/).fill('Jollof for 50');
   await host.getByRole('button', { name: /Send requests/ }).click();
-  await expect(host.getByText(new RegExp(`${vendorName} · OPEN`))).toBeVisible();
+  await expect(host.getByRole('listitem').filter({ hasText: vendorName }).getByText('Waiting for quote')).toBeVisible();
 
   // UF-15: vendor builds the quote (server totals) and sends it.
   await gotoSettled(vendor, '/quotes');

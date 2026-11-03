@@ -112,7 +112,7 @@ test('UF-13: profile goes live when published; OG tags present', async ({ browse
     buffer: pngBuffer(i),
   }));
   await gotoSettled(page, '/business/profile');
-  await page.locator('input[type="file"][accept*="image"]').first().setInputFiles(files);
+  await page.locator('input[type="file"][accept*="image"][multiple]').first().setInputFiles(files);
   await expect(page.locator('li img')).toHaveCount(6, { timeout: 90_000 });
 
   // Package: one is enough to publish.
@@ -121,7 +121,7 @@ test('UF-13: profile goes live when published; OG tags present', async ({ browse
   const partyForm = page.locator('form', { has: page.getByLabel('Package name') });
   await partyForm.getByLabel('Starting price').fill('250000');
   await partyForm.getByLabel("What's included (one per line)").fill('100 portions\nSetup');
-  await page.getByRole('button', { name: 'Save' }).last().click();
+  await partyForm.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Party platters')).toBeVisible();
 
   // Publish → live banner (UF-13-1).
@@ -163,11 +163,14 @@ test('UF-14 search: category/city finds the vendor; blocked dates exclude (UF-14
     mimeType: 'image/png',
     buffer: pngBuffer(i + 10),
   }));
-  await page.locator('input[type="file"][accept*="image"]').first().setInputFiles(files);
+  await page.locator('input[type="file"][accept*="image"][multiple]').first().setInputFiles(files);
   await expect(page.locator('li img')).toHaveCount(6, { timeout: 90_000 });
   await page.getByRole('button', { name: 'Add package' }).click();
   await page.getByLabel('Package name').fill('Platters');
-  await page.getByRole('button', { name: 'Save' }).last().click();
+  await page
+    .locator('form', { has: page.getByLabel('Package name') })
+    .getByRole('button', { name: 'Save', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Publish profile' }).click();
   await expect(page.getByText('Your profile is live')).toBeVisible();
 

@@ -136,6 +136,16 @@ export default async function VenuesPage({
                       <MapPin className="size-3.5" aria-hidden />
                       {hit.city}
                     </p>
+                    <ul className="flex flex-wrap gap-1.5" aria-label={t('spaceFor', { count: hit.spaces.length })}>
+                      {hit.spaces.slice(0, 3).map((space) => (
+                        <li
+                          key={space.id}
+                          className="bg-brand-soft/70 text-brand-strong rounded-full px-2.5 py-0.5 text-xs font-medium"
+                        >
+                          {space.name}
+                        </li>
+                      ))}
+                    </ul>
                     {amenities.length > 0 && (
                       <p className="text-muted truncate text-xs">
                         {amenities.map((key) => t(`amenity_${key}`)).join(' · ')}
