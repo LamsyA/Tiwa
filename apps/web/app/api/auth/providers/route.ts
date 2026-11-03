@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
+import { authMethods } from '@/lib/auth-methods.js';
 
-/** Which social providers are configured (drives the Google button). */
+/** Which sign-in methods are live (drives the phone and Google options; D-X48). */
 export async function GET() {
-  return NextResponse.json({
-    google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-  });
+  return NextResponse.json(authMethods());
 }

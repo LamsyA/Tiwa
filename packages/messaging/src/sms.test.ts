@@ -52,7 +52,17 @@ describe('TermiiSms', () => {
       to: '2348012345678',
       from: 'Tiwa',
       sms: 'hello',
+      channel: 'dnd',
     });
+  });
+
+  it("surfaces Termii's reason when it refuses without a message id", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ message: 'ApplicationSenderId not found' }), { status: 200 })),
+    );
+    const sms = new TermiiSms({ apiKey: 'key', senderId: 'Nope', channel: 'generic' });
+    await expect(sms.send({ to: '+2348012345678', text: 'hello' })).rejects.toThrow('ApplicationSenderId not found');
   });
 
   it('throws on provider errors', async () => {

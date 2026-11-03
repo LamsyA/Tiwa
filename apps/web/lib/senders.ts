@@ -75,13 +75,15 @@ export class TermiiSmsSender implements SmsSender {
         from: env.TERMII_SENDER_ID,
         sms: message.body,
         type: 'plain',
-        channel: 'generic',
+        channel: env.TERMII_CHANNEL,
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Termii send failed: HTTP ${response.status}`);
+    const data = (await response.json().catch(() => ({}))) as { message_id?: string; message?: string; code?: string };
+    // Termii answers 200 with no message_id for some refusals (unapproved
+    // sender, low balance), so success means a message_id came back.
+    if (!response.ok || !data.message_id) {
+      throw new Error(`Termii send failed (HTTP ${response.status}): ${data.message ?? 'no message_id'}`);
     }
-    const data = (await response.json()) as { message_id?: string };
     return { providerRef: data.message_id };
   }
 }

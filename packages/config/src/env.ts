@@ -56,6 +56,8 @@ const envSchema = z
     SMS_PROVIDER: provider(['fake', 'termii'] as const, 'fake'),
     TERMII_API_KEY: optString(),
     TERMII_SENDER_ID: z.string().default('Tiwa'),
+    // 'dnd' reaches numbers on Do-Not-Disturb (most OTP traffic in NG); 'generic' needs an approved sender ID.
+    TERMII_CHANNEL: z.enum(['dnd', 'generic', 'whatsapp']).default('dnd'),
     WHATSAPP_PROVIDER: provider(['fake', 'cloud'] as const, 'fake'),
     WHATSAPP_TOKEN: optString(),
     WHATSAPP_PHONE_NUMBER_ID: optString(),

@@ -34,7 +34,7 @@ export function providers(): Providers {
         : new FakeEmail({ mailpitUrl: process.env.MAILPIT_URL }),
     sms:
       env.SMS_PROVIDER === 'termii' && env.TERMII_API_KEY
-        ? new TermiiSms({ apiKey: env.TERMII_API_KEY, senderId: env.TERMII_SENDER_ID })
+        ? new TermiiSms({ apiKey: env.TERMII_API_KEY, senderId: env.TERMII_SENDER_ID, channel: env.TERMII_CHANNEL })
         : new FakeSms(),
     whatsapp:
       env.WHATSAPP_PROVIDER === 'cloud' && env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID

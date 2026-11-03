@@ -1,6 +1,7 @@
 import { isDomainError } from '@tiwa/core';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { authMethods } from '@/lib/auth-methods.js';
 import { requestOtp } from '@/lib/otp.js';
 
 function clientIp(request: NextRequest): string {
@@ -8,6 +9,12 @@ function clientIp(request: NextRequest): string {
 }
 
 export async function POST(request: NextRequest) {
+  if (!authMethods().phone) {
+    return NextResponse.json(
+      { ok: false, error: 'Phone sign-in is coming soon', code: 'FEATURE_DISABLED' },
+      { status: 403 },
+    );
+  }
   const body = (await request.json().catch(() => ({}))) as { phone?: unknown };
   if (typeof body.phone !== 'string') {
     return NextResponse.json({ ok: false, error: 'Enter a valid phone number' }, { status: 400 });

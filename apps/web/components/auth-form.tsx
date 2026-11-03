@@ -28,7 +28,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? undefined;
 
-  const [method, setMethod] = React.useState<Method>('phone');
+  const [method, setMethod] = React.useState<Method>('email');
   const [step, setStep] = React.useState<Step>('method');
   const [phone, setPhone] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -38,14 +38,20 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
   const [sending, setSending] = React.useState(false);
   const [verifying, setVerifying] = React.useState(false);
   const [cooldown, setCooldown] = React.useState(0);
-  const [providers, setProviders] = React.useState<{ google: boolean }>({ google: false });
+  // Phone and Google show as "Coming soon" until the server says they are live (D-X48).
+  const [providers, setProviders] = React.useState<{ phone: boolean; google: boolean }>({
+    phone: false,
+    google: false,
+  });
+  const soon = (m: Method) => (m === 'phone' && !providers.phone) || (m === 'google' && !providers.google);
 
   React.useEffect(() => {
     void fetch('/api/auth/providers')
       .then((response) => response.json())
       .then((data: unknown) => {
-        if (typeof data === 'object' && data !== null && 'google' in data) {
-          setProviders({ google: Boolean((data as { google: unknown }).google) });
+        if (typeof data === 'object' && data !== null) {
+          const live = data as { phone?: unknown; google?: unknown };
+          setProviders({ phone: Boolean(live.phone), google: Boolean(live.google) });
         }
       })
       .catch(() => undefined);
@@ -113,7 +119,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
 
   const primary =
     step === 'method' ? (
-      method === 'phone' ? (
+      method === 'phone' && !soon('phone') ? (
         <Button fullWidth size="lg" loading={sending} onClick={() => void sendCode()} className="rounded-xl">
           {t('sendCode')}
           <ArrowRight className="size-4" aria-hidden />
@@ -152,6 +158,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
               type="button"
               role="tab"
               aria-selected={method === m}
+              disabled={soon(m)}
               onClick={() => {
                 setMethod(m);
                 setFormError(undefined);
@@ -159,6 +166,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
               className={cn(
                 'border-border bg-bg flex items-center gap-3 rounded-xl border p-4 text-left transition-colors',
                 'hover:border-text/25 aria-selected:border-brand-strong aria-selected:bg-brand-soft/40 aria-selected:ring-brand-strong/20 aria-selected:ring-4',
+                'disabled:hover:border-border disabled:cursor-not-allowed disabled:opacity-60',
               )}
             >
               <span className="bg-surface-2 text-text grid size-9 shrink-0 place-items-center rounded-lg">
@@ -182,10 +190,15 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
                     ? t('continueWithEmail')
                     : t('continueWithGoogle')}
               </span>
+              {soon(m) && (
+                <span className="bg-surface-2 text-muted ml-auto rounded-full px-2.5 py-0.5 text-xs font-semibold">
+                  {t('comingSoon')}
+                </span>
+              )}
             </button>
           ))}
 
-          {method === 'phone' && (
+          {method === 'phone' && !soon('phone') && (
             <FieldShell id="auth-phone" label={t('phoneLabel')} hint={t('phoneHint')}>
               {(describedBy) => (
                 <Input

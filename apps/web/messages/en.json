@@ -52,7 +52,8 @@
     "haveAccount": "Already have an account?",
     "noAccount": "New to Tiwa?",
     "loginLink": "Sign in",
-    "signupLink": "Create an account"
+    "signupLink": "Create an account",
+    "comingSoon": "Coming soon"
   },
   "onboarding": {
     "roleTitle": "What brings you to Tiwa?",

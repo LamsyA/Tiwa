@@ -22,6 +22,8 @@ export interface SmsProvider {
 export interface TermiiSmsConfig {
   apiKey: string;
   senderId: string;
+  /** 'dnd' reaches Do-Not-Disturb numbers; 'generic' needs an approved sender ID. */
+  channel?: 'dnd' | 'generic' | 'whatsapp';
 }
 
 export class TermiiSms implements SmsProvider {
@@ -39,12 +41,13 @@ export class TermiiSms implements SmsProvider {
         from: this.config.senderId,
         sms: message.text,
         type: 'plain',
-        channel: 'generic',
+        channel: this.config.channel ?? 'dnd',
       }),
     });
-    if (!response.ok) throw new Error(`Termii send failed: HTTP ${response.status}`);
-    const data = (await response.json()) as { message_id?: string };
-    if (!data.message_id) throw new Error('Termii send failed: no message_id returned');
+    const data = (await response.json().catch(() => ({}))) as { message_id?: string; message?: string };
+    if (!response.ok || !data.message_id) {
+      throw new Error(`Termii send failed (HTTP ${response.status}): ${data.message ?? 'no message_id'}`);
+    }
     return { id: data.message_id };
   }
 }
