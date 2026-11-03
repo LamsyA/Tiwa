@@ -45,8 +45,8 @@ function OfficialQueue() {
         }}
         className={
           dragging
-            ? 'border-brand-strong bg-surface-2 rounded-md border-2 border-dashed p-6 text-center'
-            : 'border-border rounded-md border-2 border-dashed p-6 text-center'
+            ? 'border-brand-strong bg-surface-2 rounded-xl border-2 border-dashed p-6 text-center'
+            : 'border-border rounded-xl border-2 border-dashed p-6 text-center'
         }
       >
         <p className="text-sm font-medium">{t('dropHint')}</p>
@@ -74,14 +74,14 @@ function OfficialQueue() {
         <button
           type="button"
           onClick={() => filesRef.current?.click()}
-          className="rounded-md border border-border px-3 py-2 text-sm font-medium"
+          className="rounded-xl border border-border px-3 py-2 text-sm font-medium"
         >
           {t('chooseFiles')}
         </button>
         <button
           type="button"
           onClick={() => folderRef.current?.click()}
-          className="rounded-md border border-border px-3 py-2 text-sm font-medium"
+          className="rounded-xl border border-border px-3 py-2 text-sm font-medium"
         >
           {t('chooseFolder')}
         </button>
@@ -108,7 +108,7 @@ function OfficialQueue() {
       {queue.files.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">
           {queue.files.map((file) => (
-            <li key={file.id} className="border-border flex items-center gap-3 rounded-md border p-2">
+            <li key={file.id} className="border-border flex items-center gap-3 rounded-xl border p-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{file.name}</p>
                 <p className="text-muted text-xs">
@@ -158,7 +158,7 @@ export function OfficialAlbumPanel({ eventId, galleryId }: { eventId: string; ga
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div>
-        <h3 className="font-medium">{t('officialTitle')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('officialTitle')}</h3>
         <p className="text-muted text-sm">{t('officialBody')}</p>
       </div>
       <UploadQueueProvider eventId={eventId} galleryId={galleryId} album="OFFICIAL" kind="MIXED" autoUpload>

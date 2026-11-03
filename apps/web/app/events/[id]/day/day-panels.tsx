@@ -253,11 +253,11 @@ export function ContactsPanel(props: {
                 <span className="rounded-full border px-2 py-0.5 text-xs">{t('backupVendor')}</span>
               )}
               <span className="ml-auto flex gap-2">
-                <a className="underline" href={`tel:${encodeURIComponent(row.phone)}`}>
+                <a className="text-brand-strong font-medium underline-offset-4 hover:underline" href={`tel:${encodeURIComponent(row.phone)}`}>
                   {t('call')}
                 </a>
                 <a
-                  className="underline"
+                  className="text-brand-strong font-medium underline-offset-4 hover:underline"
                   href={`https://wa.me/${row.phone.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noreferrer"
@@ -284,7 +284,7 @@ export function ContactsPanel(props: {
       </ul>
       {props.onsiteVendors.length > 0 && (
         <Card className="flex flex-col gap-1 p-3 text-sm">
-          <h3 className="font-medium">{t('onsiteVendors')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('onsiteVendors')}</h3>
           {props.onsiteVendors.map((row) => (
             <p key={row.orgId} className="text-muted">
               {row.name}

@@ -46,7 +46,7 @@ export function ZipPanel({
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div>
-        <h3 className="font-medium">{t('zipTitle')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('zipTitle')}</h3>
         <p className="text-muted text-sm">{t('zipBody')}</p>
       </div>
       {error && <p className="text-danger text-sm">{te('generic')}</p>}

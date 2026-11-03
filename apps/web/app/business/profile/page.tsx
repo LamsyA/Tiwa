@@ -43,7 +43,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
           title={t('noOrgTitle')}
           body={t('noOrgBody')}
           action={
-            <Link href="/onboarding/role" className="font-medium underline">
+            <Link href="/onboarding/role" className="text-brand-strong font-semibold underline-offset-4 hover:underline">
               {t('noOrgAction')}
             </Link>
           }
@@ -273,7 +273,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
 
             <Card>
               <div className="flex flex-col gap-1 p-4">
-                <h3 className="font-medium">{t('bankHeading')}</h3>
+                <h3 className="font-display text-base font-bold tracking-tight">{t('bankHeading')}</h3>
                 <p className="text-muted text-sm">{t('bankComing')}</p>
               </div>
             </Card>

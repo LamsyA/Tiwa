@@ -149,7 +149,7 @@ export function DocumentsPanel({
               <a
                 href={`/api/documents/${eventId}/${doc.id}`}
                 aria-label={t('download', { name: doc.name })}
-                className="text-text hover:bg-surface-2 focus-visible:outline-focus flex size-11 items-center justify-center rounded-md focus-visible:outline-2"
+                className="text-text hover:bg-surface-2 focus-visible:outline-focus flex size-11 items-center justify-center rounded-xl focus-visible:outline-2"
               >
                 <Download aria-hidden className="size-5" />
               </a>

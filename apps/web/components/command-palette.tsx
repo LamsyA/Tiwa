@@ -76,7 +76,7 @@ export function CommandPalette() {
         type="button"
         onClick={openPalette}
         aria-keyshortcuts="meta+k control+k"
-        className="border-border text-muted hidden items-center gap-2 rounded-md border px-3 py-1.5 text-sm md:inline-flex"
+        className="border-border text-muted hidden items-center gap-2 rounded-xl border px-3 py-1.5 text-sm md:inline-flex"
       >
         {t('commandTrigger')}
         <kbd className="bg-surface-2 rounded px-1.5 py-0.5 text-xs">⌘K</kbd>
@@ -127,7 +127,7 @@ export function CommandPalette() {
                     type="button"
                     onClick={() => go(cmd.href)}
                     onMouseEnter={() => setActive(index)}
-                    className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                    className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm ${
                       index === active ? 'bg-surface-2' : ''
                     }`}
                   >

@@ -83,7 +83,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
       ticketsOn={ticketsOn}
     >
       <div className="flex flex-col gap-4 py-4">
-        <Link href={`/events/${eventId}/vendors`} className="text-sm underline">
+        <Link href={`/events/${eventId}/vendors`} className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
           ← {t('backToEvent')}
         </Link>
         <p className="text-muted text-sm">{t('categoryBody')}</p>

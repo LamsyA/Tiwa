@@ -50,7 +50,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
         </Card>
         {event.programme.length > 0 && (
           <Card className="flex flex-col gap-2 p-4">
-            <h2 className="font-medium">{t('agenda')}</h2>
+            <h2 className="font-display text-lg font-bold tracking-tight">{t('agenda')}</h2>
             {event.programme.slice(0, 20).map((item) => (
               <div key={item.id} className="flex items-baseline justify-between gap-3 text-sm">
                 <span className="font-medium">{item.title}</span>
@@ -60,7 +60,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
           </Card>
         )}
         <Card className="flex flex-col gap-3 p-4">
-          <h2 className="font-medium">{t('tickets')}</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight">{t('tickets')}</h2>
           {types.length === 0 && <Banner tone="warning">{t('soldOut')}</Banner>}
           <TicketSelector
             slug={slug}

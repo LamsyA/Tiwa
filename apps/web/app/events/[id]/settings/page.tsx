@@ -98,10 +98,10 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
               pricesVisible={event.hostCanSeeVendorPrices}
               canChangePrices={canChangePrices}
             />
-            <Card className="p-4">
+            <Card>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium">{ts('membersHeading')}</h3>
+                  <h3 className="font-display text-base font-bold tracking-tight">{ts('membersHeading')}</h3>
                   <p className="text-muted text-sm">{ts('membersBody')}</p>
                 </div>
                 <Link href={`/events/${id}/settings/members`} className={buttonClasses({ variant: 'secondary' })}>

@@ -122,7 +122,7 @@ export default async function ClosePage({ params }: { params: Promise<{ id: stri
           </Card>
         )}
         {!pack ? (
-          <Card className="p-4">
+          <Card>
             <p className="text-muted text-sm">{t('noBookings')}</p>
           </Card>
         ) : (

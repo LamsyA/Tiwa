@@ -463,7 +463,7 @@ export function ChatThread({
             </div>
           }
         >
-          <p className="bg-surface-2 rounded-md p-3 text-sm">{held.body}</p>
+          <p className="bg-surface-2 rounded-xl p-3 text-sm">{held.body}</p>
         </ResponsiveDialog>
       )}
       {confirmBlock && header.blockTarget && (

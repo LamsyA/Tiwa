@@ -117,7 +117,7 @@ export default async function EventMoneyPage({
               </Banner>
             ) : (
               <Banner key={alert.milestoneId} tone={alert.within === '1d' ? 'danger' : 'info'}>
-                <Link href={`/events/${id}/bookings/${alert.bookingId}?tab=payments`} className="underline">
+                <Link href={`/events/${id}/bookings/${alert.bookingId}?tab=payments`} className="text-brand-strong font-medium underline-offset-4 hover:underline">
                   {t(alert.within === '1d' ? 'alerts.dueDay' : 'alerts.dueWeek', {
                     vendor: alert.vendorName,
                     label: alert.label,

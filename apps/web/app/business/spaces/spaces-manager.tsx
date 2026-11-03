@@ -79,7 +79,7 @@ export function SpacesManager({
     <div className="flex flex-col gap-4">
       {canManage && <VenueSettingsForm orgId={orgId} instantBook={instantBook} holdHours={holdHours} />}
       <div className="flex items-center justify-between">
-        <h2 className="font-medium">{t('spacesHeading')}</h2>
+        <h2 className="font-display text-lg font-bold tracking-tight">{t('spacesHeading')}</h2>
         {canManage && !creating && <Button onClick={() => setCreating(true)}>{t('addSpace')}</Button>}
       </div>
       {spaces.length === 0 && !creating && <p className="text-muted text-sm">{t('noSpaces')}</p>}
@@ -170,7 +170,7 @@ function SpaceCard({
     <Card>
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-medium">{space.name}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{space.name}</h3>
           {canManage && (
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => setEditing((open) => !open)}>
@@ -578,7 +578,7 @@ function SpaceAvailability({ orgId, space, canManage }: { orgId: string; space: 
                 <StatusPill tone="brand">{t('bookedSlot')}</StatusPill>
               ) : (
                 canManage && (
-                  <button type="button" className="underline" onClick={() => void onUnblock(block.id)}>
+                  <button type="button" className="text-brand-strong font-medium underline-offset-4 hover:underline" onClick={() => void onUnblock(block.id)}>
                     {t('unblock')}
                   </button>
                 )

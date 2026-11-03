@@ -34,7 +34,7 @@ export function PackagesEditor({ orgId, packages }: { orgId: string; packages: P
     <Card>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-medium">{t('packagesHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('packagesHeading')}</h3>
           {!creating && !editing && <Button onClick={() => setCreating(true)}>{t('addPackage')}</Button>}
         </div>
         {error && <Banner tone="danger">{error}</Banner>}

@@ -71,7 +71,7 @@ function Tile({
 }) {
   const src = tileSrc(item);
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-md bg-surface-2">
+    <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-surface-2">
       <button
         type="button"
         onClick={() => onOpen(index)}
@@ -348,7 +348,7 @@ export function GalleryGrid({
           type="button"
           onClick={() => void loadMore()}
           disabled={loadingMore}
-          className="mt-3 w-full rounded-md border border-border py-2.5 text-sm font-medium disabled:opacity-50"
+          className="mt-3 w-full rounded-xl border border-border py-2.5 text-sm font-medium disabled:opacity-50"
         >
           {loadingMore ? t('loading') : t('showMore')}
         </button>

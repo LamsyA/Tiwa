@@ -59,7 +59,7 @@ export function HostGuestbook({
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-medium">{t('guestbookSectionTitle')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('guestbookSectionTitle')}</h3>
           <p className="text-muted text-sm">{t('guestbookSectionBody')}</p>
         </div>
         <Button type="button" variant="secondary" size="sm" onClick={() => void exportPdf()}>
@@ -75,8 +75,8 @@ export function HostGuestbook({
               key={message.id}
               className={
                 message.hidden
-                  ? 'border-border rounded-md border p-3 opacity-60'
-                  : 'border-border rounded-md border p-3'
+                  ? 'border-border/70 bg-surface rounded-2xl border p-4 opacity-60'
+                  : 'border-border/70 bg-surface rounded-2xl border p-4'
               }
             >
               <p className="text-sm">{message.body}</p>

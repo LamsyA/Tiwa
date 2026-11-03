@@ -110,7 +110,7 @@ export function ShareSection({
   return (
     <Card className="flex flex-col gap-4 p-4">
       <div>
-        <h3 className="font-medium">{t('share.title')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('share.title')}</h3>
         <p className="text-muted text-sm">{t('share.body')}</p>
       </div>
       {error && <Banner tone="danger">{error}</Banner>}
@@ -147,7 +147,7 @@ export function ShareSection({
               value={shareUrl}
               size={224}
               label={t('share.qrLabel')}
-              className="text-text max-w-56 rounded-md border p-2"
+              className="text-text max-w-56 rounded-xl border p-2"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-3">

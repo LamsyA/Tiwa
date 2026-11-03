@@ -1369,7 +1369,7 @@
     "readiness": {
       "eyebrow": "Get ready",
       "heading": "Your next steps",
-      "body": "{done} of {total} done. Each one ticks itself as you go.",
+      "body": "{done} of {total} steps complete. Each one ticks itself as you go.",
       "percent": "{percent}% ready",
       "steps": {
         "budget": {

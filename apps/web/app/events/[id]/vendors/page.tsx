@@ -176,7 +176,7 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
             <h2 className="pt-2 font-medium">{t('visitsHeading')}</h2>
             <ul className="flex flex-col gap-2">
               {visits.map((visit) => (
-                <li key={visit.id} className="border-border rounded-lg border p-3 text-sm">
+                <li key={visit.id} className="border-border/70 rounded-2xl border p-3 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="flex-1 font-medium">{visitNames.get(visit.vendorOrgId) ?? ''}</span>
                     <StatusPill tone={visit.status === 'CONFIRMED' ? 'success' : 'neutral'}>{visit.status}</StatusPill>

@@ -36,23 +36,23 @@ export default async function InvitePassPage({ params }: { params: Promise<{ tok
     <GuestShell title={page.event.name}>
       <div className="flex flex-col items-center gap-4 py-4 text-center">
         <p className="font-medium">{t('passFor', { name: page.guest.name })}</p>
-        <QRCode value={checkin} size={224} label={t('passQr')} className="text-text max-w-60 rounded-md border p-2" />
+        <QRCode value={checkin} size={224} label={t('passQr')} className="text-text max-w-60 rounded-xl border p-2" />
         <div className="flex flex-col gap-2">
           {calendar && (
-            <a href={calendar} target="_blank" rel="noopener noreferrer" className="text-sm underline">
+            <a href={calendar} target="_blank" rel="noopener noreferrer" className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
               {t('googleCal')}
             </a>
           )}
-          <a href={`${base}/api/ics/${page.token}?kind=invite`} download className="text-sm underline">
+          <a href={`${base}/api/ics/${page.token}?kind=invite`} download className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
             {t('icsDownload')}
           </a>
           {mapsUrl && (
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm underline">
+            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
               {t('directions')}
             </a>
           )}
           {momentsActive && galleryCode && (
-            <a href={`${base}/m/${galleryCode}?guest=${page.token}`} className="text-sm underline">
+            <a href={`${base}/m/${galleryCode}?guest=${page.token}`} className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
               {t('moments')}
             </a>
           )}

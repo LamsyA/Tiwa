@@ -10,7 +10,7 @@ export function HeadcountPanel({ eventId, report }: { eventId: string; report: H
   const t = useTranslations('events.guests');
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-4">
+      <Card>
         <p className="text-muted text-sm">{t('headcount.expected')}</p>
         <p className="font-display text-3xl font-bold">{report.expectedAttendance}</p>
         <p className="text-muted text-sm">{t('headcount.expectedHint')}</p>
@@ -98,7 +98,7 @@ function ShareCard({ eventId }: { eventId: string }) {
 
   return (
     <Card className="flex flex-col gap-2 p-4">
-      <h3 className="font-medium">{t('headcount.share')}</h3>
+      <h3 className="font-display text-base font-bold tracking-tight">{t('headcount.share')}</h3>
       <p className="text-muted text-sm">{t('headcount.shareHint')}</p>
       {error && <Banner tone="danger">{error}</Banner>}
       {!link ? (

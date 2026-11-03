@@ -63,7 +63,7 @@ export default async function GalleryPage({
               name="access"
               autoComplete="off"
               placeholder={t('accessCodePlaceholder')}
-              className="border-border bg-bg text-text h-11 flex-1 rounded-md border px-3 text-base uppercase"
+              className="border-border bg-bg text-text h-11 flex-1 rounded-xl border px-3 text-base uppercase"
             />
             <button type="submit" className={buttonClasses({ variant: 'primary' })}>
               {t('unlock')}

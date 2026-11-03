@@ -33,11 +33,11 @@ export function AssignForm({
         }
       }}
     >
-      <h3 className="font-semibold">{t('assignHeading')}</h3>
+      <h3 className="font-display text-base font-bold tracking-tight">{t('assignHeading')}</h3>
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
           {t('eventLabel')}
-          <select name="eventId" required className="border-border rounded-md border px-3 py-2">
+          <select name="eventId" required className="border-border rounded-xl border px-3 py-2">
             {events.map((ev) => (
               <option key={ev.id} value={ev.id}>
                 {ev.name}
@@ -47,7 +47,7 @@ export function AssignForm({
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('memberLabel')}
-          <select name="userId" required className="border-border rounded-md border px-3 py-2">
+          <select name="userId" required className="border-border rounded-xl border px-3 py-2">
             {members.map((m) => (
               <option key={m.userId} value={m.userId}>
                 {m.userId} · {m.role}
@@ -59,7 +59,7 @@ export function AssignForm({
       <button
         type="submit"
         disabled={pending || events.length === 0}
-        className="bg-brand-strong text-on-brand rounded-md px-4 py-2 text-sm font-medium"
+        className="bg-brand-strong text-on-brand rounded-xl px-4 py-2 text-sm font-medium"
       >
         {t('assignAction')}
       </button>

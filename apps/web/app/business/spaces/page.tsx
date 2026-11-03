@@ -24,7 +24,7 @@ export default async function BusinessSpacesPage({ searchParams }: { searchParam
           title={tb('noOrgTitle')}
           body={tb('noOrgBody')}
           action={
-            <Link href="/onboarding/role" className="font-medium underline">
+            <Link href="/onboarding/role" className="text-brand-strong font-semibold underline-offset-4 hover:underline">
               {tb('noOrgAction')}
             </Link>
           }
@@ -43,7 +43,7 @@ export default async function BusinessSpacesPage({ searchParams }: { searchParam
           title={t('notVenueTitle')}
           body={t('notVenueBody')}
           action={
-            <Link href="/business/profile" className="font-medium underline">
+            <Link href="/business/profile" className="text-brand-strong font-semibold underline-offset-4 hover:underline">
               {t('goToProfile')}
             </Link>
           }

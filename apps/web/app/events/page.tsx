@@ -30,7 +30,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     <AppFrame userId={ctx.actor.userId} active="events" title={t('list.title')}>
       <div className="flex flex-col gap-4 py-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav aria-label={t('list.title')} className="bg-surface-2 inline-flex gap-1 rounded-md p-1">
+          <nav aria-label={t('list.title')} className="bg-surface-2 inline-flex gap-1 rounded-xl p-1">
             {TABS.map((item) => (
               <Link
                 key={item.key}

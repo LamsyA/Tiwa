@@ -73,7 +73,7 @@ export function GuestbookPanel({
 
   return (
     <div>
-      <form onSubmit={sign} className="border-border bg-surface flex flex-col gap-2 rounded-md border p-3">
+      <form onSubmit={sign} className="border-border bg-surface flex flex-col gap-2 rounded-xl border p-3">
         <div>
           <label htmlFor="guestbook-name" className="mb-1 block text-sm font-medium">
             {t('guestName')}
@@ -85,7 +85,7 @@ export function GuestbookPanel({
             placeholder={t('guestNamePlaceholder')}
             autoComplete="given-name"
             maxLength={80}
-            className="border-border bg-bg text-text h-11 w-full rounded-md border px-3 text-base"
+            className="border-border bg-bg text-text h-11 w-full rounded-xl border px-3 text-base"
           />
         </div>
         <div>
@@ -100,20 +100,20 @@ export function GuestbookPanel({
             maxLength={500}
             rows={3}
             required
-            className="border-border bg-bg text-text w-full rounded-md border px-3 py-2 text-base"
+            className="border-border bg-bg text-text w-full rounded-xl border px-3 py-2 text-base"
           />
         </div>
         <button
           type="submit"
           disabled={saving || body.trim().length === 0}
-          className="bg-brand-strong text-on-brand rounded-md py-2.5 text-sm font-semibold disabled:opacity-50"
+          className="bg-brand-strong text-on-brand rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
         >
           {saving ? t('signingIn') : t('signButton')}
         </button>
       </form>
       <ul className="mt-3 flex flex-col gap-2">
         {messages.map((message) => (
-          <li key={message.id} className="border-border rounded-md border p-3">
+          <li key={message.id} className="border-border/70 bg-surface rounded-2xl border p-4">
             <p className="text-sm">{message.body}</p>
             <p className="text-muted mt-1 text-xs">
               {message.name ?? '—'} ·{' '}

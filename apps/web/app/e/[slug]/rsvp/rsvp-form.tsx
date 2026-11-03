@@ -17,7 +17,7 @@ export function RsvpForm({ slug }: { slug: string }) {
 
   if (done) {
     return (
-      <Card className="p-4">
+      <Card>
         <p role="status" className="font-medium">
           {t('done')}
         </p>
@@ -26,7 +26,7 @@ export function RsvpForm({ slug }: { slug: string }) {
   }
 
   return (
-    <Card className="p-4">
+    <Card>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {

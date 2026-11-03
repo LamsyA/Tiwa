@@ -58,7 +58,7 @@ export default async function VenuesPage({
         {eventName && (
           <p className="text-muted text-sm">
             {t('shortlistFor', { event: eventName })} ·{' '}
-            <Link className="underline" href={`/vendors/compare?eventId=${eventId}`}>
+            <Link className="text-brand-strong font-medium underline-offset-4 hover:underline" href={`/vendors/compare?eventId=${eventId}`}>
               {t('compare')}
             </Link>
           </p>

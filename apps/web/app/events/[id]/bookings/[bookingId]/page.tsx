@@ -164,7 +164,7 @@ export default async function BookingPage({
         {active === 'details' && (
           <Card>
             <div className="flex flex-col gap-2 p-4 text-sm">
-              <h3 className="font-medium">{t('scopeHeading')}</h3>
+              <h3 className="font-display text-base font-bold tracking-tight">{t('scopeHeading')}</h3>
               {scope == null ? (
                 <p className="text-muted">{t('hiddenByPlanner')}</p>
               ) : (
@@ -182,9 +182,9 @@ export default async function BookingPage({
                   {scope.notes && <p className="text-muted">{scope.notes}</p>}
                 </>
               )}
-              <h3 className="font-medium">{t('termsHeading')}</h3>
+              <h3 className="font-display text-base font-bold tracking-tight">{t('termsHeading')}</h3>
               <p className="text-muted">{current.terms}</p>
-              <h3 className="font-medium">{t('scheduleHeading')}</h3>
+              <h3 className="font-display text-base font-bold tracking-tight">{t('scheduleHeading')}</h3>
               <ul className="divide-border/60 border-border/70 flex flex-col divide-y rounded-2xl border">
                 {booking.milestones.map((row) => (
                   <li key={row.id} className="flex items-center gap-3 px-4 py-3">

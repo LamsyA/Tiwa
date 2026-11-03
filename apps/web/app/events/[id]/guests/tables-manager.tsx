@@ -43,7 +43,7 @@ export function TablesManager({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <h3 className="font-medium">{t('tables.title')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('tables.title')}</h3>
         {canManage && (
           <span className="ml-auto">
             <TableDialog eventId={eventId} />
@@ -248,7 +248,7 @@ function AssignDialog({ eventId, table, guests }: { eventId: string; table: Tabl
         />
         <div className="flex max-h-72 flex-col gap-1 overflow-auto">
           {visible.map((guest) => (
-            <label key={guest.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-surface">
+            <label key={guest.id} className="flex cursor-pointer items-center gap-2 rounded-xl p-2 hover:bg-surface">
               <Checkbox
                 checked={picked.includes(guest.id)}
                 onCheckedChange={(checked) =>

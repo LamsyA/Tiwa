@@ -44,7 +44,7 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
         <button
           type="button"
           onClick={() => queue.resume()}
-          className="mb-3 w-full rounded-md border border-border py-2.5 text-sm font-medium"
+          className="mb-3 w-full rounded-xl border border-border py-2.5 text-sm font-medium"
         >
           {t('resumeUploads', { count: queue.restoredCount })}
         </button>
@@ -55,7 +55,7 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
           if (queue.files.length === 0) inputRef.current?.click();
           else queue.resume();
         }}
-        className="bg-brand-strong text-on-brand w-full rounded-md py-3 text-base font-semibold"
+        className="bg-brand-strong text-on-brand w-full rounded-xl py-3 text-base font-semibold"
       >
         {t('choosePhotos')}
       </button>
@@ -75,7 +75,7 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
       )}
       <ul className="mt-3 flex flex-col gap-2">
         {queue.files.map((file) => (
-          <li key={file.id} className="border-border flex items-center gap-3 rounded-md border p-2">
+          <li key={file.id} className="border-border flex items-center gap-3 rounded-xl border p-2">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{file.name}</p>
               <p className="text-muted text-xs">
@@ -105,7 +105,7 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
         ))}
       </ul>
       {done > 0 && queue.files.length === done && (
-        <p className="bg-success-soft text-success mt-4 rounded-md p-3 text-sm font-medium">
+        <p className="bg-success-soft text-success mt-4 rounded-xl p-3 text-sm font-medium">
           {moderation === 'APPROVE_FIRST' ? t('sentForApproval') : t('sharedThanks', { count: done })}
         </p>
       )}
@@ -170,7 +170,7 @@ export function UploadSheet({
             placeholder={t('firstNamePlaceholder')}
             autoComplete="given-name"
             maxLength={80}
-            className="border-border bg-bg text-text h-11 w-full rounded-md border px-3 text-base"
+            className="border-border bg-bg text-text h-11 w-full rounded-xl border px-3 text-base"
           />
         </div>
         <p className="text-muted text-xs">{t('consentLine')}</p>
@@ -178,7 +178,7 @@ export function UploadSheet({
         <button
           type="submit"
           disabled={saving}
-          className="bg-brand-strong text-on-brand w-full rounded-md py-3 text-base font-semibold disabled:opacity-50"
+          className="bg-brand-strong text-on-brand w-full rounded-xl py-3 text-base font-semibold disabled:opacity-50"
         >
           {saving ? t('starting') : t('continue')}
         </button>

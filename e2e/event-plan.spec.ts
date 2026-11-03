@@ -73,16 +73,19 @@ test('UF-05-1: completing a task moves overview progress', async ({ page }) => {
   await expect(page.getByText(new RegExp(`${doneBefore + 1} of \\d+ done`)).first()).toBeVisible();
 });
 
-test('UF-05-2: overdue tasks show in red with days overdue', async ({ page }) => {
+test('UF-05-2: overdue tasks show as missed, in red', async ({ page }) => {
   await newHost(page);
   const eventUrl = await quickEvent(page, 'Overdue Party');
 
   await page.goto(`${eventUrl}/plan`);
-  await page.getByRole('button', { name: /Order the cake/ }).click();
-  await page.getByLabel('Due date').fill(yesterdayISO());
-  await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('1 day overdue')).toBeVisible();
-  await expect(page.getByText('1 day overdue')).toHaveClass(/text-danger/);
+  await page.getByRole('button', { name: 'Order the cake', exact: true }).click();
+  const editor = page.getByRole('dialog');
+  await editor.getByLabel('Due date').fill(yesterdayISO());
+  await editor.getByRole('button', { name: 'Save' }).click();
+  // D-X31 wording: an overdue task reads "Missed · <date>" in the danger colour.
+  const missed = page.getByText(/^Missed · /).first();
+  await expect(missed).toBeVisible();
+  await expect(missed).toHaveClass(/text-danger/);
 });
 
 test('UF-05-3: a co-host sees task changes within 10 seconds', async ({ page, browser }) => {

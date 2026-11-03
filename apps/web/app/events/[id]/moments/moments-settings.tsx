@@ -82,7 +82,7 @@ export function MomentsSettingsForm({
   return (
     <Card className="flex flex-col gap-4 p-4">
       <div>
-        <h3 className="font-medium">{t('settingsTitle')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('settingsTitle')}</h3>
         <p className="text-muted text-sm">{t('settingsBody')}</p>
       </div>
       {error && <Banner tone="danger">{error}</Banner>}

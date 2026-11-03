@@ -198,9 +198,9 @@ export default async function HomePage() {
           />
         </section>
 
-        <Card className="p-4">
+        <Card>
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="font-semibold">{tp('weekEvents')}</h2>
+            <h2 className="font-display text-lg font-bold tracking-tight">{tp('weekEvents')}</h2>
             <Link href="/events" className={buttonClasses({ variant: 'ghost' })}>
               {tp('viewAll')}
             </Link>
@@ -220,9 +220,9 @@ export default async function HomePage() {
           )}
         </Card>
 
-        <Card className="p-4">
+        <Card>
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="font-semibold">{tp('pipeline')}</h2>
+            <h2 className="font-display text-lg font-bold tracking-tight">{tp('pipeline')}</h2>
             <Link href="/clients?view=pipeline" className={buttonClasses({ variant: 'ghost' })}>
               {tp('viewAll')}
             </Link>

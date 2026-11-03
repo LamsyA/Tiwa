@@ -239,7 +239,7 @@ export function QuoteCards({
     <div className="flex flex-col gap-3">
       {bookingId && (
         <Banner tone="info">
-          <Link href={`/events/${eventId}/bookings/${bookingId}`} className="underline">
+          <Link href={`/events/${eventId}/bookings/${bookingId}`} className="text-brand-strong font-medium underline-offset-4 hover:underline">
             {t('viewBooking')}
           </Link>
         </Banner>

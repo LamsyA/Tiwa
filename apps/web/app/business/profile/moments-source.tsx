@@ -38,7 +38,7 @@ export function MomentsSourcePicker(props: { orgId: string; events: MomentsSourc
   return (
     <Card>
       <div className="flex flex-col gap-3 p-4">
-        <h3 className="font-medium">{t('momentsSourceHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('momentsSourceHeading')}</h3>
         <p className="text-muted text-sm">{t('momentsSourceBody')}</p>
         {error && <p className="text-danger text-sm">{error}</p>}
         {props.events.map((event) => (

@@ -311,7 +311,7 @@ export function DayEditor(props: {
       )}
       {props.checkins.length > 0 && tab === 'timeline' && (
         <Card className="flex flex-col gap-1 p-3 text-sm">
-          <h3 className="font-medium">{t('arrivals')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('arrivals')}</h3>
           {props.checkins.slice(0, 10).map((row) => (
             <p key={row.id} className="text-muted">
               {row.userName}

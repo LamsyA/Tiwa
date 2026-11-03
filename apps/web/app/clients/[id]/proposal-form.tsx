@@ -37,15 +37,15 @@ export function ProposalForm({ orgId, clientId }: { orgId: string; clientId: str
         }
       }}
     >
-      <h3 className="font-semibold">{t('newProposalTitle')}</h3>
+      <h3 className="font-display text-base font-bold tracking-tight">{t('newProposalTitle')}</h3>
       <label className="flex flex-col gap-1 text-sm">
         {t('titleLabel')}
-        <input name="title" required maxLength={160} className="border-border rounded-md border px-3 py-2" />
+        <input name="title" required maxLength={160} className="border-border rounded-xl border px-3 py-2" />
       </label>
       <div className="grid grid-cols-3 gap-2">
         <label className="flex flex-col gap-1 text-sm">
           {t('titleLabel')}
-          <input name="label" defaultValue="Planning" className="border-border rounded-md border px-3 py-2" />
+          <input name="label" defaultValue="Planning" className="border-border rounded-xl border px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('qtyLabel')}
@@ -54,7 +54,7 @@ export function ProposalForm({ orgId, clientId }: { orgId: string; clientId: str
             type="number"
             min={1}
             defaultValue={1}
-            className="border-border rounded-md border px-3 py-2"
+            className="border-border rounded-xl border px-3 py-2"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -63,14 +63,14 @@ export function ProposalForm({ orgId, clientId }: { orgId: string; clientId: str
             name="amount"
             inputMode="numeric"
             defaultValue="500000"
-            className="border-border rounded-md border px-3 py-2"
+            className="border-border rounded-xl border px-3 py-2"
           />
         </label>
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="bg-brand-strong text-on-brand rounded-md px-4 py-2 text-sm font-medium"
+        className="bg-brand-strong text-on-brand rounded-xl px-4 py-2 text-sm font-medium"
       >
         {t('create')}
       </button>

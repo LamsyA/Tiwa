@@ -30,29 +30,29 @@ export function VendorBookForms({ orgId, events }: { orgId: string; events: { id
           }
         }}
       >
-        <h3 className="font-semibold">{t('addVendorHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('addVendorHeading')}</h3>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
             {t('nameLabel')}
-            <input name="name" required maxLength={120} className="border-border rounded-md border px-3 py-2" />
+            <input name="name" required maxLength={120} className="border-border rounded-xl border px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             {t('categoryLabel')}
-            <input name="category" required maxLength={60} className="border-border rounded-md border px-3 py-2" />
+            <input name="category" required maxLength={60} className="border-border rounded-xl border px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             {t('phoneLabel')}
-            <input name="phone" maxLength={30} className="border-border rounded-md border px-3 py-2" />
+            <input name="phone" maxLength={30} className="border-border rounded-xl border px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             {t('rateLabel')}
-            <input name="rate" maxLength={500} className="border-border rounded-md border px-3 py-2" />
+            <input name="rate" maxLength={500} className="border-border rounded-xl border px-3 py-2" />
           </label>
         </div>
         <button
           type="submit"
           disabled={pending}
-          className="bg-brand-strong text-on-brand rounded-md px-4 py-2 text-sm font-medium"
+          className="bg-brand-strong text-on-brand rounded-xl px-4 py-2 text-sm font-medium"
         >
           {t('create')}
         </button>
@@ -79,11 +79,11 @@ function AddToEventForm({ events }: { events: { id: string; name: string }[] }) 
     >
       <label className="flex flex-col gap-1 text-sm">
         {t('entryLabel')}
-        <input name="entryId" required className="border-border rounded-md border px-3 py-2" />
+        <input name="entryId" required className="border-border rounded-xl border px-3 py-2" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         {t('eventLabel')}
-        <select name="eventId" required className="border-border rounded-md border px-3 py-2">
+        <select name="eventId" required className="border-border rounded-xl border px-3 py-2">
           {events.map((ev) => (
             <option key={ev.id} value={ev.id}>
               {ev.name}
@@ -91,7 +91,7 @@ function AddToEventForm({ events }: { events: { id: string; name: string }[] }) 
           ))}
         </select>
       </label>
-      <button type="submit" className="border-border rounded-md border px-4 py-2 text-sm font-medium">
+      <button type="submit" className="border-border rounded-xl border px-4 py-2 text-sm font-medium">
         {t('addToEvent')}
       </button>
     </form>
@@ -111,9 +111,9 @@ function RemoveForm() {
     >
       <label className="flex flex-col gap-1 text-sm">
         {t('entryLabel')}
-        <input name="entryId" required className="border-border rounded-md border px-3 py-2" />
+        <input name="entryId" required className="border-border rounded-xl border px-3 py-2" />
       </label>
-      <button type="submit" className="border-border rounded-md border px-4 py-2 text-sm font-medium">
+      <button type="submit" className="border-border rounded-xl border px-4 py-2 text-sm font-medium">
         {t('removeAction')}
       </button>
     </form>

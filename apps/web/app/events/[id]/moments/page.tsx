@@ -179,7 +179,7 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <h3 className="font-medium">{t('queueTitle')}</h3>
+              <h3 className="font-display text-base font-bold tracking-tight">{t('queueTitle')}</h3>
               <p className="text-muted text-sm">{t('queueBody')}</p>
             </div>
             <Link

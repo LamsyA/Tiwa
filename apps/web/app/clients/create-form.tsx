@@ -33,25 +33,25 @@ export function CreateClientForm({ orgId }: { orgId: string }) {
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
           {t('nameLabel')}
-          <input name="name" required maxLength={120} className="border-border rounded-md border px-3 py-2" />
+          <input name="name" required maxLength={120} className="border-border rounded-xl border px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('phoneLabel')}
-          <input name="phone" maxLength={30} className="border-border rounded-md border px-3 py-2" />
+          <input name="phone" maxLength={30} className="border-border rounded-xl border px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('emailLabel')}
-          <input name="email" type="email" maxLength={160} className="border-border rounded-md border px-3 py-2" />
+          <input name="email" type="email" maxLength={160} className="border-border rounded-xl border px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           {t('notesLabel')}
-          <input name="notes" maxLength={2000} className="border-border rounded-md border px-3 py-2" />
+          <input name="notes" maxLength={2000} className="border-border rounded-xl border px-3 py-2" />
         </label>
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="bg-brand-strong text-on-brand rounded-md px-4 py-2 text-sm font-medium"
+        className="bg-brand-strong text-on-brand rounded-xl px-4 py-2 text-sm font-medium"
       >
         {t('create')}
       </button>

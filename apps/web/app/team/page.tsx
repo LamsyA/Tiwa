@@ -30,7 +30,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   return (
     <AppFrame userId={ctx.actor.userId} active="clients" title={t('teamTitle')}>
       <div className="flex flex-col gap-4 py-2">
-        <Card className="p-4">
+        <Card>
           <h2 className="mb-2 font-semibold">{t('teamTitle')}</h2>
           <ul className="flex flex-col gap-1">
             {members.members.map((m) => (
@@ -43,7 +43,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
             {t('viewAll')}
           </Link>
         </Card>
-        <Card className="p-4">
+        <Card>
           <h2 className="mb-2 font-semibold">{t('assignmentsHeading')}</h2>
           {assignments.length === 0 ? (
             <p className="text-muted text-sm">{t('noAssignments')}</p>

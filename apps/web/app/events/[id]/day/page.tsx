@@ -242,7 +242,7 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
         )}
         <h2 className="font-display text-xl font-bold">{t('timeline')}</h2>
         {!day ? (
-          <Card className="p-4">
+          <Card>
             <p className="text-muted text-sm">{t('noItems')}</p>
           </Card>
         ) : (

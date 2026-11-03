@@ -90,7 +90,7 @@ export function OtpInput({
             aria-label={`${label} digit ${index + 1}`}
             aria-invalid={error ? true : undefined}
             className={cn(
-              'border-border bg-bg text-text h-12 w-full rounded-md border text-center text-lg font-medium',
+              'border-border bg-bg text-text h-12 w-full rounded-xl border text-center text-lg font-medium',
               'focus:border-focus focus:outline-none focus:ring-1 focus:ring-focus',
               'disabled:cursor-not-allowed disabled:opacity-50',
               error && 'border-danger focus:border-danger focus:ring-danger',

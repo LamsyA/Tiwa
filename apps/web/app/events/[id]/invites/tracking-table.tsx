@@ -33,7 +33,7 @@ export function TrackingSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
-        <h3 className="font-medium">{t('title')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('title')}</h3>
         <span className="ml-auto min-w-52">
           <Select
             aria-label={t('batch')}

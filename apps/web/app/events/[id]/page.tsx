@@ -137,7 +137,7 @@ export default async function EventOverviewPage({
         )}
         {event.status === 'DRAFT' && (
           <Banner tone="warning" title={t('overview.draftBanner')}>
-            <Link href={`/events/new?id=${id}`} className="font-medium underline">
+            <Link href={`/events/new?id=${id}`} className="text-brand-strong font-semibold underline-offset-4 hover:underline">
               {t('overview.continueSetup')}
             </Link>
           </Banner>

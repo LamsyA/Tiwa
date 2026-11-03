@@ -38,7 +38,7 @@ export function VisitCards({ visits }: { visits: VisitRow[] }) {
   if (visits.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="font-medium">{t('visitsHeading')}</h2>
+      <h2 className="font-display text-lg font-bold tracking-tight">{t('visitsHeading')}</h2>
       {error && <Banner tone="danger">{error}</Banner>}
       <ul className="flex flex-col gap-2">
         {visits.map((visit) => (

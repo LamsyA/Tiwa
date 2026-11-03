@@ -43,7 +43,7 @@ export function PolicyToggles({
 
   return (
     <Card className="flex flex-col gap-3 p-4">
-      <h3 className="font-medium">{t('title')}</h3>
+      <h3 className="font-display text-base font-bold tracking-tight">{t('title')}</h3>
       {error && <Banner tone="danger">{error}</Banner>}
       <label className="flex cursor-pointer items-start gap-2">
         <Switch

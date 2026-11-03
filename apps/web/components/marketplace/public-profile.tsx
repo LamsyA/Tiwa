@@ -162,7 +162,7 @@ export async function PublicProfileView({
         {profile.profile.bio && (
           <Card>
             <div className="flex flex-col gap-1 p-4">
-              <h2 className="font-medium">{t('about')}</h2>
+              <h2 className="font-display text-lg font-bold tracking-tight">{t('about')}</h2>
               <p className="text-base whitespace-pre-line">{profile.profile.bio}</p>
             </div>
           </Card>
@@ -222,7 +222,7 @@ export async function PublicProfileView({
                   <Card>
                     <div className="flex flex-col gap-1 p-4">
                       <div className="flex items-baseline justify-between gap-2">
-                        <h3 className="font-medium">{pkg.name}</h3>
+                        <h3 className="font-display text-base font-bold tracking-tight">{pkg.name}</h3>
                         {pkg.priceMinor && <MoneyText value={pkg.priceMinor} currency={pkg.currency} />}
                       </div>
                       {pkg.description && <p className="text-muted text-sm">{pkg.description}</p>}
@@ -292,7 +292,7 @@ export async function PublicProfileView({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-medium">{space.name}</h3>
+                            <h3 className="font-display text-base font-bold tracking-tight">{space.name}</h3>
                             <p className="text-muted text-sm">
                               {[
                                 space.capacitySeated !== null ? `🪑 ${space.capacitySeated}` : null,

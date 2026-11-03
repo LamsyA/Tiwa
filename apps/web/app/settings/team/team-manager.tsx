@@ -186,7 +186,7 @@ function InviteForm({
 
   const fieldId = `invite-${by}`;
   return (
-    <Card className="p-4">
+    <Card>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {
@@ -194,7 +194,7 @@ function InviteForm({
           void submit();
         }}
       >
-        <h3 className="font-medium">{t('inviteHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('inviteHeading')}</h3>
         <SegmentedControl
           ariaLabel={t('inviteBy')}
           value={by}

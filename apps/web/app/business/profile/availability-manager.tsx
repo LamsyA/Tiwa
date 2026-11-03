@@ -58,7 +58,7 @@ export function AvailabilityManager({
     <Card>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-medium">{t('availabilityHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('availabilityHeading')}</h3>
           <StatusPill tone={stale ? 'warning' : 'success'}>
             {confirmedAt
               ? stale

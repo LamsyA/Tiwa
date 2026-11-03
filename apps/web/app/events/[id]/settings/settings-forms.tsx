@@ -133,7 +133,7 @@ function DetailsForm({ eventId, canEdit, details }: SettingsFormsProps) {
   const disabled = !canEdit;
 
   return (
-    <Card className="p-4">
+    <Card>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {
@@ -151,7 +151,7 @@ function DetailsForm({ eventId, canEdit, details }: SettingsFormsProps) {
           );
         }}
       >
-        <h3 className="font-medium">{t('detailsHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('detailsHeading')}</h3>
         <Feedback error={error} saved={saved} />
         <FieldShell id="settings-name" label={t('nameLabel')}>
           {(describedBy) => (
@@ -272,7 +272,7 @@ function FeaturesForm({ eventId, canEdit, features, allowedVisibilities, tickets
   const ticketsDisabled = !canEdit || visibility !== 'PUBLIC' || !ticketsAllowed;
 
   return (
-    <Card className="p-4">
+    <Card>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {
@@ -288,7 +288,7 @@ function FeaturesForm({ eventId, canEdit, features, allowedVisibilities, tickets
           );
         }}
       >
-        <h3 className="font-medium">{t('featuresHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('featuresHeading')}</h3>
         <Feedback error={error} saved={saved} />
         <Select
           label={t('visibilityLabel')}
@@ -341,7 +341,7 @@ function PricesForm({ eventId, pricesVisible, canChangePrices }: SettingsFormsPr
   const [visible, setVisible] = React.useState(pricesVisible);
   if (!canChangePrices && pricesVisible) return null;
   return (
-    <Card className="p-4">
+    <Card>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {
@@ -349,7 +349,7 @@ function PricesForm({ eventId, pricesVisible, canChangePrices }: SettingsFormsPr
           void run(() => savePriceVisibility({ eventId, visible }));
         }}
       >
-        <h3 className="font-medium">{t('pricesHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('pricesHeading')}</h3>
         <Feedback error={error} saved={saved} />
         {canChangePrices ? (
           <>
@@ -417,14 +417,14 @@ function AppearanceForm({ eventId, canEdit, themeColor, coverUrl }: SettingsForm
   }
 
   return (
-    <Card className="p-4">
+    <Card>
       <div className="flex flex-col gap-4">
-        <h3 className="font-medium">{t('appearanceHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('appearanceHeading')}</h3>
         <div className="flex flex-col gap-2">
           <p className="font-medium">{t('coverLabel')}</p>
           {coverUrl ? (
             // Signed storage URL; next/image would need remote patterns for every bucket host.
-            <img src={coverUrl} alt={t('coverAlt')} className="aspect-[16/9] w-full rounded-md object-cover" />
+            <img src={coverUrl} alt={t('coverAlt')} className="aspect-[16/9] w-full rounded-xl object-cover" />
           ) : (
             <p className="text-muted text-sm">{t('coverHint')}</p>
           )}
@@ -477,7 +477,7 @@ function AppearanceForm({ eventId, canEdit, themeColor, coverUrl }: SettingsForm
                     disabled={!canEdit}
                     onClick={() => setColor('')}
                     className={cn(
-                      'min-h-11 rounded-md border px-3 text-sm font-medium',
+                      'min-h-11 rounded-xl border px-3 text-sm font-medium',
                       color === '' ? 'border-brand-strong text-brand-strong' : 'border-border',
                     )}
                   >
@@ -491,7 +491,7 @@ function AppearanceForm({ eventId, canEdit, themeColor, coverUrl }: SettingsForm
                       aria-label={preset}
                       onClick={() => setColor(preset)}
                       className={cn(
-                        'size-11 rounded-md border-2',
+                        'size-11 rounded-xl border-2',
                         color === preset ? 'border-text' : 'border-transparent',
                       )}
                       style={{ backgroundColor: preset }}

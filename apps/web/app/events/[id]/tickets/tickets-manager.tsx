@@ -95,7 +95,7 @@ export function TicketsManager(props: {
     <div className="flex flex-col gap-4">
       {error && <p className="text-danger text-sm">{error}</p>}
       <Card className="flex flex-col gap-3 p-4">
-        <h3 className="font-medium">{t('settings')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('settings')}</h3>
         <label className="flex items-center justify-between gap-3 text-sm">
           {t('enableTickets')}
           <Switch
@@ -133,7 +133,7 @@ export function TicketsManager(props: {
       </Card>
 
       <Card className="flex flex-col gap-3 p-4">
-        <h3 className="font-medium">{t('types')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('types')}</h3>
         {props.types.length === 0 && <p className="text-muted text-sm">{t('emptyTypes')}</p>}
         {props.types.map((row) => (
           <TypeRowEditor key={row.id} row={row} currency={props.currency} pending={pending} run={run} />
@@ -182,7 +182,7 @@ export function TicketsManager(props: {
       </Card>
 
       <Card className="flex flex-col gap-3 p-4">
-        <h3 className="font-medium">{t('promos')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('promos')}</h3>
         {props.promos.map((row) => (
           <div key={row.id} className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-mono font-medium">{row.code}</span>
@@ -230,7 +230,7 @@ export function TicketsManager(props: {
       </Card>
 
       <Card className="flex flex-col gap-3 p-4">
-        <h3 className="font-medium">{t('questions')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('questions')}</h3>
         {questions.map((question) => (
           <div key={question.key} className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-medium">{question.label}</span>
@@ -282,7 +282,7 @@ export function TicketsManager(props: {
       </Card>
 
       <Card className="flex flex-col gap-3 p-4">
-        <h3 className="font-medium">{t('orders')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('orders')}</h3>
         {props.orders.length === 0 && <p className="text-muted text-sm">—</p>}
         <ul className="flex flex-col gap-1">
           {props.orders.slice(0, 20).map((row) => (

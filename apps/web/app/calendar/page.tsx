@@ -21,7 +21,7 @@ export default async function CalendarPage() {
     <AppFrame userId={ctx.actor.userId} active={active} title={t('calendarTitle')}>
       <div className="flex flex-col gap-4 py-2">
         {plannerEvents.length > 0 && (
-          <Card className="p-4">
+          <Card>
             <h2 className="mb-2 font-semibold">{t('calendarTitle')}</h2>
             <ul className="flex flex-col gap-2">
               {plannerEvents.map((e) => (
@@ -36,7 +36,7 @@ export default async function CalendarPage() {
           </Card>
         )}
         {vendorDash && (
-          <Card className="p-4">
+          <Card>
             <h2 className="mb-2 font-semibold">{t('calendarTitle')}</h2>
             <ul className="flex flex-col gap-2">
               {vendorDash.upcomingBookings.map((b) => (

@@ -66,7 +66,7 @@ export function PortfolioManager({
     <Card>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-medium">{t('portfolioHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('portfolioHeading')}</h3>
           <Button onClick={() => inputRef.current?.click()} disabled={uploading}>
             {uploading ? t('uploading') : t('uploadPhotos')}
           </Button>

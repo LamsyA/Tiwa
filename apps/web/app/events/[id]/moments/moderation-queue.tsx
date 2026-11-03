@@ -275,7 +275,7 @@ export function ModerationQueue({
         </div>
       )}
       {selecting && selected.size > 0 && (
-        <div className="border-border bg-surface sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-md border p-2">
+        <div className="border-border bg-surface sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-xl border p-2">
           <span className="text-sm font-medium">{t('bulkSelected', { count: selected.size })}</span>
           <div className="flex-1" />
           <Button size="sm" disabled={busyId !== null} onClick={() => void bulk('approve')}>
@@ -295,7 +295,7 @@ export function ModerationQueue({
       {tab === 'reported' && reports.length > 0 && (
         <ul className="flex flex-col gap-2">
           {reports.map((report) => (
-            <li key={report.id} className="border-border flex gap-3 rounded-md border p-2">
+            <li key={report.id} className="border-border flex gap-3 rounded-xl border p-2">
               {report.item?.thumbUrl ? (
                 <img
                   src={report.item.thumbUrl}
@@ -385,7 +385,7 @@ export function ModerationQueue({
               type="button"
               onClick={() => void loadMore()}
               disabled={busyId !== null}
-              className="mt-3 w-full rounded-md border border-border py-2.5 text-sm font-medium disabled:opacity-50"
+              className="mt-3 w-full rounded-xl border border-border py-2.5 text-sm font-medium disabled:opacity-50"
             >
               {busyId === 'more' ? t('loading') : t('showMore')}
             </button>
@@ -421,7 +421,7 @@ function PendingTile({
 
   return (
     <div
-      className="border-border overflow-hidden rounded-md border"
+      className="border-border overflow-hidden rounded-xl border"
       tabIndex={0}
       role="group"
       data-media-id={item.id}

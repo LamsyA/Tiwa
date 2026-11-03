@@ -231,7 +231,7 @@ export function Composer({
                   {(['all', 'attending', 'group', 'ids'] as const).map((option) => (
                     <label
                       key={option}
-                      className="border-border flex cursor-pointer items-center gap-2 rounded-md border p-3"
+                      className="border-border flex cursor-pointer items-center gap-2 rounded-xl border p-3"
                     >
                       <input
                         type="radio"
@@ -268,7 +268,7 @@ export function Composer({
                       {visibleGuests.map((guest) => (
                         <label
                           key={guest.id}
-                          className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-surface"
+                          className="flex cursor-pointer items-center gap-2 rounded-xl p-2 hover:bg-surface"
                         >
                           <Checkbox
                             checked={picked.includes(guest.id)}
@@ -379,7 +379,7 @@ export function Composer({
                     {t('templates.edit')}
                   </Button>
                 )}
-                <Card className="p-3">
+                <Card>
                   <p className="text-muted mb-2 text-xs font-medium uppercase">
                     {t('templates.previewFor', { name: sampleName })}
                   </p>
@@ -395,7 +395,7 @@ export function Composer({
             )}
             {step === 3 && preview && (
               <div className="flex flex-col gap-3">
-                <h3 className="font-medium">{t('review.title')}</h3>
+                <h3 className="font-display text-base font-bold tracking-tight">{t('review.title')}</h3>
                 <Card className="flex flex-col gap-1 p-3">
                   <p className="mb-1 text-xs font-medium uppercase">{t('review.perChannel')}</p>
                   {(['WHATSAPP', 'EMAIL', 'SMS', 'LINK'] as const).map(

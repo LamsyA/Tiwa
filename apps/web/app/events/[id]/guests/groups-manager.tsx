@@ -22,7 +22,7 @@ export function GroupsManager({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <h3 className="font-medium">{t('groups.title')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('groups.title')}</h3>
         {canManage && (
           <span className="ml-auto">
             <GroupDialog eventId={eventId} />

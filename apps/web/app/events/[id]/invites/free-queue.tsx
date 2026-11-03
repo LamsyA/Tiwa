@@ -46,7 +46,7 @@ export function FreeQueue({ items }: { items: FreeModeItem[] }) {
   if (items.length === 0) return null;
   if (!current) {
     return (
-      <Card className="p-4">
+      <Card>
         <p role="status" className="font-medium">
           {t('done')}
         </p>
@@ -57,7 +57,7 @@ export function FreeQueue({ items }: { items: FreeModeItem[] }) {
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="font-medium">{t('title')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('title')}</h3>
         <p className="text-muted text-sm">{t('left', { count: remaining.length })}</p>
       </div>
       {error && <Banner tone="danger">{error}</Banner>}

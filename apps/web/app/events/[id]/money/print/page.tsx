@@ -37,7 +37,7 @@ export default async function MoneyPrintPage({ params }: { params: Promise<{ id:
       </header>
       <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
         {(['planned', 'committed', 'paid', 'outstanding', 'uncommitted'] as const).map((key) => (
-          <div key={key} className="border-border rounded-md border p-2">
+          <div key={key} className="border-border rounded-xl border p-2">
             <dt className="text-muted">{t(key)}</dt>
             <dd className="font-medium">{money(summary.totals[`${key}Minor`])}</dd>
           </div>

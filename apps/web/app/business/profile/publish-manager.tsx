@@ -84,7 +84,7 @@ export function PublishManager({
     <Card>
       <div className="flex flex-col gap-4 p-4">
         <div>
-          <h3 className="font-medium">{t('publishHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('publishHeading')}</h3>
           <p className="text-muted text-sm">{t('publishBody')}</p>
         </div>
         {error && <Banner tone="danger">{error}</Banner>}
@@ -104,7 +104,7 @@ export function PublishManager({
           </div>
         )}
         <div className="border-border border-t pt-4">
-          <h3 className="font-medium">{t('verificationHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('verificationHeading')}</h3>
           <p className="text-muted text-sm">{t('verificationBody')}</p>
           {verificationStatus === 'PENDING' ? (
             <div className="mt-2 flex items-center gap-3">
@@ -156,7 +156,7 @@ export function PublishManager({
                   {docs.map((doc) => (
                     <li key={doc.storageKey} className="flex items-center gap-2">
                       <span>{doc.type.toUpperCase()}</span>
-                      <button type="button" className="underline" onClick={() => void onRemoveDoc(doc)}>
+                      <button type="button" className="text-brand-strong font-medium underline-offset-4 hover:underline" onClick={() => void onRemoveDoc(doc)}>
                         {t('removeDoc')}
                       </button>
                     </li>

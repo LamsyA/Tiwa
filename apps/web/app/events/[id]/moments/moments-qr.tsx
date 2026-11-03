@@ -54,7 +54,7 @@ export function MomentsQrCard({ eventName, galleryUrl }: { eventName: string; ga
   return (
     <Card className="flex flex-col gap-4 p-4">
       <div>
-        <h3 className="font-medium">{t('qrTitle')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('qrTitle')}</h3>
         <p className="text-muted text-sm">{t('qrBody')}</p>
       </div>
       {error && <Banner tone="danger">{error}</Banner>}
@@ -64,7 +64,7 @@ export function MomentsQrCard({ eventName, galleryUrl }: { eventName: string; ga
             value={galleryUrl}
             size={224}
             label={t('qrTitle')}
-            className="text-text max-w-56 rounded-md border p-2"
+            className="text-text max-w-56 rounded-xl border p-2"
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-3">

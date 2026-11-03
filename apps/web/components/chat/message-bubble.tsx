@@ -99,7 +99,7 @@ export function MessageBubble({
         {message.replyTo && !message.deleted && (
           <div
             className={cn(
-              'mb-1 rounded-md border-l-4 px-2 py-1 text-[13px]',
+              'mb-1 rounded-xl border-l-4 px-2 py-1 text-[13px]',
               message.mine ? 'border-white/70 bg-black/10' : 'border-[var(--chat-accent)] bg-black/5',
             )}
           >

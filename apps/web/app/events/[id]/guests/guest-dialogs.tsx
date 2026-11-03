@@ -216,7 +216,7 @@ export function PasteDialog({ eventId, triggerLabel }: { eventId: string; trigge
           <>
             <div className="flex max-h-64 flex-col gap-2 overflow-auto">
               {preview.map((row, index) => (
-                <div key={index} className="border-border flex flex-col gap-1 rounded-md border p-2 text-sm">
+                <div key={index} className="border-border flex flex-col gap-1 rounded-xl border p-2 text-sm">
                   <p className="font-medium">{row.name || row.phone || row.email || `—`}</p>
                   <p className="text-muted text-xs">
                     {[row.phone, row.email].filter(Boolean).join(' · ') || t('table.noContact')}
@@ -631,7 +631,7 @@ export function MergeDialog({
           </p>
         )}
         {remaining.map(({ dup, match }) => (
-          <div key={dup.id} className="border-border flex items-center gap-2 rounded-md border p-2">
+          <div key={dup.id} className="border-border flex items-center gap-2 rounded-xl border p-2">
             <p className="min-w-0 flex-1 truncate text-sm font-medium">{dup.name}</p>
             <Button
               variant="secondary"

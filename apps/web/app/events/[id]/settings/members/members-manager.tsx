@@ -202,7 +202,7 @@ function AddMember({
 
   const fieldId = `member-${by}`;
   return (
-    <Card className="p-4">
+    <Card>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {
@@ -210,7 +210,7 @@ function AddMember({
           void submit();
         }}
       >
-        <h3 className="font-medium">{t('members.addHeading')}</h3>
+        <h3 className="font-display text-base font-bold tracking-tight">{t('members.addHeading')}</h3>
         <SegmentedControl
           ariaLabel={t('members.inviteBy')}
           value={by}

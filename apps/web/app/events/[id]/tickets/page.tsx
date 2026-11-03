@@ -88,7 +88,7 @@ export default async function TicketsPage({ params }: { params: Promise<{ id: st
         {event.visibility !== 'PUBLIC' && <Banner tone="warning">{t('needsPublic')}</Banner>}
         {/* P11-T09: organiser payouts stay behind `payments.payouts` (D-M03/Q-005). */}
         <Card className="flex flex-col gap-2 p-4">
-          <h3 className="font-medium">{t('payouts')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('payouts')}</h3>
           {payoutsOn ? (
             <p className="text-muted text-sm">{t('payoutsPending', { amount: sales?.revenueMinor ?? '0' })}</p>
           ) : (
@@ -119,7 +119,7 @@ export default async function TicketsPage({ params }: { params: Promise<{ id: st
         )}
         {programme.length > 0 && (
           <Card className="flex flex-col gap-2 p-4">
-            <h3 className="font-medium">{t('agenda')}</h3>
+            <h3 className="font-display text-base font-bold tracking-tight">{t('agenda')}</h3>
             {programme.map((item) => (
               <div key={item.id} className="flex items-baseline justify-between gap-3 text-sm">
                 <span className="font-medium">

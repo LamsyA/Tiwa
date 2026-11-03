@@ -15,7 +15,7 @@ function applyTheme(choice: ThemeChoice) {
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <Card className="p-4">
+    <Card>
       <section aria-labelledby={id} className="flex flex-col gap-4">
         <h2 id={id} className="font-display text-lg font-bold">
           {title}

@@ -75,7 +75,7 @@ export function CloseManager(props: {
     <div className="flex flex-col gap-4">
       {error && <p className="text-danger text-sm">{error}</p>}
       {props.eventStatus === 'COMPLETED' && (
-        <Card className="p-4">
+        <Card>
           <p className="text-sm">{t('closed')}</p>
         </Card>
       )}

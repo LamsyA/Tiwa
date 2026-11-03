@@ -19,7 +19,7 @@ export default async function TicketPage({ params }: { params: Promise<{ ticketI
           value={data.qr}
           size={224}
           label={data.event.name}
-          className="text-text max-w-60 rounded-md border p-2"
+          className="text-text max-w-60 rounded-xl border p-2"
         />
         <Card className="w-full p-4">
           <p className="font-display text-lg font-bold">{data.event.name}</p>

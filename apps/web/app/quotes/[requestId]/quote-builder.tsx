@@ -184,7 +184,7 @@ export function QuoteBuilder({
       )}
       <Card>
         <div className="flex flex-col gap-3 p-4">
-          <h3 className="font-medium">{t('itemsHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('itemsHeading')}</h3>
           {items.map((item, i) => (
             <div key={i} className="flex gap-2">
               <Input
@@ -255,7 +255,7 @@ export function QuoteBuilder({
             {t('termsLabel')}
             <Textarea value={terms} onChange={(e) => setTerms(e.target.value)} placeholder={t('termsPlaceholder')} />
           </label>
-          <h3 className="font-medium">{t('scheduleHeading')}</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">{t('scheduleHeading')}</h3>
           {schedule.map((entry, i) => (
             <div key={i} className="flex gap-2">
               <Input
@@ -288,7 +288,7 @@ export function QuoteBuilder({
                   next[i] = { ...next[i]!, due: e.target.value };
                   setSchedule(next);
                 }}
-                className="border-border rounded-md border px-2 text-sm"
+                className="border-border rounded-xl border px-2 text-sm"
               >
                 {DUE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
