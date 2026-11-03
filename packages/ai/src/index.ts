@@ -1,174 +1,134 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema';
-import { z } from 'zod';
+import { MUSE_DEFAULT_MODEL, MuseClient, type UsageHook } from './llm.js';
+import { BUDGET_PROMPT_VERSION, BUDGET_SYSTEM, budgetSchema, describeBudget } from './prompts/budget.js';
+import type { BudgetDraftContext, BudgetSplitDraft } from './prompts/budget.js';
+import { CAPTION_PROMPT_VERSION, CAPTION_SYSTEM, captionSchema, describeCaption } from './prompts/caption.js';
+import type { CaptionContext } from './prompts/caption.js';
+import { COMPARE_PROMPT_VERSION, COMPARE_SYSTEM, compareSchema, describeCompare } from './prompts/compare.js';
+import type { QuoteCompareContext, QuoteComparison } from './prompts/compare.js';
+import { IMPACT_PROMPT_VERSION, IMPACT_SYSTEM, describeImpact, impactSchema } from './prompts/impact.js';
+import type { GuestImpactContext, GuestImpactList } from './prompts/impact.js';
+import { MESSAGE_PROMPT_VERSION, MESSAGE_SYSTEM, describeMessage, messageSchema } from './prompts/message.js';
+import type { MessageAudience, MessageDraft, MessageDraftContext, MessageKind } from './prompts/message.js';
+import { PLAN_PROMPT_VERSION, PLAN_SYSTEM, describePlan, planSchema } from './prompts/plan.js';
+import type { PlanDraftContext, PlanDraftSuggestion } from './prompts/plan.js';
 
-// LLM adapters (arc.md §4 "LlmProvider", PRD AI-01; D-X31). Shapes match
-// @tiwa/core's PlanDrafter structurally, so this package never imports core.
-// `fake` is deterministic for tests and keyless local work; `anthropic` calls
-// Claude through the official SDK with structured JSON output.
+// AI assistant (PRD AI-01…AI-06, Backend.md §9.1; D-X31, D-X41, D-X42).
+// Meta Muse Spark is the only real model. Without `TIWA_MUSE_API` every
+// feature runs on deterministic Fakes (tests, keyless local work). Shapes
+// match @tiwa/core's drafter interfaces structurally, so this package never
+// imports core. Prompts are versioned in ./prompts; outputs are Zod-checked;
+// invalid output becomes an empty/null result, never a partial save.
 
-export interface PlanDraftContext {
-  eventType: string;
-  eventFormat: string;
-  daysUntilEvent: number | null;
-  expectedGuests: number | null;
-  budget: { amount: string; currency: string } | null;
-  existingTasks: string[];
-  request: string;
-}
-
-export interface PlanDraftSuggestion {
-  title: string;
-  daysBefore: number | null;
-  why: string;
-}
+export * from './llm.js';
+export * from './prompts/budget.js';
+export * from './prompts/caption.js';
+export * from './prompts/compare.js';
+export * from './prompts/impact.js';
+export * from './prompts/message.js';
+export * from './prompts/plan.js';
 
 export interface PlanDrafter {
   draftTasks(context: PlanDraftContext): Promise<PlanDraftSuggestion[]>;
 }
-
-const suggestionsSchema = z.object({
-  tasks: z
-    .array(
-      z.object({
-        title: z.string(),
-        daysBefore: z.number().nullable(),
-        why: z.string(),
-      }),
-    )
-    .max(25),
-});
-
-const OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    tasks: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', description: 'Short, actionable task, max 80 characters, imperative mood.' },
-          daysBefore: {
-            type: ['integer', 'null'],
-            description: 'Days before the event it should be done; 0 = on the day; null if timing does not matter.',
-          },
-          why: { type: 'string', description: 'One short sentence on why it matters for this event.' },
-        },
-        required: ['title', 'daysBefore', 'why'],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['tasks'],
-  additionalProperties: false,
-} as const;
-
-/** Prompt v1. Versioned so changes show up in review and logs. */
-export const PLAN_PROMPT_VERSION = 'plan-draft@2';
-const SYSTEM = [
-  'You help people plan their own events (birthdays, weddings, funerals, church programmes, reunions, corporate events, concerts and more) without a professional planner.',
-  "Turn the host's request into a practical checklist of 6 to 20 tasks that fits their event, timing, guest count and budget.",
-  'Respect what they ask for and skip anything they say they do not want. Do not repeat tasks they already have.',
-  'Be specific to their request, not generic. Order tasks from earliest to latest.',
-  'Never include personal data, prices you were not given, or vendor names.',
-].join(' ');
-
-function describe(context: PlanDraftContext): string {
-  const lines = [
-    `Event type: ${context.eventType} (${context.eventFormat.toLowerCase().replace(/_/g, ' ')})`,
-    context.daysUntilEvent !== null ? `Days until the event: ${context.daysUntilEvent}` : 'Date: not set yet',
-    context.expectedGuests
-      ? `Saved guest estimate (use the request instead if it gives a number): ${context.expectedGuests}`
-      : null,
-    context.budget
-      ? `Saved total budget (use the request instead if it gives one): ${context.budget.amount} ${context.budget.currency}`
-      : null,
-    context.existingTasks.length > 0 ? `Tasks they already have:\n- ${context.existingTasks.join('\n- ')}` : null,
-    `What they want help with:\n${context.request}`,
-  ];
-  return lines.filter(Boolean).join('\n');
+export interface MessageDrafter {
+  draftMessage(context: MessageDraftContext): Promise<MessageDraft | null>;
+}
+export interface BudgetDrafter {
+  draftBudget(context: BudgetDraftContext): Promise<BudgetSplitDraft | null>;
+}
+export interface QuoteComparer {
+  compareQuotes(context: QuoteCompareContext): Promise<QuoteComparison | null>;
+}
+export interface ImpactDrafter {
+  guestImpact(context: GuestImpactContext): Promise<GuestImpactList | null>;
+}
+export interface Captioner {
+  caption(context: CaptionContext): Promise<string | null>;
 }
 
-export class ClaudePlanDrafter implements PlanDrafter {
-  private readonly client: Anthropic;
+export type Assistant = PlanDrafter & MessageDrafter & BudgetDrafter & QuoteComparer & ImpactDrafter & Captioner;
 
-  constructor(
-    apiKey: string,
-    private readonly model = 'claude-opus-5-5',
-  ) {
-    this.client = new Anthropic({ apiKey });
+/** Token caps per call (§9.1): enough room for the model to reason, never unbounded. */
+const MAX_TOKENS = { plan: 8000, message: 4000, budget: 4000, compare: 6000, impact: 4000, caption: 1500 } as const;
+
+export class MuseAssistant implements Assistant {
+  private readonly client: MuseClient;
+
+  constructor(apiKey: string, model = MUSE_DEFAULT_MODEL, onUsage?: UsageHook, baseUrl?: string) {
+    this.client = new MuseClient(apiKey, model, onUsage, baseUrl);
   }
 
   async draftTasks(context: PlanDraftContext): Promise<PlanDraftSuggestion[]> {
-    const response = await this.client.messages.parse({
-      model: this.model,
-      max_tokens: 16000,
-      output_config: { effort: 'low', format: jsonSchemaOutputFormat(OUTPUT_SCHEMA) },
-      system: SYSTEM,
-      messages: [{ role: 'user', content: describe(context) }],
+    const json = await this.client.json({
+      feature: 'plan',
+      promptVersion: PLAN_PROMPT_VERSION,
+      system: PLAN_SYSTEM,
+      user: describePlan(context),
+      maxTokens: MAX_TOKENS.plan,
     });
-    if (response.stop_reason === 'refusal') return [];
-    const parsed = suggestionsSchema.safeParse(response.parsed_output);
-    console.info(
-      `[ai] ${PLAN_PROMPT_VERSION} model=${this.model} in=${response.usage.input_tokens} out=${response.usage.output_tokens}`,
-    );
+    const parsed = planSchema.safeParse(json);
     return parsed.success ? parsed.data.tasks : [];
   }
-}
 
-const MUSE_BASE_URL = 'https://api.meta.ai/v1';
-
-/**
- * Meta Muse Spark via the Meta Model API (OpenAI-compatible chat completions,
- * JSON mode). Default model `muse-spark-1.3-contributor` (D-X32). The model
- * reasons before answering, so the token limit leaves room for that and
- * effort is kept low for a quick checklist.
- */
-export class MusePlanDrafter implements PlanDrafter {
-  constructor(
-    private readonly apiKey: string,
-    private readonly model = 'muse-spark-1.3-contributor',
-    private readonly baseUrl = MUSE_BASE_URL,
-  ) {}
-
-  async draftTasks(context: PlanDraftContext): Promise<PlanDraftSuggestion[]> {
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
-      signal: AbortSignal.timeout(60_000),
-      body: JSON.stringify({
-        model: this.model,
-        reasoning_effort: 'low',
-        max_tokens: 8000,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `${SYSTEM} Reply with JSON only, exactly this shape: {"tasks":[{"title":string,"daysBefore":integer|null,"why":string}]}. daysBefore = days before the event the task should be done (0 = on the day, null if timing does not matter).`,
-          },
-          { role: 'user', content: describe(context) },
-        ],
-      }),
+  async draftMessage(context: MessageDraftContext): Promise<MessageDraft | null> {
+    const json = await this.client.json({
+      feature: 'message',
+      promptVersion: MESSAGE_PROMPT_VERSION,
+      system: MESSAGE_SYSTEM,
+      user: describeMessage(context),
+      maxTokens: MAX_TOKENS.message,
     });
-    if (!response.ok) throw new Error(`Muse request failed (${response.status})`);
-    const body = (await response.json()) as {
-      choices?: { message?: { content?: string | null } }[];
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
-    console.info(
-      `[ai] ${PLAN_PROMPT_VERSION} model=${this.model} in=${body.usage?.prompt_tokens ?? 0} out=${body.usage?.completion_tokens ?? 0}`,
-    );
-    const content = body.choices?.[0]?.message?.content;
-    if (!content) return [];
-    let json: unknown;
-    try {
-      json = JSON.parse(content);
-    } catch {
-      const match = /\{[\s\S]*\}/.exec(content);
-      json = match ? JSON.parse(match[0]) : null;
-    }
-    const parsed = suggestionsSchema.safeParse(json);
-    return parsed.success ? parsed.data.tasks : [];
+    const parsed = messageSchema.safeParse(json);
+    return parsed.success ? parsed.data : null;
+  }
+
+  async draftBudget(context: BudgetDraftContext): Promise<BudgetSplitDraft | null> {
+    const json = await this.client.json({
+      feature: 'budget',
+      promptVersion: BUDGET_PROMPT_VERSION,
+      system: BUDGET_SYSTEM,
+      user: describeBudget(context),
+      maxTokens: MAX_TOKENS.budget,
+    });
+    const parsed = budgetSchema.safeParse(json);
+    return parsed.success ? parsed.data : null;
+  }
+
+  async compareQuotes(context: QuoteCompareContext): Promise<QuoteComparison | null> {
+    const json = await this.client.json({
+      feature: 'compare',
+      promptVersion: COMPARE_PROMPT_VERSION,
+      system: COMPARE_SYSTEM,
+      user: describeCompare(context),
+      maxTokens: MAX_TOKENS.compare,
+    });
+    const parsed = compareSchema.safeParse(json);
+    return parsed.success ? parsed.data : null;
+  }
+
+  async guestImpact(context: GuestImpactContext): Promise<GuestImpactList | null> {
+    const json = await this.client.json({
+      feature: 'impact',
+      promptVersion: IMPACT_PROMPT_VERSION,
+      system: IMPACT_SYSTEM,
+      user: describeImpact(context),
+      maxTokens: MAX_TOKENS.impact,
+    });
+    const parsed = impactSchema.safeParse(json);
+    return parsed.success ? parsed.data : null;
+  }
+
+  async caption(context: CaptionContext): Promise<string | null> {
+    const json = await this.client.json({
+      feature: 'caption',
+      promptVersion: CAPTION_PROMPT_VERSION,
+      system: CAPTION_SYSTEM,
+      user: describeCaption(context),
+      images: [context.image],
+      maxTokens: MAX_TOKENS.caption,
+    });
+    const parsed = captionSchema.safeParse(json);
+    return parsed.success && parsed.data.alt.trim() ? parsed.data.alt.trim() : null;
   }
 }
 
@@ -198,206 +158,6 @@ export class FakePlanDrafter implements PlanDrafter {
     }
     const existing = new Set(context.existingTasks.map((title) => title.toLowerCase()));
     return tasks.filter((task) => !existing.has(task.title.toLowerCase()));
-  }
-}
-
-/**
- * Picks the drafter from env: Meta Muse when `TIWA_MUSE_API` is set (D-X32),
- * else Claude when `LLM_PROVIDER=anthropic` with `LLM_API_KEY`, else the Fake.
- */
-export function planDrafterFromEnv(env: {
-  LLM_PROVIDER?: string | undefined;
-  LLM_API_KEY?: string | undefined;
-  LLM_MODEL_DRAFT?: string | undefined;
-  TIWA_MUSE_API?: string | undefined;
-  TIWA_MUSE_MODEL?: string | undefined;
-}): PlanDrafter {
-  if (env.TIWA_MUSE_API) {
-    return new MusePlanDrafter(env.TIWA_MUSE_API, env.TIWA_MUSE_MODEL || 'muse-spark-1.3-contributor');
-  }
-  if (env.LLM_PROVIDER === 'anthropic' && env.LLM_API_KEY) {
-    return new ClaudePlanDrafter(env.LLM_API_KEY, env.LLM_MODEL_DRAFT || 'claude-opus-5-5');
-  }
-  return new FakePlanDrafter();
-}
-
-// ───────────── Guest messages (AI-04, UF-27 step 3; D-X41) ─────────────
-// One prompt → a ready message plus who it is for. The model never sees a
-// guest's name, phone or email: only counts, group names and event facts.
-// `{name}` and `{link}` stay as placeholders and are filled per guest at send.
-
-export type MessageKind = 'INVITE' | 'UPDATE' | 'REMINDER';
-export type MessageAudience = 'all' | 'not_replied' | 'attending' | 'group';
-export type MessageStyle = 'shorter' | 'formal' | 'warmer' | 'pidgin';
-
-export interface MessageDraftContext {
-  eventName: string;
-  eventType: string;
-  whenText: string | null;
-  venue: string | null;
-  daysUntilEvent: number | null;
-  invitesSent: boolean;
-  guestCounts: { total: number; notReplied: number; attending: number; maybe: number; declined: number };
-  groups: string[];
-  language: 'en' | 'pcm';
-  prompt: string;
-  /** Set when rewriting an earlier draft. */
-  previous: string | null;
-  style: MessageStyle | null;
-}
-
-export interface MessageDraft {
-  message: string;
-  kind: MessageKind;
-  audience: MessageAudience;
-  groupName: string | null;
-  /** A few words for the review card, e.g. "Venue change for everyone". */
-  headline: string;
-}
-
-export interface MessageDrafter {
-  draftMessage(context: MessageDraftContext): Promise<MessageDraft | null>;
-}
-
-const draftSchema = z.object({
-  message: z.string().min(1).max(2000),
-  kind: z.enum(['INVITE', 'UPDATE', 'REMINDER']),
-  audience: z.enum(['all', 'not_replied', 'attending', 'group']),
-  groupName: z.string().nullable(),
-  headline: z.string().max(120),
-});
-
-const MESSAGE_SCHEMA = {
-  type: 'object',
-  properties: {
-    message: {
-      type: 'string',
-      description:
-        'The message to send. Must contain {name} where the guest name goes and {link} where their personal link goes. Max 600 characters. No phone numbers, emails or URLs.',
-    },
-    kind: {
-      type: 'string',
-      enum: ['INVITE', 'UPDATE', 'REMINDER'],
-      description:
-        'INVITE for a first invitation, UPDATE for news or changes, REMINDER to nudge replies or attendance.',
-    },
-    audience: {
-      type: 'string',
-      enum: ['all', 'not_replied', 'attending', 'group'],
-      description:
-        'Who it is for. all = everyone; not_replied = no reply yet; attending = said yes; group = one guest group.',
-    },
-    groupName: { type: ['string', 'null'], description: 'The exact group name when audience is group, else null.' },
-    headline: { type: 'string', description: 'Three to seven words summarising the message for the host.' },
-  },
-  required: ['message', 'kind', 'audience', 'groupName', 'headline'],
-  additionalProperties: false,
-} as const;
-
-export const MESSAGE_PROMPT_VERSION = 'guest-message@1';
-const MESSAGE_SYSTEM = [
-  'You write short, warm messages that an event host sends to their guests by WhatsApp, SMS or email.',
-  'The host gives one instruction. Decide the message, whether it is a first invitation, an update or a reminder, and who should get it.',
-  'Use the event facts you are given; never invent dates, times, venues, prices or names.',
-  'Always include the placeholders {name} (guest first name) and {link} (their personal RSVP link) exactly once each.',
-  'Keep it under 600 characters, friendly and clear, no hashtags, at most one emoji.',
-  'If the language is pcm, write in natural Nigerian Pidgin English.',
-  'Never include phone numbers, email addresses or web links other than {link}.',
-].join(' ');
-
-function describeMessage(context: MessageDraftContext): string {
-  const c = context.guestCounts;
-  return [
-    `Event: ${context.eventName} (${context.eventType})`,
-    context.whenText ? `When: ${context.whenText}` : 'When: not set yet',
-    context.venue ? `Where: ${context.venue}` : null,
-    context.daysUntilEvent !== null ? `Days until the event: ${context.daysUntilEvent}` : null,
-    `Invitations already sent: ${context.invitesSent ? 'yes' : 'no'}`,
-    `Guests: ${c.total} total, ${c.notReplied} not replied, ${c.attending} coming, ${c.maybe} maybe, ${c.declined} not coming`,
-    context.groups.length > 0 ? `Guest groups: ${context.groups.join(', ')}` : null,
-    `Language: ${context.language === 'pcm' ? 'Nigerian Pidgin' : 'English'}`,
-    context.previous ? `Earlier draft:\n${context.previous}` : null,
-    context.style
-      ? `Rewrite the earlier draft to be: ${context.style === 'pidgin' ? 'in Nigerian Pidgin' : context.style}`
-      : null,
-    `Host's instruction:\n${context.prompt}`,
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
-
-export class ClaudeMessageDrafter implements MessageDrafter {
-  private readonly client: Anthropic;
-
-  constructor(
-    apiKey: string,
-    private readonly model = 'claude-opus-5-5',
-  ) {
-    this.client = new Anthropic({ apiKey });
-  }
-
-  async draftMessage(context: MessageDraftContext): Promise<MessageDraft | null> {
-    const response = await this.client.messages.parse({
-      model: this.model,
-      max_tokens: 4000,
-      output_config: { effort: 'low', format: jsonSchemaOutputFormat(MESSAGE_SCHEMA) },
-      system: MESSAGE_SYSTEM,
-      messages: [{ role: 'user', content: describeMessage(context) }],
-    });
-    console.info(
-      `[ai] ${MESSAGE_PROMPT_VERSION} model=${this.model} in=${response.usage.input_tokens} out=${response.usage.output_tokens}`,
-    );
-    if (response.stop_reason === 'refusal') return null;
-    const parsed = draftSchema.safeParse(response.parsed_output);
-    return parsed.success ? parsed.data : null;
-  }
-}
-
-export class MuseMessageDrafter implements MessageDrafter {
-  constructor(
-    private readonly apiKey: string,
-    private readonly model = 'muse-spark-1.3-contributor',
-    private readonly baseUrl = MUSE_BASE_URL,
-  ) {}
-
-  async draftMessage(context: MessageDraftContext): Promise<MessageDraft | null> {
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
-      signal: AbortSignal.timeout(60_000),
-      body: JSON.stringify({
-        model: this.model,
-        reasoning_effort: 'low',
-        max_tokens: 4000,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `${MESSAGE_SYSTEM} Reply with JSON only, exactly this shape: {"message":string,"kind":"INVITE"|"UPDATE"|"REMINDER","audience":"all"|"not_replied"|"attending"|"group","groupName":string|null,"headline":string}.`,
-          },
-          { role: 'user', content: describeMessage(context) },
-        ],
-      }),
-    });
-    if (!response.ok) throw new Error(`Muse request failed (${response.status})`);
-    const body = (await response.json()) as {
-      choices?: { message?: { content?: string | null } }[];
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
-    console.info(
-      `[ai] ${MESSAGE_PROMPT_VERSION} model=${this.model} in=${body.usage?.prompt_tokens ?? 0} out=${body.usage?.completion_tokens ?? 0}`,
-    );
-    const content = body.choices?.[0]?.message?.content;
-    if (!content) return null;
-    const match = /\{[\s\S]*\}/.exec(content);
-    let json: unknown;
-    try {
-      json = JSON.parse(match ? match[0] : content);
-    } catch {
-      return null;
-    }
-    const parsed = draftSchema.safeParse(json);
-    return parsed.success ? parsed.data : null;
   }
 }
 
@@ -447,13 +207,147 @@ export class FakeMessageDrafter implements MessageDrafter {
   }
 }
 
-/** Same provider choice as `planDrafterFromEnv`. */
-export function messageDrafterFromEnv(env: Parameters<typeof planDrafterFromEnv>[0]): MessageDrafter {
-  if (env.TIWA_MUSE_API) {
-    return new MuseMessageDrafter(env.TIWA_MUSE_API, env.TIWA_MUSE_MODEL || 'muse-spark-1.3-contributor');
+/** Deterministic budget split: weights by common category keys, the rest share what is left. */
+export class FakeBudgetDrafter implements BudgetDrafter {
+  async draftBudget(context: BudgetDraftContext): Promise<BudgetSplitDraft> {
+    const weights: Record<string, number> = {
+      venue: 30,
+      catering: 30,
+      food: 30,
+      decor: 10,
+      decoration: 10,
+      entertainment: 8,
+      music: 8,
+      photography: 8,
+      photo: 8,
+      attire: 5,
+      invitations: 2,
+      transport: 4,
+      cake: 3,
+    };
+    const raw = context.categories.map((row) => ({
+      key: row.key,
+      weight: weights[row.key.toLowerCase()] ?? weights[row.label.toLowerCase()] ?? 5,
+    }));
+    const sum = raw.reduce((total, row) => total + row.weight, 0) || 1;
+    const lines = raw.map((row) => ({
+      key: row.key,
+      percent: Math.floor((row.weight * 100) / sum),
+      why: 'Typical share for this kind of event.',
+    }));
+    const left = 100 - lines.reduce((total, row) => total + row.percent, 0);
+    if (lines[0]) lines[0].percent += left;
+    return { lines, note: 'Keep about 10% of each line spare for last-minute costs.' };
   }
-  if (env.LLM_PROVIDER === 'anthropic' && env.LLM_API_KEY) {
-    return new ClaudeMessageDrafter(env.LLM_API_KEY, env.LLM_MODEL_DRAFT || 'claude-opus-5-5');
-  }
-  return new FakeMessageDrafter();
 }
+
+/** Deterministic comparison: cheapest total, missing items, fees and terms by simple rules. */
+export class FakeQuoteComparer implements QuoteComparer {
+  async compareQuotes(context: QuoteCompareContext): Promise<QuoteComparison> {
+    const names = new Set(context.quotes.flatMap((quote) => quote.items.map((item) => item.name.toLowerCase())));
+    const cheapest = [...context.quotes].sort((a, b) => Number(a.total) - Number(b.total))[0];
+    return {
+      summary: cheapest
+        ? `Quote ${cheapest.ref} (${cheapest.vendor}) has the lowest total. Check what each one includes before deciding.`
+        : 'No quotes to compare yet.',
+      quotes: context.quotes.map((quote) => {
+        const own = new Set(quote.items.map((item) => item.name.toLowerCase()));
+        return {
+          ref: quote.ref,
+          strengths: quote.ref === cheapest?.ref ? ['Lowest total'] : [],
+          missing: [...names].filter((name) => !own.has(name)).slice(0, 8),
+          unclear: quote.cancellationTerms.trim().length < 20 ? ['Cancellation terms are very short'] : [],
+          extraFees: [
+            ...(quote.taxPercent > 0 ? [`Tax ${quote.taxPercent}%`] : []),
+            ...(quote.servicePercent > 0 ? [`Service charge ${quote.servicePercent}%`] : []),
+            ...(Number(quote.travelFee) > 0 ? [`Travel fee ${quote.travelFee}`] : []),
+          ],
+        };
+      }),
+      questions: ['What exactly is included per head?', 'How much is refunded if you cancel?'],
+    };
+  }
+}
+
+/** Deterministic impact list: scales every booked item and checks seating. */
+export class FakeImpactDrafter implements ImpactDrafter {
+  async guestImpact(context: GuestImpactContext): Promise<GuestImpactList> {
+    const ratio = context.fromGuests > 0 ? context.toGuests / context.fromGuests : 1;
+    const more = context.toGuests > context.fromGuests;
+    const items: GuestImpactList['items'] = context.bookings.flatMap((booking) =>
+      booking.items.slice(0, 2).map((item) => ({
+        area: booking.category,
+        change: `${item.name}: ${item.qty} → about ${Math.max(1, Math.round(item.qty * ratio))}`,
+        action: `Ask ${booking.vendor} to ${more ? 'increase' : 'reduce'} the order.`,
+        urgency: 'high' as const,
+      })),
+    );
+    if (context.tables && context.toGuests > context.tables.seats) {
+      items.push({
+        area: 'Seating',
+        change: `${context.toGuests} guests for ${context.tables.seats} seats`,
+        action: 'Add tables or seats.',
+        urgency: 'high',
+      });
+    }
+    items.push({
+      area: 'Invitations',
+      change: more ? `${context.toGuests - context.fromGuests} more guests to invite` : 'Fewer guests coming',
+      action: more ? 'Add the new guests and send their invites.' : 'Update your guest list.',
+      urgency: 'medium',
+    });
+    return { items };
+  }
+}
+
+/** Deterministic alt text (no model): describes the album and event type. */
+export class FakeCaptioner implements Captioner {
+  async caption(context: CaptionContext): Promise<string> {
+    return `${context.album === 'OFFICIAL' ? 'Photo' : 'Guest photo'} from the ${context.eventType.toLowerCase()}.`;
+  }
+}
+
+export class FakeAssistant implements Assistant {
+  private readonly plan = new FakePlanDrafter();
+  private readonly message = new FakeMessageDrafter();
+  private readonly budget = new FakeBudgetDrafter();
+  private readonly compare = new FakeQuoteComparer();
+  private readonly impact = new FakeImpactDrafter();
+  private readonly captioner = new FakeCaptioner();
+  draftTasks(context: PlanDraftContext) {
+    return this.plan.draftTasks(context);
+  }
+  draftMessage(context: MessageDraftContext) {
+    return this.message.draftMessage(context);
+  }
+  draftBudget(context: BudgetDraftContext) {
+    return this.budget.draftBudget(context);
+  }
+  compareQuotes(context: QuoteCompareContext) {
+    return this.compare.compareQuotes(context);
+  }
+  guestImpact(context: GuestImpactContext) {
+    return this.impact.guestImpact(context);
+  }
+  caption(context: CaptionContext) {
+    return this.captioner.caption(context);
+  }
+}
+
+export interface AiEnv {
+  TIWA_MUSE_API?: string | undefined;
+  TIWA_MUSE_MODEL?: string | undefined;
+}
+
+/** Muse when `TIWA_MUSE_API` is set (D-X42: the only real model), else the Fakes. */
+export function assistantFromEnv(env: AiEnv, onUsage?: UsageHook): Assistant {
+  if (env.TIWA_MUSE_API)
+    return new MuseAssistant(env.TIWA_MUSE_API, env.TIWA_MUSE_MODEL || MUSE_DEFAULT_MODEL, onUsage);
+  return new FakeAssistant();
+}
+
+/** @deprecated use assistantFromEnv */
+export const planDrafterFromEnv = (env: AiEnv, onUsage?: UsageHook): PlanDrafter => assistantFromEnv(env, onUsage);
+/** @deprecated use assistantFromEnv */
+export const messageDrafterFromEnv = (env: AiEnv, onUsage?: UsageHook): MessageDrafter =>
+  assistantFromEnv(env, onUsage);

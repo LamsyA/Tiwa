@@ -68,13 +68,12 @@ const envSchema = z
     // Moderation & AI
     MODERATION_PROVIDER: provider(['fake'] as const, 'fake'),
     MODERATION_API_KEY: optString(),
-    LLM_PROVIDER: provider(['fake', 'anthropic', 'openai', 'google'] as const, 'fake'),
-    LLM_API_KEY: optString(),
-    LLM_MODEL_DRAFT: optString(),
-    LLM_MODEL_FAST: optString(),
-    // Meta Model API (Muse Spark, OpenAI-compatible). When set, AI planning uses Muse (D-X32).
+    // AI runs on Meta Muse Spark only (D-X42); without the key every AI feature uses the Fakes.
     TIWA_MUSE_API: optString(),
     TIWA_MUSE_MODEL: optString(),
+    // Daily AI token caps (Backend.md §9.1): per user and per event, input + output.
+    AI_DAILY_TOKENS_PER_USER: z.coerce.number().int().min(0).default(300_000),
+    AI_DAILY_TOKENS_PER_EVENT: z.coerce.number().int().min(0).default(600_000),
 
     // Observability
     SENTRY_DSN: optUrl(),
@@ -125,12 +124,6 @@ const envSchema = z
       'WHATSAPP_TOKEN',
       value.WHATSAPP_TOKEN,
       'WHATSAPP_TOKEN is required when WHATSAPP_PROVIDER=cloud',
-    );
-    requireWhen(
-      value.LLM_PROVIDER !== 'fake',
-      'LLM_API_KEY',
-      value.LLM_API_KEY,
-      'LLM_API_KEY is required when LLM_PROVIDER is not fake',
     );
   });
 

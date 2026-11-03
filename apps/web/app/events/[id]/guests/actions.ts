@@ -37,7 +37,10 @@ import {
   updateTable,
   updateTableSchema,
   uuidv7,
+  aiGuestImpact,
+  guestImpactSchema,
 } from '@tiwa/core';
+import { assistantFor } from '@/lib/ai.js';
 import { prisma } from '@tiwa/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -191,3 +194,8 @@ export const shareHeadcount = userAction(z.object({ eventId: z.string().uuid() }
   const base = env.APP_URL.replace(/\/$/, '');
   return { url: `${base}/s/headcount/${token}`, expiresAt: expiresAt.toISOString() };
 });
+
+/** Guest-count impact list (AI-03): read-only. */
+export const guestImpactAction = userAction(guestImpactSchema, async (input, ctx) =>
+  aiGuestImpact(await assistantFor(ctx.actor.userId, input.eventId), ctx.actor, input),
+);

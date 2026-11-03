@@ -209,3 +209,11 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X41: P15-T05 re-scoped to one-prompt AI invites/updates (draft + audience + one-tap send); PRD AI-04 and UF-27 updated.
 - P15-T05 done: one-prompt AI invites/updates (Write with AI on Invites): draft + audience + type + channel estimate, Rewrite (shorter/formal/warmer/Pidgin), single Send through the batch sender; server-enforced: no send without the tap, guests.manage + ai.draftMessage only, model sees no guest names/phones/emails. Core 4/4, ai 5/5, e2e UF-27 passed desktop + mobile (real Muse model).
 - P15-T07 done: e2e UF-27 one-prompt invite flow.
+
+## 2026-11-03
+- P15-T01 done (D-X42): AI is Meta Muse only (Claude adapter + SDK removed); MuseClient with per-feature max_tokens, contact stripping, usage hook; versioned prompts; AiUsage table + daily caps per user/event.
+- P15-T02 done: `aiEventContext` (flag + permissions as the actor, money hidden without money.view or when planner hides prices) + `aiSafeText`.
+- P15-T03 done: "Split with AI" on Money → review current → proposed per category → Apply (setAllocations).
+- P15-T04 done: "Compare with AI" on vendor category pages (read-only; no amounts for members without money access); "What if numbers change?" guest-count impact on Guests.
+- P15-T06 done: 10-minute worker sweep fills empty Moments alt text via Muse vision (never overwrites).
+- P15-T07: e2e/ai.spec.ts + invites UF-27 pass at 390 px and 1280 px against real Muse. Core AI tests 7/7 + message 4/4 + plan 3/3; ai package 7/7; config 41/41.

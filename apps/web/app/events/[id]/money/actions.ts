@@ -25,7 +25,10 @@ import {
   setExpensePaidSchema,
   startExpenseReceipt,
   startExpenseReceiptSchema,
+  draftBudgetSplit,
+  draftBudgetSplitSchema,
 } from '@tiwa/core';
+import { assistantFor } from '@/lib/ai.js';
 import { userAction } from '@/lib/ctx.js';
 import { privateStorage } from '@/lib/storage.js';
 
@@ -71,4 +74,9 @@ export const removeBudgetCategoryAction = userAction(budgetCategoryRefSchema, (i
 
 export const applySuggestedBudgetAction = userAction(eventIdSchema, (input, ctx) =>
   applySuggestedBudget(ctx.actor, input),
+);
+
+/** AI budget split (AI-01): a proposal only — Apply goes through setAllocationsAction (AI-06). */
+export const draftBudgetSplitAction = userAction(draftBudgetSplitSchema, async (input, ctx) =>
+  draftBudgetSplit(await assistantFor(ctx.actor.userId, input.eventId), ctx.actor, input),
 );

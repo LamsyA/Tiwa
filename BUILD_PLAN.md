@@ -454,10 +454,10 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** helpful drafting that never changes data on its own.
 **Read first:** `PRD.md AI-*`, `UF-27`, `Backend.md §9.1`.
 
-- [ ] P15-T01 `packages/ai`: `LlmProvider` interface, Fake, at least one real adapter selected by env, prompt files with versions, Zod output schemas, token logging and caps. *(Started early under D-X31: PlanDrafter, Fake + Claude adapter by env, versioned prompt, JSON schema output, token logging; caps still to do.)*
-- [ ] P15-T02 Permission-filtered context builder (runs queries as the actor; strips phones/emails). *(Done for guest messages under D-X41: counts and group names only, typed contacts masked, snapshot-style test; plan/quotes contexts still to align.)*
-- [ ] P15-T03 Draft plan (tasks + budget split) with review-and-add UI. *(Tasks part built early under D-X31: "Plan with AI" on the Plan page with review-and-add; budget split still to do.)*
-- [ ] P15-T04 Compare quotes summary; guest-count impact list.
+- [x] P15-T01 `packages/ai`: `LlmProvider` interface, Fake, at least one real adapter selected by env, prompt files with versions, Zod output schemas, token logging and caps. *(D-X42: Meta Muse only — `MuseClient`, prompts in `prompts/*.ts`, Zod outputs, per-call token caps, `AiUsage` log, daily caps per user/event. Claude adapter removed.)*
+- [x] P15-T02 Permission-filtered context builder (runs queries as the actor; strips phones/emails). *(Done for guest messages under D-X41: counts and group names only, typed contacts masked, snapshot-style test; plan/quotes contexts still to align.)*
+- [x] P15-T03 Draft plan (tasks + budget split) with review-and-add UI. *(Tasks part built early under D-X31: "Plan with AI" on the Plan page with review-and-add; budget split still to do.)*
+- [x] P15-T04 Compare quotes summary; guest-count impact list.
 - [x] P15-T05 **One-prompt AI invites and updates (D-X41).** On the Invites page the host or planner types one prompt (e.g. "Invite everyone to my 40th, Saturday 6pm, dress code all white" or "Tell guests the venue moved to Eko Hotel and we start 1 hour later"). The AI:
   - drafts the message from the prompt plus event details it may see (name, date, venue, dress code, agenda), in English or Nigerian Pidgin, with `{name}` and `{link}` placed for it, so the host never types them;
   - picks the audience from the prompt: everyone, not replied yet, coming, a group/tag, or a guest list the host selects;
@@ -465,7 +465,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
   - picks the channel from what each guest has (WhatsApp, SMS or email).
 
   The host sees one review card: the message preview for the first guest, the audience and count, the channel and the cost. They can edit the text or audience, then tap **Send to N guests** once, and it goes through the existing invite/update batch sender. One-tap "Rewrite": shorter, more formal, Pidgin. Nothing is sent without that tap (AI-06). Same drafting for vendor briefs and client updates. Rate-limited per event, and only users with `guests.manage` (plus the invite permission) can use it.
-- [ ] P15-T06 Media alt-text captions job.
+- [x] P15-T06 Media alt-text captions job.
 - [x] P15-T07 e2e UF-27 (with Fake LLM). *(One-prompt invite flow in e2e/invites.spec.ts; plan/compare parts follow T03/T04.)*
 
 **GATE P15**

@@ -12,6 +12,8 @@ import { Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { can, EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
+import { aiAllowed } from '@/lib/ai.js';
+import { AiBudgetSplit } from './ai-budget-split.js';
 import { LiveRefresh } from '@/components/live-refresh.js';
 import {
   AddContributionDialog,
@@ -65,6 +67,7 @@ export default async function EventMoneyPage({
   const summary = await budgetSummary(ctx.actor, { eventId: id }, access);
   const { totals, currency } = summary;
   const canEdit = can(access, ctx.actor.userId, 'money.edit');
+  const splitOn = canEdit && (await aiAllowed(ctx.actor, id, access, 'ai.draftPlan'));
   const max = [totals.plannedMinor, totals.committedMinor, totals.paidMinor].reduce((a, b) => (b > a ? b : a), 1n);
   const pct = (value: bigint) => Number((value * 1000n) / max) / 10;
   const categoryOptions = summary.lines
@@ -154,7 +157,8 @@ export default async function EventMoneyPage({
       <MoneyTabbar eventId={id} active={active} items={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))} />
 
       {active === 'budget' && canEdit && categoryOptions.length > 0 && (
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {splitOn && totals.plannedMinor > 0n && <AiBudgetSplit eventId={id} />}
           <AllocationsDialog
             eventId={id}
             currency={currency}

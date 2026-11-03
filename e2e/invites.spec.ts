@@ -222,6 +222,11 @@ test('UF-27: one prompt drafts an update, nothing is sent until Send, then it go
   await newHost(page);
   const eventUrl = await quickEvent(page, 'AI Invite Party');
   await seedTwoGuests(page, eventUrl);
+  // Make sure the guests are saved (the pasted preview also shows their names):
+  // wait for the paste sheet to close before leaving the page, or the save is cancelled.
+  await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 30_000 });
+  await gotoSettled(page, `${eventUrl}/guests`);
+  await see(page, 'Invite Ada');
   await gotoSettled(page, `${eventUrl}/invites`);
   const invitesSwitch = page.getByRole('switch', { name: /Turn (on|off) invitations/ });
   if ((await invitesSwitch.getAttribute('aria-label')) === 'Turn on invitations') {

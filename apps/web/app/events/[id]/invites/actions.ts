@@ -1,7 +1,5 @@
 'use server';
 
-import { messageDrafterFromEnv } from '@tiwa/ai';
-import { env } from '@tiwa/config';
 import {
   createInviteBatch,
   createInviteBatchSchema,
@@ -27,6 +25,7 @@ import {
   toggleSharedLinkSchema,
 } from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
+import { assistantFor } from '@/lib/ai.js';
 import { userAction } from '@/lib/ctx.js';
 import { publishLive } from '@/lib/live.js';
 
@@ -84,7 +83,7 @@ export const revokeInviteAction = userAction(revokeInviteSchema, async (input, c
 
 /** One-prompt AI (D-X41): drafts and counts only — nothing is sent here (AI-06). */
 export const draftAiMessageAction = userAction(draftGuestMessageSchema, async (input, ctx) =>
-  draftGuestMessage(messageDrafterFromEnv(env), ctx.actor, input),
+  draftGuestMessage(await assistantFor(ctx.actor.userId, input.eventId), ctx.actor, input),
 );
 
 export const estimateAiMessageAction = userAction(estimateDraftSchema, async (input, ctx) =>

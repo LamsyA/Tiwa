@@ -4,6 +4,8 @@ import { prisma } from '@tiwa/db';
 import { Banner } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
+import { aiAllowed } from '@/lib/ai.js';
+import { GuestImpact } from './guest-impact.js';
 import { GuestsManager } from './guests-manager.js';
 
 /** P4-T03 / UF-06: guest list with counters, search, filters, bulk actions; groups tab. */
@@ -61,12 +63,13 @@ export default async function GuestsPage({
   const [counts, groups, event, listed, tables, report] = await Promise.all([
     countGuests(ctx.actor, id, access),
     listGroups(ctx.actor, id, access),
-    prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } }),
+    prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true, expectedGuests: true } }),
     tab === 'list' || tab === 'tables' ? listGuests(ctx.actor, listFilter, access) : Promise.resolve(null),
     tab === 'tables' ? listTables(ctx.actor, id, access) : Promise.resolve(null),
     tab === 'headcount' && canManage ? headcount(ctx.actor, id, access) : Promise.resolve(null),
   ]);
   const guests = listed?.guests ?? [];
+  const impactOn = await aiAllowed(ctx.actor, id, access, 'ai.draftPlan');
 
   return (
     <EventFrame
@@ -79,6 +82,11 @@ export default async function GuestsPage({
       active="guests"
       title={event.name}
     >
+      {impactOn && (
+        <div className="flex justify-end pt-2">
+          <GuestImpact eventId={id} current={event.expectedGuests ?? 0} />
+        </div>
+      )}
       <GuestsManager
         eventId={id}
         canManage={canManage}

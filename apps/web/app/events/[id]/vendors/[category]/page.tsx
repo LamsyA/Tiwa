@@ -6,6 +6,8 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
+import { aiAllowed } from '@/lib/ai.js';
+import { AiCompare } from './ai-compare.js';
 import { QuoteCards } from './quote-cards.js';
 import { RequestDialog } from './request-dialog.js';
 
@@ -14,7 +16,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
   const { id: eventId, category } = await params;
   const label = VENDOR_CATEGORIES[category as keyof typeof VENDOR_CATEGORIES];
   if (!label) notFound();
-  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(eventId, '/vendors');
+  const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(eventId, '/vendors');
   const t = await getTranslations('quotes');
   if (!allowed) {
     return (
@@ -26,6 +28,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
         title={label}
         invitesOn={invitesOn}
         momentsOn={momentsOn}
+        ticketsOn={ticketsOn}
       >
         <Banner tone="warning">{t('errors.FORBIDDEN')}</Banner>
       </EventFrame>
@@ -36,6 +39,9 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
     prisma.event.findUniqueOrThrow({ where: { id: eventId }, select: { countryCode: true } }),
   ]);
   const flags = await getFlagsFor(event.countryCode);
+  const compareOn =
+    overview.quotes.filter((quote) => quote.status !== 'DECLINED').length >= 2 &&
+    (await aiAllowed(ctx.actor, eventId, access, 'ai.compareQuotes'));
   const unrequested = overview.shortlisted.filter(
     (row) =>
       !overview.requests.some(
@@ -52,6 +58,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
       title={t('categoryTitle', { category: label })}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
     >
       <div className="flex flex-col gap-4 py-4">
         <Link href={`/events/${eventId}/vendors`} className="text-sm underline">
@@ -85,6 +92,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
         ) : (
           <>
             <p className="text-muted text-sm">{t('compareHint')}</p>
+            {compareOn && <AiCompare eventId={eventId} category={category} categoryLabel={label} />}
             <QuoteCards
               eventId={eventId}
               category={label}

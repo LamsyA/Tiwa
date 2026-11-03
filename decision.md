@@ -291,3 +291,10 @@ Template:
 - Decision: P15-T05 becomes "one-prompt AI invites and updates". The host or planner types one prompt; AI drafts the message (with `{name}`/`{link}` placed automatically), proposes the audience (all / not replied / coming / group / selected) and the invite-or-update type, and shows one review card. A single **Send to N guests** tap sends it through the existing batch sender. Rewrite options: shorter, formal, Pidgin. AI-06 still holds: nothing is sent without that tap. Gated by `ai.enabled` and `guests.manage`; the prompt context excludes contact details.
 - Why: owner request: hosts with many guests should not write or send invites and updates by hand.
 - Affects: BUILD_PLAN P15-T05, PRD AI-04, user_flow UF-27 (steps 3, checks 4–6).
+
+### 2026-11-03 — AI runs on Meta Muse only; P15 completed
+- ID: D-X42
+- Status: LOCKED (owner, 2026-11-03)
+- Decision: (1) Meta Muse Spark (Meta Model API, `TIWA_MUSE_API`) is the only real AI model. The Claude adapter and `@anthropic-ai/sdk` are removed, and `LLM_PROVIDER`/`LLM_API_KEY` are gone. Without a Muse key every feature uses deterministic Fakes. (2) `packages/ai`: one `MuseClient` (JSON mode, per-feature `max_tokens`, 60 s timeout, phones/emails stripped from every prompt, usage callback); versioned prompts in `prompts/*.ts`; Zod-checked outputs. (3) Usage: one `AiUsage` row per call (no prompt text); daily caps per user and per event (`AI_DAILY_TOKENS_PER_USER` 300k, `AI_DAILY_TOKENS_PER_EVENT` 600k) checked before each call. (4) `aiEventContext` checks the flag and both permissions as the actor, and hides amounts from members without money access or when a planner hides vendor prices. (5) New features, all confirm-before-change (AI-06): budget split (Apply uses `setAllocations`), quote comparison (read-only), guest-count impact list (read-only), Moments alt text (10-minute worker sweep that only fills empty alt text).
+- Why: owner request: finish P15 and use Muse, not Claude.
+- Affects: packages/ai, packages/core/src/ai (+tests), packages/db AiUsage migration, packages/config env, apps/worker ai-captions job, apps/web money/vendors/guests/plan/invites AI UI, arc.md.

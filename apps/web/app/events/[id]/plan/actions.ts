@@ -1,7 +1,5 @@
 'use server';
 
-import { planDrafterFromEnv } from '@tiwa/ai';
-import { env } from '@tiwa/config';
 import {
   addDraftedTasks,
   addDraftedTasksSchema,
@@ -14,6 +12,7 @@ import {
   updateTask,
   updateTaskSchema,
 } from '@tiwa/core';
+import { assistantFor } from '@/lib/ai.js';
 import { userAction } from '@/lib/ctx.js';
 import { eventChannel, publishLive } from '@/lib/live.js';
 
@@ -39,7 +38,7 @@ export const removeTask = userAction(deleteTaskSchema, async (input, ctx) => {
 
 /** AI plan assistant (D-X31): suggestions only — nothing is saved here (AI-06). */
 export const draftPlanAction = userAction(draftPlanSchema, async (input, ctx) =>
-  draftPlan(planDrafterFromEnv(env), ctx.actor, input),
+  draftPlan(await assistantFor(ctx.actor.userId, input.eventId), ctx.actor, input),
 );
 
 export const addDraftedTasksAction = userAction(addDraftedTasksSchema, async (input, ctx) => {

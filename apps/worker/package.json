@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@sentry/node": "^11.10.0",
+    "@tiwa/ai": "workspace:*",
     "@tiwa/config": "workspace:*",
     "@tiwa/core": "workspace:*",
     "@tiwa/db": "workspace:^",

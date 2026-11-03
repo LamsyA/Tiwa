@@ -108,3 +108,4 @@ export * from './day/agenda.js';
 export * from './day/progress.js';
 export * from './events/ai-plan.js';
 export * from './orders/tracker.js';
+export * from './ai/index.js';

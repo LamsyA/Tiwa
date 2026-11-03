@@ -17,6 +17,7 @@ import { TICKET_EXPIRY_EVERY_MS, TICKET_EXPIRY_JOB, handleTicketExpiry } from '.
 import { DAY_PROGRESS_EVERY_MS, DAY_PROGRESS_JOB, handleDayProgress } from './jobs/day-progress.js';
 import { CHAT_NUDGES_EVERY_MS, CHAT_NUDGES_JOB, handleChatNudges } from './jobs/chat-nudges.js';
 import { ROLLUP_RATINGS_EVERY_MS, ROLLUP_RATINGS_JOB, handleRollupRatings } from './jobs/rollup-ratings.js';
+import { AI_CAPTIONS_EVERY_MS, AI_CAPTIONS_JOB, handleAiCaptions } from './jobs/ai-captions.js';
 import { RETENTION_EVERY_MS, RETENTION_JOB, handleRetention } from './jobs/retention.js';
 import { PING_JOB, handlePing } from './jobs/ping.js';
 import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from './jobs/publish-outbox.js';
@@ -56,6 +57,7 @@ async function main() {
       if (job.name === DAY_PROGRESS_JOB) return handleDayProgress(log);
       if (job.name === CHAT_NUDGES_JOB) return handleChatNudges(log);
       if (job.name === ROLLUP_RATINGS_JOB) return handleRollupRatings(log);
+      if (job.name === AI_CAPTIONS_JOB) return handleAiCaptions(log);
       if (job.name === HOLD_EXPIRY_JOB) return handleHoldExpiry(log);
       if (job.name === RETENTION_JOB) return handleRetention(log);
       if (job.name === SEND_INVITE_JOB) return handleSendInvite(job.data, log);
@@ -147,6 +149,11 @@ async function main() {
     ROLLUP_RATINGS_JOB,
     { every: ROLLUP_RATINGS_EVERY_MS },
     { name: ROLLUP_RATINGS_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
+  );
+  await queue.upsertJobScheduler(
+    AI_CAPTIONS_JOB,
+    { every: AI_CAPTIONS_EVERY_MS },
+    { name: AI_CAPTIONS_JOB, opts: { removeOnComplete: true, removeOnFail: 100 } },
   );
   log.info({ queue: QUEUE_NAME }, 'listening');
 }

@@ -1174,7 +1174,8 @@
           "RATE_LIMITED": "You've drafted a lot this hour. Try again in a little while.",
           "FORBIDDEN": "Only people who manage guests can use this.",
           "FEATURE_DISABLED": "Writing with AI isn't available right now.",
-          "INVALID_TRANSITION": "Turn invitations on first."
+          "INVALID_TRANSITION": "Turn invitations on first.",
+          "LIMIT_REACHED": "You have reached today’s AI limit. It resets tomorrow."
         }
       }
     },
@@ -2876,5 +2877,70 @@
     "message": "Message the client",
     "open": "Open booking",
     "changeWaiting": "Change request waiting"
+  },
+  "ai": {
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "noDraft": "The assistant couldn't do that one. Try again in a moment.",
+      "noBudget": "Set a total budget first, then the assistant can split it.",
+      "noCategories": "Add budget categories first.",
+      "tooFew": "You need at least two quotes to compare.",
+      "sameCount": "That's the guest count you already have. Try a different number.",
+      "LIMIT_REACHED": "You've reached today's AI limit. It resets tomorrow.",
+      "RATE_LIMITED": "Too many requests. Try again in a little while.",
+      "FORBIDDEN": "You don't have permission for this.",
+      "FEATURE_DISABLED": "AI isn't available right now.",
+      "VALIDATION": "Check what you entered and try again."
+    },
+    "budget": {
+      "trigger": "Split with AI",
+      "title": "Split your budget with AI",
+      "subtitle": "We'll suggest how much each category should get. You review it, then apply.",
+      "requestLabel": "Anything we should know?",
+      "requestPlaceholder": "Optional. e.g. Food matters most, we already have a free venue, keep decor simple",
+      "draft": "Suggest a split",
+      "thinking": "Working out a sensible split…",
+      "total": "Total budget",
+      "percent": "{value}% of the budget",
+      "again": "Try again",
+      "apply": "Apply this split",
+      "appliedTitle": "Budget updated",
+      "appliedBody": "Your categories now use the new amounts. You can still change any of them.",
+      "done": "Done",
+      "ruleTitle": "Nothing changes until you tap Apply.",
+      "ruleBody": "The AI sees your event type, guest count, total budget and category names only."
+    },
+    "compare": {
+      "trigger": "Compare with AI",
+      "title": "AI comparison",
+      "thinking": "Reading every quote line by line…",
+      "again": "Compare again",
+      "close": "Close comparison",
+      "sections": {
+        "strengths": "Stands out",
+        "missing": "Leaves out",
+        "unclear": "Unclear",
+        "extraFees": "Extra fees"
+      },
+      "questions": "Ask before you decide",
+      "note": "This only reads the quotes. Nothing is accepted, declined or changed.",
+      "noteNoMoney": "You can't see prices for this event, so the AI compared what's included without any amounts."
+    },
+    "impact": {
+      "trigger": "What if numbers change?",
+      "title": "If your guest count changes",
+      "subtitle": "See what a new guest count affects: food, seating, vendors and invites.",
+      "newCount": "New guest count",
+      "check": "Show the impact",
+      "again": "Check again",
+      "thinking": "Checking your bookings and seating…",
+      "guests": "guests",
+      "urgency": {
+        "high": "Do soon",
+        "medium": "Plan for it",
+        "low": "Nice to check"
+      },
+      "note": "This is a checklist for you. Nothing is changed or sent to vendors. The AI sees quantities and seating, never guest names or contact details."
+    }
   }
 }

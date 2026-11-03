@@ -9,7 +9,10 @@ import {
   requestQuoteChanges,
   requestQuotes,
   requestQuotesSchema,
+  aiCompareQuotes,
+  aiCompareQuotesSchema,
 } from '@tiwa/core';
+import { assistantFor } from '@/lib/ai.js';
 import { userAction } from '@/lib/ctx.js';
 
 /** Host requests quotes from up to 5 vendors in a category (P7-T03). */
@@ -30,3 +33,8 @@ export const requestChangesAction = userAction(requestChangesSchema, async (inpu
 export const acceptQuoteAction = userAction(acceptQuoteSchema, async (input, ctx) => {
   return acceptQuote(ctx.actor, input, { ip: ctx.ip });
 });
+
+/** AI quote comparison (AI-02): read-only. */
+export const aiCompareQuotesAction = userAction(aiCompareQuotesSchema, async (input, ctx) =>
+  aiCompareQuotes(await assistantFor(ctx.actor.userId, input.eventId), ctx.actor, input),
+);

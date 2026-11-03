@@ -205,7 +205,7 @@ export async function draftGuestMessage(
     targetId: input.eventId,
     data: { ok: draft !== null, kind: draft?.kind ?? null, promptChars: input.prompt.length },
   });
-  if (!draft) throw new ValidationError('The assistant could not draft that — try rewording', { key: 'noDraft' });
+  if (!draft) throw new ValidationError('The assistant could not draft that — try rewording', { field: 'ai', key: 'noDraft' });
 
   const group =
     draft.audience === 'group' && draft.groupName

@@ -1606,3 +1606,20 @@ model Review {
 
   @@index([vendorOrgId, createdAt])
 }
+
+// AI token usage (Backend.md §9.1, D-X42): one row per model call, for logs
+// and the daily caps per user and per event. No prompt text is stored.
+model AiUsage {
+  id            String   @id @default(uuid(7))
+  userId        String?
+  eventId       String?
+  feature       String // plan | message | budget | compare | impact | caption
+  promptVersion String
+  model         String
+  inputTokens   Int
+  outputTokens  Int
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([eventId, createdAt])
+}
