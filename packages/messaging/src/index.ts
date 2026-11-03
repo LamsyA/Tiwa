@@ -20,13 +20,8 @@ export { ExpiryEmail, type ExpiryEmailProps } from './templates/expiry.js';
 export { ReminderEmail, type ReminderEmailProps } from './templates/reminder.js';
 export { UpdateEmail, type UpdateEmailProps } from './templates/update.js';
 export { NotifyEmail, type NotifyEmailProps } from './templates/notify.js';
-export type {
-  PushProvider,
-  PushSendInput,
-  PushSendResult,
-  PushSubscriptionJSON,
-  WebPushConfig,
-} from './push.js';
+export type { PushProvider, PushSendInput, PushSendResult, PushSubscriptionJSON, WebPushConfig } from './push.js';
 export { FakePush, WebPush } from './push.js';
 export { SignInEmail, renderSignInEmail, type SignInEmailProps } from './templates/sign-in.js';
 export { SmtpEmail, sendSmtp, smtpTransport, type SmtpConfig } from './smtp.js';
+export { PLACEHOLDER_EMAIL_DOMAINS, isDeliverableEmail, isPlaceholderEmail } from './email-address.js';

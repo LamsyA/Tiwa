@@ -17,7 +17,10 @@ export function NotifyEmail({ name, title, body, url }: NotifyEmailProps) {
       <Text style={{ color: '#6b665f', fontSize: '14px', margin: '0 0 8px' }}>Hello {name},</Text>
       <Heading style={{ fontSize: '24px', margin: '0 0 4px', color: '#1c1917' }}>{title}</Heading>
       <Text style={{ fontSize: '14px', color: '#44403c', margin: '0 0 16px' }}>{body}</Text>
-      <Button href={url} style={{ backgroundColor: '#1c1917', borderRadius: '8px', color: '#ffffff', padding: '12px 24px' }}>
+      <Button
+        href={url}
+        style={{ backgroundColor: '#1c1917', borderRadius: '8px', color: '#ffffff', padding: '12px 24px' }}
+      >
         Open Tiwa
       </Button>
     </EmailLayout>

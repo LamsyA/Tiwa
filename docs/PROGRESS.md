@@ -233,3 +233,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - pnpm db:seed:planner refreshes only the planner demo (dates drift out of "this week"); planner e2e 2/2 again.
 - D-X54: app-wide styling pass over 68 files. Web typecheck/lint/unit 60/60; e2e settings, members, guests, tickets, invites, day, check-in, money, planner, plan all green at 1280 px.
 - D-X55: deploy files for the free stack. Worker image built locally (ffmpeg 5.1), container served /health 200 against local Postgres + Redis.
+- D-X56: senders skip placeholder and reserved-domain addresses (no bounces). messaging 27/27, web 60/60, worker notify+invite 8/8.

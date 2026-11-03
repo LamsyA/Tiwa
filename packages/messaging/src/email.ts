@@ -1,3 +1,4 @@
+import { isPlaceholderEmail } from './email-address.js';
 import { render } from '@react-email/render';
 import type * as React from 'react';
 
@@ -33,6 +34,8 @@ export class ResendEmail implements EmailProvider {
   constructor(private readonly config: ResendEmailConfig) {}
 
   async send(message: EmailSendInput): Promise<EmailSendResult> {
+    // Placeholder addresses are not mailboxes; skip instead of bouncing (D-X56).
+    if (isPlaceholderEmail(message.to)) return { id: 'skipped-placeholder' };
     const html = await render(message.react);
     const text = await render(message.react, { plainText: true });
     const response = await fetch('https://api.resend.com/emails', {

@@ -20,7 +20,7 @@ const invite = (
 describe('FakeEmail', () => {
   it('renders the template and records html + text', async () => {
     const email = new FakeEmail();
-    const result = await email.send({ to: 'ada@example.com', subject: "You're invited", react: invite });
+    const result = await email.send({ to: 'ada@mail.tiwa.ng', subject: "You're invited", react: invite });
     expect(result.id).toBe('fake-email-1');
     expect(email.sent).toHaveLength(1);
     expect(email.sent[0]?.html).toContain('Ada&#x27;s 40th');
@@ -38,13 +38,13 @@ describe('ResendEmail', () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 're_1' }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     const email = new ResendEmail({ apiKey: 'key', from: 'Tiwa <hello@tiwa.app>' });
-    const result = await email.send({ to: 'ada@example.com', subject: 'Hi', react: invite });
+    const result = await email.send({ to: 'ada@mail.tiwa.ng', subject: 'Hi', react: invite });
     expect(result).toEqual({ id: 're_1' });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.resend.com/emails');
     const body = JSON.parse(init.body as string);
     expect(body.from).toBe('Tiwa <hello@tiwa.app>');
-    expect(body.to).toEqual(['ada@example.com']);
+    expect(body.to).toEqual(['ada@mail.tiwa.ng']);
     expect(body.html).toContain('Ada');
     expect(body.text).toContain('Ada');
   });
@@ -63,7 +63,7 @@ describe('templates', () => {
   it('reminder and update render their copy and links', async () => {
     const email = new FakeEmail();
     await email.send({
-      to: 'ada@example.com',
+      to: 'ada@mail.tiwa.ng',
       subject: 'Reminder',
       react: (
         <ReminderEmail
@@ -76,7 +76,7 @@ describe('templates', () => {
       ),
     });
     await email.send({
-      to: 'ada@example.com',
+      to: 'ada@mail.tiwa.ng',
       subject: 'Update',
       react: (
         <UpdateEmail

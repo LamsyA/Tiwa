@@ -1,3 +1,4 @@
+import { isDeliverableEmail } from '@tiwa/messaging';
 import { prisma } from '@tiwa/db';
 import { ConflictError, NotFoundError, RateLimitedError, ValidationError } from '@tiwa/core';
 import { LOGIN_KEY, OTP_LIMITS, checkRedisRateLimit, clearRateLimit } from './rate-store.js';
@@ -78,9 +79,6 @@ export async function sendMagicLink(rawEmail: string, ip: string, callbackURL = 
   return { ok: true };
 }
 
-/** Placeholder addresses given to accounts created without an email (D-X50). */
-export const PLACEHOLDER_EMAIL = /@(user|phone)\.tiwa\.local$/;
-
 /**
  * Forgot password (D-X51, D-X53): accepts a username or an email,
  * rate-limited like a login. Tells the user plainly when no account matches,
@@ -98,7 +96,7 @@ export async function requestPasswordReset(rawIdentifier: string, ip: string): P
   if (!user || user.deletedAt || user.suspendedAt) {
     throw new NotFoundError('No account matches that username or email', { field: 'identifier' });
   }
-  if (!user.email || PLACEHOLDER_EMAIL.test(user.email)) {
+  if (!isDeliverableEmail(user.email)) {
     throw new ValidationError('This account has no email address, so we can’t send a reset link', {
       field: 'identifier',
       key: 'noEmail',

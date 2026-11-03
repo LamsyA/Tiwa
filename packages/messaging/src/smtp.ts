@@ -1,3 +1,4 @@
+import { isPlaceholderEmail } from './email-address.js';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { render } from '@react-email/render';
 import type { EmailProvider, EmailSendInput, EmailSendResult } from './email.js';
@@ -87,6 +88,8 @@ export class SmtpEmail implements EmailProvider {
   constructor(private readonly config: SmtpConfig) {}
 
   async send(message: EmailSendInput): Promise<EmailSendResult> {
+    // Placeholder addresses are not mailboxes; skip instead of bouncing (D-X56).
+    if (isPlaceholderEmail(message.to)) return { id: 'skipped-placeholder' };
     const [html, text] = await Promise.all([render(message.react), render(message.react, { plainText: true })]);
     return { id: await sendSmtp(this.config, { to: message.to, subject: message.subject, html, text }) };
   }

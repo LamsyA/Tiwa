@@ -389,3 +389,10 @@ Template:
 - Decision: Web on Vercel Hobby (`apps/web/vercel.json` builds the monorepo with turbo); worker on a Render free web service from `render.yaml` (Docker image with ffmpeg; the Dockerfile now builds the worker's workspace packages in order, `.dockerignore` keeps secrets and build output out); a `/health` page (only when `PORT` is set) that answers 200 while Redis responds, pinged by cron-job.org every 10 minutes so Render never sleeps it, which also keeps the Layerbase free Redis (Valkey) out of hibernation; Postgres on Neon free; files on Cloudflare R2; email via Gmail SMTP. Settings live in `.env.production.local` (git-ignored) and each host's dashboard. Runbook: docs/runbooks/deploy-free-stack.md. Limits accepted: Vercel Hobby is non-commercial; Layerbase free caps 20 connections; keep-awake pings may breach free-host fair use; the free worker is slow for video.
 - Why: owner request for a $0 stack.
 - Affects: apps/worker health + index + Dockerfile; .dockerignore; render.yaml; apps/web/vercel.json; docs/runbooks/deploy-free-stack.md.
+
+### 2026-11-03 — Never email placeholder or reserved addresses
+- ID: D-X56
+- Status: LOCKED (owner, 2026-11-03)
+- Decision: Every real email sender (Gmail SMTP and Resend, web and worker) skips addresses that cannot receive mail: the auth placeholders `@phone.tiwa.local` / `@user.tiwa.local` and reserved test names (`.test`, `.example`, `.invalid`, `.localhost`, `.local`, example.com/net/org). They return a "skipped-placeholder" id instead of sending, so nothing bounces. Helper `isPlaceholderEmail` / `isDeliverableEmail` lives in packages/messaging (packages/config validates env on import, which broke messaging's tests). No data is deleted: placeholder accounts are valid; only sending to them was wrong. The 7 bounces came from running the worker container locally with the real `.env` during D-X55 testing, which drained queued notifications to test accounts through Gmail.
+- Why: owner saw "Address not found" bounces; bounces hurt the sending account's reputation.
+- Affects: packages/messaging email-address (+test), email, smtp (+test); apps/web lib/senders, lib/otp.

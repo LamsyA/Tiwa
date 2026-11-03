@@ -2,7 +2,7 @@
 // Resend are used when their keys are present. Mailpit stays available for
 // manual inspection; SMTP wiring lands with packages/messaging in P13.
 import { env } from '@tiwa/config';
-import { sendSmtp } from '@tiwa/messaging';
+import { isPlaceholderEmail, sendSmtp } from '@tiwa/messaging';
 
 export interface SmsMessage {
   to: string;
@@ -109,6 +109,7 @@ export class ResendEmailSender implements EmailSender {
   readonly kind = 'resend';
 
   async send(message: EmailMessage): Promise<{ providerRef: string | undefined }> {
+    if (isPlaceholderEmail(message.to)) return { providerRef: 'skipped-placeholder' }; // D-X56
     if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -134,6 +135,7 @@ export class SmtpEmailSender implements EmailSender {
   readonly kind = 'smtp';
 
   async send(message: EmailMessage): Promise<{ providerRef: string | undefined }> {
+    if (isPlaceholderEmail(message.to)) return { providerRef: 'skipped-placeholder' }; // D-X56
     if (!env.SMTP_USER || !env.SMTP_PASSWORD) throw new Error('SMTP_USER and SMTP_PASSWORD are not set');
     const id = await sendSmtp(
       {

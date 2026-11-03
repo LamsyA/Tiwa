@@ -51,11 +51,7 @@ export class WebPush implements PushProvider {
   readonly kind = 'web-push';
 
   constructor(config: WebPushConfig) {
-    webPush.setVapidDetails(
-      config.subject ?? 'mailto:hello@tiwa.app',
-      config.vapidPublicKey,
-      config.vapidPrivateKey,
-    );
+    webPush.setVapidDetails(config.subject ?? 'mailto:hello@tiwa.app', config.vapidPublicKey, config.vapidPrivateKey);
   }
 
   async send(input: PushSendInput): Promise<PushSendResult> {
