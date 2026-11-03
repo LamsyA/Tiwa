@@ -8,6 +8,9 @@ export {
   VENDOR_BUDGET_KEYS,
   budgetKeyFor,
   isDateExclusive,
+  PLANNER_SPECIALTIES,
+  serviceLabel,
+  type PlannerSpecialty,
   type VendorCategory,
 } from './vendor-categories.js';
 export { EVENT_TYPES };

@@ -1,6 +1,6 @@
 'use client';
 
-import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { PLANNER_SPECIALTIES, VENDOR_CATEGORIES } from '@tiwa/config';
 import { Banner, Button, Card, Chip, ChipGroup, FieldShell, Input, MoneyInput, Switch, Textarea } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,17 @@ interface ProfileData {
   allowGuestEnquiries: boolean;
 }
 
-export function ProfileForm({ orgId, initial }: { orgId: string; initial: ProfileData | null }) {
+export function ProfileForm({
+  orgId,
+  initial,
+  kind = 'VENDOR',
+}: {
+  orgId: string;
+  initial: ProfileData | null;
+  kind?: 'VENDOR' | 'PLANNER';
+}) {
+  const planner = kind === 'PLANNER';
+  const options: Record<string, string> = planner ? PLANNER_SPECIALTIES : VENDOR_CATEGORIES;
   const t = useTranslations('business');
   const router = useRouter();
   const uid = React.useId();
@@ -71,13 +81,18 @@ export function ProfileForm({ orgId, initial }: { orgId: string; initial: Profil
   return (
     <Card>
       <form onSubmit={onSave} className="flex flex-col gap-4 p-4">
-        <h3 className="font-medium">{t('profileHeading')}</h3>
+        <div>
+          <h3 className="font-display text-lg font-bold">
+            {planner ? t('plannerProfileHeading') : t('profileHeading')}
+          </h3>
+          {planner && <p className="text-muted text-sm">{t('plannerProfileBody')}</p>}
+        </div>
         {error && <Banner tone="danger">{error}</Banner>}
         {saved && <Banner tone="info">{t('saved')}</Banner>}
-        <FieldShell id={`${uid}-categories`} label={t('categoriesLabel')}>
+        <FieldShell id={`${uid}-categories`} label={planner ? t('specialtiesLabel') : t('categoriesLabel')}>
           {() => (
-            <ChipGroup label={t('categoriesLabel')}>
-              {Object.entries(VENDOR_CATEGORIES).map(([key, label]) => (
+            <ChipGroup label={planner ? t('specialtiesLabel') : t('categoriesLabel')}>
+              {Object.entries(options).map(([key, label]) => (
                 <Chip key={key} selected={categories.includes(key)} onClick={() => toggleCategory(key)}>
                   {label}
                 </Chip>
@@ -85,14 +100,15 @@ export function ProfileForm({ orgId, initial }: { orgId: string; initial: Profil
             </ChipGroup>
           )}
         </FieldShell>
-        <FieldShell id={`${uid}-bio`} label={t('bioLabel')}>
+        <FieldShell id={`${uid}-bio`} label={planner ? t('plannerBioLabel') : t('bioLabel')}>
           {(describedBy) => (
             <Textarea
               id={`${uid}-bio`}
               aria-describedby={describedBy}
               value={bio}
               onChange={(event) => setBio(event.target.value)}
-              rows={3}
+              rows={planner ? 5 : 3}
+              placeholder={planner ? t('plannerBioPlaceholder') : undefined}
             />
           )}
         </FieldShell>
@@ -122,7 +138,7 @@ export function ProfileForm({ orgId, initial }: { orgId: string; initial: Profil
             )}
           </FieldShell>
         </div>
-        <FieldShell id={`${uid}-price`} label={t('priceLabel')}>
+        <FieldShell id={`${uid}-price`} label={planner ? t('plannerPriceLabel') : t('priceLabel')}>
           {(describedBy) => (
             <MoneyInput
               id={`${uid}-price`}
@@ -133,7 +149,7 @@ export function ProfileForm({ orgId, initial }: { orgId: string; initial: Profil
             />
           )}
         </FieldShell>
-        <FieldShell id={`${uid}-travel`} label={t('travelFeeLabel')}>
+        <FieldShell id={`${uid}-travel`} label={planner ? t('plannerTermsLabel') : t('travelFeeLabel')}>
           {(describedBy) => (
             <Input
               id={`${uid}-travel`}
@@ -148,7 +164,7 @@ export function ProfileForm({ orgId, initial }: { orgId: string; initial: Profil
           {t('guestEnquiriesLabel')}
         </label>
         <div>
-          <Button type="submit" disabled={saving || categories.length === 0 || city.trim() === ''}>
+          <Button type="submit" disabled={saving || (!planner && categories.length === 0) || city.trim() === ''}>
             {t('save')}
           </Button>
         </div>

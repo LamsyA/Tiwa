@@ -1,9 +1,9 @@
 import { prisma } from '@tiwa/db';
-import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { PLANNER_SPECIALTIES, VENDOR_CATEGORIES, serviceLabel } from '@tiwa/config';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg, type OrgAction } from '../auth/org.js';
-import { ConflictError } from '../shared/errors.js';
+import { ConflictError, ValidationError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
 
 // Business profile (MKT-01, P6-T02). One profile per organisation; edits need
@@ -12,10 +12,12 @@ import { audit } from '../shared/outbox.js';
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
 const CATEGORY_KEYS = Object.keys(VENDOR_CATEGORIES);
+const PLANNER_KEYS = Object.keys(PLANNER_SPECIALTIES);
 
 export const upsertBusinessProfileSchema = z.object({
   orgId: z.string().uuid(),
-  categories: z.array(z.string()).min(1, 'categoriesRequired').max(5, 'categoriesTooMany'),
+  // Vendors need at least one category (checked below); planners may leave specialties empty (D-X44).
+  categories: z.array(z.string()).max(5, 'categoriesTooMany'),
   bio: z.string().trim().max(2000, 'bioTooLong').optional(),
   city: z.string().trim().min(1, 'cityRequired').max(120, 'cityTooLong'),
   serviceAreaKm: z.number().int().min(0).max(1000).default(50),
@@ -39,15 +41,19 @@ export function buildSearchText(
   name: string,
   input: { bio?: string | undefined; city: string; categories: string[] },
 ): string {
-  const labels = input.categories.map((key) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key);
+  const labels = input.categories.map((key) => serviceLabel(key));
   return [name, input.bio ?? '', input.city, ...labels].join(' ').replace(/\s+/g, ' ').trim();
 }
 
 export async function upsertBusinessProfile(actor: UserActor, input: z.infer<typeof upsertBusinessProfileSchema>) {
   await loadAccess(actor, input.orgId, 'org.manage');
-  const unknown = input.categories.filter((key) => !CATEGORY_KEYS.includes(key));
-  if (unknown.length > 0) throw new ConflictError('Unknown category', { reason: 'unknown-category', unknown });
   const org = await prisma.organization.findUniqueOrThrow({ where: { id: input.orgId } });
+  const allowed = org.kind === 'PLANNER' ? [...PLANNER_KEYS, ...CATEGORY_KEYS] : CATEGORY_KEYS;
+  const unknown = input.categories.filter((key) => !allowed.includes(key));
+  if (unknown.length > 0) throw new ConflictError('Unknown category', { reason: 'unknown-category', unknown });
+  if (org.kind !== 'PLANNER' && input.categories.length === 0) {
+    throw new ValidationError('Pick at least one service', { field: 'categories', key: 'categoriesRequired' });
+  }
 
   const data = {
     categories: input.categories,

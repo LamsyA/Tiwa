@@ -81,3 +81,27 @@ export const DATE_EXCLUSIVE_CATEGORIES: readonly VendorCategory[] = [
 export function isDateExclusive(category: string): boolean {
   return (DATE_EXCLUSIVE_CATEGORIES as readonly string[]).includes(category);
 }
+
+/** What a planner specialises in (D-X44): shown on planner profiles and searchable. */
+export const PLANNER_SPECIALTIES = {
+  weddings: 'Weddings',
+  traditional: 'Traditional ceremonies',
+  birthdays: 'Birthdays and parties',
+  corporate: 'Corporate events',
+  conferences: 'Conferences and launches',
+  funerals: 'Funerals and memorials',
+  religious: 'Church and religious programmes',
+  reunions: 'Reunions and alumni',
+  concerts: 'Concerts and shows',
+  kids: 'Kids parties',
+  destination: 'Destination events',
+} as const;
+
+export type PlannerSpecialty = keyof typeof PLANNER_SPECIALTIES;
+
+/** Label for a vendor category or planner specialty key. */
+export function serviceLabel(key: string): string {
+  return (
+    (VENDOR_CATEGORIES as Record<string, string>)[key] ?? (PLANNER_SPECIALTIES as Record<string, string>)[key] ?? key
+  );
+}

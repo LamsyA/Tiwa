@@ -140,8 +140,15 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
         {!canManage && <Banner tone="warning">{t('forbiddenBody')}</Banner>}
         {canManage && (
           <>
+            <PublishManager
+              orgId={current.org.id}
+              published={profile.profile?.published ?? false}
+              publishable={checklist.publishable}
+              verificationStatus={verification?.status ?? null}
+            />
             <ProfileForm
               orgId={current.org.id}
+              kind={current.org.kind === 'PLANNER' ? 'PLANNER' : 'VENDOR'}
               initial={
                 profile.profile
                   ? {
@@ -190,12 +197,7 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               confirmedAt={profile.profile?.availabilityConfirmedAt?.toISOString() ?? null}
               stale={!checklist.availability}
             />
-            <PublishManager
-              orgId={current.org.id}
-              published={profile.profile?.published ?? false}
-              publishable={checklist.publishable}
-              verificationStatus={verification?.status ?? null}
-            />
+
             <Card>
               <div className="flex flex-col gap-1 p-4">
                 <h3 className="font-medium">{t('bankHeading')}</h3>

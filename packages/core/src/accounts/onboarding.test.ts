@@ -99,9 +99,9 @@ describe('completeBusinessOnboarding', () => {
       where: { orgId_userId: { orgId, userId: user.id } },
     });
     expect(membership.role).toBe('OWNER');
-    // D-X43: live in the marketplace straight away, findable by name.
+    // D-X44: a draft profile; the owner publishes when ready.
     const profile = await prisma.businessProfile.findUniqueOrThrow({ where: { orgId } });
-    expect(profile).toMatchObject({ published: true, city: 'Lagos', currency: 'NGN' });
+    expect(profile).toMatchObject({ published: false, city: 'Lagos', currency: 'NGN' });
   });
 
   it('sets the owner name when given (phone users)', async () => {

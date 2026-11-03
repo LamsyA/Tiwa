@@ -1542,7 +1542,14 @@
     "verifySubmitted": "Submitted — we review business verifications in order.",
     "verifyUploading": "Uploading…",
     "removeDoc": "Remove",
-    "liveBanner": "Live on Tiwa: hosts and planners can find and message you."
+    "liveBanner": "Live on Tiwa: hosts and planners can find and message you.",
+    "plannerProfileHeading": "Your planner profile",
+    "plannerProfileBody": "Tell clients what you plan and how you work. Only your city is required. You can publish any time and add more later.",
+    "specialtiesLabel": "What you plan (up to 5)",
+    "plannerBioLabel": "About you and your team",
+    "plannerBioPlaceholder": "Years of experience, team size, signature style, notable events, languages, how you work with clients…",
+    "plannerPriceLabel": "Planning fees start from",
+    "plannerTermsLabel": "How you charge (e.g. % of budget, day-of coordination fee)"
   },
   "marketplace": {
     "about": "About",

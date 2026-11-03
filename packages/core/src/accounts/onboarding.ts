@@ -74,15 +74,15 @@ export async function completeBusinessOnboarding(
       },
     });
     await tx.membership.create({ data: { orgId: org.id, userId, role: 'OWNER' } });
-    // Live in the marketplace straight away (D-X34, D-X43): findable by name
-    // while the owner fills in the rest of the profile.
+    // A draft profile (D-X44): the owner fills in details and publishes
+    // from Business profile when ready; publishing never needs every field.
     await tx.businessProfile.create({
       data: {
         orgId: org.id,
         categories: [],
         city: input.city,
         currency: currencyForCountry(user.countryCode),
-        published: true,
+        published: false,
         searchText: [input.name, input.city].join(' ').toLowerCase(),
       },
     });

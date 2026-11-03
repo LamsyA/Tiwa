@@ -61,13 +61,15 @@ export interface DateTextProps {
 export function DateText({ value, format = 'date', locale = 'en', timeZone = 'UTC', className }: DateTextProps) {
   const text = React.useMemo(() => {
     const date = value instanceof Date ? value : new Date(value);
-    const styles: Record<DateTextFormat, Intl.DateTimeFormatOptions> = {
-      date: { dateStyle: 'medium' },
-      datetime: { dateStyle: 'medium', timeStyle: 'short' },
-      time: { timeStyle: 'short' },
-    };
     try {
-      return new Intl.DateTimeFormat(locale, { ...styles[format], timeZone }).format(date);
+      const part = (options: Intl.DateTimeFormatOptions) =>
+        new Intl.DateTimeFormat(locale, { ...options, timeZone }).format(date);
+      // Date and time are formatted separately and joined here: the combined
+      // dateStyle+timeStyle joiner differs between ICU versions ("at" on the
+      // server, "," in some browsers), which caused hydration mismatches.
+      if (format === 'time') return part({ timeStyle: 'short' });
+      if (format === 'date') return part({ dateStyle: 'medium' });
+      return `${part({ dateStyle: 'medium' })}, ${part({ timeStyle: 'short' })}`;
     } catch {
       return date.toISOString();
     }

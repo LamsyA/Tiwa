@@ -81,6 +81,23 @@ describe('upsertBusinessProfile', () => {
     await expect(upsertBusinessProfile(staff, { ...profileInput, orgId })).rejects.toBeInstanceOf(ForbiddenError);
     await expect(upsertBusinessProfile(outsider, { ...profileInput, orgId })).rejects.toBeInstanceOf(ForbiddenError);
   });
+
+  it('D-X44: planners pick specialties (or none); vendors still need a category', async () => {
+    const plannerOrg = await makeOrg('PLANNER', 'spec-planner');
+    await prisma.membership.create({ data: { orgId: plannerOrg, userId: owner.userId, role: 'OWNER' } });
+    const none = await upsertBusinessProfile(owner, { ...profileInput, orgId: plannerOrg, categories: [] });
+    expect(none.categories).toEqual([]);
+    const specialised = await upsertBusinessProfile(owner, {
+      ...profileInput,
+      orgId: plannerOrg,
+      categories: ['weddings', 'corporate'],
+    });
+    expect(specialised.searchText).toContain('Weddings');
+    await expect(upsertBusinessProfile(owner, { ...profileInput, orgId, categories: [] })).rejects.toThrow();
+    await expect(
+      upsertBusinessProfile(owner, { ...profileInput, orgId, categories: ['weddings'] }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
 });
 
 describe('packages', () => {

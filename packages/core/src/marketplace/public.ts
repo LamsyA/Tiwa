@@ -1,5 +1,5 @@
 import { prisma } from '@tiwa/db';
-import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { serviceLabel } from '@tiwa/config';
 import { NotFoundError } from '../shared/errors.js';
 
 // Public marketplace profiles (MKT-07, P6-T04). Only published profiles are
@@ -38,9 +38,7 @@ export async function getPublicProfileForOrg(orgId: string, kind: PublicProfileK
     prisma.businessVerification.findFirst({ where: { orgId: org.id }, orderBy: { createdAt: 'desc' } }),
     prisma.venueSpace.findMany({ where: { profileId: profile.id, active: true }, orderBy: { name: 'asc' } }),
   ]);
-  const categoryLabels = profile.categories.map(
-    (key) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key,
-  );
+  const categoryLabels = profile.categories.map((key) => serviceLabel(key));
   return {
     org: { id: org.id, name: org.name, slug: org.slug, kind: org.kind, city: org.city, verification: org.verification },
     profile: {
