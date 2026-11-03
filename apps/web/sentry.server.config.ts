@@ -1,6 +1,6 @@
 // Server-side Sentry. Guarded: no DSN (local dev) means no-op.
 import * as Sentry from '@sentry/nextjs';
-import { scrubSentryEvent } from '@tiwa/core';
+import { scrubSentryEvent } from '@tiwa/core/shared/sentry.js';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({

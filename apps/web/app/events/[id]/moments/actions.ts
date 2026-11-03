@@ -4,6 +4,7 @@ import {
   blockUploader,
   blockUploaderSchema,
   listPendingMedia,
+  listPublishedMedia,
   moderateMediaItem,
   moderateMediaSchema,
   requestGalleryZip,
@@ -92,15 +93,34 @@ export const morePendingMoments = userAction(
       ...(input.cursor !== undefined ? { cursor: input.cursor } : {}),
       limit: 60,
     });
-    const storage = privateStorage();
-    const items = await Promise.all(
-      page.items.map(async (item) => ({
-        ...item,
-        createdAt: item.createdAt.toISOString(),
-        thumbUrl: item.thumbKey ? await storage.getSignedUrl(item.thumbKey, 3600) : null,
-        largeUrl: item.largeKey ? await storage.getSignedUrl(item.largeKey, 3600) : null,
-      })),
-    );
-    return { items, nextCursor: page.nextCursor };
+    return signQueuePage(page);
   },
 );
+
+/** Cursor page for the published tab, with signed thumbnails for the client. */
+export const morePublishedMoments = userAction(
+  z.object({ eventId: z.string().uuid(), cursor: z.string().max(200).optional() }),
+  async (input, ctx) => {
+    const page = await listPublishedMedia(ctx.actor, input.eventId, {
+      ...(input.cursor !== undefined ? { cursor: input.cursor } : {}),
+      limit: 60,
+    });
+    return signQueuePage(page);
+  },
+);
+
+async function signQueuePage<Item extends { thumbKey: string | null; largeKey: string | null; createdAt: Date }>(page: {
+  items: Item[];
+  nextCursor: string | null;
+}) {
+  const storage = privateStorage();
+  const items = await Promise.all(
+    page.items.map(async (item) => ({
+      ...item,
+      createdAt: item.createdAt.toISOString(),
+      thumbUrl: item.thumbKey ? await storage.getSignedUrl(item.thumbKey, 3600) : null,
+      largeUrl: item.largeKey ? await storage.getSignedUrl(item.largeKey, 3600) : null,
+    })),
+  );
+  return { items, nextCursor: page.nextCursor };
+}

@@ -54,6 +54,72 @@ async function redPng(width = 64, height = 48): Promise<Uint8Array> {
     .toBuffer();
 }
 
+/**
+ * Minimal EXIF APP1 segment (little-endian TIFF): Orientation + ExifIFD
+ * (DateTimeOriginal) + GPS IFD (6.5°N, 3.4°E). Spliced after SOI of a real
+ * JPEG so decoders accept it.
+ */
+function exifApp1Segment(): Buffer {
+  const tiff = Buffer.alloc(194);
+  tiff.write('II', 0, 'ascii');
+  tiff.writeUInt16LE(42, 2);
+  tiff.writeUInt32LE(8, 4);
+  const entry = (at: number, tag: number, type: number, count: number, value: number) => {
+    tiff.writeUInt16LE(tag, at);
+    tiff.writeUInt16LE(type, at + 2);
+    tiff.writeUInt32LE(count, at + 4);
+    tiff.writeUInt32LE(value, at + 8);
+  };
+  tiff.writeUInt16LE(3, 8); // IFD0 count
+  entry(10, 0x0112, 3, 1, 6); // Orientation = 6
+  entry(22, 0x8769, 4, 1, 122); // ExifIFD offset
+  entry(34, 0x8825, 4, 1, 140); // GPS IFD offset
+  tiff.writeUInt32LE(0, 46); // IFD0 next
+  Buffer.from('2024:05:06 07:08:09\0', 'ascii').copy(tiff, 50); // DateTimeOriginal
+  Buffer.from('N\0', 'ascii').copy(tiff, 70); // LatRef
+  Buffer.from('E\0', 'ascii').copy(tiff, 72); // LonRef
+  const rational = (at: number, triple: [number, number][]) => {
+    triple.forEach(([num, den], i) => {
+      tiff.writeUInt32LE(num, at + i * 8);
+      tiff.writeUInt32LE(den, at + i * 8 + 4);
+    });
+  };
+  rational(74, [
+    [6, 1],
+    [30, 1],
+    [0, 1],
+  ]); // 6°30'N
+  rational(98, [
+    [3, 1],
+    [24, 1],
+    [0, 1],
+  ]); // 3°24'E
+  tiff.writeUInt16LE(1, 122); // ExifIFD count
+  entry(124, 0x9003, 2, 20, 50); // DateTimeOriginal
+  tiff.writeUInt32LE(0, 136); // ExifIFD next
+  tiff.writeUInt16LE(4, 140); // GPS IFD count
+  entry(142, 0x0001, 2, 2, 70); // LatRef
+  entry(154, 0x0002, 5, 3, 74); // Latitude
+  entry(166, 0x0003, 2, 2, 72); // LonRef
+  entry(178, 0x0004, 5, 3, 98); // Longitude
+  tiff.writeUInt32LE(0, 190); // GPS IFD next
+  const body = Buffer.concat([Buffer.from('Exif\0\0', 'ascii'), tiff]);
+  const segment = Buffer.alloc(2 + 2 + body.length);
+  segment[0] = 0xff;
+  segment[1] = 0xe1;
+  segment.writeUInt16BE(2 + body.length, 2);
+  body.copy(segment, 4);
+  return segment;
+}
+
+async function jpegWithGps(): Promise<Uint8Array> {
+  const plain = await sharp({ create: { width: 64, height: 48, channels: 3, background: { r: 30, g: 90, b: 200 } } })
+    .jpeg()
+    .toBuffer();
+  // SOI is FFD8; splice APP1 right after it.
+  return Buffer.concat([plain.subarray(0, 2), exifApp1Segment(), plain.subarray(2)]);
+}
+
 afterAll(async () => {
   await prisma.mediaItem.deleteMany({ where: { galleryId: { in: galleryIds } } });
   await prisma.guestSession.deleteMany({ where: { galleryId: { in: galleryIds } } });
@@ -192,6 +258,45 @@ describe('media/process-image', () => {
       }),
     ).toEqual({ status: 'FAILED' });
     expect(jobs).toHaveLength(0);
+  });
+
+  it('strips GPS/EXIF from served derivatives but keeps takenAt (UF-10-3)', async () => {
+    const storage = new FakeStorage();
+    const pub = new FakeStorage();
+    const { gallery } = await makeGallery();
+    const bytes = await jpegWithGps();
+    // Sanity: the input really carries GPS.
+    expect(Buffer.from(bytes).includes(Buffer.from('Exif\0\0', 'ascii'))).toBe(true);
+    const key = `galleries/${gallery.id}/originals/gps.jpg`;
+    await storage.put(key, bytes, 'image/jpeg');
+    const item = await prisma.mediaItem.create({
+      data: {
+        galleryId: gallery.id,
+        album: 'GUEST',
+        kind: 'PHOTO',
+        state: 'PROCESSING',
+        originalKey: key,
+        sizeBytes: bytes.byteLength,
+      },
+    });
+    const { sink } = fakeSink();
+    await handleProcessImage({ mediaItemId: item.id }, fakeLog, sink, {
+      storagePrivate: storage,
+      storagePublic: pub,
+    });
+    const updated = await prisma.mediaItem.findUniqueOrThrow({ where: { id: item.id } });
+    // takenAt comes from the server-side parse, not from preserved tags
+    // (EXIF stamps carry no zone; exifr reads them in server-local time).
+    expect(updated.takenAt?.toISOString()).toBe(new Date(2024, 4, 6, 7, 8, 9).toISOString());
+    for (const outKey of [updated.thumbKey, updated.largeKey]) {
+      expect(outKey).toBeTruthy();
+      const stored = await pub.get(outKey as string);
+      expect(stored).not.toBeNull();
+      const body = Buffer.from(stored!.body);
+      expect(body.includes(Buffer.from('Exif\0\0', 'ascii'))).toBe(false);
+      const meta = await sharp(body).metadata();
+      expect(meta.exif).toBeUndefined();
+    }
   });
 });
 

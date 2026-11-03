@@ -177,7 +177,7 @@ function Hero({ t, name }: { t: T; name: string }) {
                 <Image
                   key={index}
                   src={img}
-                  alt=""
+                  alt={t('decorativeAlt')}
                   sizes="36px"
                   className="border-bg size-9 rounded-full border-2 object-cover"
                 />
@@ -206,9 +206,9 @@ function EventCard3D({ t }: { t: T }) {
           <div className="relative aspect-[4/3.1] overflow-hidden">
             <Image
               src={heroImg}
-              alt=""
+              alt={t('decorativeAlt')}
               priority
-              placeholder="blur"
+              placeholder={'blur' as const}
               sizes="(min-width: 1024px) 600px, 100vw"
               className="size-full object-cover"
             />
@@ -232,7 +232,12 @@ function EventCard3D({ t }: { t: T }) {
         {/* Floating: chat (front-left, closest) */}
         <div className="tiwa-float absolute top-[16%] -left-3 sm:top-[42%] w-[15.5rem] [transform:translateZ(110px)] sm:-left-14">
           <div className="border-border/70 bg-bg/85 flex items-start gap-3 rounded-2xl border p-3.5 shadow-[0_20px_50px_-15px_rgb(0_0_0/0.4)] backdrop-blur-xl">
-            <Image src={cateringImg} alt="" sizes="40px" className="size-10 shrink-0 rounded-full object-cover" />
+            <Image
+              src={cateringImg}
+              alt={t('decorativeAlt')}
+              sizes="40px"
+              className="size-10 shrink-0 rounded-full object-cover"
+            />
             <div className="text-left text-sm">
               <p className="flex items-center gap-1 font-semibold">
                 {t('mock.chatFrom')}
@@ -265,7 +270,13 @@ function EventCard3D({ t }: { t: T }) {
             </p>
             <div className="grid grid-cols-2 gap-1.5">
               {[venueImg, photographyImg, djImg, heroImg].map((img, index) => (
-                <Image key={index} src={img} alt="" sizes="56px" className="size-14 rounded-lg object-cover" />
+                <Image
+                  key={index}
+                  src={img}
+                  alt={t('decorativeAlt')}
+                  sizes="56px"
+                  className="size-14 rounded-lg object-cover"
+                />
               ))}
             </div>
           </div>
@@ -363,8 +374,8 @@ function Marketplace({ t }: { t: T }) {
               <div className="bg-surface-2 relative h-48 overflow-hidden">
                 <Image
                   src={vendor.image}
-                  alt=""
-                  placeholder="blur"
+                  alt={t('decorativeAlt')}
+                  placeholder={'blur' as const}
                   sizes="(min-width: 1024px) 280px, (min-width: 640px) 50vw, 100vw"
                   className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />

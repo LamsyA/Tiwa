@@ -11,7 +11,7 @@ import { SettingsForms } from './settings-forms.js';
 /** P3-T10 / Frontend.md §6.3: details, members, features, visibility, appearance, danger zone. */
 export default async function EventSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(id, '/settings', 'event.view');
+  const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '/settings', 'event.view');
   const t = await getTranslations('events');
   const ts = await getTranslations('events.settingsPage');
   const event = await prisma.event.findUniqueOrThrow({
@@ -59,6 +59,7 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
       access={access}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
       active="settings"
       title={event.name}
     >

@@ -59,9 +59,7 @@ export function budgetCsv(summary: BudgetCsvInput, currency: string, text: Budge
     ]);
     for (const booking of line.bookings) {
       const outstanding =
-        booking.committedMinor == null || booking.paidMinor == null
-          ? null
-          : booking.committedMinor - booking.paidMinor;
+        booking.committedMinor == null || booking.paidMinor == null ? null : booking.committedMinor - booking.paidMinor;
       rows.push([
         text.sections.booking,
         `${label}: ${booking.vendorName}`,

@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "dotenv -e ../../.env -- tsx --watch src/index.ts",
     "build": "tsc -p tsconfig.json",
+    "seed-gallery": "dotenv -e ../../.env -- tsx src/seed-gallery.ts",
+    "check:exif": "dotenv -e ../../.env -- tsx src/check-gallery-exif.ts",
+    "load:gallery": "dotenv -e ../../.env -- tsx src/load-gallery.ts",
     "start": "dotenv -e ../../.env -- node dist/index.js",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",

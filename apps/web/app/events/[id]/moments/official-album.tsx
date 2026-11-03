@@ -161,7 +161,7 @@ export function OfficialAlbumPanel({ eventId, galleryId }: { eventId: string; ga
         <h3 className="font-medium">{t('officialTitle')}</h3>
         <p className="text-muted text-sm">{t('officialBody')}</p>
       </div>
-      <UploadQueueProvider eventId={eventId} galleryId={galleryId} album="OFFICIAL" kind="MIXED">
+      <UploadQueueProvider eventId={eventId} galleryId={galleryId} album="OFFICIAL" kind="MIXED" autoUpload>
         <OfficialQueue />
       </UploadQueueProvider>
       <p className="text-muted text-xs">{t('watermarkNote')}</p>

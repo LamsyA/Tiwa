@@ -4,6 +4,7 @@ import {
   listGuestbookMessagesForHost,
   listOpenMediaReports,
   listPendingMedia,
+  listPublishedMedia,
   authorize,
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
@@ -23,7 +24,7 @@ import { ZipPanel } from './zip-panel.js';
 /** P5-T08 / Frontend.md §6.3: host Moments page — settings, QR, queue, stats. */
 export default async function HostMomentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ctx, access, allowed, invitesOn, momentsOn } = await loadEventPage(id, '/moments');
+  const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '/moments');
   const t = await getTranslations('events.momentsPage');
   const event = await prisma.event.findUniqueOrThrow({
     where: { id },
@@ -57,6 +58,7 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
         access={access}
         invitesOn={invitesOn}
         momentsOn={momentsOn}
+        ticketsOn={ticketsOn}
         active="moments"
         title={event.name}
       >
@@ -68,17 +70,19 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
     );
   }
 
-  const [dashboard, pendingPage, reported, wall] = await Promise.all([
+  const [dashboard, pendingPage, publishedPage, reported, wall] = await Promise.all([
     getMomentsDashboard(ctx.actor, id, access),
     listPendingMedia(ctx.actor, id, { limit: 60 }, access),
+    listPublishedMedia(ctx.actor, id, { limit: 60 }, access),
     listOpenMediaReports(ctx.actor, id, access),
     listGuestbookMessagesForHost(ctx.actor, id, access),
   ]);
   const base = env.APP_URL.replace(/\/$/, '');
   const galleryUrl = `${base}/m/${dashboard.gallery.code}`;
   const storage = privateStorage();
-  const [pending, reports] = await Promise.all([
+  const [pending, published, reports] = await Promise.all([
     withSignedUrls(pendingPage.items),
+    withSignedUrls(publishedPage.items),
     Promise.all(
       reported.reports.map(async (report) => ({
         id: report.id,
@@ -109,6 +113,7 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
       access={access}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
       active="moments"
       title={event.name}
     >
@@ -199,6 +204,17 @@ export default async function HostMomentsPage({ params }: { params: Promise<{ id
               featured: item.featured,
             }))}
             initialCursor={pendingPage.nextCursor}
+            initialPublished={published.map((item) => ({
+              id: item.id,
+              album: item.album,
+              kind: item.kind,
+              thumbUrl: item.thumbUrl,
+              largeUrl: item.largeUrl,
+              createdAt: item.createdAt.toISOString(),
+              uploaderLabel: item.uploaderLabel,
+              featured: item.featured,
+            }))}
+            initialPublishedCursor={publishedPage.nextCursor}
             initialReports={reports}
           />
         </Card>

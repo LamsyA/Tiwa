@@ -195,4 +195,82 @@ describe('createGalleryUploader', () => {
     expect(JSON.parse((complete?.init.body ?? '{}') as string)).toEqual({ mediaId: 'mid-7' });
     local.destroy();
   });
+
+  it('autoUpload starts only once every queued file is prepared', async () => {
+    let created = 0;
+    const fetchImpl = (async (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      expect(url).toBe('/api/uploads/create');
+      created += 1;
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: { mediaId: `mid-${created}`, key: `galleries/g1/originals/mid-${created}/a.jpg` },
+        }),
+      } as unknown as Response;
+    }) as unknown as typeof fetch;
+    const local = createGalleryUploader({
+      eventId: 'e1',
+      galleryId: 'g1',
+      album: 'GUEST',
+      kind: 'PHOTO',
+      fetchImpl,
+      autoUpload: true,
+      resize: async (blob: Blob) => ({ blob, resized: false }),
+    });
+    let started = 0;
+    local.on('upload', () => {
+      started += 1;
+    });
+    local.addFiles([
+      { source: 'test', name: 'one.jpg', type: 'image/jpeg', data: new Blob(['x'.repeat(10)], { type: 'image/jpeg' }) },
+      { source: 'test', name: 'two.jpg', type: 'image/jpeg', data: new Blob(['y'.repeat(10)], { type: 'image/jpeg' }) },
+    ]);
+    await vi.waitFor(() => {
+      expect(local.getFiles().filter((file) => (file.meta as { mediaId?: string }).mediaId).length).toBe(2);
+    });
+    await vi.waitFor(() => {
+      expect(started).toBeGreaterThan(0);
+    });
+    local.destroy();
+  });
+
+  it('retries preparation after a network failure instead of dropping the file', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      if (calls === 1) throw new TypeError('offline');
+      return {
+        ok: true,
+        json: async () => ({ ok: true, data: { mediaId: 'mid-9', key: 'galleries/g1/originals/mid-9/a.jpg' } }),
+      } as unknown as Response;
+    }) as unknown as typeof fetch;
+    vi.useFakeTimers();
+    try {
+      const local = createGalleryUploader({
+        eventId: 'e1',
+        galleryId: 'g1',
+        album: 'GUEST',
+        kind: 'PHOTO',
+        fetchImpl,
+        resize: async (blob: Blob) => ({ blob, resized: false }),
+      });
+      local.addFiles([
+        { source: 'test', name: 'a.jpg', type: 'image/jpeg', data: new Blob(['x'.repeat(10)], { type: 'image/jpeg' }) },
+      ]);
+      // First attempt hits the (simulated) offline gap: the file stays queued.
+      await vi.advanceTimersByTimeAsync(0);
+      expect(local.getFiles()).toHaveLength(1);
+      expect(local.getFiles()[0]?.error).toBeUndefined();
+      // Backoff (1s) fires the retry, which mints the row.
+      await vi.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(local.getFiles()[0]?.meta).toMatchObject({ mediaId: 'mid-9' });
+      expect(calls).toBe(2);
+      local.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

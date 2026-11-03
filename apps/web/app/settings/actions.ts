@@ -11,7 +11,7 @@ import { THEME_COOKIE } from '@tiwa/ui/theme';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { action, userAction } from '@/lib/ctx.js';
+import { action, clearActorCache, userAction } from '@/lib/ctx.js';
 
 export const saveProfile = userAction(updateProfileSchema, async (input, ctx) => {
   await updateProfile(ctx.actor.userId, input);
@@ -30,6 +30,7 @@ export const exportMyData = userAction(z.object({}), async (_input, ctx) => {
 
 export const deleteAccount = userAction(deleteAccountSchema, async (_input, ctx) => {
   await deleteMyAccount(ctx.actor.userId);
+  clearActorCache(ctx.actor.userId);
   // Sessions are gone server-side; drop the browser's cookies too.
   const store = await cookies();
   for (const cookie of store.getAll()) {

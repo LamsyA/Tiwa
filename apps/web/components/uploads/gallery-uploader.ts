@@ -42,6 +42,12 @@ export interface GalleryUploaderOptions {
   kind: 'PHOTO' | 'VIDEO' | 'MIXED';
   fetchImpl?: typeof fetch;
   resize?: typeof resizeImageForUpload;
+  /**
+   * Start uploading automatically once every queued file is prepared
+   * (resized + server-minted). Off by default: callers that manage their
+   * own start button leave it off; sheet flows opt in.
+   */
+  autoUpload?: boolean;
 }
 
 export interface CreateMediaResponse {
@@ -61,11 +67,19 @@ export async function createMediaRecord(
     sizeBytes: number;
   },
 ): Promise<CreateMediaResponse> {
-  const response = await fetchImpl('/api/uploads/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(opts),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  let response: Response;
+  try {
+    response = await fetchImpl('/api/uploads/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   const body = (await response.json().catch(() => null)) as {
     ok?: boolean;
     data?: { mediaId?: string; key?: string } | undefined;
@@ -124,8 +138,9 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
     } as UploadMeta,
     // Safety net: files added programmatically (or restored) may not have
     // gone through the file-added hook yet. Uploads never start until every
-    // file has a server-minted media row + key (Uppy v6 gates synchronously,
-    // so preparation happens in the file-added hook above).
+    // file has a server-minted row + key. Only autoUpload/resume call
+    // uppy.upload(); retries bypass this gate via retryUpload, so an unready
+    // file can never deadlock the rest.
     onBeforeUpload: (files) => {
       const ready = Object.values(files).every(
         (file) =>
@@ -206,9 +221,30 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
           key: record.key,
         } satisfies UploadMeta,
       });
+      maybeAutoUpload();
       return true;
     } catch (error) {
       if (!alive(file.id)) return false;
+      // Network failures (offline tunnels, captive portals, timeouts) keep
+      // the file queued and retry with backoff — uploads are never silently
+      // dropped (UF-10-2). Anything else is a real setup failure: surface it
+      // and drop the row-less file.
+      const transient =
+        error instanceof TypeError ||
+        (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError');
+      if (transient) {
+        const attempts = (prepareAttempts.get(file.id) ?? 0) + 1;
+        prepareAttempts.set(file.id, attempts);
+        if (attempts <= UPLOAD_RETRY_DELAYS_MS.length) {
+          const delay = UPLOAD_RETRY_DELAYS_MS[attempts - 1] ?? 10000;
+          setTimeout(() => {
+            prepareAttempts.delete(file.id);
+            if (alive(file.id)) void prepareFile(file);
+          }, delay);
+          return false;
+        }
+        prepareAttempts.delete(file.id);
+      }
       try {
         uppy.setFileState(file.id, {
           error: error instanceof Error ? error.message : 'Upload setup failed',
@@ -220,9 +256,32 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
       return false;
     }
   }
+  const prepareAttempts = new Map<string, number>();
   uppy.on('file-added', (file) => {
     void prepareFile(file);
   });
+
+  // Auto-start (P5-T13 fix): preparation is async, so nothing may call
+  // upload() until every queued file carries a server-minted row. Every
+  // preparation completion re-checks; concurrent upload() calls are safe
+  // (Uppy only picks up files that never started).
+  const maybeAutoUpload = () => {
+    if (!options.autoUpload) return;
+    let files: UploadFile[];
+    try {
+      files = uppy.getFiles();
+    } catch {
+      return;
+    }
+    if (files.length === 0) return;
+    const ready = files.every(
+      (file) =>
+        typeof (file.meta as Record<string, unknown> | undefined)?.mediaId === 'string' &&
+        typeof (file.meta as Record<string, unknown> | undefined)?.key === 'string',
+    );
+    if (!ready) return;
+    void uppy.upload().catch(() => undefined);
+  };
 
   async function postMedia(path: 'complete' | 'abort', mediaId: string): Promise<boolean> {
     try {
@@ -241,6 +300,9 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
   // Server handoff (P5-T07): the S3 multipart finishing only lands the
   // bytes. `complete` verifies the object, moves the row to PROCESSING and
   // enqueues the worker; `abort` drops rows whose files never finished.
+  // Complete is retried with backoff (same delays as upload retries): an
+  // offline gap mid-handoff must recover on its own (UF-10-2).
+  const completeAttempts = new Map<string, number>();
   uppy.on('upload-success', (file) => {
     const meta = file?.meta as UploadMeta | undefined;
     if (!file || !meta || typeof meta.mediaId !== 'string' || meta.completed) return;
@@ -249,16 +311,34 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
     void (async () => {
       const done = await postMedia('complete', mediaId);
       if (!alive(file.id)) return;
-      try {
-        uppy.setFileState(
-          file.id,
-          (done
-            ? { meta: { ...withName, completed: true } }
-            : { error: 'Processing failed — tap retry' }) as Partial<UploadFile>,
-        );
-      } catch {
-        // Uppy went away mid-handoff; nothing left to clean up.
+      if (done) {
+        completeAttempts.delete(file.id);
+        try {
+          uppy.setFileState(file.id, { meta: { ...withName, completed: true } } as Partial<UploadFile>);
+        } catch {
+          // Uppy went away mid-handoff; nothing left to clean up.
+        }
+        return;
       }
+      const attempts = (completeAttempts.get(file.id) ?? 0) + 1;
+      completeAttempts.set(file.id, attempts);
+      if (attempts > UPLOAD_RETRY_DELAYS_MS.length) {
+        try {
+          uppy.setFileState(file.id, { error: 'Processing failed — tap retry' } as Partial<UploadFile>);
+        } catch {
+          // Uppy went away mid-handoff; nothing left to clean up.
+        }
+        return;
+      }
+      const delay = UPLOAD_RETRY_DELAYS_MS[attempts - 1] ?? 10000;
+      setTimeout(() => {
+        if (!alive(file.id)) return;
+        try {
+          void uppy.retryUpload(file.id);
+        } catch {
+          // Uppy went away; the provider-level retry covers the rest.
+        }
+      }, delay);
     })();
   });
   uppy.on('file-removed', (file) => {

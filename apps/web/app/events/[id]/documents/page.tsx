@@ -7,7 +7,7 @@ import { DocumentsPanel } from './documents-panel.js';
 /** EVT-08: per-event documents (PDF, images, Office files ≤ 25 MB). */
 export default async function DocumentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ctx, access, invitesOn, momentsOn } = await loadEventPage(id, '/documents');
+  const { ctx, access, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '/documents');
   const t = await getTranslations('events.documents');
   const [event, documents] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id }, select: { name: true } }),
@@ -26,6 +26,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ id: 
       access={access}
       invitesOn={invitesOn}
       momentsOn={momentsOn}
+      ticketsOn={ticketsOn}
       active="documents"
       title={event.name}
     >

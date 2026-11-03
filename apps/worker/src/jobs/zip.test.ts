@@ -118,4 +118,28 @@ describe('media/zip', () => {
     expect((await prisma.mediaZip.findUniqueOrThrow({ where: { id: zip.id } })).failReason).toBe('empty');
     expect(email.sent).toHaveLength(0);
   });
+
+  it('packs 1000 files without timing out (UF-11-3)', async () => {
+    const { host, gallery } = await makeGallery();
+    const store = new FakeStorage();
+    const payload = new Uint8Array(1024);
+    const rows = Array.from({ length: 1000 }, (_, i) => ({
+      galleryId: gallery.id,
+      album: (i % 2 === 0 ? 'OFFICIAL' : 'GUEST') as 'OFFICIAL' | 'GUEST',
+      kind: 'PHOTO' as const,
+      state: 'PUBLISHED' as const,
+      originalKey: `g/${gallery.id}/bulk/${i}.jpg`,
+      sizeBytes: payload.length,
+    }));
+    await prisma.mediaItem.createMany({ data: rows });
+    for (const row of rows) await store.put(row.originalKey, payload, 'image/jpeg');
+    const zip = await prisma.mediaZip.create({ data: { galleryId: gallery.id, requestedByUserId: host.userId } });
+    const email = new FakeEmail();
+    const started = Date.now();
+    expect(await handleZip({ zipId: zip.id }, fakeLog, { storagePrivate: store, email })).toEqual({ status: 'READY' });
+    expect(Date.now() - started).toBeLessThan(120_000);
+    const done = await prisma.mediaZip.findUniqueOrThrow({ where: { id: zip.id } });
+    expect(done.itemCount).toBe(1000);
+    expect(email.sent).toHaveLength(1);
+  }, 180_000);
 });

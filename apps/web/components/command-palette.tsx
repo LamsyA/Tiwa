@@ -53,13 +53,13 @@ export function CommandPalette() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open ]);
+  }, [open]);
 
   React.useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => inputRef.current?.focus());
     return () => cancelAnimationFrame(frame);
-  }, [open ]);
+  }, [open]);
 
   const labels = React.useMemo(() => COMMANDS.map((cmd) => ({ ...cmd, label: t(`commands.${cmd.key}`) })), [t]);
   const filtered = labels.filter((cmd) => cmd.label.toLowerCase().includes(query.trim().toLowerCase()));
@@ -122,12 +122,7 @@ export function CommandPalette() {
             />
             <ul id="cmd-list" role="listbox" className="max-h-64 overflow-auto p-1">
               {filtered.map((cmd, index) => (
-                <li
-                  key={cmd.key}
-                  id={`cmd-${cmd.key}`}
-                  role="option"
-                  aria-selected={index === active}
-                >
+                <li key={cmd.key} id={`cmd-${cmd.key}`} role="option" aria-selected={index === active}>
                   <button
                     type="button"
                     onClick={() => go(cmd.href)}

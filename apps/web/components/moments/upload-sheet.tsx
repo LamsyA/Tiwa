@@ -187,7 +187,7 @@ export function UploadSheet({
   }
 
   return (
-    <UploadQueueProvider eventId={eventId} galleryId={galleryId} album="GUEST" kind="MIXED">
+    <UploadQueueProvider eventId={eventId} galleryId={galleryId} album="GUEST" kind="MIXED" autoUpload>
       <Sheet moderation={moderation} />
     </UploadQueueProvider>
   );
