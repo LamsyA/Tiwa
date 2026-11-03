@@ -76,3 +76,29 @@ export async function sendMagicLink(rawEmail: string, ip: string, callbackURL = 
   await auth.api.signInMagicLink({ body: { email, callbackURL }, headers: new Headers() });
   return { ok: true };
 }
+
+/** Placeholder addresses given to accounts created without an email (D-X50). */
+export const PLACEHOLDER_EMAIL = /@(user|phone)\.tiwa\.local$/;
+
+/**
+ * Forgot password (D-X51): accepts a username or an email, rate-limited like
+ * a login. Accounts without a real email cannot receive a link. The answer is
+ * the same either way, so nobody can probe which accounts exist.
+ */
+export async function requestPasswordReset(rawIdentifier: string, ip: string): Promise<{ ok: true }> {
+  const identifier = rawIdentifier.trim().toLowerCase();
+  if (identifier.length < 3) throw new ValidationError('Enter your username or email', { field: 'identifier' });
+  const login = await checkRedisRateLimit(LOGIN_KEY(ip), 10, 600);
+  if (!login.allowed) throw new RateLimitedError('Too many attempts — try again shortly');
+  const user = await prisma.user.findFirst({
+    where: identifier.includes('@') ? { email: identifier } : { username: identifier },
+    select: { email: true, deletedAt: true, suspendedAt: true },
+  });
+  if (user?.email && !PLACEHOLDER_EMAIL.test(user.email) && !user.deletedAt && !user.suspendedAt) {
+    await auth.api.requestPasswordReset({
+      body: { email: user.email, redirectTo: '/reset-password' },
+      headers: new Headers(),
+    });
+  }
+  return { ok: true };
+}

@@ -75,9 +75,9 @@ function Submit({ saving, label }: { saving: boolean; label: string }) {
   );
 }
 
-export function HostProfileForm({ next }: { next: string }) {
+export function HostProfileForm({ next, defaultName = '' }: { next: string; defaultName?: string }) {
   const t = useTranslations('onboarding');
-  const [name, setName] = React.useState('');
+  const [name, setName] = React.useState(defaultName);
   const { errors, saving, submit } = useSubmit(() => saveHostProfile({ name }), next);
 
   return (

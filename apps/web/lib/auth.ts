@@ -37,6 +37,20 @@ const options = {
     maxPasswordLength: 128,
     requireEmailVerification: false,
     autoSignIn: true,
+    // D-X51: forgot password. One-hour link in the branded email; a reset
+    // signs the account out everywhere.
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
+      const message = await renderSignInEmail({
+        url,
+        email: user.email,
+        appUrl: env.APP_URL,
+        expiresInMinutes: 60,
+        purpose: 'reset',
+      });
+      await emailSender.send({ to: user.email, ...message });
+    },
   },
   // D-A11: new users, sessions and accounts get UUID v7 ids like every other table.
   // (Accounts created before this keep Better Auth's 32-char ids; see core userIdSchema.)

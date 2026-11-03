@@ -17,19 +17,19 @@ export function safeNextPath(next: string | null | undefined, fallback: string):
 export type OnboardingDecision = { done: true; to: string } | { done: false; step: 'role' };
 
 export interface ProfileState {
-  name: string | null;
-  phone: string | null;
+  /** Set once the user picked host or created a business (D-X51). */
+  onboardedAt: Date | null;
   membershipCount: number;
 }
 
 /**
- * Triage for /onboarding. Anyone already in an organisation (owner or
- * invited member, UF-01 step 6) is done. A phone user whose name is still
- * their number, or a user with no name, has not onboarded yet.
+ * Triage for /onboarding. Anyone already in an organisation or on an event
+ * (owner or invited member, UF-01 step 6) is done, and so is anyone who
+ * finished the role step. A name alone no longer counts (D-X51): Google and
+ * password sign-ups arrive with one and were wrongly landing as hosts.
  */
 export function triageOnboarding(state: ProfileState, next?: string | null): OnboardingDecision {
-  const hasRealName = Boolean(state.name?.trim()) && state.name !== state.phone;
-  if (state.membershipCount > 0 || hasRealName) return { done: true, to: safeNextPath(next, '/home') };
+  if (state.membershipCount > 0 || state.onboardedAt) return { done: true, to: safeNextPath(next, '/home') };
   return { done: false, step: 'role' };
 }
 
@@ -41,7 +41,10 @@ export async function completeHostProfile(
   userId: string,
   input: z.infer<typeof hostProfileSchema>,
 ): Promise<{ name: string }> {
-  const user = await prisma.user.update({ where: { id: userId }, data: { name: input.name } });
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { name: input.name, onboardedAt: new Date() },
+  });
   return { name: user.name };
 }
 
@@ -86,7 +89,10 @@ export async function completeBusinessOnboarding(
         searchText: [input.name, input.city].join(' ').toLowerCase(),
       },
     });
-    if (input.ownerName) await tx.user.update({ where: { id: userId }, data: { name: input.ownerName } });
+    await tx.user.update({
+      where: { id: userId },
+      data: { onboardedAt: new Date(), ...(input.ownerName ? { name: input.ownerName } : {}) },
+    });
     return { orgId: org.id };
   });
 }

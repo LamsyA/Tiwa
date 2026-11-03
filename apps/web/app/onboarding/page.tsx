@@ -12,14 +12,13 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id as string },
     select: {
-      name: true,
-      phone: true,
+      onboardedAt: true,
       // Invited team members and event co-hosts skip the role step (UF-01 step 6).
       _count: { select: { memberships: true, participants: { where: { removedAt: null } } } },
     },
   });
   const decision = triageOnboarding(
-    { name: user.name, phone: user.phone, membershipCount: user._count.memberships + user._count.participants },
+    { onboardedAt: user.onboardedAt, membershipCount: user._count.memberships + user._count.participants },
     next,
   );
   if (decision.done) redirect(decision.to);

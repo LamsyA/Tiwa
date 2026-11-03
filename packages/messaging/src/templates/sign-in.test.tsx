@@ -25,4 +25,11 @@ describe('sign-in email (D-X49)', () => {
     expect(subject).toBe('Finish creating your Tiwa account');
     expect(html).toContain('Welcome to Tiwa');
   });
+
+  it('D-X51: renders the password-reset variant', async () => {
+    const { subject, html } = await renderSignInEmail({ ...props, expiresInMinutes: 60, purpose: 'reset' });
+    expect(subject).toBe('Reset your Tiwa password');
+    expect(html).toContain('Choose a new password');
+    expect(html).toContain('60 minutes');
+  });
 });

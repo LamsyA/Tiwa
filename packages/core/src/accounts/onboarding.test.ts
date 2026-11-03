@@ -38,32 +38,25 @@ describe('safeNextPath', () => {
 });
 
 describe('triageOnboarding', () => {
-  it('sends members of an organisation to next or /home (invited members skip the role step)', () => {
-    expect(triageOnboarding({ name: '+2341', phone: '+2341', membershipCount: 1 })).toEqual({
-      done: true,
-      to: '/home',
-    });
-    expect(triageOnboarding({ name: 'Ada', phone: null, membershipCount: 2 }, '/events/x')).toEqual({
+  it('sends members of an organisation or event to next or /home (invited members skip the role step)', () => {
+    expect(triageOnboarding({ onboardedAt: null, membershipCount: 1 })).toEqual({ done: true, to: '/home' });
+    expect(triageOnboarding({ onboardedAt: null, membershipCount: 2 }, '/events/x')).toEqual({
       done: true,
       to: '/events/x',
     });
   });
 
-  it('sends named users to next or /home', () => {
-    expect(triageOnboarding({ name: 'Ada', phone: null, membershipCount: 0 })).toEqual({ done: true, to: '/home' });
-    expect(triageOnboarding({ name: 'Ada', phone: null, membershipCount: 0 }, 'https://evil.test')).toEqual({
+  it('sends onboarded users to next or /home, never off-site', () => {
+    const at = new Date();
+    expect(triageOnboarding({ onboardedAt: at, membershipCount: 0 })).toEqual({ done: true, to: '/home' });
+    expect(triageOnboarding({ onboardedAt: at, membershipCount: 0 }, 'https://evil.test')).toEqual({
       done: true,
       to: '/home',
     });
   });
 
-  it('asks unfinished profiles to pick a role', () => {
-    expect(triageOnboarding({ name: null, phone: null, membershipCount: 0 })).toEqual({ done: false, step: 'role' });
-    expect(triageOnboarding({ name: '+2348012345678', phone: '+2348012345678', membershipCount: 0 })).toEqual({
-      done: false,
-      step: 'role',
-    });
-    expect(triageOnboarding({ name: '  ', phone: null, membershipCount: 0 })).toEqual({ done: false, step: 'role' });
+  it('D-X51: a fresh Google or password sign-up with a name still picks a role', () => {
+    expect(triageOnboarding({ onboardedAt: null, membershipCount: 0 })).toEqual({ done: false, step: 'role' });
   });
 });
 

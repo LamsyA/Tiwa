@@ -81,6 +81,33 @@
       "USERNAME_TOO_LONG": "Usernames can be at most 30 characters.",
       "INVALID_USERNAME": "Use only letters, numbers, dots or underscores.",
       "INVALID_EMAIL": "Check the email address."
+    },
+    "forgotPassword": "Forgot password?",
+    "reset": {
+      "forgotTitle": "Forgot your password?",
+      "forgotBody": "Enter your username or email and we’ll email you a link to choose a new one.",
+      "identifierLabel": "Username or email",
+      "send": "Send reset link",
+      "sentTitle": "Check your email",
+      "sentBody": "If an account matches and has an email on it, a reset link is on its way. It expires in 1 hour.",
+      "noEmailNote": "Signed up without an email? Ask support to help you back in, and add an email in Settings once you’re in.",
+      "backToLogin": "Back to sign in",
+      "resetTitle": "Choose a new password",
+      "resetBody": "You’ll be signed out on every other device.",
+      "newLabel": "New password",
+      "confirmLabel": "Confirm new password",
+      "hint": "At least 8 characters.",
+      "show": "Show password",
+      "hide": "Hide password",
+      "save": "Save new password",
+      "tooShort": "Use at least 8 characters.",
+      "mismatch": "The two passwords don’t match.",
+      "doneTitle": "Password updated",
+      "doneBody": "Taking you to sign in…",
+      "invalidTitle": "This link has expired",
+      "invalidBody": "Reset links work once and last 1 hour. Ask for a new one.",
+      "requestNew": "Send me a new link",
+      "generic": "Something went wrong. Try again."
     }
   },
   "onboarding": {

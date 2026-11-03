@@ -37,13 +37,26 @@ export interface SignInEmailProps {
   expiresInMinutes: number;
   /** "Sign up" reads warmer for brand-new accounts; the link works the same. */
   isNewAccount?: boolean;
+  /** 'reset' turns this into the password-reset email (D-X51). */
+  purpose?: 'sign-in' | 'reset';
 }
 
-export function SignInEmail({ url, email, appUrl, expiresInMinutes, isNewAccount = false }: SignInEmailProps) {
-  const heading = isNewAccount ? 'Welcome to Tiwa' : 'Your sign-in link';
-  const lead = isNewAccount
-    ? 'You’re one tap away from planning, booking and remembering every celebration in one place.'
-    : 'Tap the button below to sign in securely. No password needed.';
+export function SignInEmail({
+  url,
+  email,
+  appUrl,
+  expiresInMinutes,
+  isNewAccount = false,
+  purpose = 'sign-in',
+}: SignInEmailProps) {
+  const reset = purpose === 'reset';
+  const heading = reset ? 'Reset your password' : isNewAccount ? 'Welcome to Tiwa' : 'Your sign-in link';
+  const lead = reset
+    ? 'Someone asked to reset the password on your Tiwa account. Tap the button to choose a new one.'
+    : isNewAccount
+      ? 'You’re one tap away from planning, booking and remembering every celebration in one place.'
+      : 'Tap the button below to sign in securely. No password needed.';
+  const button = reset ? 'Choose a new password' : isNewAccount ? 'Create my account' : 'Sign in to Tiwa';
   const host = appUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return (
     <Html lang="en">
@@ -148,7 +161,7 @@ export function SignInEmail({ url, email, appUrl, expiresInMinutes, isNewAccount
                   textAlign: 'center',
                 }}
               >
-                {isNewAccount ? 'Create my account' : 'Sign in to Tiwa'}
+                {button}
               </Button>
 
               <Text
@@ -192,7 +205,10 @@ export function SignInEmail({ url, email, appUrl, expiresInMinutes, isNewAccount
           >
             <Text style={{ fontSize: '13px', lineHeight: '20px', color: MUTED, margin: 0 }}>
               <strong style={{ color: INK }}>Didn’t ask for this?</strong> You can ignore this email. Someone may have
-              typed <span style={{ color: INK }}>{email}</span> by mistake, and nobody can sign in without this link.
+              typed <span style={{ color: INK }}>{email}</span> by mistake, and{' '}
+              {reset
+                ? 'your password stays the same unless this link is used.'
+                : 'nobody can sign in without this link.'}
             </Text>
           </Section>
 
@@ -212,7 +228,7 @@ export function SignInEmail({ url, email, appUrl, expiresInMinutes, isNewAccount
             <Link href={appUrl} style={{ color: '#9a948c', textDecoration: 'underline' }}>
               {host}
             </Link>{' '}
-            · You received this because a sign-in was requested for {email}.
+            · You received this because {reset ? 'a password reset' : 'a sign-in'} was requested for {email}.
           </Text>
         </Container>
       </Body>
@@ -226,5 +242,11 @@ export async function renderSignInEmail(
 ): Promise<{ subject: string; html: string; text: string }> {
   const element = <SignInEmail {...props} />;
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);
-  return { subject: props.isNewAccount ? 'Finish creating your Tiwa account' : 'Your Tiwa sign-in link', html, text };
+  const subject =
+    props.purpose === 'reset'
+      ? 'Reset your Tiwa password'
+      : props.isNewAccount
+        ? 'Finish creating your Tiwa account'
+        : 'Your Tiwa sign-in link';
+  return { subject, html, text };
 }

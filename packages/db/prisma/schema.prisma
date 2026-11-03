@@ -62,6 +62,10 @@ model User {
   notifications       Notification[]
   notificationPreference NotificationPreference?
   pushSubscriptions   PushSubscription[]
+  // D-X51: set when the user finishes onboarding (picks host, or creates a
+  // business). Having a name no longer counts: Google and password sign-ups
+  // arrive with one and were skipping the role step.
+  onboardedAt         DateTime?
   lastSeenAt  DateTime? // presence: refreshed while the app is open (chat "online" / "last seen", D-X37)
 }
 

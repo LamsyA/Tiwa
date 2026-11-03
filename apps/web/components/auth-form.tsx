@@ -373,6 +373,14 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
                   />
                 )}
               </FieldShell>
+              {mode === 'login' && (
+                <Link
+                  href="/forgot-password"
+                  className="text-brand-strong -mt-1 self-end text-sm font-medium hover:underline"
+                >
+                  {t('forgotPassword')}
+                </Link>
+              )}
               <button type="submit" hidden aria-hidden tabIndex={-1} />
             </form>
           )}
