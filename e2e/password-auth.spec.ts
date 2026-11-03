@@ -73,12 +73,17 @@ test('D-X51: forgot password by username emails a link that sets a new password'
   await page.goto('/login');
   await page.getByRole('link', { name: 'Forgot password?' }).click();
   await expect(page.getByRole('heading', { name: 'Forgot your password?' })).toBeVisible();
+  // D-X53: an unknown account gets a clear error, not a spinner.
+  await page.getByLabel('Username or email').fill(`${handle}_nobody`);
+  await page.getByRole('button', { name: 'Send reset link' }).click();
+  await expect(page.getByText('No account matches that username or email')).toBeVisible();
   await page.getByLabel('Username or email').fill(handle);
   await page.getByRole('button', { name: 'Send reset link' }).click();
   await expect(page.getByText('Check your email')).toBeVisible();
 
   const body = await latestMessage(page.request, email);
   expect(body).toContain('Reset your password');
+  expect(body).toContain('10 minutes');
   const link = body.match(/href="([^"]*reset-password[^"]*)"/)?.[1]?.replace(/&amp;/g, '&');
   if (!link) throw new Error('no reset link in outbox');
   await page.goto(link);

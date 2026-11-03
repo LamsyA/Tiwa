@@ -20,16 +20,23 @@ export function ForgotPasswordForm() {
     event.preventDefault();
     setSending(true);
     setError(undefined);
+    // Never spin forever: give up after 25 s with a clear message (D-X53).
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 25_000);
     try {
       const response = await fetch('/api/account/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier }),
+        signal: controller.signal,
       });
-      const result = (await response.json()) as { ok: boolean; error?: string };
+      const result = (await response.json().catch(() => ({ ok: false }))) as { ok: boolean; error?: string };
       if (!result.ok) setError(result.error ?? t('generic'));
       else setSent(true);
+    } catch {
+      setError(controller.signal.aborted ? t('timeout') : t('generic'));
     } finally {
+      window.clearTimeout(timer);
       setSending(false);
     }
   }

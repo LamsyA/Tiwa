@@ -1,7 +1,8 @@
 import { prisma } from '@tiwa/db';
-import { RateLimitedError, ValidationError } from '@tiwa/core';
+import { ConflictError, NotFoundError, RateLimitedError, ValidationError } from '@tiwa/core';
 import { LOGIN_KEY, OTP_LIMITS, checkRedisRateLimit, clearRateLimit } from './rate-store.js';
 import { auth } from './auth.js';
+import { takeResetOutcome } from './reset-outcome.js';
 
 function e164(phone: string): string {
   const digits = phone.replace(/[^\d+]/g, '');
@@ -81,9 +82,9 @@ export async function sendMagicLink(rawEmail: string, ip: string, callbackURL = 
 export const PLACEHOLDER_EMAIL = /@(user|phone)\.tiwa\.local$/;
 
 /**
- * Forgot password (D-X51): accepts a username or an email, rate-limited like
- * a login. Accounts without a real email cannot receive a link. The answer is
- * the same either way, so nobody can probe which accounts exist.
+ * Forgot password (D-X51, D-X53): accepts a username or an email,
+ * rate-limited like a login. Tells the user plainly when no account matches,
+ * when the account has no email, or when the email could not be sent.
  */
 export async function requestPasswordReset(rawIdentifier: string, ip: string): Promise<{ ok: true }> {
   const identifier = rawIdentifier.trim().toLowerCase();
@@ -94,11 +95,22 @@ export async function requestPasswordReset(rawIdentifier: string, ip: string): P
     where: identifier.includes('@') ? { email: identifier } : { username: identifier },
     select: { email: true, deletedAt: true, suspendedAt: true },
   });
-  if (user?.email && !PLACEHOLDER_EMAIL.test(user.email) && !user.deletedAt && !user.suspendedAt) {
-    await auth.api.requestPasswordReset({
-      body: { email: user.email, redirectTo: '/reset-password' },
-      headers: new Headers(),
+  if (!user || user.deletedAt || user.suspendedAt) {
+    throw new NotFoundError('No account matches that username or email', { field: 'identifier' });
+  }
+  if (!user.email || PLACEHOLDER_EMAIL.test(user.email)) {
+    throw new ValidationError('This account has no email address, so we can’t send a reset link', {
+      field: 'identifier',
+      key: 'noEmail',
     });
+  }
+  const startedAt = Date.now();
+  await auth.api.requestPasswordReset({
+    body: { email: user.email, redirectTo: '/reset-password' },
+    headers: new Headers(),
+  });
+  if (takeResetOutcome(user.email, startedAt) === false) {
+    throw new ConflictError('We couldn’t send the email just now. Try again in a minute.', { reason: 'send-failed' });
   }
   return { ok: true };
 }

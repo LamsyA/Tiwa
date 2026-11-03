@@ -8,6 +8,7 @@ import { magicLink } from 'better-auth/plugins/magic-link';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
 import { username } from 'better-auth/plugins/username';
 import { authMethods } from './auth-methods.js';
+import { recordResetOutcome } from './reset-outcome.js';
 import {
   EmailSender,
   ResendEmailSender,
@@ -42,19 +43,25 @@ const options = {
     maxPasswordLength: 128,
     requireEmailVerification: false,
     autoSignIn: true,
-    // D-X51: forgot password. One-hour link in the branded email; a reset
-    // signs the account out everywhere.
-    resetPasswordTokenExpiresIn: 60 * 60,
+    // D-X51/D-X53: forgot password. Ten-minute link in the branded email; a
+    // reset signs the account out everywhere.
+    resetPasswordTokenExpiresIn: 10 * 60,
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
       const message = await renderSignInEmail({
         url,
         email: user.email,
         appUrl: env.APP_URL,
-        expiresInMinutes: 60,
+        expiresInMinutes: 10,
         purpose: 'reset',
       });
-      await emailSender.send({ to: user.email, ...message });
+      try {
+        await emailSender.send({ to: user.email, ...message });
+        recordResetOutcome(user.email, true);
+      } catch (error) {
+        recordResetOutcome(user.email, false);
+        throw error;
+      }
     },
   },
   // D-A11: new users, sessions and accounts get UUID v7 ids like every other table.

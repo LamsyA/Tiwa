@@ -499,3 +499,10 @@ Template:
 - Decision: `EMAIL_PROVIDER=smtp` sends all app email (sign-in, password reset, invites, notifications) through Nodemailer with `SMTP_HOST/PORT/USER/PASSWORD` (Gmail + app password: tiwa.app.mail@gmail.com). It is a bridge until a domain is verified in Resend (free tier: 3 domains, 3,000/month, 100/day); switching back is an `.env` change. Same react-email templates, pooled connection (3), HTML + plain text. `EMAIL_FROM` must be the Gmail address (Gmail rewrites other senders). Limits: about 500 emails a day, sender shows as @gmail.com.
 - Why: Resend's test sender only reaches the account owner; owner wants every user to receive mail now.
 - Affects: packages/messaging smtp (+nodemailer 7.0.9); packages/config env; apps/web lib/senders, lib/auth; apps/worker providers; .env.example.
+
+### 2026-11-03 — Reset links last 10 minutes; reset errors are explicit; SMTP hardening
+- ID: D-X53
+- Status: LOCKED (owner, 2026-11-03)
+- Decision: Supersedes parts of D-X51. (1) Reset links expire after 10 minutes (token, email copy, page text). (2) Forgot password now says plainly when no account matches (404), when the account has no email (400), and when the email could not be sent (502); the owner chose clarity over hiding which accounts exist. Better Auth swallows errors from `sendResetPassword`, so the hook records each send's outcome (`lib/reset-outcome`) and the route reads it. The page aborts after 25 s with a message instead of spinning. (3) SMTP: connection/greeting/socket timeouts, and one retry on a fresh connection for connection-level errors (a pooled Gmail socket went stale after the machine changed networks: EADDRNOTAVAIL). Mail now carries Reply-To, a unique X-Entity-Ref-ID and Auto-Submitted headers. Spam placement is mainly from the new Gmail sender and localhost links; it improves with "Not spam" marks and goes away with a real https domain.
+- Why: owner report (spam, endless spinner, long expiry).
+- Affects: packages/messaging smtp; apps/web lib/auth, lib/otp, lib/reset-outcome, api/account/forgot-password, components/password-reset-forms, messages; e2e/password-auth.spec.ts.
