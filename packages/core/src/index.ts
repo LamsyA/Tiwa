@@ -86,6 +86,8 @@ export * from './bookings/site-visits.js';
 export * from './bookings/queries.js';
 export * from './payments/offline.js';
 export * from './payments/status.js';
+export * from './payments/earnings.js';
+export * from './payments/bank.js';
 export * from './budget/summary.js';
 export * from './budget/records.js';
 export * from './budget/edit.js';

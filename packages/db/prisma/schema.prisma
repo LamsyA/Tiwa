@@ -86,7 +86,7 @@ model Organization {
   proposals     Proposal[]         @relation("OrgProposals")
   invoices      Invoice[]          @relation("OrgInvoices")
   vendorBook    VendorBookEntry[]  @relation("OrgVendorBook")
-  // bankAccounts BankAccount[] — arrives with P8 (BankAccount model)
+  bankAccounts  BankAccount[]
 }
 
 enum OrgKind {
@@ -1070,6 +1070,28 @@ model BusinessVerification {
   createdAt DateTime           @default(now())
 
   @@index([orgId, status])
+}
+
+// Payout account (Backend.md §3, D-X46). Only the last 4 digits are kept:
+// the full number goes to the payment provider, which returns the
+// recipient code. verifiedAt is set when the provider confirms the name.
+model BankAccount {
+  id                 String        @id @default(uuid(7))
+  orgId              String?
+  userId             String? // hosts receiving contributions
+  bankCode           String
+  accountNumberLast4 String
+  accountName        String
+  provider           String
+  subaccountCode     String? // provider split recipient
+  recipientCode      String? // provider transfer recipient
+  verifiedAt         DateTime?
+  payoutsPausedUntil DateTime?
+  isDefault          Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  org                Organization? @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
 }
 
 model Shortlist {

@@ -13,10 +13,14 @@ import {
   portfolioItemSchema,
   publishProfile,
   publishProfileSchema,
+  removeBankAccount,
+  removeBankAccountSchema,
   removePortfolioItem,
   removeVerificationDocument,
   savePackage as saveCorePackage,
   savePackageSchema,
+  setupBankAccount,
+  setupBankAccountSchema,
   startPortfolioUpload,
   startPortfolioUploadSchema,
   startVerificationUpload,
@@ -111,3 +115,14 @@ export const removeVerificationDoc = userAction(
     await removeVerificationDocument(privateStorage(), ctx.actor, input);
   },
 );
+
+/** D-X46: payout bank account (OWNER only, enforced in core). */
+export const savePayoutAccount = userAction(setupBankAccountSchema, async (input, ctx) => {
+  await setupBankAccount(ctx.actor, input);
+  revalidatePath('/business/profile');
+});
+
+export const removePayoutAccount = userAction(removeBankAccountSchema, async (input, ctx) => {
+  await removeBankAccount(ctx.actor, input);
+  revalidatePath('/business/profile');
+});

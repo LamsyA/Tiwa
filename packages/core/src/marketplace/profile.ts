@@ -137,7 +137,7 @@ export interface ProfileChecklist {
   packages: boolean;
   availability: boolean;
   verification: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
-  /** Bank account always false until P8 (payments.setupBankAccount). */
+  /** A payout bank account is on file (D-X46). */
   bank: boolean;
   /** Always true (D-X34): publishing no longer waits for the checklist. */
   publishable: boolean;
@@ -148,11 +148,12 @@ const AVAILABILITY_FRESH_DAYS = 14;
 
 export async function getChecklist(actor: UserActor, orgId: string): Promise<ProfileChecklist> {
   await loadAccess(actor, orgId, 'org.view');
-  const [profile, portfolioCount, packageCount, verification] = await Promise.all([
+  const [profile, portfolioCount, packageCount, verification, bankCount] = await Promise.all([
     prisma.businessProfile.findUnique({ where: { orgId } }),
     prisma.portfolioItem.count({ where: { orgId } }),
     prisma.servicePackage.count({ where: { orgId, active: true } }),
     prisma.businessVerification.findFirst({ where: { orgId }, orderBy: { createdAt: 'desc' } }),
+    prisma.bankAccount.count({ where: { orgId } }),
   ]);
   const hasProfile = Boolean(profile && profile.categories.length > 0 && profile.city);
   const hasPortfolio = portfolioCount >= 6;
@@ -166,7 +167,7 @@ export async function getChecklist(actor: UserActor, orgId: string): Promise<Pro
     packages: hasPackages,
     availability,
     verification: verification?.status ?? 'NONE',
-    bank: false,
+    bank: bankCount > 0,
     publishable: true,
     portfolioCount,
   };

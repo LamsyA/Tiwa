@@ -16,6 +16,11 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
   const t = await getTranslations('quotes');
   const enquiry = await getEnquiry(ctx.actor, { requestId }).catch(() => null);
   if (!enquiry) notFound();
+  const packages = await prisma.servicePackage.findMany({
+    where: { orgId: enquiry.request.vendorOrgId, active: true },
+    orderBy: { priceMinor: 'asc' },
+    take: 12,
+  });
   const brief = enquiry.request.brief as {
     eventName?: string;
     eventType?: string;
@@ -122,6 +127,15 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           vendorOrgId={enquiry.request.vendorOrgId}
           currency={enquiry.event.currency}
           existing={enquiry.quotes}
+          packages={packages
+            .filter((row) => row.currency === enquiry.event.currency)
+            .map((row) => ({
+              id: row.id,
+              name: row.name,
+              description: row.description,
+              priceMinor: row.priceMinor?.toString() ?? null,
+              includes: row.includes,
+            }))}
         />
       </div>
     </AppFrame>

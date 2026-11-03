@@ -161,7 +161,7 @@ export async function listMembers(actor: UserActor, orgId: string): Promise<{ my
 export async function listMyOrgs(userId: string) {
   return prisma.membership.findMany({
     where: { userId, org: { deletedAt: null } },
-    select: { role: true, org: { select: { id: true, name: true, kind: true } } },
+    select: { role: true, org: { select: { id: true, name: true, kind: true, countryCode: true } } },
     orderBy: { id: 'asc' },
   });
 }

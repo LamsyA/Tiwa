@@ -1,11 +1,20 @@
 'use client';
 
-import { Banner, Button, Card, Input, MoneyInput, StatusPill, Textarea } from '@tiwa/ui';
+import { Banner, Button, Card, Input, MoneyInput, MoneyText, StatusPill, Textarea } from '@tiwa/ui';
+import { Package } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { totalsOf } from '@/components/marketplace/quote-totals.js';
 import { createQuoteAction, sendQuoteAction, withdrawQuoteAction } from '../actions.js';
+
+export interface PackageOption {
+  id: string;
+  name: string;
+  description: string | null;
+  priceMinor: string | null;
+  includes: string[];
+}
 
 interface DraftQuote {
   id: string;
@@ -23,12 +32,14 @@ export function QuoteBuilder({
   vendorOrgId,
   currency,
   existing,
+  packages = [],
 }: {
   requestId: string;
   eventId: string;
   vendorOrgId: string;
   currency: string;
   existing: DraftQuote[];
+  packages?: PackageOption[];
 }) {
   const t = useTranslations('quotes');
   const te = useTranslations('quotes.errors');
@@ -44,6 +55,18 @@ export function QuoteBuilder({
   const [saving, setSaving] = React.useState(false);
 
   const totals = totalsOf(items, taxBps, serviceBps, travelFeeMinor);
+  const [picked, setPicked] = React.useState<string | null>(null);
+
+  /** Start from a saved package (D-X46): its price becomes the first line, and
+   * what it includes becomes zero-priced lines the host can see itemised. */
+  function applyPackage(pack: PackageOption) {
+    setPicked(pack.id);
+    setItems([
+      { name: pack.name, qty: 1, unitMinor: pack.priceMinor ?? '0' },
+      ...pack.includes.map((name) => ({ name, qty: 1, unitMinor: '0' })),
+    ]);
+    if (!terms && pack.description) setTerms(pack.description);
+  }
 
   async function onSave(send: boolean) {
     setError(null);
@@ -94,10 +117,20 @@ export function QuoteBuilder({
       {existing.length > 0 && (
         <ul className="flex flex-col gap-2">
           {existing.map((quote) => (
-            <li key={quote.id} className="border-border flex items-center gap-2 rounded-lg border p-3 text-sm">
-              <StatusPill tone={quote.status === 'SENT' ? 'success' : 'neutral'}>{quote.status}</StatusPill>
-              <span className="flex-1">
-                {t('total')}: {quote.totalMinor} {quote.currency}
+            <li
+              key={quote.id}
+              className="border-border/70 bg-surface flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm"
+            >
+              <StatusPill tone={quote.status === 'SENT' ? 'success' : 'neutral'}>
+                {t.has(`quoteStatus.${quote.status}`) ? t(`quoteStatus.${quote.status}`) : quote.status}
+              </StatusPill>
+              <span className="text-muted flex-1">
+                {t('total')}{' '}
+                <MoneyText
+                  value={quote.totalMinor}
+                  currency={quote.currency}
+                  className="font-semibold text-[var(--text)]"
+                />
               </span>
               {quote.status === 'DRAFT' && (
                 <Button variant="secondary" onClick={() => void onSend(quote.id)}>
@@ -112,6 +145,42 @@ export function QuoteBuilder({
             </li>
           ))}
         </ul>
+      )}
+      {packages.length > 0 && (
+        <section aria-labelledby="packages-heading" className="flex flex-col gap-2">
+          <h3 id="packages-heading" className="inline-flex items-center gap-2 text-sm font-semibold">
+            <Package aria-hidden className="text-brand-strong size-4" />
+            {t('fromPackage')}
+          </h3>
+          <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0 lg:grid-cols-3">
+            {packages.map((pack) => (
+              <li key={pack.id} className="w-60 shrink-0 snap-start sm:w-auto">
+                <button
+                  type="button"
+                  aria-pressed={picked === pack.id}
+                  onClick={() => applyPackage(pack)}
+                  className={`flex h-full w-full flex-col gap-1 rounded-2xl border p-3.5 text-left transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-1)] ${
+                    picked === pack.id
+                      ? 'border-brand bg-brand-soft/60 ring-brand/30 ring-2'
+                      : 'border-border/70 bg-surface'
+                  }`}
+                >
+                  <span className="font-semibold">{pack.name}</span>
+                  {pack.priceMinor && (
+                    <MoneyText
+                      value={pack.priceMinor}
+                      currency={currency}
+                      className="font-display text-brand-strong text-lg font-bold"
+                    />
+                  )}
+                  {pack.includes.length > 0 && (
+                    <span className="text-muted line-clamp-2 text-xs">{pack.includes.join(' · ')}</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       <Card>
         <div className="flex flex-col gap-3 p-4">

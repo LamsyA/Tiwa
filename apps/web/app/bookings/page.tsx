@@ -1,10 +1,11 @@
-import { listMyOrgs, listVendorBookingMoney, pendingReplies, vendorDayTasks } from '@tiwa/core';
+import { listMyOrgs, listVendorBookingMoney, pendingReplies, vendorDayTasks, vendorEarnings } from '@tiwa/core';
 import { Card, EmptyState, MoneyText, StatusPill } from '@tiwa/ui';
 import { Briefcase } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
+import { EarningsPanel } from './earnings-panel.js';
 import { VendorDayCard } from './vendor-day.js';
 import { VendorReplies } from './vendor-replies.js';
 
@@ -23,15 +24,17 @@ export default async function BookingsPage() {
       </AppFrame>
     );
   }
-  const [rows, day, replies] = await Promise.all([
+  const [rows, day, replies, earnings] = await Promise.all([
     listVendorBookingMoney(ctx.actor, { vendorOrgId: vendorOrg.id }),
     vendorDayTasks(ctx.actor, vendorOrg.id).catch(() => null),
     pendingReplies(vendorOrg.id).catch(() => []),
+    vendorEarnings(ctx.actor, vendorOrg.id).catch(() => []),
   ]);
   const dayByBooking = new Map((day?.bookings ?? []).map((row) => [row.bookingId, row]));
   return (
     <AppFrame userId={ctx.actor.userId} active="bookings" title={t('bookingsTitle')}>
-      <div className="flex flex-col gap-3 py-2">
+      <div className="flex flex-col gap-4 py-2">
+        {earnings[0] && <EarningsPanel summary={earnings[0]} />}
         <VendorReplies rows={replies.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))} />
         {rows.length === 0 ? (
           <EmptyState icon={<Briefcase className="size-8" aria-hidden />} title={t('noBookings')} body="" />

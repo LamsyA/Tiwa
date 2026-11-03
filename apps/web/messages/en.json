@@ -1581,7 +1581,31 @@
     "plannerBioLabel": "About you and your team",
     "plannerBioPlaceholder": "Years of experience, team size, signature style, notable events, languages, how you work with clients…",
     "plannerPriceLabel": "Planning fees start from",
-    "plannerTermsLabel": "How you charge (e.g. % of budget, day-of coordination fee)"
+    "plannerTermsLabel": "How you charge (e.g. % of budget, day-of coordination fee)",
+    "payout": {
+      "heading": "Payout account",
+      "body": "Where your earnings are sent. Only the business owner can change it.",
+      "verified": "Verified",
+      "unverified": "Not yet verified",
+      "change": "Change account",
+      "remove": "Remove",
+      "ownerOnly": "Only the business owner can add the payout account.",
+      "bank": "Bank",
+      "bankPlaceholder": "Choose your bank",
+      "number": "Account number",
+      "name": "Account name",
+      "privacy": "We keep only the last 4 digits. The full number goes straight to our payment partner when online payouts switch on.",
+      "save": "Save account",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "errors": {
+        "generic": "Could not save the account. Try again.",
+        "bankRequired": "Choose your bank from the list.",
+        "accountNumberInvalid": "Check the account number: it should be 10 digits.",
+        "accountNameRequired": "Enter the name on the account."
+      }
+    },
+    "checklistProgress": "{done} of {total} steps done"
   },
   "marketplace": {
     "about": "About",
@@ -2039,6 +2063,16 @@
       "expires": "Valid until",
       "hidden": "Hidden",
       "footnote": "Pins stay on this device. Accepting a quote still happens on its card below."
+    },
+    "fromPackage": "Start from one of your packages",
+    "quoteStatus": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "CHANGES_REQUESTED": "Changes requested",
+      "ACCEPTED": "Accepted",
+      "DECLINED": "Declined",
+      "EXPIRED": "Expired",
+      "WITHDRAWN": "Withdrawn"
     }
   },
   "bookings": {
@@ -2376,7 +2410,15 @@
     "reviewReportLabel": "Report this review",
     "reviewReportReason": "Why are you reporting it?",
     "reviewReportSubmit": "Send report",
-    "reviewReported": "Thanks — our team will take a look."
+    "reviewReported": "Thanks — our team will take a look.",
+    "earnings": {
+      "thisMonth": "Earned this month",
+      "vsLastMonth": "{direction, select, up {Up} other {Down}} {percent}% on last month",
+      "upcoming": "Upcoming · {count}",
+      "overdue": "Overdue · {count}",
+      "trend": "Money received over the last six months",
+      "note": "Counted when a payment is confirmed. Bank payouts arrive with online payments."
+    }
   },
   "landing": {
     "theme": {
