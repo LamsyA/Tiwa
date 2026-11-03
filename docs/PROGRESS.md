@@ -232,3 +232,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X53: 10-minute reset links; unknown/no-email/send-failed errors; SMTP timeouts + retry. password-auth e2e 2/2; real Gmail resets sent to both owner addresses, unknown user → 404 in 0.4 s.
 - pnpm db:seed:planner refreshes only the planner demo (dates drift out of "this week"); planner e2e 2/2 again.
 - D-X54: app-wide styling pass over 68 files. Web typecheck/lint/unit 60/60; e2e settings, members, guests, tickets, invites, day, check-in, money, planner, plan all green at 1280 px.
+- D-X55: deploy files for the free stack. Worker image built locally (ffmpeg 5.1), container served /health 200 against local Postgres + Redis.

@@ -1,0 +1,17 @@
+# Keep the worker image small and free of secrets (D-X55).
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/test-results
+**/playwright-report
+.git
+.env
+.env.*
+!.env.example
+apps/web/public
+e2e
+docs
+*.md
+!packages/**/*.md

@@ -12,9 +12,11 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json tsconfig.base.js
 COPY apps/worker ./apps/worker
 COPY packages ./packages
 
+# D-X55: build the worker's workspace packages first (topological order),
+# including `prisma generate` in @tiwa/db, then the worker itself.
 RUN corepack enable \
-  && pnpm install --frozen-lockfile --filter @tiwa/worker... \
-  && pnpm --filter @tiwa/worker build \
+  && pnpm install --frozen-lockfile --filter "@tiwa/worker..." \
+  && pnpm --filter "@tiwa/worker..." run build \
   && pnpm store prune
 
 ENV NODE_ENV=production

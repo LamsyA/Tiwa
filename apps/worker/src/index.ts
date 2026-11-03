@@ -24,6 +24,7 @@ import { PUBLISH_OUTBOX_EVERY_MS, PUBLISH_OUTBOX_JOB, handlePublishOutbox } from
 import { MEDIA_MODERATE_JOB, handleModerate } from './jobs/media.js';
 import { SEND_INVITE_JOB, handleSendInvite } from './jobs/send-invite.js';
 import { TOPIC_HANDLERS } from './jobs/topics.js';
+import { startHealthServer } from './health.js';
 
 const QUEUE_NAME = 'tiwa';
 
@@ -80,11 +81,15 @@ async function main() {
     Sentry.captureException(error);
   });
 
+  // Hosts that give us a PORT (Render) get a /health page for keep-awake pings.
+  const health = process.env.PORT ? startHealthServer(connection, Number(process.env.PORT)) : null;
+
   let shuttingDown = false;
   async function shutdown(signal: string) {
     if (shuttingDown) return;
     shuttingDown = true;
     log.info({ signal }, 'shutting down');
+    health?.close();
     await worker.close();
     await queue.close();
     await connection.quit().catch(() => undefined);

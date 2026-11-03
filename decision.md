@@ -382,3 +382,10 @@ Template:
 - Decision: The 68 screens and components still on the early plain look were converted to the premium patterns in one consistent pass: section headings use the display face (bold, tight tracking); `<Card className="p-4">` drops its extra padding (Card already pads itself, so those cards were cramped and uneven); plain underlined links become brand-coloured links with hover underline; small `rounded-md`/`rounded-lg` boxes become `rounded-xl`/`rounded-2xl` with softer borders. Class-only changes, so labels and roles are untouched. The "next steps" card now says "steps complete" so it no longer reads like the task counter. Two plan e2e assertions written before D-X31 were updated (exact task-button name, dialog-scoped due date, "Missed · date" wording).
 - Why: owner request — not every page had the premium styling.
 - Affects: 68 files under apps/web/app and apps/web/components; messages; e2e/event-plan.spec.ts.
+
+### 2026-11-03 — Free hosting stack
+- ID: D-X55
+- Status: PROPOSED (owner chose the services; goes LOCKED once deployed)
+- Decision: Web on Vercel Hobby (`apps/web/vercel.json` builds the monorepo with turbo); worker on a Render free web service from `render.yaml` (Docker image with ffmpeg; the Dockerfile now builds the worker's workspace packages in order, `.dockerignore` keeps secrets and build output out); a `/health` page (only when `PORT` is set) that answers 200 while Redis responds, pinged by cron-job.org every 10 minutes so Render never sleeps it, which also keeps the Layerbase free Redis (Valkey) out of hibernation; Postgres on Neon free; files on Cloudflare R2; email via Gmail SMTP. Settings live in `.env.production.local` (git-ignored) and each host's dashboard. Runbook: docs/runbooks/deploy-free-stack.md. Limits accepted: Vercel Hobby is non-commercial; Layerbase free caps 20 connections; keep-awake pings may breach free-host fair use; the free worker is slow for video.
+- Why: owner request for a $0 stack.
+- Affects: apps/worker health + index + Dockerfile; .dockerignore; render.yaml; apps/web/vercel.json; docs/runbooks/deploy-free-stack.md.
