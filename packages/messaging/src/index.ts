@@ -29,3 +29,4 @@ export type {
 } from './push.js';
 export { FakePush, WebPush } from './push.js';
 export { SignInEmail, renderSignInEmail, type SignInEmailProps } from './templates/sign-in.js';
+export { SmtpEmail, sendSmtp, smtpTransport, type SmtpConfig } from './smtp.js';

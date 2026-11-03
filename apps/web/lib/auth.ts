@@ -11,6 +11,7 @@ import { authMethods } from './auth-methods.js';
 import {
   EmailSender,
   ResendEmailSender,
+  SmtpEmailSender,
   FakeEmailSender,
   FakeSmsSender,
   SmsSender,
@@ -20,7 +21,11 @@ import {
 // Wired by provider (Fake default). Tests inject their own instances.
 export const smsSender: SmsSender = env.SMS_PROVIDER === 'termii' ? new TermiiSmsSender() : new FakeSmsSender();
 export const emailSender: EmailSender =
-  env.EMAIL_PROVIDER === 'resend' ? new ResendEmailSender() : new FakeEmailSender();
+  env.EMAIL_PROVIDER === 'resend'
+    ? new ResendEmailSender()
+    : env.EMAIL_PROVIDER === 'smtp'
+      ? new SmtpEmailSender()
+      : new FakeEmailSender();
 
 // D-X50: Google is registered only when switched on and configured.
 const googleConfigured = authMethods().google;

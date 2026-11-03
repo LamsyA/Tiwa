@@ -6,6 +6,7 @@ import {
   FakeSms,
   FakeWhatsApp,
   ResendEmail,
+  SmtpEmail,
   TermiiSms,
   WebPush,
   type EmailProvider,
@@ -31,7 +32,15 @@ export function providers(): Providers {
     email:
       env.EMAIL_PROVIDER === 'resend' && env.RESEND_API_KEY
         ? new ResendEmail({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM })
-        : new FakeEmail({ mailpitUrl: process.env.MAILPIT_URL }),
+        : env.EMAIL_PROVIDER === 'smtp' && env.SMTP_USER && env.SMTP_PASSWORD
+          ? new SmtpEmail({
+              host: env.SMTP_HOST,
+              port: env.SMTP_PORT,
+              user: env.SMTP_USER,
+              password: env.SMTP_PASSWORD,
+              from: env.EMAIL_FROM,
+            })
+          : new FakeEmail({ mailpitUrl: process.env.MAILPIT_URL }),
     sms:
       env.SMS_PROVIDER === 'termii' && env.TERMII_API_KEY
         ? new TermiiSms({ apiKey: env.TERMII_API_KEY, senderId: env.TERMII_SENDER_ID, channel: env.TERMII_CHANNEL })

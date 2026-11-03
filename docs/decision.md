@@ -492,3 +492,10 @@ Template:
 - Decision: (1) Onboarding is "done" only when `User.onboardedAt` is set (picking host, or creating a planner/vendor business) or the user is already in an org or on an event. Having a name no longer counts: Google and password sign-ups arrive with one and were skipping "What brings you to Tiwa?" and landing as hosts. Migration `20261103170000_user_onboarded_at` backfills users who own/joined a business, are on an event or created one. The host step pre-fills the name they already gave. (2) Forgot password: "Forgot password?" on login → `/forgot-password` takes a username or email (rate-limited like login, same reply whether or not it matches, accounts without a real email can't receive a link) → branded reset email (the sign-in template's `purpose: 'reset'`), link valid 1 hour and single-use → `/reset-password` sets the new password and signs the account out everywhere.
 - Why: owner bug report and request.
 - Affects: packages/db schema + migration; packages/core accounts/onboarding (+test); packages/messaging sign-in template (+test); apps/web onboarding, lib/auth, lib/otp, api/account/forgot-password, forgot-password, reset-password, components/password-reset-forms, auth-form, messages; e2e/password-auth.spec.ts.
+
+### 2026-11-03 — SMTP email (Gmail) via Nodemailer
+- ID: D-X52
+- Status: LOCKED (owner, 2026-11-03)
+- Decision: `EMAIL_PROVIDER=smtp` sends all app email (sign-in, password reset, invites, notifications) through Nodemailer with `SMTP_HOST/PORT/USER/PASSWORD` (Gmail + app password: tiwa.app.mail@gmail.com). It is a bridge until a domain is verified in Resend (free tier: 3 domains, 3,000/month, 100/day); switching back is an `.env` change. Same react-email templates, pooled connection (3), HTML + plain text. `EMAIL_FROM` must be the Gmail address (Gmail rewrites other senders). Limits: about 500 emails a day, sender shows as @gmail.com.
+- Why: Resend's test sender only reaches the account owner; owner wants every user to receive mail now.
+- Affects: packages/messaging smtp (+nodemailer 7.0.9); packages/config env; apps/web lib/senders, lib/auth; apps/worker providers; .env.example.

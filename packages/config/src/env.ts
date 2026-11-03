@@ -50,7 +50,12 @@ const envSchema = z
     PLATFORM_FEE_BPS: z.coerce.number().int().min(0).max(10000).default(500),
 
     // Messaging
-    EMAIL_PROVIDER: provider(['fake', 'resend'] as const, 'fake'),
+    EMAIL_PROVIDER: provider(['fake', 'resend', 'smtp'] as const, 'fake'),
+    // D-X52: SMTP (e.g. Gmail + app password) until a Resend domain is verified.
+    SMTP_HOST: z.string().default('smtp.gmail.com'),
+    SMTP_PORT: z.coerce.number().int().default(465),
+    SMTP_USER: optString(),
+    SMTP_PASSWORD: optString(),
     RESEND_API_KEY: optString(),
     EMAIL_FROM: z.string().default('Tiwa <hello@tiwa.app>'),
     SMS_PROVIDER: provider(['fake', 'termii'] as const, 'fake'),
@@ -114,6 +119,18 @@ const envSchema = z
       'RESEND_API_KEY',
       value.RESEND_API_KEY,
       'RESEND_API_KEY is required when EMAIL_PROVIDER=resend',
+    );
+    requireWhen(
+      value.EMAIL_PROVIDER === 'smtp',
+      'SMTP_USER',
+      value.SMTP_USER,
+      'SMTP_USER is required when EMAIL_PROVIDER=smtp',
+    );
+    requireWhen(
+      value.EMAIL_PROVIDER === 'smtp',
+      'SMTP_PASSWORD',
+      value.SMTP_PASSWORD,
+      'SMTP_PASSWORD is required when EMAIL_PROVIDER=smtp',
     );
     requireWhen(
       value.SMS_PROVIDER === 'termii',

@@ -2,6 +2,7 @@
 // Resend are used when their keys are present. Mailpit stays available for
 // manual inspection; SMTP wiring lands with packages/messaging in P13.
 import { env } from '@tiwa/config';
+import { sendSmtp } from '@tiwa/messaging';
 
 export interface SmsMessage {
   to: string;
@@ -125,5 +126,25 @@ export class ResendEmailSender implements EmailSender {
       throw new Error(`Resend send failed (HTTP ${response.status}): ${data.message ?? 'no details'}`);
     }
     return { providerRef: data.id };
+  }
+}
+
+/** Gmail (or any SMTP) via Nodemailer until a Resend domain is verified (D-X52). */
+export class SmtpEmailSender implements EmailSender {
+  readonly kind = 'smtp';
+
+  async send(message: EmailMessage): Promise<{ providerRef: string | undefined }> {
+    if (!env.SMTP_USER || !env.SMTP_PASSWORD) throw new Error('SMTP_USER and SMTP_PASSWORD are not set');
+    const id = await sendSmtp(
+      {
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT,
+        user: env.SMTP_USER,
+        password: env.SMTP_PASSWORD,
+        from: env.EMAIL_FROM,
+      },
+      message,
+    );
+    return { providerRef: id };
   }
 }
