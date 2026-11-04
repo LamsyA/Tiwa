@@ -244,3 +244,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X61: db:seed:demo — 20 demo businesses with owners; e2e demo-booking (request → quote → accept → booking) passing locally.
 - D-X62: sign-in photo cross-fade (3 photos, CSS only); verified loop and reduced motion in Chromium.
 - README rewritten: problem, features, how it works, architecture, how to use by role, demo businesses, local run, deploy.
+- D-X63: /money page for hosts (was 404); sign-in back to one full-resolution gele photo (q90).

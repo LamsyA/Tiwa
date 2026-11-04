@@ -2939,6 +2939,20 @@
       "copied": "Link copied"
     }
   },
+  "moneyHub": {
+    "title": "Money",
+    "intro": "Budgets and payments across all your events. Open an event to add expenses, record payments or pay a vendor.",
+    "planned": "Planned budget",
+    "committed": "Committed",
+    "paid": "Paid",
+    "outstanding": "Outstanding",
+    "open": "Open",
+    "noDate": "Date not set",
+    "paidShare": "{percent}% of committed spend paid",
+    "emptyTitle": "No event budgets yet",
+    "emptyBody": "Create an event to plan its budget and track payments here.",
+    "newEvent": "Create an event"
+  },
   "notifications": {
     "title": "Notifications",
     "bell": "{count, plural, one {# unread notification} other {# unread notifications}}",

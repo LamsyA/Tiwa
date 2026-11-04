@@ -3,12 +3,8 @@ import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import Link from 'next/link';
 import type * as React from 'react';
-// Free-licence photos (same set as public/marketplace and the home hero).
-import heroImg from '../public/landing/auth.jpg';
-import hallImg from '../public/marketplace/venue-1.jpg';
-import guestsImg from '../public/landing/hero.jpg';
-
-const SLIDES = [heroImg, hallImg, guestsImg];
+// Pexels #36808366 (free licence): the home hero's gele photo, full-resolution portrait.
+import heroImg from '../public/landing/auth-gele.jpg';
 
 /**
  * Sign-in / sign-up frame: full-height photo with a short message on the
@@ -23,20 +19,15 @@ export async function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-bg text-text grid h-dvh overflow-hidden lg:grid-cols-[1.05fr_1fr]">
       <aside className="relative hidden overflow-hidden lg:block">
-        {/* Only the first photo is priority; the others load lazily after it. */}
-        <div className="absolute inset-0">
-          {SLIDES.map((src, index) => (
-            <Image
-              key={src.src}
-              src={src}
-              alt=""
-              priority={index === 0}
-              placeholder="blur"
-              sizes="55vw"
-              className="tiwa-auth-slide absolute inset-0 size-full object-cover"
-            />
-          ))}
-        </div>
+        <Image
+          src={heroImg}
+          alt=""
+          priority
+          quality={90}
+          placeholder="blur"
+          sizes="55vw"
+          className="size-full object-cover object-[50%_35%]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40" />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-10">
           <Link href="/" className="font-display text-2xl font-bold tracking-tight text-white">
@@ -63,7 +54,15 @@ export async function AuthLayout({ children }: { children: React.ReactNode }) {
 
       <div className="relative flex h-dvh min-h-0 flex-col">
         <div className="relative h-[72px] shrink-0 overflow-hidden sm:h-28 lg:hidden">
-          <Image src={heroImg} alt="" priority placeholder="blur" sizes="100vw" className="size-full object-cover" />
+          <Image
+            src={heroImg}
+            alt=""
+            priority
+            placeholder="blur"
+            sizes="100vw"
+            className="size-full object-cover object-[50%_35%]"
+            quality={90}
+          />
           <div className="from-bg absolute inset-0 bg-gradient-to-t via-black/20 to-black/30" />
           <Link
             href="/"

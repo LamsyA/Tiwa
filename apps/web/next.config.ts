@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   // The dev badge adds a "Next.js Dev Tools" button that collides with "Next" in e2e locators.
   ...(process.env.E2E_TEST_HOOKS === '1' ? { devIndicators: false as const } : {}),
   reactStrictMode: true,
+  // Sign-in photo uses quality 90 (D-X63); everything else the default 75.
+  images: { qualities: [75, 90] },
   // Playwright boots `next dev` locally (CI uses `next start`); keep dev
   // output out of `.next` so perf/size always see the production build.
   // Set via the Playwright webServer env below.

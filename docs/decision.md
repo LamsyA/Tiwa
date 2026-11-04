@@ -575,3 +575,11 @@ Template:
 - Decision: The desktop sign-in panel cross-fades three photos (table setting, lit hall, guests in gele) on an 18 s CSS loop, 6 s each. CSS opacity only (composited, no JS, no layout shift); only the first photo is priority, the other two load lazily. Phones keep one static photo to save data; reduced-motion users see the first photo only.
 - Why: owner asked for a changing image without making the site slower.
 - Affects: apps/web components/auth-layout.tsx, app/globals.css.
+
+### 2026-11-04 — Host Money page; sign-in back to one sharp gele photo
+- ID: D-X63
+- Date: 2026-11-04
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: (1) New `/money` page for the host sidebar item, which pointed at a route that never existed (404). It lists every upcoming and past event the person can see money on (budgetSummary enforces money.view), with planned, committed, paid and outstanding per event, totals grouped by currency, and a link to each event Money tab; empty, loading and error states included. (2) Sign-in panel returns to the single gele photo (replaces D-X62 cross-fade at owner request), now the full-resolution portrait original (Pexels #36808366, 2000×3000) served at quality 90 (images.qualities [75, 90]); Next resizes per screen so phones still get a small file.
+- Why: owner reported the host Money page not working and did not like two of the three slideshow photos.
+- Affects: apps/web app/money/*, messages/en.json (moneyHub), components/auth-layout.tsx, app/globals.css, next.config.ts, public/landing/auth-gele.jpg.
