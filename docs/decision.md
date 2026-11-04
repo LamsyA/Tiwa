@@ -551,3 +551,11 @@ Template:
 - Decision: In production the proxy sends every other host (deployment URLs, tiwa-xi.vercel.app) to the APP_URL host with a 308, keeping path and query. The proxy now runs on all non-static paths; the signed-out redirect still covers only app pages.
 - Why: Google sign-in started on another Vercel address set its state cookie there, then Google returned to tiwa-events.vercel.app without it: ?error=state_mismatch.
 - Affects: apps/web proxy.ts, lib/proxy.test.ts.
+
+### 2026-11-04 — Sign-in screens fit one screen
+- ID: D-X60
+- Date: 2026-11-04
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: Auth layout is exactly one viewport tall (h-dvh); the form column scrolls inside itself only when the screen is too short. Sign-in methods are a 2×2 grid with short labels (full "Continue with …" kept as the accessible name). Name and username sit side by side from sm up; hints shortened. New photo: the terracotta table setting (public/landing/auth.jpg). Fits with no scrolling at 390×844 and 1280×720 (login and signup); login also at 360×640. Password reset now refuses only accounts with no real email (placeholder domains); reserved test domains are skipped by the senders instead.
+- Why: owner asked for a new image and everything on the login page to fit the screen.
+- Affects: apps/web components/auth-layout, auth-form, messages/en.json, lib/otp.ts, public/landing/auth.jpg, e2e (exact Username label).

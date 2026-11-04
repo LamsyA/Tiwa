@@ -18,7 +18,7 @@ test('sign up with a username, sign out, sign back in by username and by email',
   await page.goto('/signup');
   await expect(page.getByRole('tab', { name: /Username & password/ })).toHaveAttribute('aria-selected', 'true');
   await page.getByLabel('Your name').fill('Ada Password');
-  await page.getByLabel('Username').fill(handle);
+  await page.getByLabel('Username', { exact: true }).fill(handle);
   await page.getByLabel('Email (optional)').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
@@ -31,7 +31,7 @@ test('sign up with a username, sign out, sign back in by username and by email',
   const second = await other.newPage();
   await isolateIp(second);
   await second.goto('/signup');
-  await second.getByLabel('Username').fill(handle);
+  await second.getByLabel('Username', { exact: true }).fill(handle);
   await second.getByLabel('Password', { exact: true }).fill(password);
   await second.getByRole('button', { name: 'Create account' }).click();
   await expect(second.getByText('That username is taken. Try another.')).toBeVisible();
@@ -63,7 +63,7 @@ test('D-X51: forgot password by username emails a link that sets a new password'
   const handle = `e2e_rp_${Date.now().toString(36)}`;
   const email = `${handle}@example.test`;
   await page.goto('/signup');
-  await page.getByLabel('Username').fill(handle);
+  await page.getByLabel('Username', { exact: true }).fill(handle);
   await page.getByLabel('Email (optional)').fill(email);
   await page.getByLabel('Password', { exact: true }).fill('first-password-1');
   await page.getByRole('button', { name: 'Create account' }).click();

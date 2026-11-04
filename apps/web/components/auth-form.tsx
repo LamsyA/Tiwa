@@ -217,66 +217,71 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
 
   return (
     <div data-frame="guest" className="flex flex-col">
-      <h1 className="font-display text-3xl font-bold tracking-[-0.02em] sm:text-4xl">
+      <h1 className="font-display text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
         {mode === 'signup' ? t('signupTitle') : t('loginTitle')}
       </h1>
-      <p className="text-muted mt-2 mb-8 text-base">{mode === 'signup' ? t('signupSubtitle') : t('loginSubtitle')}</p>
+      <p className="text-muted mt-1 mb-5 text-sm sm:text-base">
+        {mode === 'signup' ? t('signupSubtitle') : t('loginSubtitle')}
+      </p>
 
       {step === 'method' && (
-        <div className="flex flex-col gap-4" role="tablist" aria-label="Sign-in method">
-          {(['password', 'email', 'phone', 'google'] as Method[]).map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="tab"
-              aria-selected={method === m}
-              disabled={soon(m)}
-              onClick={() => {
-                setMethod(m);
-                setFormError(undefined);
-              }}
-              className={cn(
-                'border-border bg-bg flex items-center gap-3 rounded-xl border p-4 text-left transition-colors',
-                'hover:border-text/25 aria-selected:border-brand-strong aria-selected:bg-brand-soft/40 aria-selected:ring-brand-strong/20 aria-selected:ring-4',
-                'disabled:hover:border-border disabled:cursor-not-allowed disabled:opacity-60',
-              )}
-            >
-              <span className="bg-surface-2 text-text grid size-9 shrink-0 place-items-center rounded-lg">
-                {m === 'password' ? (
-                  <KeyRound className="size-4" aria-hidden />
-                ) : m === 'phone' ? (
-                  <Smartphone className="size-4" aria-hidden />
-                ) : m === 'email' ? (
-                  <Mail className="size-4" aria-hidden />
-                ) : (
-                  <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-                    <path
-                      fill="#EA4335"
-                      d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.8-5.4 3.8-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.4l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"
-                    />
-                  </svg>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Sign-in method">
+            {(['password', 'email', 'phone', 'google'] as Method[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={method === m}
+                aria-label={
+                  m === 'password'
+                    ? t('continueWithPassword')
+                    : m === 'phone'
+                      ? t('continueWithPhone')
+                      : m === 'email'
+                        ? t('continueWithEmail')
+                        : t('continueWithGoogle')
+                }
+                disabled={soon(m)}
+                onClick={() => {
+                  setMethod(m);
+                  setFormError(undefined);
+                }}
+                className={cn(
+                  'border-border bg-bg relative flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+                  'hover:border-text/25 aria-selected:border-brand-strong aria-selected:bg-brand-soft/40 aria-selected:ring-brand-strong/20 aria-selected:ring-4',
+                  'disabled:hover:border-border disabled:cursor-not-allowed disabled:opacity-60',
                 )}
-              </span>
-              <span className="font-medium">
-                {m === 'password'
-                  ? t('continueWithPassword')
-                  : m === 'phone'
-                    ? t('continueWithPhone')
-                    : m === 'email'
-                      ? t('continueWithEmail')
-                      : t('continueWithGoogle')}
-              </span>
-              {soon(m) && (
-                <span className="bg-surface-2 text-muted ml-auto rounded-full px-2.5 py-0.5 text-xs font-semibold">
-                  {t('comingSoon')}
+              >
+                <span className="bg-surface-2 text-text grid size-7 shrink-0 place-items-center rounded-md">
+                  {m === 'password' ? (
+                    <KeyRound className="size-4" aria-hidden />
+                  ) : m === 'phone' ? (
+                    <Smartphone className="size-4" aria-hidden />
+                  ) : m === 'email' ? (
+                    <Mail className="size-4" aria-hidden />
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+                      <path
+                        fill="#EA4335"
+                        d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.8-5.4 3.8-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.4l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z"
+                      />
+                    </svg>
+                  )}
                 </span>
-              )}
-            </button>
-          ))}
+                <span className="truncate font-medium">{t(`method.${m}`)}</span>
+                {soon(m) && (
+                  <span className="bg-surface-2 text-muted absolute -top-2 right-2 rounded-full px-1.5 py-px text-[10px] font-semibold">
+                    {t('comingSoon')}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
           {method === 'password' && (
             <form
-              className="flex flex-col gap-4"
+              className="flex flex-col gap-3"
               onSubmit={(event) => {
                 event.preventDefault();
                 void submitPassword();
@@ -284,35 +289,37 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
             >
               {mode === 'signup' ? (
                 <>
-                  <FieldShell id="auth-name" label={t('nameLabel')}>
-                    {(describedBy) => (
-                      <Input
-                        id="auth-name"
-                        aria-describedby={describedBy}
-                        autoComplete="name"
-                        placeholder={t('namePlaceholder')}
-                        value={fullName}
-                        onChange={(event) => setFullName(event.target.value)}
-                      />
-                    )}
-                  </FieldShell>
-                  <FieldShell id="auth-username" label={t('usernameLabel')} hint={t('usernameHint')}>
-                    {(describedBy) => (
-                      <Input
-                        id="auth-username"
-                        aria-describedby={describedBy}
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        prefix={<span className="text-muted">@</span>}
-                        placeholder="ada.events"
-                        value={username}
-                        onChange={(event) =>
-                          setUsername(event.target.value.replace(/[^a-zA-Z0-9._]/g, '').slice(0, 30))
-                        }
-                      />
-                    )}
-                  </FieldShell>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FieldShell id="auth-name" label={t('nameLabel')}>
+                      {(describedBy) => (
+                        <Input
+                          id="auth-name"
+                          aria-describedby={describedBy}
+                          autoComplete="name"
+                          placeholder={t('namePlaceholder')}
+                          value={fullName}
+                          onChange={(event) => setFullName(event.target.value)}
+                        />
+                      )}
+                    </FieldShell>
+                    <FieldShell id="auth-username" label={t('usernameLabel')} hint={t('usernameHint')}>
+                      {(describedBy) => (
+                        <Input
+                          id="auth-username"
+                          aria-describedby={describedBy}
+                          autoComplete="username"
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          prefix={<span className="text-muted">@</span>}
+                          placeholder="ada.events"
+                          value={username}
+                          onChange={(event) =>
+                            setUsername(event.target.value.replace(/[^a-zA-Z0-9._]/g, '').slice(0, 30))
+                          }
+                        />
+                      )}
+                    </FieldShell>
+                  </div>
                   <FieldShell id="auth-signup-email" label={t('emailOptionalLabel')} hint={t('emailOptionalHint')}>
                     {(describedBy) => (
                       <Input

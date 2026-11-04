@@ -1,4 +1,4 @@
-import { isDeliverableEmail } from '@tiwa/messaging';
+import { PLACEHOLDER_EMAIL_DOMAINS } from '@tiwa/messaging';
 import { prisma } from '@tiwa/db';
 import { ConflictError, NotFoundError, RateLimitedError, ValidationError } from '@tiwa/core';
 import { LOGIN_KEY, OTP_LIMITS, checkRedisRateLimit, clearRateLimit } from './rate-store.js';
@@ -96,7 +96,10 @@ export async function requestPasswordReset(rawIdentifier: string, ip: string): P
   if (!user || user.deletedAt || user.suspendedAt) {
     throw new NotFoundError('No account matches that username or email', { field: 'identifier' });
   }
-  if (!isDeliverableEmail(user.email)) {
+  // Only accounts made without an email are refused here; reserved test
+  // domains are skipped quietly by the senders (D-X56).
+  const domain = user.email?.split('@')[1]?.toLowerCase() ?? '';
+  if (!user.email || (PLACEHOLDER_EMAIL_DOMAINS as readonly string[]).includes(domain)) {
     throw new ValidationError('This account has no email address, so we can’t send a reset link', {
       field: 'identifier',
       key: 'noEmail',
