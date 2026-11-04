@@ -404,9 +404,11 @@ Template:
 - Why: the first live test against Layerbase failed.
 - Affects: packages/config redis (+test); apps/web lib/live, lib/chat-live, lib/rate-store, api/health; apps/worker index, jobs/media, jobs/send-invite, jobs/csv-import.
 
+### 2026-11-04 — 1 MB upload cap; live deploy (Render worker, Vercel web)
 - ID: D-X58
 - Date: 2026-11-04
 - Status: LOCKED (owner, 2026-11-04)
 - Decision: One app-wide upload ceiling, `UPLOAD_MAX_BYTES` = 1 MB in `@tiwa/core/shared/upload-limit` (client-safe). Every per-feature limit (Moments photo/video, chat, documents, cover, logo, portfolio, space photos, verification, receipts, expense receipts, guest CSV) is wrapped in `capUpload()`, so the server rejects anything larger; the browser checks the same value. Photos are resized first (now 2048 px, WebP q0.78) and checked after resizing, so ordinary phone photos still fit. Hint and error strings say 1 MB. R2 set up from the CLI (both buckets, public r2.dev URL, CORS) and tested: put/get/delete on both buckets, public URL 200.
 - Why: owner asked to keep free-tier storage small for now (500 KB–1 MB per file).
 - Affects: packages/core shared/upload-limit (+test) and the 11 limit constants; apps/web gallery-uploader, resize-image, settings-forms, guest-dialogs, messages/en.json.
+- Deploy: Render Blueprint `tiwa` → service tiwa-worker-cy5y (https://tiwa-worker-cy5y.onrender.com, /health 200, scheduled jobs running on Neon + Layerbase). Vercel project `tiwa`, root apps/web, address https://tiwa-events.vercel.app (tiwa and tiwa-app were taken), 28 env vars, GitHub connected. All set from the CLI; secrets never printed.

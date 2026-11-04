@@ -236,3 +236,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X56: senders skip placeholder and reserved-domain addresses (no bounces). messaging 27/27, web 60/60, worker notify+invite 8/8.
 - D-X57: Redis SNI fix for Layerbase; Neon migrated (34 migrations, 74 tables); Layerbase reachable (noeviction).
 - D-X58: 1 MB app-wide upload cap (server + browser); R2 buckets, public URL and CORS created by CLI; live put/get/delete passed.
+- Deploy: Render worker live (/health 200, jobs running); Vercel project tiwa (tiwa-events.vercel.app) configured from the CLI.
