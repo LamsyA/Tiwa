@@ -436,3 +436,11 @@ Template:
 - Decision: `pnpm db:seed:demo` (apps/web/scripts/seed-demo-businesses.mts) creates 12 vendors (catering, small chops, cake, decor, photography, videography, DJ, live band, MC, makeup, sound and lighting, rentals), 5 venues with priced spaces (Lagos, Abuja, Ibadan, Port Harcourt) and 3 planners. Fictional but realistic names, bios, packages and naira prices; verified, published, availability confirmed, portfolio photos uploaded to object storage. Each has an OWNER who signs in with a username and the demo password (DEMO_BUSINESS_PASSWORD, default TiwaDemo2026!) so quotes can be answered. Idempotent on `demo-` slugs; re-runs keep any bookings made against them.
 - Why: owner asked for 20 demo businesses that make booking work correctly on the live app.
 - Affects: apps/web scripts/seed-demo-businesses.mts, package.json (db:seed:demo), e2e/demo-booking.spec.ts.
+
+### 2026-11-04 — Sign-in photo cross-fade
+- ID: D-X62
+- Date: 2026-11-04
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: The desktop sign-in panel cross-fades three photos (table setting, lit hall, guests in gele) on an 18 s CSS loop, 6 s each. CSS opacity only (composited, no JS, no layout shift); only the first photo is priority, the other two load lazily. Phones keep one static photo to save data; reduced-motion users see the first photo only.
+- Why: owner asked for a changing image without making the site slower.
+- Affects: apps/web components/auth-layout.tsx, app/globals.css.

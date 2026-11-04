@@ -3,8 +3,12 @@ import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import Link from 'next/link';
 import type * as React from 'react';
-// Set table in brand terracotta (same free-licence set as public/marketplace).
+// Free-licence photos (same set as public/marketplace and the home hero).
 import heroImg from '../public/landing/auth.jpg';
+import hallImg from '../public/marketplace/venue-1.jpg';
+import guestsImg from '../public/landing/hero.jpg';
+
+const SLIDES = [heroImg, hallImg, guestsImg];
 
 /**
  * Sign-in / sign-up frame: full-height photo with a short message on the
@@ -19,7 +23,20 @@ export async function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-bg text-text grid h-dvh overflow-hidden lg:grid-cols-[1.05fr_1fr]">
       <aside className="relative hidden overflow-hidden lg:block">
-        <Image src={heroImg} alt="" priority placeholder="blur" sizes="55vw" className="size-full object-cover" />
+        {/* Only the first photo is priority; the others load lazily after it. */}
+        <div className="absolute inset-0">
+          {SLIDES.map((src, index) => (
+            <Image
+              key={src.src}
+              src={src}
+              alt=""
+              priority={index === 0}
+              placeholder="blur"
+              sizes="55vw"
+              className="tiwa-auth-slide absolute inset-0 size-full object-cover"
+            />
+          ))}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40" />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-10">
           <Link href="/" className="font-display text-2xl font-bold tracking-tight text-white">

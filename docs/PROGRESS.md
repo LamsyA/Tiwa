@@ -242,3 +242,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X59: production redirects stray hosts to APP_URL (Google state_mismatch). proxy tests 3/3.
 - D-X60: login/signup fit one screen, new photo, 2x2 method grid. password-auth 2/2, accounts 8/8.
 - D-X61: db:seed:demo — 20 demo businesses with owners; e2e demo-booking (request → quote → accept → booking) passing locally.
+- D-X62: sign-in photo cross-fade (3 photos, CSS only); verified loop and reduced motion in Chromium.
