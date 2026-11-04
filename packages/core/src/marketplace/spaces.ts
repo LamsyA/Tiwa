@@ -7,6 +7,7 @@ import { authorizeOrg, type OrgAction } from '../auth/org.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Venue spaces (P6-T08): halls, gardens, conference rooms inside a venue
 // business. Only orgs whose profile lists the `venue` category may manage
@@ -143,7 +144,7 @@ export async function updateVenueSettings(actor: UserActor, input: z.infer<typeo
 
 // Space photos (keys never contain file names; magic bytes verified on complete).
 
-export const MAX_SPACE_PHOTO_BYTES = 10 * 1024 * 1024;
+export const MAX_SPACE_PHOTO_BYTES = capUpload(10 * 1024 * 1024);
 
 export const SPACE_PHOTO_TYPES: Record<string, string> = {
   'image/jpeg': 'image/jpeg',

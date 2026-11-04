@@ -6,6 +6,7 @@ import { authorizeOrg, type OrgAction } from '../auth/org.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Business verification (MKT-06, P6-T03): the business uploads an ID and its
 // CAC registration certificate; status goes PENDING for the admin queue
@@ -13,7 +14,7 @@ import { audit } from '../shared/outbox.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
-export const MAX_VERIFICATION_BYTES = 10 * 1024 * 1024;
+export const MAX_VERIFICATION_BYTES = capUpload(10 * 1024 * 1024);
 
 export const VERIFICATION_TYPES: Record<string, string> = {
   'application/pdf': 'application/pdf',

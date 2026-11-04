@@ -1,5 +1,6 @@
 'use client';
 
+import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
 import type { GuestRow, ParsedGuestRow } from '@tiwa/core';
 import { Banner, Button, FieldShell, Input, ProgressBar, ResponsiveDialog, Select, Textarea } from '@tiwa/ui';
 import { Upload } from 'lucide-react';
@@ -333,7 +334,7 @@ export function CsvDialog({
 
   async function startImport() {
     if (!file || mapping['name'] === undefined) return;
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > UPLOAD_MAX_BYTES) {
       setError(t('csvDialog.badFile'));
       return;
     }

@@ -7,6 +7,7 @@ import { loadEventAccess } from '../events/access.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Offline payments (lean P8, D-X27; Backend.md §7.7, UF-17 step 5). The host
 // side records "I paid outside Tiwa" → milestone RECORDED_OFFLINE + Payment
@@ -18,7 +19,7 @@ import { audit, enqueue } from '../shared/outbox.js';
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
 export const OFFLINE_METHODS = ['bank_transfer', 'cash', 'pos', 'other'] as const;
-export const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
+export const MAX_RECEIPT_BYTES = capUpload(10 * 1024 * 1024);
 const RECEIPT_TYPES: Record<string, string> = {
   'image/jpeg': 'image/jpeg',
   'image/png': 'image/png',

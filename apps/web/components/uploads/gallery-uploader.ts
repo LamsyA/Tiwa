@@ -1,11 +1,12 @@
 import AwsS3 from '@uppy/aws-s3';
 import Uppy, { type UppyFile } from '@uppy/core';
 import GoldenRetriever from '@uppy/golden-retriever';
+import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
 // Client-safe copy of packages/core moments/uploads limits.
 // Do not import from '@tiwa/core' here: the barrel pulls node:crypto +
 // prisma and breaks the client webpack build (node: scheme).
-const IMAGE_MAX_BYTES = 25 * 1024 * 1024;
-const VIDEO_MAX_BYTES = 200 * 1024 * 1024;
+const IMAGE_MAX_BYTES = UPLOAD_MAX_BYTES;
+const VIDEO_MAX_BYTES = UPLOAD_MAX_BYTES;
 import { resizeImageForUpload, resizedFileName } from './resize-image.js';
 
 // Uppy wiring for Moments uploads (Frontend §7.4): multipart with 5 MB
@@ -127,7 +128,9 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
   const uppy = new Uppy<UploadMeta>({
     autoProceed: false,
     restrictions: {
-      maxFileSize: isPhoto ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES,
+      // Photos are checked after resizing (prepareFileInner); the server
+      // re-checks every size against UPLOAD_MAX_BYTES (D-X58).
+      maxFileSize: options.kind === 'VIDEO' ? VIDEO_MAX_BYTES : null,
       allowedFileTypes: mixed ? [...IMAGE_MIMES, ...VIDEO_MIMES] : isPhoto ? IMAGE_MIMES : VIDEO_MIMES,
     },
     meta: {
@@ -196,6 +199,9 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
       const resized =
         fileKind === 'PHOTO' ? await resize(source, current.type || 'image/jpeg') : { blob: source, resized: false };
       if (!alive(file.id)) return false;
+      if (resized.blob.size > (fileKind === 'PHOTO' ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES)) {
+        throw new Error('File too large');
+      }
       const name = resized.resized ? resizedFileName(current.name ?? 'photo') : (current.name ?? 'photo');
       const record = await createMediaRecord(fetchImpl, {
         eventId: options.eventId,

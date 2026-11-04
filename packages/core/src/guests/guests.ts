@@ -6,6 +6,7 @@ import { normaliseEmail, toE164 } from '../shared/contact.js';
 import { ForbiddenError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { csvMappingSchema } from './csv.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
@@ -556,7 +557,7 @@ export const importCsvUploadSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(5 * 1024 * 1024),
+    .max(capUpload(5 * 1024 * 1024)),
 });
 
 /** Enqueue the worker CSV import (the file was uploaded to private storage first). */

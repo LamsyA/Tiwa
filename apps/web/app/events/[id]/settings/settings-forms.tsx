@@ -1,5 +1,6 @@
 'use client';
 
+import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
 import {
   Banner,
   Button,
@@ -376,7 +377,7 @@ function PricesForm({ eventId, pricesVisible, canChangePrices }: SettingsFormsPr
 
 const THEME_PRESETS = ['#e5532d', '#b83a17', '#15803d', '#2563eb', '#7c3aed', '#b45309', '#0f766e', '#be185d'];
 const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_COVER_BYTES = 5 * 1024 * 1024;
+const MAX_COVER_BYTES = UPLOAD_MAX_BYTES;
 
 function AppearanceForm({ eventId, canEdit, themeColor, coverUrl }: SettingsFormsProps) {
   const t = useTranslations('events.settingsPage');

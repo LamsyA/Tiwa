@@ -5,6 +5,7 @@ import type { Actor } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { requireParticipant } from './participants.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Chat attachments (Backend.md §9a.4, lean per D-X20): photos and files up to
 // 25 MB, uploaded straight to private storage with a signed PUT (D-A05),
@@ -13,7 +14,7 @@ import { requireParticipant } from './participants.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
-export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+export const MAX_ATTACHMENT_BYTES = capUpload(25 * 1024 * 1024);
 export const MAX_ATTACHMENTS = 10;
 
 /** Declared MIME → the family its bytes must sniff as. */

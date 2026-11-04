@@ -7,6 +7,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors
 import { uuidv7 } from '../shared/ids.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import type { Storage } from '@tiwa/storage';
+import { capUpload } from '../shared/upload-limit.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 export interface GallerySessionActor {
@@ -17,8 +18,8 @@ export interface GallerySessionActor {
 export type UploaderActor = UserActor | GallerySessionActor;
 
 // Upload limits (MOM-03/04, Frontend §7.4): images resize client-side, videos cap by plan.
-export const IMAGE_MAX_BYTES = 25 * 1024 * 1024;
-export const VIDEO_MAX_BYTES = 200 * 1024 * 1024;
+export const IMAGE_MAX_BYTES = capUpload(25 * 1024 * 1024);
+export const VIDEO_MAX_BYTES = capUpload(200 * 1024 * 1024);
 export const VIDEO_FREE_SEC = 30;
 export const VIDEO_PLUS_SEC = 3 * 60;
 export const MAX_PART_NUMBER = 10_000;

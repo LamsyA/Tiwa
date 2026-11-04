@@ -6,6 +6,7 @@ import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
 import { requireEventAccess, resolveEventAccess } from './access.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Event documents (EVT-08): PDFs, images and office files up to 25 MB.
 // Flow: start (signed PUT) → browser uploads straight to storage (D-A05) →
@@ -13,7 +14,7 @@ import { requireEventAccess, resolveEventAccess } from './access.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
-export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = capUpload(25 * 1024 * 1024);
 
 /** Declared MIME → the sniffed family it must match. */
 export const DOCUMENT_TYPES: Record<string, string> = {

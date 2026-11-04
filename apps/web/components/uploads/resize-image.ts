@@ -3,8 +3,8 @@
 // Falls back to the original file on any failure — an unresized upload
 // always beats a failed one. Videos skip resizing entirely.
 
-export const RESIZE_MAX_SIDE = 2560;
-export const RESIZE_QUALITY = 0.82;
+export const RESIZE_MAX_SIDE = 2048;
+export const RESIZE_QUALITY = 0.78;
 const RESIZE_TIMEOUT_MS = 60_000;
 
 export interface ResizeOutcome {

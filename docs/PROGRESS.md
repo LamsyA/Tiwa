@@ -235,3 +235,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X55: deploy files for the free stack. Worker image built locally (ffmpeg 5.1), container served /health 200 against local Postgres + Redis.
 - D-X56: senders skip placeholder and reserved-domain addresses (no bounces). messaging 27/27, web 60/60, worker notify+invite 8/8.
 - D-X57: Redis SNI fix for Layerbase; Neon migrated (34 migrations, 74 tables); Layerbase reachable (noeviction).
+- D-X58: 1 MB app-wide upload cap (server + browser); R2 buckets, public URL and CORS created by CLI; live put/get/delete passed.

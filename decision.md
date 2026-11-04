@@ -403,3 +403,10 @@ Template:
 - Decision: Every Redis client (10: web live/chat/rate-limit/health, worker queue/media/invites/CSV) now spreads `redisTls(url)` from packages/config, which sets `tls.servername` to the URL's host for `rediss://`. Layerbase routes connections by TLS servername and refuses them without it ("ERR TLS SNI required"); ioredis does not set it from a URL by itself. Production checks from this machine: Neon PostgreSQL 18.6 reachable through the pooled URL; all 34 migrations applied over the direct URL (74 tables, both hand-written indexes, citext + pg_trgm); Layerbase Redis 7.2.15 with `maxmemory-policy noeviction` (what BullMQ needs), first connect ~7.7 s while waking from hibernation.
 - Why: the first live test against Layerbase failed.
 - Affects: packages/config redis (+test); apps/web lib/live, lib/chat-live, lib/rate-store, api/health; apps/worker index, jobs/media, jobs/send-invite, jobs/csv-import.
+
+- ID: D-X58
+- Date: 2026-11-04
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: One app-wide upload ceiling, `UPLOAD_MAX_BYTES` = 1 MB in `@tiwa/core/shared/upload-limit` (client-safe). Every per-feature limit (Moments photo/video, chat, documents, cover, logo, portfolio, space photos, verification, receipts, expense receipts, guest CSV) is wrapped in `capUpload()`, so the server rejects anything larger; the browser checks the same value. Photos are resized first (now 2048 px, WebP q0.78) and checked after resizing, so ordinary phone photos still fit. Hint and error strings say 1 MB. R2 set up from the CLI (both buckets, public r2.dev URL, CORS) and tested: put/get/delete on both buckets, public URL 200.
+- Why: owner asked to keep free-tier storage small for now (500 KB–1 MB per file).
+- Affects: packages/core shared/upload-limit (+test) and the 11 limit constants; apps/web gallery-uploader, resize-image, settings-forms, guest-dialogs, messages/en.json.

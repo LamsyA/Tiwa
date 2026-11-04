@@ -429,7 +429,7 @@
       "ticketsNeedPublic": "Tickets need a public event. Make the event public to turn tickets on.",
       "appearanceHeading": "Cover image and theme",
       "coverLabel": "Cover image",
-      "coverHint": "JPEG, PNG or WebP, up to 5 MB. It appears on invitations, tickets and the photo gallery.",
+      "coverHint": "JPEG, PNG or WebP, up to 1 MB. It appears on invitations, tickets and the photo gallery.",
       "coverUpload": "Upload a cover",
       "coverReplace": "Replace cover",
       "coverRemove": "Remove",
@@ -460,7 +460,7 @@
         "invalidColour": "Use a colour like #b83a17",
         "coverType": "Use a JPEG, PNG or WebP image.",
         "emptyFile": "That file is empty.",
-        "coverTooLarge": "Covers must be 5 MB or smaller.",
+        "coverTooLarge": "Covers must be 1 MB or smaller.",
         "coverMismatch": "That file doesn't match its type, so it wasn't saved.",
         "coverFailed": "The upload didn't finish. Please try again.",
         "INVALID_TRANSITION": "This event can no longer be changed, or bookings and payments block cancelling.",
@@ -599,7 +599,7 @@
         "unknownCategory": "That category doesn't exist.",
         "invalidReceipt": "That receipt couldn't be read. Upload a photo or PDF.",
         "typeNotAllowed": "Upload a photo or PDF.",
-        "tooLarge": "That file is too large (10 MB max).",
+        "tooLarge": "That file is too large (1 MB max).",
         "uploadFailed": "The receipt didn't upload. Try again.",
         "labelRequired": "Give every line a name.",
         "labelTaken": "You already have a line with that name.",
@@ -749,7 +749,7 @@
     },
     "documents": {
       "heading": "Documents",
-      "hint": "PDFs, photos and Office files up to 25 MB. Only people on this event can open them.",
+      "hint": "PDFs, photos and Office files up to 1 MB. Only people on this event can open them.",
       "upload": "Upload files",
       "uploading": "Uploading {name}…",
       "uploaded": "{count, plural, one {# file uploaded} other {# files uploaded}}",
@@ -761,7 +761,7 @@
       "readOnly": "You can download documents. Ask the host for edit access to add files.",
       "errors": {
         "typeNotAllowed": "{name}: this file type isn't supported.",
-        "tooLarge": "{name}: files must be 25 MB or smaller.",
+        "tooLarge": "{name}: files must be 1 MB or smaller.",
         "emptyFile": "{name}: the file is empty.",
         "contentMismatch": "{name}: the file content doesn't match its type.",
         "uploadFailed": "{name}: the upload didn't finish. Please try again.",
@@ -1506,7 +1506,7 @@
     "reportReason": "Why should this be removed? (optional)",
     "reportSent": "Request sent to the host.",
     "reportFailed": "Could not send the request — try again.",
-    "limitNote": "Up to 50 files at a time. Photos shrink on your phone before upload; videos up to 200 MB.",
+    "limitNote": "Up to 50 files at a time. Photos shrink on your phone before upload; files up to 1 MB each.",
     "all": "All",
     "myUploads": "My uploads",
     "myUploadsWithCount": "My uploads ({count})",
@@ -1682,13 +1682,13 @@
     "checklistProgress": "{done} of {total} steps done",
     "logo": {
       "heading": "Your logo",
-      "body": "Shown on your proposals, invoices and public profile. PNG, JPG or WebP, up to 2 MB.",
+      "body": "Shown on your proposals, invoices and public profile. PNG, JPG or WebP, up to 1 MB.",
       "add": "Add your logo",
       "change": "Change your logo",
       "errors": {
         "generic": "Could not upload the logo. Try again.",
         "typeNotAllowed": "Use a PNG, JPG or WebP image.",
-        "tooLarge": "That image is over 2 MB.",
+        "tooLarge": "That image is over 1 MB.",
         "emptyFile": "That file is empty."
       }
     }
@@ -1972,7 +1972,7 @@
     "file": "File",
     "attachmentErrors": {
       "typeNotAllowed": "{name}: this file type isn't supported.",
-      "tooLarge": "{name}: files must be 25 MB or smaller.",
+      "tooLarge": "{name}: files must be 1 MB or smaller.",
       "uploadFailed": "{name}: the upload didn't finish.",
       "attachmentMismatch": "A file didn't match its type and wasn't sent.",
       "attachmentBlocked": "A photo was blocked by our safety check.",
@@ -2340,7 +2340,7 @@
       "heldNotOffline": "This booking is paid through Tiwa.",
       "bookingClosed": "This booking is closed.",
       "typeNotAllowed": "Upload a photo or PDF.",
-      "tooLarge": "That file is too large (10 MB max).",
+      "tooLarge": "That file is too large (1 MB max).",
       "emptyFile": "That file is empty.",
       "uploadFailed": "The receipt didn't upload. Try again."
     },

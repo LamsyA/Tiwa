@@ -6,6 +6,7 @@ import { authorizeOrg } from '../auth/org.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Business logo (D-X47): shown on proposals, invoices and the public profile.
 // Same start → browser PUT → complete pattern as portfolio photos; the key
@@ -14,7 +15,7 @@ import { audit } from '../shared/outbox.js';
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
 const LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-export const MAX_LOGO_BYTES = 2 * 1024 * 1024;
+export const MAX_LOGO_BYTES = capUpload(2 * 1024 * 1024);
 
 export const startLogoUploadSchema = z.object({
   orgId: z.string().uuid(),

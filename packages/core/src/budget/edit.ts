@@ -6,6 +6,7 @@ import { requireEventAccess } from '../events/access.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
+import { capUpload } from '../shared/upload-limit.js';
 
 // Budget edits (BUD-02–BUD-06, UF-20 steps 3; D-X28). Everything needs
 // `money.edit`; every change writes an AuditLog `budget.*` row with the
@@ -15,7 +16,7 @@ type UserActor = Extract<Actor, { kind: 'user' }>;
 
 const minor = z.string().regex(/^\d{1,15}$/, 'invalidAmount');
 export const CONTRIBUTION_KINDS = ['family', 'committee', 'member', 'sponsor', 'other_income'] as const;
-export const MAX_EXPENSE_RECEIPT_BYTES = 10 * 1024 * 1024;
+export const MAX_EXPENSE_RECEIPT_BYTES = capUpload(10 * 1024 * 1024);
 const RECEIPT_TYPES: Record<string, string> = {
   'image/jpeg': 'image/jpeg',
   'image/png': 'image/png',
