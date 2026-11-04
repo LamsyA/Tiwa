@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { withSentryConfig } from '@sentry/nextjs/config';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withSerwistInit from '@serwist/next';
@@ -28,6 +29,12 @@ const nextConfig: NextConfig = {
     '@tiwa/storage',
     '@tiwa/ui',
   ],
+  // Vercel: trace from the monorepo root and ship Prisma's query engine with
+  // every function; pnpm keeps it outside apps/web, so it is not found otherwise.
+  outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
+  outputFileTracingIncludes: {
+    '/**': ['../../node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/**'],
+  },
   webpack(config) {
     // Packages are authored NodeNext-style (./x.js for ./x.ts). Teach webpack
     // the same mapping TS/tsx already understand.

@@ -19,7 +19,9 @@
 // Better Auth's Prisma adapter in P2-T04; `User` below already carries the
 // fields the adapter expects (name, email, emailVerified, image).
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native for local and Render; rhel-openssl-3.0.x for Vercel functions.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
