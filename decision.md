@@ -428,3 +428,11 @@ Template:
 - Decision: Auth layout is exactly one viewport tall (h-dvh); the form column scrolls inside itself only when the screen is too short. Sign-in methods are a 2×2 grid with short labels (full "Continue with …" kept as the accessible name). Name and username sit side by side from sm up; hints shortened. New photo: the terracotta table setting (public/landing/auth.jpg). Fits with no scrolling at 390×844 and 1280×720 (login and signup); login also at 360×640. Password reset now refuses only accounts with no real email (placeholder domains); reserved test domains are skipped by the senders instead.
 - Why: owner asked for a new image and everything on the login page to fit the screen.
 - Affects: apps/web components/auth-layout, auth-form, messages/en.json, lib/otp.ts, public/landing/auth.jpg, e2e (exact Username label).
+
+### 2026-11-04 — 20 demo businesses that book end to end
+- ID: D-X61
+- Date: 2026-11-04
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: `pnpm db:seed:demo` (apps/web/scripts/seed-demo-businesses.mts) creates 12 vendors (catering, small chops, cake, decor, photography, videography, DJ, live band, MC, makeup, sound and lighting, rentals), 5 venues with priced spaces (Lagos, Abuja, Ibadan, Port Harcourt) and 3 planners. Fictional but realistic names, bios, packages and naira prices; verified, published, availability confirmed, portfolio photos uploaded to object storage. Each has an OWNER who signs in with a username and the demo password (DEMO_BUSINESS_PASSWORD, default TiwaDemo2026!) so quotes can be answered. Idempotent on `demo-` slugs; re-runs keep any bookings made against them.
+- Why: owner asked for 20 demo businesses that make booking work correctly on the live app.
+- Affects: apps/web scripts/seed-demo-businesses.mts, package.json (db:seed:demo), e2e/demo-booking.spec.ts.
