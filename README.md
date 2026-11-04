@@ -14,14 +14,12 @@ It launches in Lagos, Nigeria, but nothing is hard-coded to one country, currenc
 2. [What Tiwa does](#2-what-tiwa-does)
 3. [Who it is for](#3-who-it-is-for)
 4. [How to use Tiwa](#4-how-to-use-tiwa)
-5. [How it works](#5-how-it-works)
-6. [Architecture and stack](#6-architecture-and-stack)
-7. [Repository layout](#7-repository-layout)
-8. [Run it locally](#8-run-it-locally)
-9. [Deploying](#9-deploying)
-10. [Testing and quality](#10-testing-and-quality)
-11. [Current status and limits](#11-current-status-and-limits)
-12. [Project documents](#12-project-documents)
+5. [How AI helps you decide](#5-how-ai-helps-you-decide)
+6. [User flows](#6-user-flows)
+7. [How it works](#7-how-it-works)
+8. [Architecture and stack](#8-architecture-and-stack)
+9. [Repository layout](#9-repository-layout)
+10. [Run it locally](#10-run-it-locally)
 
 ---
 
@@ -51,6 +49,7 @@ Tiwa gives each event **one shared record** that everyone involved works from, w
 - **Run the day:** a run-of-show timeline with owners and dependencies, vendor check-in, an incident log and guest check-in with tickets.
 - **Remember:** "Moments" is a shared gallery. Guests scan a QR code and upload photos, and the hired photographer publishes the official album.
 - **Talk:** chat between hosts, planners and vendors, plus notifications by email, push and WhatsApp.
+- **Decide with AI:** an assistant drafts the plan and budget split, flags what's missing or risky in vendor quotes, shows what changes when the guest count moves, and writes invitations and updates in one prompt. It suggests; you decide. See [How AI helps you decide](#5-how-ai-helps-you-decide).
 
 ## 3. Who it is for
 
@@ -165,22 +164,126 @@ Payments on the live demo use a **test payment provider**, so no real money move
 
 ---
 
-## 5. How it works
+## 5. How AI helps you decide
 
-### 5.1 One event, many people, server-enforced permissions
+Planning an event is a long chain of decisions: how to split the money, which quote to trust, what to do when 30 more guests are coming, how to tell 200 people about a change. Most hosts make these decisions once or twice in their life, without a professional's experience. Tiwa's AI assistant gives them that experience at the moment of each decision.
+
+### 5.1 What the assistant does
+
+| Decision | Without AI | With Tiwa's assistant |
+|---|---|---|
+| **"What do I need to do, and when?"** | Start from a blank page or copy a friend's list. | **Plan with AI** (Plan tab): from the event type, date, guest count and your notes, the assistant drafts a checklist with sensible due dates, that you tick to add to your plan. |
+| **"How should I split my budget?"** | Guess, then run out of money for the cake. | **Budget split** (Money tab): it proposes a percentage for each budget category. Tiwa turns that into exact naira amounts that add up to your total to the kobo, and you review them before tapping **Apply**. |
+| **"Which quote is actually better?"** | Read three PDFs line by line and miss the hidden travel fee. | **Compare with AI** (quote compare page): it reads every quote line by line and sorts what it finds into **Stands out, Leaves out, Unclear and Extra fees**, plus **questions to ask before you decide**, such as "Vendor B doesn't include setup" or "Vendor C charges a separate generator fee". |
+| **"We now have 150 guests, not 120. What changes?"** | Call every vendor and work it out by hand. | **What if numbers change?**: it lists what each booking and the seating plan need to change (plates, chairs, tables, ushers), so you know who to ask for a change before the day. |
+| **"How do I tell everyone?"** | Type the same message 200 times, or one generic broadcast. | **Write with AI** (Invites tab): type one sentence, such as "remind everyone the venue moved to The Palms, Lekki". The assistant writes the message with each guest's name and personal link, proposes who should get it and on which channel, and you send it with one tap. Buttons make it **Shorter, More formal, Warmer** or switch it to **Pidgin**. It also drafts vendor briefs and client updates, in **English or Nigerian Pidgin**. |
+| **"Is the gallery accessible?"** | Photos have no descriptions. | **Auto alt text:** a background job adds short image descriptions to Moments photos for screen-reader users. It never overwrites a caption someone typed and is never used to identify people. |
+
+### 5.2 How it keeps you in control
+
+- **It suggests; you decide.** The AI never changes anything by itself. Every suggestion appears as a draft that you review, and nothing is saved, sent or paid until you press a confirm button such as **Apply** or **Send**.
+- **It sees only what you're allowed to see.** Each AI request starts from the same permission check as the rest of the app. If a planner hides vendor prices, or you can't view money, the quote comparison runs **with no amounts in it at all**.
+- **Private data stays private.** Guest names, phone numbers and emails are never sent to the model. Free text such as notes is masked before it leaves Tiwa.
+- **Money is exact.** The model proposes percentages; Tiwa's own code does the arithmetic in whole kobo, so totals always match.
+- **Costs are capped.** Every call has a token and time limit, and there's a daily allowance per user and per event. Each call is logged (without its prompt text) so usage can be audited.
+- **It can be switched off.** The assistant sits behind the `ai.enabled` feature flag (`FLAG_AI_ENABLED`). Without a model key, the app uses built-in fake responses, so it runs and tests fully offline.
+
+### 5.3 Under the hood
+
+The assistant uses **Meta Muse Spark** through the Meta Model API (OpenAI-compatible chat completions in JSON mode), called from one gateway in `packages/ai`. The permission checks, masking, exact arithmetic and daily caps live in `packages/core/src/ai`, and each feature has its own prompt in `packages/ai/src/prompts` (plan, budget, compare, impact, message, caption).
+
+---
+
+## 6. User flows
+
+### 6.1 The journey through Tiwa
+
+```mermaid
+flowchart LR
+  A[Sign up] --> B{What brings you here?}
+  B -->|Hosting| H[Create event from a template]
+  B -->|Planning for clients| P[Planner workspace]
+  B -->|Providing services| V[Business profile]
+  H --> PL[Plan + budget<br/>AI drafts plan and split]
+  PL --> F[Find vendors and venues]
+  F --> Q[Request quotes]
+  V --> Q
+  Q --> C[Compare quotes<br/>AI flags gaps and fees]
+  C --> BK[Accept → versioned booking]
+  BK --> PAY[Pay milestones]
+  H --> G[Invite guests<br/>AI drafts the message]
+  G --> R[Guests RSVP, no account]
+  PAY --> D[Event day: run-of-show, check-in]
+  R --> D
+  D --> M[Moments gallery + reviews]
+  P --> H
+```
+
+### 6.2 From quote to paid booking
+
+```mermaid
+sequenceDiagram
+  actor Host
+  participant Tiwa
+  actor Vendor
+  Host->>Tiwa: Request a quote (brief, date, guests)
+  Tiwa->>Vendor: New enquiry (email / push)
+  Vendor->>Tiwa: Itemised quote (server computes totals)
+  Tiwa->>Host: Quote ready
+  Host->>Tiwa: Compare quotes (optional AI review)
+  Host->>Tiwa: Accept and agree to terms
+  Tiwa->>Tiwa: Create booking v1 + payment schedule + click-to-accept record
+  Host->>Tiwa: Pay deposit
+  Tiwa->>Tiwa: Verify payment webhook, write ledger
+  Tiwa->>Vendor: Deposit secured + booking brief
+  Host->>Tiwa: Request a change (e.g. more plates)
+  Vendor->>Tiwa: Accept → booking v2 (v1 kept read-only)
+```
+
+### 6.3 A guest's flow (no account)
+
+```mermaid
+flowchart LR
+  I[Invitation link<br/>WhatsApp / email / SMS] --> E[Event page]
+  E --> RS[RSVP + plus-ones + dietary needs]
+  E --> T[Ticket QR, for ticketed events]
+  T --> CI[Checked in at the door]
+  RS --> DAY[On the day]
+  CI --> DAY
+  DAY --> QR[Scan Moments QR]
+  QR --> UP[Upload photos + guestbook message]
+```
+
+### 6.4 The event day
+
+```mermaid
+flowchart LR
+  RO[Run-of-show item due] --> VC{Vendor checked in?}
+  VC -->|Yes| OK[Item on time]
+  VC -->|No / late| LATE[Mark late]
+  LATE --> DEP[Every dependent item flagged]
+  DEP --> AL[Owners alerted]
+  AL --> INC[Incident logged with owner + resolution]
+```
+
+---
+
+## 7. How it works
+
+### 7.1 One event, many people, server-enforced permissions
 Every event has **members**, each with a role: host, co-host, planner, planner staff, vendor or photographer. Every page and action asks the server, "may this person do this on this event?" Examples:
 - A vendor sees only their own booking brief and the guest count, never guests' phone numbers.
 - A co-host can approve quotes only up to an amount the host sets.
 - A planner decides whether the host can see vendor prices.
 
-### 5.2 Quotes become versioned bookings
+### 7.2 Quotes become versioned bookings
 1. A **quote** is an itemised offer: line items, tax, service charge, travel fee, expiry and cancellation terms. The **server** computes all totals.
 2. Accepting it creates a **booking (version 1)**. The booking records the scope, terms and payment schedule, and stores a click-to-accept record (time, user, IP).
 3. A **change request** creates version 2, which both sides must accept. Old versions stay read-only, so there's always proof of what was agreed.
 4. A booking's **status** (requested → confirmed → completed…) moves only through server rules.
 5. **Venues** cannot be double-booked: the database allows one held or confirmed booking per space, date and time slot.
 
-### 5.3 Money is handled carefully
+### 7.3 Money is handled carefully
 - **Exact amounts.** All amounts are whole numbers in the smallest currency unit (kobo for naira), stored with a currency code, so rounding errors are impossible.
 - **Payment modes:**
   - **Direct:** paid at checkout and split to the vendor.
@@ -189,7 +292,7 @@ Every event has **members**, each with a role: host, co-host, planner, planner s
 - **Ledger.** Every movement is written to a **double-entry ledger** and reconciled daily.
 - **Webhooks.** Payment notifications from the provider are verified and processed only once. A booking changes state only after a verified payment.
 
-### 5.4 Fast pages, slow work in the background
+### 7.4 Fast pages, slow work in the background
 The web app answers people instantly and hands slow work to a separate **worker** through a job queue. The worker handles:
 - photo thumbnails and video processing (ffmpeg);
 - sending invitations and notifications;
@@ -197,35 +300,116 @@ The web app answers people instantly and hands slow work to a separate **worker*
 - ZIP downloads of galleries;
 - scheduled jobs: expiring old quotes, holds and ticket reservations, deadline alerts, reminders, rating updates and media clean-up.
 
-### 5.5 Files go straight to storage
+### 7.5 Files go straight to storage
 Browsers upload photos and documents **directly to object storage** using short-lived signed links, so large files never pass through the web server. Photos are resized on the phone first. Private files (guest photos, receipts, verification documents) are only served through signed links. Each file is limited to 1 MB for now.
 
-### 5.6 Guests without accounts
+### 7.6 Guests without accounts
 Guests are identified by a **signed link or ticket**, not an account. That keeps RSVPs and uploads to one tap. Abuse is controlled with rate limits and moderation.
 
-### 5.7 Any event, any country
+### 7.7 Any event, any country
 Event types, labels, currencies, taxes and payment providers live in **configuration** (`packages/config`), not in the screens. Adding a new event type or a new country is a configuration change.
 
 ---
 
-## 6. Architecture and stack
+## 8. Architecture and stack
 
-```
-Browser (phone / desktop, installable PWA)
-   │
-   ├──► Web app + API  ── Next.js 16 on Vercel (London region)
-   │        │   ├──► Postgres (Neon)            permanent data
-   │        │   ├──► Redis / Valkey (Layerbase) job queue, rate limits, live updates
-   │        │   └──► Email (SMTP)                sign-in, reset, notifications
-   │        │
-   ├──── direct upload / download ───► Cloudflare R2 (S3-compatible storage)
-   │
-Worker (Node + BullMQ + ffmpeg) on Render ──► Postgres, Redis, R2, email
-cron-job.org ──► worker /health every 10 min (keeps the free worker awake)
+### 8.1 System overview
+
+```mermaid
+flowchart TB
+  subgraph Clients
+    PH[Phone / desktop browser<br/>installable PWA, works offline on the day]
+    GU[Guests via signed links<br/>no account]
+  end
+
+  subgraph Vercel["Vercel · London (lhr1)"]
+    WEB[Next.js 16 web app<br/>server components + server actions + API routes]
+  end
+
+  subgraph Domain["Shared TypeScript packages"]
+    CORE[packages/core<br/>business rules, permissions, money, state machines]
+    AI[packages/ai<br/>LLM gateway + prompts]
+    ADP[adapters: payments · messaging · storage · moderation]
+  end
+
+  subgraph Render["Render · Docker"]
+    WK[Worker<br/>BullMQ jobs + ffmpeg + schedules]
+  end
+
+  DB[(Neon Postgres<br/>permanent record)]
+  RD[(Layerbase Valkey / Redis<br/>queue · rate limits · live updates)]
+  R2[(Cloudflare R2<br/>private + public buckets)]
+  LLM[[Meta Muse Spark<br/>Meta Model API]]
+  EXT[[Paystack / Flutterwave · Gmail SMTP<br/>WhatsApp Cloud API · Web Push]]
+  CRON[[cron-job.org<br/>pings /health every 10 min]]
+
+  PH --> WEB
+  GU --> WEB
+  PH -. signed upload / download .-> R2
+  WEB --> CORE
+  WK --> CORE
+  CORE --> AI --> LLM
+  CORE --> ADP --> EXT
+  CORE --> DB
+  WEB <--> RD
+  WK <--> RD
+  WK --> R2
+  CRON --> WK
 ```
 
-| Layer | Technology |
-|---|---|
+### 8.2 How one action flows through the system
+
+Take "host accepts a quote":
+
+1. **Browser → server action.** The button calls a Next.js server action; there's no separate REST layer to keep in sync.
+2. **Session and permission.** The action reads the Better Auth session, then `packages/core` resolves the person's role **on that event** and checks `quote.accept`. If it fails, nothing else runs.
+3. **Validation.** Input is checked with Zod schemas shared by the client and the server.
+4. **Business rule.** Core runs the booking state machine, computes totals in integer kobo, and writes the booking, its version, its milestones and the click-to-accept record in **one database transaction**.
+5. **Outbox.** In the same transaction, an outbox row records "booking confirmed" and an audit entry is written.
+6. **Background work.** The worker picks the event off the queue and sends the email, push and WhatsApp notifications, retrying with backoff if a provider is down.
+7. **Live update.** A Redis pub/sub message refreshes the vendor's open page within seconds.
+
+### 8.3 Layers
+
+| Layer | What lives there | Rule |
+|---|---|---|
+| **UI** (`apps/web/app`, `packages/ui`) | Pages, layouts, design-system components, `messages/en.json` | Phone layout first; loading, empty and error states on every page; no business logic |
+| **Server actions and API** (`apps/web`) | Thin handlers, webhooks, health | Authenticate, call core, return; never touch money or permissions directly |
+| **Domain** (`packages/core`) | Events, guests, quotes, bookings, payments, ledger, budget, planner, AI orchestration | Every rule lives here, with unit tests; the only place state changes |
+| **Adapters** (`packages/payments`, `messaging`, `storage`, `moderation`, `ai`) | One interface per outside service, each with a **Fake** | Swap providers by configuration; run and test with no keys |
+| **Data** (`packages/db`) | Prisma schema, migrations, hand-written SQL indexes | Migrations only (never `db push`); money stored as `BigInt` minor units |
+| **Config** (`packages/config`) | Typed env, feature flags, event types, vendor categories, currencies | Nothing country-, currency- or event-specific in code |
+
+### 8.4 Stack
+
+| Concern | Technology | Why |
+|---|---|---|
+| Web framework | Next.js 16 (App Router, React Server Components, server actions), React, Tailwind CSS | Fast first load on phones, server-side data and permissions, one deploy |
+| Installable app | Serwist service worker, web manifest | Add to home screen; event-day pages work offline and sync later |
+| Internationalisation | next-intl | Every string in `messages/en.json`; new languages without code changes |
+| Auth | Better Auth (username + password, email magic link, Google; phone OTP ready but off) | Sessions in our own database, no vendor lock-in |
+| Database | PostgreSQL (Neon) + Prisma, `citext` and `pg_trgm` | Relational integrity for money and bookings; fuzzy vendor search |
+| Queue, cache, realtime | Valkey/Redis (Layerbase) + BullMQ + ioredis pub/sub | Retries, schedules and live updates without extra services |
+| Files | S3 API on Cloudflare R2 (MinIO/S3Mock locally) | Direct browser uploads, no egress fees |
+| Media processing | ffmpeg + image pipeline in the worker | Thumbnails, blur placeholders, EXIF GPS removal, video posters |
+| AI | Meta Muse Spark via Meta Model API, JSON mode | One gateway, capped tokens, permission-filtered context |
+| Email | react-email templates; Nodemailer over SMTP (Resend adapter ready) | Branded, table-based emails that render in every inbox |
+| Payments | Paystack / Flutterwave adapters + fake provider; double-entry ledger | Card, transfer and USSD checkout; auditable money |
+| Messaging | Email, Web Push (VAPID), WhatsApp Cloud API, SMS (Termii) adapters | Reach guests where they already are |
+| Monorepo | pnpm workspaces + Turborepo, strict TypeScript, ESLint boundaries | Shared types end to end; packages can't import the wrong layer |
+| Quality | Vitest, Playwright (390 px + 1280 px), Lighthouse CI, size-limit, axe | Every flow tested on phone and desktop sizes |
+| Observability | Sentry, `/api/health`, worker `/health`, structured logs | Errors with context and without personal data |
+
+### 8.5 Design principles
+
+- **The server decides.** Permissions, booking and payment states, ticket capacity and review eligibility are enforced on the server, never trusted from the browser.
+- **Money is integers.** `BigInt` minor units plus an ISO currency code, everywhere.
+- **AI suggests, people confirm.** No AI output changes data without a confirm tap.
+- **Private by default.** Guests need no account; contact details are visible only to roles that need them; uploads are scanned and GPS-stripped.
+- **Risky features behind flags.** Held payments, payouts, bulk WhatsApp and AI default to off in production.
+- **Any event, any country.** Templates, labels, currencies and taxes come from configuration.
+
+---|---|
 | Web | Next.js 16 (App Router, server components and server actions), React, Tailwind, next-intl, Serwist (PWA) |
 | Auth | Better Auth: username + password, email magic link, Google; phone OTP ready but off |
 | Data | PostgreSQL + Prisma (with hand-written indexes for search and availability) |
@@ -238,11 +422,11 @@ cron-job.org ──► worker /health every 10 min (keeps the free worker awake)
 | Tests | Vitest (unit and integration), Playwright (end-to-end at 390 px and 1280 px), Lighthouse CI, size-limit |
 | Monitoring | Sentry, `/api/health` and the worker's `/health` |
 
-Every external service sits behind an **adapter with a fake implementation**, so the whole app runs and is tested without real keys.
+
 
 ---
 
-## 7. Repository layout
+## 9. Repository layout
 
 ```
 apps/
@@ -264,7 +448,7 @@ docs/           Progress log, decision log, runbooks (deploy-free-stack.md)
 
 ---
 
-## 8. Run it locally
+## 10. Run it locally
 
 **You need:**
 - Node.js 22.
@@ -301,61 +485,3 @@ Emails sent locally are caught by Mailpit at http://localhost:8025.
 
 ---
 
-## 9. Deploying
-
-Production runs entirely on free tiers. The step-by-step guide is [docs/runbooks/deploy-free-stack.md](docs/runbooks/deploy-free-stack.md).
-
-| Piece | Service |
-|---|---|
-| Web app | Vercel (`apps/web`, settings in `apps/web/vercel.json`) |
-| Worker | Render free web service from `render.yaml` (Docker, includes ffmpeg) |
-| Keep-awake | cron-job.org pings the worker's `/health` every 10 minutes |
-| Database | Neon Postgres (pooled `DATABASE_URL`, direct `DIRECT_DATABASE_URL` for migrations) |
-| Redis | Layerbase Valkey (`rediss://`, TLS servername sent automatically) |
-| Files | Cloudflare R2: `tiwa-media-private` and `tiwa-media-public` |
-| Email | Gmail SMTP until a sending domain is verified |
-
-Production settings live in `.env.production.local`, which git ignores. Never commit secrets.
-
----
-
-## 10. Testing and quality
-
-- **Business rules** in `packages/core` have unit tests. Every server action has an integration test, and every user flow has a Playwright test.
-- **Performance budgets:** each page is checked with Lighthouse and JavaScript size budgets.
-- **Responsive:** every page works from 360 px to 1440 px, phone layout first, in light and dark themes.
-- **Accessibility:** checked with axe, and usable with the keyboard alone.
-- **Feature flags** keep risky features off in production until they're ready: held payments, payouts, bulk WhatsApp and AI.
-
----
-
-## 11. Current status and limits
-
-- The app is **live** with the core flows working: accounts, events, guests and invitations, the marketplace, quotes and bookings, budget, the planner workspace, tickets and check-in, the event day, chat and notifications.
-- **Phases still in progress** are tracked in [BUILD_PLAN.md](BUILD_PLAN.md) and [docs/PROGRESS.md](docs/PROGRESS.md).
-- **Payments** on the live demo use the test provider. Real Paystack or Flutterwave checkout needs live keys. Held payments and payouts are built but switched off until legal and partner sign-off.
-- **Phone sign-in** is shown as "Coming soon" until an SMS/WhatsApp OTP sender is approved.
-- **Upload size** is capped at 1 MB per file for now, to stay within free-tier storage.
-- **Free-tier limits:**
-  - Redis allows 20 connections.
-  - Gmail sends about 500 emails a day.
-  - The database has 0.5 GB of storage.
-  - File storage has 10 GB.
-- **Out of scope for the MVP:** native apps, face matching, highlight videos, print sales, a drag-and-drop seating editor and payment providers beyond Paystack and Flutterwave.
-
----
-
-## 12. Project documents
-
-Read these in order if you're building on Tiwa:
-
-| File | Contents |
-|---|---|
-| [AGENTS.md](AGENTS.md) | Working rules, build loop, glossary |
-| [decision.md](decision.md) | Every core decision and the decision log |
-| [PRD.md](PRD.md) | Product requirements with IDs (`EVT-03`, `PAY-07`…) |
-| [arc.md](arc.md) | Architecture, services and environments |
-| [user_flow.md](user_flow.md) | Every user journey with acceptance checks |
-| [Backend.md](Backend.md) | Schema, state machines, permissions, APIs, jobs, payments, ledger |
-| [Frontend.md](Frontend.md) | Design system, components, page specs, performance rules |
-| [BUILD_PLAN.md](BUILD_PLAN.md) | Phases, tasks and progress |
