@@ -543,3 +543,11 @@ Template:
 - Why: owner asked to keep free-tier storage small for now (500 KB–1 MB per file).
 - Affects: packages/core shared/upload-limit (+test) and the 11 limit constants; apps/web gallery-uploader, resize-image, settings-forms, guest-dialogs, messages/en.json.
 - Deploy: Render Blueprint `tiwa` → service tiwa-worker-cy5y (https://tiwa-worker-cy5y.onrender.com, /health 200, scheduled jobs running on Neon + Layerbase). Vercel project `tiwa`, root apps/web, address https://tiwa-events.vercel.app (tiwa and tiwa-app were taken), 28 env vars, GitHub connected. All set from the CLI; secrets never printed.
+
+### 2026-11-04 — One production address (fixes Google state_mismatch)
+- ID: D-X59
+- Date: 2026-11-04
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: In production the proxy sends every other host (deployment URLs, tiwa-xi.vercel.app) to the APP_URL host with a 308, keeping path and query. The proxy now runs on all non-static paths; the signed-out redirect still covers only app pages.
+- Why: Google sign-in started on another Vercel address set its state cookie there, then Google returned to tiwa-events.vercel.app without it: ?error=state_mismatch.
+- Affects: apps/web proxy.ts, lib/proxy.test.ts.

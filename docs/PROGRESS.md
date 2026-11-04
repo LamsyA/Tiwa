@@ -239,3 +239,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - Deploy: Render worker live (/health 200, jobs running); Vercel project tiwa (tiwa-events.vercel.app) configured from the CLI.
 - Vercel build: turbo envMode loose so builds see platform env vars (strict mode hid DATABASE_URL).
 - Vercel runtime: ship Prisma rhel engine (binaryTargets + outputFileTracingIncludes), functions in lhr1 next to Neon.
+- D-X59: production redirects stray hosts to APP_URL (Google state_mismatch). proxy tests 3/3.
