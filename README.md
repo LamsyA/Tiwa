@@ -186,7 +186,7 @@ Planning an event is a long chain of decisions: how to split the money, which qu
 - **Private data stays private.** Guest names, phone numbers and emails are never sent to the model. Free text such as notes is masked before it leaves Tiwa.
 - **Money is exact.** The model proposes percentages; Tiwa's own code does the arithmetic in whole kobo, so totals always match.
 - **Costs are capped.** Every call has a token and time limit, and there's a daily allowance per user and per event. Each call is logged (without its prompt text) so usage can be audited.
-- **It can be switched off.** The assistant sits behind the `ai.enabled` feature flag (`FLAG_AI_ENABLED`). Without a model key, the app uses built-in fake responses, so it runs and tests fully offline.
+
 
 ### 5.3 Under the hood
 
@@ -406,10 +406,11 @@ Take "host accepts a quote":
 - **Money is integers.** `BigInt` minor units plus an ISO currency code, everywhere.
 - **AI suggests, people confirm.** No AI output changes data without a confirm tap.
 - **Private by default.** Guests need no account; contact details are visible only to roles that need them; uploads are scanned and GPS-stripped.
-- **Risky features behind flags.** Held payments, payouts, bulk WhatsApp and AI default to off in production.
+
 - **Any event, any country.** Templates, labels, currencies and taxes come from configuration.
 
----|---|
+| Layer | Technology |
+|---|---|
 | Web | Next.js 16 (App Router, server components and server actions), React, Tailwind, next-intl, Serwist (PWA) |
 | Auth | Better Auth: username + password, email magic link, Google; phone OTP ready but off |
 | Data | PostgreSQL + Prisma (with hand-written indexes for search and availability) |
@@ -421,8 +422,6 @@ Take "host accepts a quote":
 | Monorepo | pnpm workspaces + Turborepo, strict TypeScript |
 | Tests | Vitest (unit and integration), Playwright (end-to-end at 390 px and 1280 px), Lighthouse CI, size-limit |
 | Monitoring | Sentry, `/api/health` and the worker's `/health` |
-
-
 
 ---
 
