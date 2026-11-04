@@ -91,7 +91,7 @@ Use the latest **stable** version of each tool at project start and pin exact ve
 | SMS | Termii | |
 | WhatsApp | Meta WhatsApp Cloud API; `wa.me` links as free mode | |
 | Content moderation | `ModerationProvider` adapter (e.g. AWS Rekognition, Google Vision SafeSearch, or Hive) + Cloudflare CSAM Scanning Tool on the media domain | |
-| LLM | `LlmProvider` adapter (any provider: Anthropic, OpenAI, Google, open models) | Default model set by env var |
+| LLM | `LlmProvider` adapter (any provider: Muse, open models) | Default model set by env var |
 | PWA | Serwist (service worker) + web manifest | Offline event day and check-in |
 | QR | `qrcode` (generate), `@zxing/browser` or `BarcodeDetector` API (scan) | Scanner loaded on demand |
 | PDF | `@react-pdf/renderer` in worker | Receipts, guestbook, budget export |
@@ -344,7 +344,7 @@ WEB_PUSH_VAPID_PRIVATE_KEY=
 # Moderation & AI
 MODERATION_PROVIDER=fake
 MODERATION_API_KEY=
-LLM_PROVIDER=fake                  # fake | anthropic | openai | google | ...
+MUSE_LLM_PROVIDER=fake                  # fake | meta muse 
 LLM_API_KEY=
 LLM_MODEL_DRAFT=                   # larger model for drafting
 LLM_MODEL_FAST=                    # small model for captions/classification
