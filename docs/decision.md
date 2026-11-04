@@ -527,3 +527,10 @@ Template:
 - Decision: Every real email sender (Gmail SMTP and Resend, web and worker) skips addresses that cannot receive mail: the auth placeholders `@phone.tiwa.local` / `@user.tiwa.local` and reserved test names (`.test`, `.example`, `.invalid`, `.localhost`, `.local`, example.com/net/org). They return a "skipped-placeholder" id instead of sending, so nothing bounces. Helper `isPlaceholderEmail` / `isDeliverableEmail` lives in packages/messaging (packages/config validates env on import, which broke messaging's tests). No data is deleted: placeholder accounts are valid; only sending to them was wrong. The 7 bounces came from running the worker container locally with the real `.env` during D-X55 testing, which drained queued notifications to test accounts through Gmail.
 - Why: owner saw "Address not found" bounces; bounces hurt the sending account's reputation.
 - Affects: packages/messaging email-address (+test), email, smtp (+test); apps/web lib/senders, lib/otp.
+
+### 2026-11-04 — Redis TLS servername (SNI); production database ready
+- ID: D-X57
+- Status: LOCKED (owner, 2026-11-04)
+- Decision: Every Redis client (10: web live/chat/rate-limit/health, worker queue/media/invites/CSV) now spreads `redisTls(url)` from packages/config, which sets `tls.servername` to the URL's host for `rediss://`. Layerbase routes connections by TLS servername and refuses them without it ("ERR TLS SNI required"); ioredis does not set it from a URL by itself. Production checks from this machine: Neon PostgreSQL 18.6 reachable through the pooled URL; all 34 migrations applied over the direct URL (74 tables, both hand-written indexes, citext + pg_trgm); Layerbase Redis 7.2.15 with `maxmemory-policy noeviction` (what BullMQ needs), first connect ~7.7 s while waking from hibernation.
+- Why: the first live test against Layerbase failed.
+- Affects: packages/config redis (+test); apps/web lib/live, lib/chat-live, lib/rate-store, api/health; apps/worker index, jobs/media, jobs/send-invite, jobs/csv-import.

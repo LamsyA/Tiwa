@@ -1,3 +1,4 @@
+import { redisTls } from '@tiwa/config';
 import { Redis } from 'ioredis';
 import type { RateLimitStore } from '@tiwa/core/auth/rate-limit';
 import { RATE_LIMITS } from '@tiwa/core/auth/rate-limit';
@@ -6,7 +7,10 @@ let client: Redis | undefined;
 
 function getClient(): Redis {
   if (!client) {
-    client = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: 3 });
+    client = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
+      ...redisTls(process.env.REDIS_URL ?? ''),
+      maxRetriesPerRequest: 3,
+    });
     client.on('error', () => {
       // Rate limiting degrades open if Redis is unreachable; failures are
       // visible in logs and the limiter treats errors as allow (fail-open is

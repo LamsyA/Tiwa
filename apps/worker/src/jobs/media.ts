@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { env } from '@tiwa/config';
+import { env, redisTls } from '@tiwa/config';
 import { createLogger } from '@tiwa/core';
 import { createModerationProvider, type ModerationProvider } from '@tiwa/moderation';
 import { prisma } from '@tiwa/db';
@@ -79,7 +79,11 @@ function moderation(overridden?: ModerationProvider): ModerationProvider {
 const globalLive = globalThis as unknown as { __tiwaWorkerMedia?: Redis };
 
 function live(): Redis {
-  globalLive.__tiwaWorkerMedia ??= new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, lazyConnect: false });
+  globalLive.__tiwaWorkerMedia ??= new Redis(env.REDIS_URL, {
+    ...redisTls(env.REDIS_URL),
+    maxRetriesPerRequest: 2,
+    lazyConnect: false,
+  });
   globalLive.__tiwaWorkerMedia.on('error', () => undefined);
   return globalLive.__tiwaWorkerMedia;
 }

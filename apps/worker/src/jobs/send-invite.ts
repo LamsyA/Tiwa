@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { WHATSAPP_TEMPLATES, env } from '@tiwa/config';
+import { WHATSAPP_TEMPLATES, env, redisTls } from '@tiwa/config';
 import { createLogger, isEnabled, rsvpLink } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { InviteEmail, ReminderEmail, UpdateEmail, type EmailProvider } from '@tiwa/messaging';
@@ -36,7 +36,11 @@ export interface FanOutSink {
 const globalLive = globalThis as unknown as { __tiwaWorkerInvites?: Redis };
 
 function live(): Redis {
-  globalLive.__tiwaWorkerInvites ??= new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, lazyConnect: false });
+  globalLive.__tiwaWorkerInvites ??= new Redis(env.REDIS_URL, {
+    ...redisTls(env.REDIS_URL),
+    maxRetriesPerRequest: 2,
+    lazyConnect: false,
+  });
   globalLive.__tiwaWorkerInvites.on('error', () => undefined);
   return globalLive.__tiwaWorkerInvites;
 }

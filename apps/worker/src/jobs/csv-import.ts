@@ -1,4 +1,4 @@
-import { env } from '@tiwa/config';
+import { env, redisTls } from '@tiwa/config';
 import {
   addGuests,
   applyCsvMapping,
@@ -45,7 +45,11 @@ export interface CsvImportResult {
 const globalRedis = globalThis as unknown as { __tiwaWorkerLive?: Redis };
 
 function live(): Redis {
-  globalRedis.__tiwaWorkerLive ??= new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, lazyConnect: false });
+  globalRedis.__tiwaWorkerLive ??= new Redis(env.REDIS_URL, {
+    ...redisTls(env.REDIS_URL),
+    maxRetriesPerRequest: 2,
+    lazyConnect: false,
+  });
   globalRedis.__tiwaWorkerLive.on('error', () => undefined);
   return globalRedis.__tiwaWorkerLive;
 }

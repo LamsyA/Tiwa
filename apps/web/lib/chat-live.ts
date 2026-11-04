@@ -1,4 +1,4 @@
-import { env } from '@tiwa/config';
+import { env, redisTls } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { Redis } from 'ioredis';
 
@@ -31,8 +31,8 @@ const globalHub = globalThis as unknown as { __tiwaChatHub?: Hub };
 
 function hub(): Hub {
   if (!globalHub.__tiwaChatHub) {
-    const publisher = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 });
-    const subscriber = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+    const publisher = new Redis(env.REDIS_URL, { ...redisTls(env.REDIS_URL), maxRetriesPerRequest: 2 });
+    const subscriber = new Redis(env.REDIS_URL, { ...redisTls(env.REDIS_URL), maxRetriesPerRequest: null });
     // Best-effort: clients re-sync on reconnect and poll as a backstop.
     publisher.on('error', () => undefined);
     subscriber.on('error', () => undefined);

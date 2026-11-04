@@ -1,3 +1,4 @@
+import { redisTls } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { NextResponse } from 'next/server';
 import { Redis } from 'ioredis';
@@ -18,6 +19,7 @@ export async function GET() {
   let redis: Redis | undefined;
   try {
     redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
+      ...redisTls(process.env.REDIS_URL ?? ''),
       lazyConnect: true,
       maxRetriesPerRequest: 0,
       connectTimeout: TIMEOUT_MS,

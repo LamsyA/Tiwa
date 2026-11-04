@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { Queue, Worker } from 'bullmq';
-import { env } from '@tiwa/config';
+import { env, redisTls } from '@tiwa/config';
 import { createLogger, scrubSentryEvent } from '@tiwa/core';
 import { Redis } from 'ioredis';
 import { DEADLINE_ALERTS_EVERY_MS, DEADLINE_ALERTS_JOB, handleDeadlineAlerts } from './jobs/deadline-alerts.js';
@@ -35,7 +35,7 @@ if (env.SENTRY_DSN) {
 const log = createLogger('worker');
 
 async function main() {
-  const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+  const connection = new Redis(env.REDIS_URL, { ...redisTls(env.REDIS_URL), maxRetriesPerRequest: null });
   connection.on('error', (error: unknown) => {
     log.error({ err: error instanceof Error ? error.message : String(error) }, 'redis error');
   });

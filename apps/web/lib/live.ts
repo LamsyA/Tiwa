@@ -1,4 +1,4 @@
-import { env } from '@tiwa/config';
+import { env, redisTls } from '@tiwa/config';
 import { Redis } from 'ioredis';
 
 // Live updates (D-A06): Redis pub/sub fan-out, delivered to browsers over
@@ -14,7 +14,11 @@ const globalLive = globalThis as unknown as { __tiwaLivePublisher?: Redis };
 
 function publisher(): Redis {
   if (!globalLive.__tiwaLivePublisher) {
-    const client = new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2, lazyConnect: false });
+    const client = new Redis(env.REDIS_URL, {
+      ...redisTls(env.REDIS_URL),
+      maxRetriesPerRequest: 2,
+      lazyConnect: false,
+    });
     // Publishing is best-effort: a Redis blip must never fail the user's write.
     client.on('error', () => undefined);
     globalLive.__tiwaLivePublisher = client;
@@ -46,7 +50,7 @@ export async function subscribeLive(
   channel: string,
   onMessage: (message: LiveMessage) => void,
 ): Promise<() => Promise<void>> {
-  const subscriber = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+  const subscriber = new Redis(env.REDIS_URL, { ...redisTls(env.REDIS_URL), maxRetriesPerRequest: null });
   subscriber.on('error', () => undefined);
   subscriber.on('message', (received, raw) => {
     if (received !== channel) return;

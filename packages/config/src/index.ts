@@ -10,3 +10,4 @@ export {
 export * from './event-types/index.js';
 export { DAY_SLOTS, VENUE_AMENITY_KEYS, type DaySlot, type VenueAmenity } from './marketplace.js';
 export { ACCOUNT_NUMBER_PATTERN, BANKS, bankName, banksFor, type Bank } from './banks.js';
+export { redisTls } from './redis.js';
