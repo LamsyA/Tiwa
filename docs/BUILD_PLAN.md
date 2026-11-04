@@ -454,7 +454,7 @@ Statuses: `TODO` · `IN PROGRESS` · `GATE FAILED` · `DONE`.
 **Goal:** helpful drafting that never changes data on its own.
 **Read first:** `PRD.md AI-*`, `UF-27`, `Backend.md §9.1`.
 
-- [ ] P15-T01 `packages/ai`: `LlmProvider` interface, Fake, at least one real adapter selected by env, prompt files with versions, Zod output schemas, token logging and caps. *(Started early under D-X31: PlanDrafter, Fake + Claude adapter by env, versioned prompt, JSON schema output, token logging; caps still to do.)*
+- [ ] P15-T01 `packages/ai`: `LlmProvider` interface, Fake, at least one real adapter selected by env, prompt files with versions, Zod output schemas, token logging and caps.
 - [ ] P15-T02 Permission-filtered context builder (runs queries as the actor; strips phones/emails).
 - [ ] P15-T03 Draft plan (tasks + budget split) with review-and-add UI. *(Tasks part built early under D-X31: "Plan with AI" on the Plan page with review-and-add; budget split still to do.)*
 - [ ] P15-T04 Compare quotes summary; guest-count impact list.

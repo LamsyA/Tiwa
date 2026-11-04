@@ -211,7 +211,7 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - P15-T07 done: e2e UF-27 one-prompt invite flow.
 
 ## 2026-11-03
-- P15-T01 done (D-X42): AI is Meta Muse only (Claude adapter + SDK removed); MuseClient with per-feature max_tokens, contact stripping, usage hook; versioned prompts; AiUsage table + daily caps per user/event.
+- P15-T01 done (D-X42): AI is Meta Muse only;MuseClient with per-feature max_tokens, contact stripping, usage hook; versioned prompts; AiUsage table + daily caps per user/event.
 - P15-T02 done: `aiEventContext` (flag + permissions as the actor, money hidden without money.view or when planner hides prices) + `aiSafeText`.
 - P15-T03 done: "Split with AI" on Money → review current → proposed per category → Apply (setAllocations).
 - P15-T04 done: "Compare with AI" on vendor category pages (read-only; no amounts for members without money access); "What if numbers change?" guest-count impact on Guests.
