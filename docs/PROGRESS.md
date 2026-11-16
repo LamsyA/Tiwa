@@ -247,3 +247,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X63: /money page for hosts (was 404); sign-in back to one full-resolution gele photo (q90).
 - README: added How AI helps you decide, user flow diagrams, fuller architecture (overview, request flow, layers, stack, principles).
 - D-X64: hire a planner — proposal request, planner proposal, accept & hire. core 4/4, e2e planner-proposal + demo-booking + quotes pass desktop and mobile. Known: day/progress.test fails without this change too.
+- D-X65: planner inbox/builder redesign (budget, real %, due dates), host planner entry points, venue optional, booked venue fills event. core 16/16 touched, e2e 16/16 desktop+mobile.

@@ -2,14 +2,16 @@
 
 import {
   Briefcase,
-  ClipboardList,
   CalendarDays,
+  ClipboardList,
   Home,
   Inbox,
-  LayoutGrid,
   Layers,
+  LayoutGrid,
   MoreHorizontal,
   Settings,
+  Sparkles,
+  Store,
   Sun,
   Users,
   Wallet,
@@ -45,6 +47,8 @@ const ICON = {
   overview: <LayoutGrid className="size-5" aria-hidden />,
   orders: <ClipboardList className="size-5" aria-hidden />,
   today: <Sun className="size-5" aria-hidden />,
+  planners: <Sparkles className="size-5" aria-hidden />,
+  vendors: <Store className="size-5" aria-hidden />,
 };
 
 /** Navigation config by role (Frontend.md §5.4). Single source of truth. */
@@ -109,6 +113,8 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
         sidebar: [
           item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
+          item('planners', 'Find a planner', '/planners', ICON.planners),
+          item('marketplace', 'Find vendors', '/vendors', ICON.vendors),
           item('orders', 'Vendor orders', '/orders', ICON.orders),
           item('inbox', 'Inbox', '/inbox', ICON.inbox),
           item('money', 'Money', '/money', ICON.money),

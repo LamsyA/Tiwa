@@ -72,6 +72,13 @@ export default async function EventOverviewPage({
   const { id } = await params;
   const { welcome } = await searchParams;
   const { ctx, access, invitesOn, momentsOn, ticketsOn } = await loadEventPage(id, '');
+  // D-X65: hosts without a planner get a "Hire a planner" card on the overview.
+  const offerPlanner =
+    (access?.role === 'HOST' || access?.role === 'CO_HOST') &&
+    !(await prisma.eventParticipant.findFirst({
+      where: { eventId: id, role: 'PLANNER', removedAt: null },
+      select: { id: true },
+    }));
   const t = await getTranslations('events');
   const overview = await getEventOverview(ctx.actor, id, new Date(), access);
   const { event, progress, deadlines, team } = overview;
@@ -137,7 +144,10 @@ export default async function EventOverviewPage({
         )}
         {event.status === 'DRAFT' && (
           <Banner tone="warning" title={t('overview.draftBanner')}>
-            <Link href={`/events/new?id=${id}`} className="text-brand-strong font-semibold underline-offset-4 hover:underline">
+            <Link
+              href={`/events/new?id=${id}`}
+              className="text-brand-strong font-semibold underline-offset-4 hover:underline"
+            >
               {t('overview.continueSetup')}
             </Link>
           </Banner>
@@ -302,6 +312,27 @@ export default async function EventOverviewPage({
                 )}
               </div>
             </Panel>
+
+            {offerPlanner && (
+              <section className="relative overflow-hidden rounded-3xl bg-[#1c1917] p-5 text-white shadow-[var(--shadow-2)] sm:p-6">
+                <span aria-hidden className="absolute -top-12 -right-8 size-40 rounded-full bg-[#b83a17]/40 blur-3xl" />
+                <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold tracking-[0.18em] text-[#f2b705] uppercase">
+                      {t('overview.plannerEyebrow')}
+                    </p>
+                    <h2 className="font-display mt-1 text-xl font-bold tracking-tight">{t('overview.plannerTitle')}</h2>
+                    <p className="mt-1 text-sm text-white/70">{t('overview.plannerBody')}</p>
+                  </div>
+                  <Link
+                    href={`/planners?eventId=${id}`}
+                    className="inline-flex h-11 shrink-0 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-[#1c1917] transition hover:bg-white/90"
+                  >
+                    {t('overview.plannerCta')}
+                  </Link>
+                </div>
+              </section>
+            )}
 
             <Panel
               icon={Store}

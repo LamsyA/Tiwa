@@ -258,7 +258,7 @@
     "venueHeading": "Where and when",
     "dayLabel": "Day {n}",
     "dayTitleLabel": "Day name (optional)",
-    "venueNameLabel": "Venue",
+    "venueNameLabel": "Venue (optional)",
     "venueNamePlaceholder": "Venue not decided yet",
     "addressLabel": "Address (optional)",
     "addDay": "Add another day",
@@ -396,7 +396,11 @@
       },
       "guestsEmpty": "No guests yet. Add them with their email so invites reach them.",
       "guestsOpen": "{count, plural, =0 {Add guests} one {See # guest} other {See all # guests}}",
-      "startPlan": "Build your checklist"
+      "startPlan": "Build your checklist",
+      "plannerEyebrow": "Professional planning",
+      "plannerTitle": "Want someone to run it for you?",
+      "plannerBody": "Ask planners for a proposal. Accept one and they join this event straight away.",
+      "plannerCta": "Find a planner"
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
@@ -1369,7 +1373,7 @@
     "customFormat": "Which fits it best?",
     "customStart": "Start planning",
     "basicsBody": "Name it and set the date. You can change these any time.",
-    "venueBody": "Add the venue for each day, or leave it for later.",
+    "venueBody": "Set the date now. The venue can wait: book one on Tiwa later and it’s added here automatically, or type it in if it isn’t on Tiwa.",
     "guestsBody": "A rough number and budget is fine to start.",
     "featuresBody": "Turn on what you need. You can switch these later in settings.",
     "readiness": {
@@ -1403,7 +1407,9 @@
           "body": "A run-of-show keeps everyone on time"
         }
       }
-    }
+    },
+    "venueLaterTitle": "No venue yet? That’s fine.",
+    "venueLaterBody": "Skip it for now. When you book a venue through Tiwa, its name and address are added to your event and its calendar is blocked for your date."
   },
   "shared": {
     "headcount": {
@@ -2089,8 +2095,8 @@
     "qty": "Qty",
     "unitPrice": "Unit price",
     "addItem": "Add item",
-    "taxLabel": "Tax %",
-    "serviceLabel": "Service %",
+    "taxLabel": "Tax (%)",
+    "serviceLabel": "Service charge (%)",
     "travelLabel": "Travel fee",
     "termsLabel": "Cancellation terms",
     "termsPlaceholder": "e.g. 50% refund if cancelled 7+ days before",
@@ -2180,7 +2186,37 @@
     },
     "proposalInboxTitle": "Proposal requests",
     "proposalInboxBody": "Hosts who want to hire you. Open a request to read the brief and send a proposal.",
-    "proposalBuilderTitle": "Write a proposal"
+    "proposalBuilderTitle": "Write a proposal",
+    "briefBudgetFact": "Client budget",
+    "builder": {
+      "depositLabel": "Deposit",
+      "balanceLabel": "Balance",
+      "paymentLabel": "Payment",
+      "due": {
+        "onAccept": "When the client accepts",
+        "daysBefore": "{days} days before the event"
+      },
+      "colService": "What’s included",
+      "removeLine": "Remove line",
+      "addLine": "Add a line",
+      "feesHeading": "Fees and charges",
+      "planShare": "{percent}% of the total scheduled",
+      "instalmentName": "Payment name",
+      "removeInstalment": "Remove payment",
+      "addInstalment": "Add a payment",
+      "noteLabel": "Message to the client (optional)",
+      "notePlaceholder": "e.g. Thank you for considering us. This covers everything from the first vendor call to the last guest leaving.",
+      "summaryTitle": "Client pays",
+      "totalHint": "Total including fees and charges",
+      "subtotal": "Subtotal",
+      "clientBudget": "Their budget",
+      "overBudget": "Over their budget by",
+      "withinBudget": "Within their budget by",
+      "planOver": "The payments add up to more than 100%. Lower one of them.",
+      "fillHint": "Name every line, add a price and schedule at least one payment."
+    },
+    "requestsTitle": "New requests",
+    "noBudget": "No budget given"
   },
   "bookings": {
     "title": "Booking",

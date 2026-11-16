@@ -91,6 +91,43 @@ export const instantBookSchema = z.object({
 });
 
 /** Instant booking (QTE-06): no quote step; price comes from the space's slot price. */
+/**
+ * D-X65: a venue booked through Tiwa becomes the event's venue for that day.
+ * Fills the day's venue name (venue · space) and address (the venue's city)
+ * only where they are empty, so a venue the host typed in is never replaced.
+ * A day that doesn't exist yet is created for the booked date.
+ */
+export async function attachVenueToEvent(
+  tx: Prisma.TransactionClient,
+  input: { eventId: string; vendorOrgId: string; spaceId: string | null; date: Date },
+): Promise<void> {
+  const [org, space] = await Promise.all([
+    tx.organization.findUnique({
+      where: { id: input.vendorOrgId },
+      select: { name: true, profile: { select: { city: true } } },
+    }),
+    input.spaceId ? tx.venueSpace.findUnique({ where: { id: input.spaceId }, select: { name: true } }) : null,
+  ]);
+  if (!org) return;
+  const venueName = space ? `${org.name} · ${space.name}` : org.name;
+  const address = org.profile?.city ?? null;
+  const day = await tx.eventDay.findFirst({
+    where: { eventId: input.eventId, date: input.date },
+    select: { id: true, venueName: true, address: true },
+  });
+  if (!day) {
+    await tx.eventDay.create({ data: { eventId: input.eventId, date: input.date, venueName, address } });
+    return;
+  }
+  await tx.eventDay.update({
+    where: { id: day.id },
+    data: {
+      ...(day.venueName ? {} : { venueName }),
+      ...(day.address || !address ? {} : { address }),
+    },
+  });
+}
+
 export async function instantBook(actor: UserActor, raw: z.infer<typeof instantBookSchema>) {
   const input = instantBookSchema.parse(raw);
   await requireEventAccess(actor, input.eventId, 'event.edit');
@@ -187,6 +224,12 @@ export async function instantBook(actor: UserActor, raw: z.infer<typeof instantB
         }
         throw error;
       }
+      await attachVenueToEvent(tx, {
+        eventId: input.eventId,
+        vendorOrgId: input.vendorOrgId,
+        spaceId: input.spaceId ?? null,
+        date,
+      });
       await audit(tx, {
         actor,
         action: 'booking.instant',

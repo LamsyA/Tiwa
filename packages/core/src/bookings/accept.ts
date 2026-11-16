@@ -7,7 +7,7 @@ import { isEnabled } from '../flags/flags.js';
 import { ConflictError, FeatureDisabledError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { mulBps } from '../shared/money.js';
 import { audit, enqueue } from '../shared/outbox.js';
-import { checkVenueAvailability } from './venue.js';
+import { attachVenueToEvent, checkVenueAvailability } from './venue.js';
 import { ensureBookingThread, mirrorToEventTeam, postCard } from '../chat/cards.js';
 import { createLogger } from '../shared/logger.js';
 
@@ -245,6 +245,14 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
             throw new ConflictError('That date was just booked', { key: 'slotTaken' });
           }
           throw error;
+        }
+        if (quote.spaceId || category === 'venue') {
+          await attachVenueToEvent(tx, {
+            eventId: quote.eventId,
+            vendorOrgId: quote.vendorOrgId,
+            spaceId: quote.spaceId,
+            date: serviceDate,
+          });
         }
       }
       if (input.declineOthers) {

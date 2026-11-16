@@ -571,6 +571,13 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
         {step === 'venue' && (
           <>
             {errors.days && <Banner tone="danger">{errors.days}</Banner>}
+            <div className="bg-brand-soft/40 border-brand/20 flex items-start gap-3 rounded-2xl border p-4">
+              <Sparkles aria-hidden className="text-brand-strong mt-0.5 size-5 shrink-0" />
+              <div className="text-sm">
+                <p className="font-semibold">{t('venueLaterTitle')}</p>
+                <p className="text-muted mt-0.5">{t('venueLaterBody')}</p>
+              </div>
+            </div>
             {state.days.map((day, dayIndex) => {
               const update = (patch: Partial<Day>) =>
                 set(

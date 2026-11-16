@@ -2,7 +2,7 @@ import { PLANNING_CATEGORY } from '@tiwa/config';
 import { getEnquiry, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { MoneyText } from '@tiwa/ui';
-import { CalendarDays, MapPin, MessageSquareText, Users } from 'lucide-react';
+import { CalendarDays, MapPin, MessageSquareText, Users, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { AppFrame } from '@/components/app-frame.js';
@@ -64,10 +64,29 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
         : 'closed';
 
   const facts = [
-    brief.startsAt ? { icon: CalendarDays, label: t('briefDate'), value: brief.startsAt.slice(0, 10) } : null,
+    brief.startsAt
+      ? {
+          icon: CalendarDays,
+          label: t('briefDate'),
+          value: new Intl.DateTimeFormat('en', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            timeZone: brief.timezone ?? 'UTC',
+          }).format(new Date(brief.startsAt)),
+        }
+      : null,
     brief.venue ? { icon: MapPin, label: t('briefVenue'), value: brief.venue } : null,
     typeof brief.expectedGuests === 'number'
       ? { icon: Users, label: t('briefGuests'), value: String(brief.expectedGuests) }
+      : null,
+    brief.budgetMaxMinor && brief.budgetMaxMinor !== '0'
+      ? {
+          icon: Wallet,
+          label: t('briefBudgetFact'),
+          value: <MoneyText value={brief.budgetMaxMinor} currency={enquiry.event.currency} />,
+        }
       : null,
   ].filter((fact): fact is NonNullable<typeof fact> => fact !== null);
 
@@ -105,7 +124,7 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
         >
           <h2 className="font-display text-lg font-bold">{t('briefHeading')}</h2>
           {facts.length > 0 && (
-            <dl className="grid gap-3 sm:grid-cols-3">
+            <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {facts.map(({ icon: Icon, label, value }) => (
                 <div key={label} className="bg-surface-2 flex items-center gap-3 rounded-2xl p-3">
                   <span className="bg-brand-soft text-brand-strong flex size-9 shrink-0 items-center justify-center rounded-xl">
@@ -134,6 +153,7 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           currency={enquiry.event.currency}
           existing={enquiry.quotes}
           proposal={proposal}
+          budgetMinor={brief.budgetMaxMinor ?? null}
           packages={packages
             .filter((row) => row.currency === enquiry.event.currency)
             .map((row) => ({

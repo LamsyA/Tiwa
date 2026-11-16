@@ -7,7 +7,7 @@ import {
   listVendorBookingMoney,
 } from '@tiwa/core';
 import { PLANNING_CATEGORY, serviceLabel } from '@tiwa/config';
-import { Banner, Card, EmptyState, StatusPill, buttonClasses } from '@tiwa/ui';
+import { Banner, EmptyState, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -77,83 +77,117 @@ export default async function QuotesInboxPage() {
 
   return (
     <AppFrame userId={ctx.actor.userId} active="quotes" title={plannerOnly ? t('proposalInboxTitle') : t('inboxTitle')}>
-      <div className="flex flex-col gap-4 py-4">
+      <div className="flex flex-col gap-6 py-4">
         <p className="text-muted text-sm">{plannerOnly ? t('proposalInboxBody') : t('inboxBody')}</p>
         {load.failed && <Banner tone="warning">{t('sectionFailed')}</Banner>}
-        <PaymentCards payments={payments} />
-        <BookingMoneyList bookings={vendorBookings} />
-        <VisitCards visits={visits} />
-        <ChangeCards changes={changes} />
-        {enquiries === null ? (
-          <EmptyState icon={<Inbox className="size-8" aria-hidden />} title={t('noEnquiries')} body="" />
-        ) : enquiries.length === 0 ? (
-          <EmptyState icon={<Inbox className="size-8" aria-hidden />} title={t('noEnquiries')} body="" />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {enquiries.map((row) => {
-              const brief = row.brief as {
-                eventName?: string;
-                venue?: string | null;
-                expectedGuests?: number | null;
-                startsAt?: string | null;
-                timezone?: string;
-                notes?: string;
-              };
-              const proposal = row.category === PLANNING_CATEGORY;
-              const category = serviceLabel(row.category);
-              const when = brief.startsAt
-                ? new Intl.DateTimeFormat('en', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    timeZone: brief.timezone ?? 'UTC',
-                  }).format(new Date(brief.startsAt))
-                : null;
-              return (
-                <li key={row.id}>
-                  <Card>
-                    <div className="flex flex-col gap-2 p-4">
-                      <div className="flex items-center gap-2">
-                        <p className="min-w-0 flex-1 truncate font-medium">{brief.eventName ?? row.event.name}</p>
-                        <StatusPill tone={row.status === 'OPEN' ? 'brand' : 'neutral'}>
-                          {t.has(`enquiry.status.${row.status}`)
-                            ? t(`enquiry.status.${row.status}` as 'enquiry.status.OPEN')
-                            : row.status}
-                        </StatusPill>
+        {/* New requests first (D-X65): the reason the inbox exists. */}
+        <section aria-labelledby="requests-heading" className="flex flex-col gap-3">
+          <h2 id="requests-heading" className="font-display flex items-center gap-2 text-lg font-bold tracking-tight">
+            {t('requestsTitle')}
+            {enquiries && enquiries.length > 0 && (
+              <span className="bg-brand-strong text-on-brand rounded-full px-2 py-0.5 text-xs font-semibold">
+                {enquiries.length}
+              </span>
+            )}
+          </h2>
+          {!enquiries || enquiries.length === 0 ? (
+            <EmptyState icon={<Inbox className="size-8" aria-hidden />} title={t('noEnquiries')} body="" />
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {enquiries.map((row) => {
+                const brief = row.brief as {
+                  eventName?: string;
+                  venue?: string | null;
+                  expectedGuests?: number | null;
+                  startsAt?: string | null;
+                  timezone?: string;
+                  notes?: string;
+                  budgetMaxMinor?: string;
+                  currency?: string;
+                };
+                const proposal = row.category === PLANNING_CATEGORY;
+                const when = brief.startsAt
+                  ? new Intl.DateTimeFormat('en', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      timeZone: brief.timezone ?? 'UTC',
+                    }).format(new Date(brief.startsAt))
+                  : null;
+                const chips = [
+                  serviceLabel(row.category),
+                  when,
+                  typeof brief.expectedGuests === 'number'
+                    ? t('enquiry.guests', { count: brief.expectedGuests })
+                    : null,
+                  brief.venue,
+                ].filter((chip): chip is string => Boolean(chip));
+                const budget = brief.budgetMaxMinor && brief.budgetMaxMinor !== '0' ? brief.budgetMaxMinor : null;
+                return (
+                  <li
+                    key={row.id}
+                    className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border shadow-[var(--shadow-1)] transition hover:shadow-[var(--shadow-2)]"
+                  >
+                    <span aria-hidden className="bg-brand-strong absolute inset-y-0 left-0 w-1" />
+                    <div className="flex flex-col gap-4 p-5 pl-6 sm:flex-row sm:items-start sm:p-6 sm:pl-7">
+                      <div className="flex min-w-0 flex-1 flex-col gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-display min-w-0 truncate text-xl font-bold tracking-tight">
+                            {brief.eventName ?? row.event.name}
+                          </h3>
+                          <StatusPill tone={row.status === 'OPEN' ? 'brand' : 'neutral'}>
+                            {t.has(`enquiry.status.${row.status}`)
+                              ? t(`enquiry.status.${row.status}` as 'enquiry.status.OPEN')
+                              : row.status}
+                          </StatusPill>
+                        </div>
+                        <ul className="flex flex-wrap gap-1.5">
+                          {chips.map((chip) => (
+                            <li key={chip} className="bg-surface-2 rounded-full px-3 py-1 text-xs font-medium">
+                              {chip}
+                            </li>
+                          ))}
+                        </ul>
+                        {brief.notes && (
+                          <p className="bg-surface-2/70 rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-line">
+                            {brief.notes}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link href={`/quotes/${row.id}`} className={buttonClasses({ className: 'rounded-2xl' })}>
+                            {row.status === 'OPEN'
+                              ? proposal
+                                ? t('proposalBuilderTitle')
+                                : t('builderTitle')
+                              : t('enquiry.open')}
+                          </Link>
+                          {row.status === 'OPEN' && <DeclineEnquiry requestId={row.id} />}
+                        </div>
                       </div>
-                      <p className="text-muted text-sm">
-                        {[
-                          category,
-                          when,
-                          brief.venue,
-                          typeof brief.expectedGuests === 'number'
-                            ? t('enquiry.guests', { count: brief.expectedGuests })
-                            : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </p>
-                      {brief.notes && (
-                        <p className="bg-surface-2 rounded-xl px-3 py-2 text-sm whitespace-pre-line">{brief.notes}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link href={`/quotes/${row.id}`} className={buttonClasses({ className: 'rounded-full' })}>
-                          {row.status === 'OPEN'
-                            ? proposal
-                              ? t('proposalBuilderTitle')
-                              : t('builderTitle')
-                            : t('enquiry.open')}
-                        </Link>
-                        {row.status === 'OPEN' && <DeclineEnquiry requestId={row.id} />}
+                      <div className="bg-surface-2 flex shrink-0 flex-col gap-0.5 rounded-2xl px-5 py-4 sm:min-w-48 sm:text-right">
+                        <span className="text-muted text-xs font-semibold tracking-[0.12em] uppercase">
+                          {t('briefBudgetFact')}
+                        </span>
+                        {budget ? (
+                          <span className="font-display text-2xl font-bold tracking-tight">
+                            <MoneyText value={budget} currency={brief.currency ?? 'NGN'} />
+                          </span>
+                        ) : (
+                          <span className="text-muted text-sm">{t('noBudget')}</span>
+                        )}
                       </div>
                     </div>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+        <PaymentCards payments={payments} />
+        <ChangeCards changes={changes} />
+        <VisitCards visits={visits} />
+        <BookingMoneyList bookings={vendorBookings} />
       </div>
     </AppFrame>
   );

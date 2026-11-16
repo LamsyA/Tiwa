@@ -118,6 +118,7 @@ afterAll(async () => {
     await prisma.organization.delete({ where: { id } });
   }
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: events } } });
+  await prisma.eventDay.deleteMany({ where: { eventId } });
   await prisma.event.deleteMany({ where: { id: { in: events } } });
   await prisma.user.deleteMany({ where: { id: { in: users } } });
   await prisma.$disconnect();
@@ -129,6 +130,9 @@ describe('venue bookings', () => {
     const result = await acceptQuote(host, { quoteId, paymentMode: 'DIRECT', declineOthers: false });
     const block = await prisma.availabilityBlock.findFirst({ where: { bookingId: result.bookingId } });
     expect(block?.slot).toBe('FULL_DAY');
+    // D-X65: the booked venue becomes the event's venue for that day.
+    const day = await prisma.eventDay.findFirst({ where: { eventId, date: new Date(DATE_A) } });
+    expect(day?.venueName).toContain((await prisma.organization.findUniqueOrThrow({ where: { id: orgId } })).name);
     // A second booking for the same slot is refused.
     const other = await makeVenueQuote(DATE_A);
     await expect(acceptQuote(host, { quoteId: other, paymentMode: 'DIRECT' })).rejects.toBeInstanceOf(ConflictError);
@@ -151,6 +155,8 @@ describe('venue bookings', () => {
     expect(booking.totalMinor).toBe(3_000_000n);
     expect(booking.quoteId).toBeNull();
     expect(booking.milestones).toHaveLength(1);
+    const evening = await prisma.eventDay.findFirst({ where: { eventId, date: new Date(DATE_B) } });
+    expect(evening?.venueName).toBeTruthy();
     await expect(
       instantBook(host, {
         eventId,
