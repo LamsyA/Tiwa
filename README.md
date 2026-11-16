@@ -4,7 +4,6 @@
 
 Tiwa ("ours" in Yoruba) is a web app where hosts, planners, vendors and guests **plan, book, pay for, run and remember any event in one shared place**: birthdays, weddings, burials, church programmes, reunions, office parties, conferences, concerts and more.
 
-It launches in Lagos, Nigeria, but nothing is hard-coded to one country, currency or kind of event. Those all come from configuration.
 
 ---
 
