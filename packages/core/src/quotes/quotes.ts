@@ -1,3 +1,4 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorizeOrg, type OrgAction } from '../auth/org.js';
@@ -62,8 +63,16 @@ export async function createQuote(actor: UserActor, raw: z.infer<typeof createQu
   const input = createQuoteSchema.parse(raw);
   await loadOrgAccess(actor, input.vendorOrgId, 'org.manage');
   const org = await prisma.organization.findUnique({ where: { id: input.vendorOrgId }, select: { kind: true } });
-  if (!org || org.kind !== 'VENDOR')
+  if (!org || (org.kind !== 'VENDOR' && org.kind !== 'PLANNER'))
     throw new ValidationError('Quotes come from vendor businesses', { key: 'notVendor' });
+  // D-X64: a planner only answers a planning request, as a proposal.
+  if (org.kind === 'PLANNER') {
+    const request = input.requestId
+      ? await prisma.quoteRequest.findUnique({ where: { id: input.requestId }, select: { category: true } })
+      : null;
+    if (request?.category !== PLANNING_CATEGORY)
+      throw new ValidationError('Planners send proposals in reply to a request', { key: 'notVendor' });
+  }
 
   if (input.requestId) {
     const request = await prisma.quoteRequest.findUnique({ where: { id: input.requestId } });
@@ -327,13 +336,13 @@ function toQuoteView(quote: {
   };
 }
 
-/** Vendor team inbox (VND-01): open enquiries for every vendor org the actor belongs to. */
+/** Vendor team inbox (VND-01): open enquiries for every vendor or planner org the actor belongs to (D-X64). */
 export async function listEnquiries(actor: UserActor) {
   const memberships = await prisma.membership.findMany({
-    where: { userId: actor.userId, org: { kind: 'VENDOR', deletedAt: null } },
+    where: { userId: actor.userId, org: { kind: { in: ['VENDOR', 'PLANNER'] }, deletedAt: null } },
     select: { orgId: true },
   });
-  if (memberships.length === 0) throw new ForbiddenError('Only vendor teams have an enquiries inbox');
+  if (memberships.length === 0) throw new ForbiddenError('Only business teams have an enquiries inbox');
   const orgIds = memberships.map((membership) => membership.orgId);
   const requests = await prisma.quoteRequest.findMany({
     where: { vendorOrgId: { in: orgIds }, status: 'OPEN' },

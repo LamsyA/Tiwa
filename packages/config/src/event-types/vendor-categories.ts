@@ -99,8 +99,22 @@ export const PLANNER_SPECIALTIES = {
 
 export type PlannerSpecialty = keyof typeof PLANNER_SPECIALTIES;
 
-/** Label for a vendor category or planner specialty key. */
+/**
+ * Planner proposals (D-X64) travel through the quote pipeline under this one
+ * reserved category: a host asks a planner org for a proposal, the planner
+ * answers with a quote, and accepting it hires the planner onto the event.
+ */
+export const PLANNING_CATEGORY = 'planning' as const;
+export const PLANNING_LABEL = 'Event planning';
+
+/** True for the vendor categories and the planner proposal category. */
+export function isQuoteCategory(key: string): boolean {
+  return key === PLANNING_CATEGORY || key in VENDOR_CATEGORIES;
+}
+
+/** Label for a vendor category, planner specialty or the planning category. */
 export function serviceLabel(key: string): string {
+  if (key === PLANNING_CATEGORY) return PLANNING_LABEL;
   return (
     (VENDOR_CATEGORIES as Record<string, string>)[key] ?? (PLANNER_SPECIALTIES as Record<string, string>)[key] ?? key
   );

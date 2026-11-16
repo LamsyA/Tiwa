@@ -1,3 +1,4 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { getEnquiry, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { MoneyText } from '@tiwa/ui';
@@ -16,6 +17,7 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
   const t = await getTranslations('quotes');
   const enquiry = await getEnquiry(ctx.actor, { requestId }).catch(() => null);
   if (!enquiry) notFound();
+  const proposal = enquiry.request.category === PLANNING_CATEGORY;
   const packages = await prisma.servicePackage.findMany({
     where: { orgId: enquiry.request.vendorOrgId, active: true },
     orderBy: { priceMinor: 'asc' },
@@ -70,7 +72,11 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
   ].filter((fact): fact is NonNullable<typeof fact> => fact !== null);
 
   return (
-    <AppFrame userId={ctx.actor.userId} active="orders" title={t('builderTitle')}>
+    <AppFrame
+      userId={ctx.actor.userId}
+      active={proposal ? 'quotes' : 'orders'}
+      title={proposal ? t('proposalBuilderTitle') : t('builderTitle')}
+    >
       <div className="flex flex-col gap-6 py-4">
         <OrderTimeline
           stage={stage}
@@ -127,6 +133,7 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           vendorOrgId={enquiry.request.vendorOrgId}
           currency={enquiry.event.currency}
           existing={enquiry.quotes}
+          proposal={proposal}
           packages={packages
             .filter((row) => row.currency === enquiry.event.currency)
             .map((row) => ({

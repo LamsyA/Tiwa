@@ -6,7 +6,7 @@ import {
   listSiteVisits,
   listVendorBookingMoney,
 } from '@tiwa/core';
-import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { PLANNING_CATEGORY, serviceLabel } from '@tiwa/config';
 import { Banner, Card, EmptyState, StatusPill, buttonClasses } from '@tiwa/ui';
 import { Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -34,7 +34,11 @@ export default async function QuotesInboxPage() {
     };
   const enquiries = await listEnquiries(ctx.actor).catch(() => null);
   const orgs = enquiries === null ? [] : await listMyOrgs(ctx.actor.userId).catch(() => []);
-  const vendorOrgIds = (orgs ?? []).filter((row) => row.org.kind === 'VENDOR').map((row) => row.org.id);
+  // D-X64: planner orgs receive proposal requests here too.
+  const vendorOrgIds = (orgs ?? [])
+    .filter((row) => row.org.kind === 'VENDOR' || row.org.kind === 'PLANNER')
+    .map((row) => row.org.id);
+  const plannerOnly = (orgs ?? []).length > 0 && (orgs ?? []).every((row) => row.org.kind === 'PLANNER');
   const visits = (
     await Promise.all(
       vendorOrgIds.map((orgId) => listSiteVisits(ctx.actor, { vendorOrgId: orgId }).catch(fallback([]))),
@@ -72,9 +76,9 @@ export default async function QuotesInboxPage() {
   ).flat();
 
   return (
-    <AppFrame userId={ctx.actor.userId} active="quotes" title={t('inboxTitle')}>
+    <AppFrame userId={ctx.actor.userId} active="quotes" title={plannerOnly ? t('proposalInboxTitle') : t('inboxTitle')}>
       <div className="flex flex-col gap-4 py-4">
-        <p className="text-muted text-sm">{t('inboxBody')}</p>
+        <p className="text-muted text-sm">{plannerOnly ? t('proposalInboxBody') : t('inboxBody')}</p>
         {load.failed && <Banner tone="warning">{t('sectionFailed')}</Banner>}
         <PaymentCards payments={payments} />
         <BookingMoneyList bookings={vendorBookings} />
@@ -95,7 +99,8 @@ export default async function QuotesInboxPage() {
                 timezone?: string;
                 notes?: string;
               };
-              const category = VENDOR_CATEGORIES[row.category as keyof typeof VENDOR_CATEGORIES] ?? row.category;
+              const proposal = row.category === PLANNING_CATEGORY;
+              const category = serviceLabel(row.category);
               const when = brief.startsAt
                 ? new Intl.DateTimeFormat('en', {
                     weekday: 'short',
@@ -129,10 +134,16 @@ export default async function QuotesInboxPage() {
                           .filter(Boolean)
                           .join(' · ')}
                       </p>
-                      {brief.notes && <p className="bg-surface-2 rounded-xl px-3 py-2 text-sm">“{brief.notes}”</p>}
+                      {brief.notes && (
+                        <p className="bg-surface-2 rounded-xl px-3 py-2 text-sm whitespace-pre-line">{brief.notes}</p>
+                      )}
                       <div className="flex flex-wrap items-center gap-2">
                         <Link href={`/quotes/${row.id}`} className={buttonClasses({ className: 'rounded-full' })}>
-                          {row.status === 'OPEN' ? t('builderTitle') : t('enquiry.open')}
+                          {row.status === 'OPEN'
+                            ? proposal
+                              ? t('proposalBuilderTitle')
+                              : t('builderTitle')
+                            : t('enquiry.open')}
                         </Link>
                         {row.status === 'OPEN' && <DeclineEnquiry requestId={row.id} />}
                       </div>

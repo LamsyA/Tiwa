@@ -1,7 +1,9 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { eventOrders, getEventVendorCategories, listSiteVisits, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { StatusPill, buttonClasses } from '@tiwa/ui';
-import { ArrowRight, GitCompare, Search } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileSignature, GitCompare, Search, Sparkles } from 'lucide-react';
+import plannerImg from '../../../../public/marketplace/planner-1.jpg';
 import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -55,6 +57,30 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
         })
       : [];
   const visitNames = new Map(visitOrgs.map((org) => [org.id, org.name]));
+  // Hire a planner (D-X64): hosts and co-hosts only; a planner on the event doesn't hire themselves.
+  const showPlanner = access?.role === 'HOST' || access?.role === 'CO_HOST';
+  const [hiredPlanner, planningRequestIds] = showPlanner
+    ? await Promise.all([
+        prisma.eventParticipant.findFirst({
+          where: { eventId, role: 'PLANNER', removedAt: null, orgId: { not: null } },
+          select: { orgId: true },
+        }),
+        prisma.quoteRequest
+          .findMany({ where: { eventId, category: PLANNING_CATEGORY }, select: { id: true } })
+          .then((rows) => rows.map((row) => row.id)),
+      ])
+    : [null, [] as string[]];
+  const planningRequests = planningRequestIds.length;
+  const planningProposals =
+    planningRequests > 0
+      ? await prisma.quote.count({
+          where: { requestId: { in: planningRequestIds }, status: { in: ['SENT', 'CHANGES_REQUESTED'] } },
+        })
+      : 0;
+  const hiredName = hiredPlanner?.orgId
+    ? ((await prisma.organization.findUnique({ where: { id: hiredPlanner.orgId }, select: { name: true } }))?.name ??
+      null)
+    : null;
   return (
     <EventFrame
       eventId={eventId}
@@ -100,6 +126,69 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
             </Link>
           )}
         </section>
+
+        {showPlanner && (
+          <section className="relative overflow-hidden rounded-3xl bg-[#1c1917] text-white shadow-[var(--shadow-2)]">
+            <Image
+              src={plannerImg}
+              alt=""
+              placeholder="blur"
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="absolute inset-y-0 right-0 hidden h-full w-1/2 object-cover opacity-80 md:block"
+            />
+            <div className="absolute inset-0 hidden bg-gradient-to-r from-[#1c1917] via-[#1c1917]/95 to-transparent md:block" />
+            <div className="relative flex flex-col gap-4 p-6 sm:p-8 md:max-w-[60%]">
+              <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-[#f2b705] uppercase">
+                <Sparkles aria-hidden className="size-3.5" />
+                {t('hirePlanner.eyebrow')}
+              </p>
+              {hiredName ? (
+                <>
+                  <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                    {t('hirePlanner.hiredTitle', { planner: hiredName })}
+                  </h2>
+                  <p className="text-sm text-white/75">{t('hirePlanner.hiredBody')}</p>
+                  <p className="flex items-center gap-2 text-sm font-medium text-[#a7f3d0]">
+                    <CheckCircle2 aria-hidden className="size-4" />
+                    {t('hirePlanner.hiredPill')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                    {t('hirePlanner.title')}
+                  </h2>
+                  <p className="text-sm leading-relaxed text-white/75">{t('hirePlanner.body')}</p>
+                  {planningRequests > 0 && (
+                    <p className="text-sm font-medium text-white">
+                      {planningProposals > 0
+                        ? t('hirePlanner.proposalsReady', { count: planningProposals })
+                        : t('hirePlanner.waiting', { count: planningRequests })}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Link
+                      href={`/planners?eventId=${eventId}`}
+                      className="inline-flex h-11 items-center gap-2 rounded-2xl bg-white px-5 text-sm font-semibold text-[#1c1917] transition hover:bg-white/90"
+                    >
+                      <Search aria-hidden className="size-4" />
+                      {t('hirePlanner.find')}
+                    </Link>
+                    {planningRequests > 0 && (
+                      <Link
+                        href={`/events/${eventId}/vendors/${PLANNING_CATEGORY}`}
+                        className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
+                      >
+                        <FileSignature aria-hidden className="size-4" />
+                        {t('hirePlanner.viewProposals')}
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
         <section aria-labelledby="categories-heading" className="flex flex-col gap-3">
           <h2 id="categories-heading" className="font-display text-xl font-bold tracking-tight">

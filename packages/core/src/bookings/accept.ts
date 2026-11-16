@@ -1,8 +1,8 @@
-import { isDateExclusive } from '@tiwa/config';
+import { isDateExclusive, PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize, type Actor } from '../auth/authorize.js';
-import { loadEventAccess } from '../events/access.js';
+import { loadEventAccess, permissionsFor, toStoredPermissions } from '../events/access.js';
 import { isEnabled } from '../flags/flags.js';
 import { ConflictError, FeatureDisabledError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { mulBps } from '../shared/money.js';
@@ -185,6 +185,40 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
       await tx.quote.update({ where: { id: quote.id }, data: { status: 'ACCEPTED' } });
       if (quote.requestId) {
         await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'CLOSED' } });
+      }
+      if (category === PLANNING_CATEGORY) {
+        // D-X64: accepting a planner's proposal hires them. The planner org's
+        // owners and admins join the event as PLANNER (full preset, no member
+        // management) so the event appears in their workspace straight away.
+        const leads = await tx.membership.findMany({
+          where: { orgId: quote.vendorOrgId, role: { in: ['OWNER', 'ADMIN'] } },
+          select: { userId: true },
+        });
+        for (const { userId } of leads) {
+          const onEvent = await tx.eventParticipant.findFirst({
+            where: { eventId: quote.eventId, userId, removedAt: null },
+            select: { id: true },
+          });
+          if (onEvent) continue;
+          await tx.eventParticipant.create({
+            data: {
+              eventId: quote.eventId,
+              userId,
+              orgId: quote.vendorOrgId,
+              role: 'PLANNER',
+              permissions: toStoredPermissions(permissionsFor('PLANNER', 'full')),
+              acceptedAt: now,
+            },
+          });
+        }
+        await audit(tx, {
+          actor,
+          action: 'event.planner.hired',
+          targetType: 'Event',
+          targetId: quote.eventId,
+          data: { plannerOrgId: quote.vendorOrgId, bookingId: booking.id },
+        });
+        await enqueue(tx, 'event.members.changed', { eventId: quote.eventId });
       }
       if (blocksDate) {
         // Venues and one-event-a-day services hold the date the moment the

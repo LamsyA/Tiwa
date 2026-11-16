@@ -33,6 +33,7 @@ export function QuoteBuilder({
   currency,
   existing,
   packages = [],
+  proposal = false,
 }: {
   requestId: string;
   eventId: string;
@@ -40,8 +41,19 @@ export function QuoteBuilder({
   currency: string;
   existing: DraftQuote[];
   packages?: PackageOption[];
+  /** D-X64: a planner answering a planning request writes a proposal. */
+  proposal?: boolean;
 }) {
-  const t = useTranslations('quotes');
+  const tq = useTranslations('quotes');
+  const tb = useTranslations('proposals.builder');
+  // Proposal wording where it exists, quote wording otherwise.
+  const t = Object.assign(
+    (key: string, values?: Record<string, string | number>): string =>
+      proposal && tb.has(key as never)
+        ? (tb as unknown as (k: string, v?: typeof values) => string)(key, values)
+        : (tq as unknown as (k: string, v?: typeof values) => string)(key, values),
+    { has: (key: string) => tq.has(key as never) },
+  );
   const te = useTranslations('quotes.errors');
   const router = useRouter();
   const [items, setItems] = React.useState([{ name: '', qty: 1, unitMinor: '0' }]);

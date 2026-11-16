@@ -66,6 +66,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
           item('clients', 'Clients', '/clients', ICON.clients),
           item('orders', 'Vendor orders', '/orders', ICON.orders),
           item('pipeline', 'Pipeline', '/pipeline', ICON.pipeline),
+          item('quotes', 'Proposals', '/quotes', ICON.money),
           item('calendar', 'Calendar', '/calendar', ICON.events),
           item('vendors', 'Vendor book', '/vendors', ICON.bookings),
           item('invoices', 'Invoices', '/invoices', ICON.money),

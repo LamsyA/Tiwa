@@ -28,7 +28,12 @@
     "continueWithPhone": "Continue with phone",
     "continueWithEmail": "Continue with email",
     "continueWithGoogle": "Continue with Google",
-    "method": { "password": "Password", "email": "Email link", "phone": "Phone", "google": "Google" },
+    "method": {
+      "password": "Password",
+      "email": "Email link",
+      "phone": "Phone",
+      "google": "Google"
+    },
     "googleUnavailable": "Google sign-in is not configured in this environment.",
     "phoneLabel": "Phone number",
     "phoneHint": "We will text you a 6-digit code.",
@@ -1908,7 +1913,19 @@
     },
     "noVenuesBody": "Try another date, fewer guests or a nearby area.",
     "upToGuests": "Up to {count} guests",
-    "venueStockNote": "Photos show the kind of space. The venue hasn’t added its own yet."
+    "venueStockNote": "Photos show the kind of space. The venue hasn’t added its own yet.",
+    "hirePlanner": {
+      "eyebrow": "Professional planning",
+      "title": "Hire a planner to run it for you",
+      "body": "Ask up to five planners for a proposal. Each one sends their scope of work, fee and payment plan; accept the one you like and they join this event straight away.",
+      "find": "Find a planner",
+      "viewProposals": "View proposals",
+      "waiting": "{count, plural, one {# proposal request sent} other {# proposal requests sent}}. Waiting for replies.",
+      "proposalsReady": "{count, plural, one {# proposal is ready to review} other {# proposals are ready to review}}.",
+      "hiredTitle": "{planner} is planning this event",
+      "hiredBody": "Your planner can see the plan, budget, guests and vendors, and works on them with you.",
+      "hiredPill": "Hired through Tiwa"
+    }
   },
   "inbox": {
     "title": "Inbox",
@@ -2160,7 +2177,10 @@
       "DECLINED": "Declined",
       "EXPIRED": "Expired",
       "WITHDRAWN": "Withdrawn"
-    }
+    },
+    "proposalInboxTitle": "Proposal requests",
+    "proposalInboxBody": "Hosts who want to hire you. Open a request to read the brief and send a proposal.",
+    "proposalBuilderTitle": "Write a proposal"
   },
   "bookings": {
     "title": "Booking",
@@ -3270,5 +3290,136 @@
       },
       "note": "This is a checklist for you. Nothing is changed or sent to vendors. The AI sees quantities and seating, never guest names or contact details."
     }
+  },
+  "proposals": {
+    "pageTitle": "Planner proposals",
+    "pageBody": "Compare what each planner offers, what it costs and how you pay. Accepting a proposal hires the planner and adds them to this event.",
+    "findMore": "Find more planners",
+    "shortlistHeading": "Ask your shortlisted planners",
+    "requestsHeading": "Requests sent",
+    "proposalsHeading": "Proposals",
+    "emptyTitle": "No proposals yet",
+    "emptyBody": "Planners usually reply within two days. You’ll get a notification when a proposal arrives.",
+    "requestStatus": {
+      "OPEN": "Waiting for proposal",
+      "QUOTED": "Proposal received",
+      "DECLINED_BY_VENDOR": "Declined",
+      "CLOSED": "Closed"
+    },
+    "eyebrow": "Planning proposal",
+    "validUntil": "Valid until {date}",
+    "planningFee": "Planning fee",
+    "hidden": "Not shown",
+    "scopeHeading": "Scope of work",
+    "qty": "× {count}",
+    "subtotal": "Subtotal before fees",
+    "paymentPlanHeading": "Payment plan",
+    "noteHeading": "From the planner",
+    "termsHeading": "Cancellation terms",
+    "due": {
+      "onAccept": "Due when you accept",
+      "daysBefore": "Due {days} days before the event",
+      "onDate": "Due on {date}",
+      "onEventDay": "Due on the event day"
+    },
+    "status": {
+      "SENT": "Ready to review",
+      "CHANGES_REQUESTED": "Changes requested",
+      "ACCEPTED": "Accepted",
+      "DECLINED": "Declined",
+      "EXPIRED": "Expired",
+      "WITHDRAWN": "Withdrawn",
+      "DRAFT": "Draft"
+    },
+    "acceptCta": "Accept & hire",
+    "requestChanges": "Request changes",
+    "decline": "Decline",
+    "declineTitle": "Decline {planner}’s proposal?",
+    "declineBody": "The planner is told politely. You can still ask other planners.",
+    "changesTitle": "Request changes",
+    "changesBody": "Tell {planner} what to change. They’ll send an updated proposal.",
+    "changesPlaceholder": "e.g. Can you include the traditional engagement on the Friday, and spread the fee over three payments?",
+    "sendChanges": "Send request",
+    "acceptTitle": "Hire {planner}",
+    "accept": {
+      "step1": "The proposal becomes a signed agreement with today’s date, recorded on both sides.",
+      "step2": "{planner} joins this event as your planner and can work on the plan, budget, guests and vendors.",
+      "step3": "Each payment in the plan appears in Money with its due date.",
+      "payHeading": "How will you pay?",
+      "mode": {
+        "DIRECT": {
+          "title": "Pay through Tiwa",
+          "body": "Card, transfer or USSD at each due date, with a receipt."
+        },
+        "HELD": {
+          "title": "Protected payment",
+          "body": "Tiwa holds each payment and releases it when the milestone is met."
+        },
+        "OFFLINE": {
+          "title": "Pay the planner directly",
+          "body": "Record each cash or bank payment; the planner confirms receipt."
+        }
+      },
+      "declineOthers": "Decline the other planners’ proposals for this event",
+      "agree": "I agree to this scope, fee, payment plan and cancellation terms.",
+      "confirm": "Accept & hire"
+    },
+    "hiredNote": "You hired {planner}. They are now on this event as your planner.",
+    "hiredTitle": "Your planner is hired",
+    "hiredBody": "They’ve been added to this event. The agreement and payment plan are in Bookings.",
+    "viewAgreement": "View agreement",
+    "legalPill": "Agreement",
+    "legalNote": "Accepting records who agreed, when and from where, so both sides have proof of what was agreed.",
+    "request": {
+      "cta": "Request a proposal",
+      "title": "Ask {planner} for a proposal",
+      "how": {
+        "step1": "Tell them what you need. Your event’s date, venue and guest count go with it.",
+        "step2": "{planner} replies with a scope of work, fee and payment plan.",
+        "step3": "Accept the proposal to hire them; they join your event straight away."
+      },
+      "event": "For which event?",
+      "scopeLabel": "Help needed",
+      "scope": {
+        "full": {
+          "title": "Full planning",
+          "body": "From budget and vendors to running the day."
+        },
+        "partial": {
+          "title": "Partial planning",
+          "body": "You’ve started; they take over the rest."
+        },
+        "dayOf": {
+          "title": "Day-of coordination",
+          "body": "They run the event day and the final weeks."
+        },
+        "consultation": {
+          "title": "Consultation",
+          "body": "Expert advice sessions while you plan."
+        }
+      },
+      "notes": "Anything they should know?",
+      "notesPlaceholder": "e.g. Outdoor 40th for 150 guests, Yoruba and English programme, we already have a caterer.",
+      "budget": "Budget for the planning fee (optional)",
+      "briefNote": "The planner sees your event’s date, venue and guest count, never your guests’ contact details.",
+      "send": "Send request",
+      "sentTitle": "Request sent",
+      "sentBody": "{planner} will reply with a proposal. We’ll notify you when it arrives.",
+      "track": "Track proposals",
+      "close": "Close",
+      "noEvents": "Create an event first, then ask planners for proposals.",
+      "createEvent": "Create an event",
+      "alreadyAsked": "You’ve already asked this planner for a proposal for this event."
+    },
+    "builder": {
+      "itemsHeading": "Scope of work",
+      "itemName": "Service (e.g. Full planning, vendor management)",
+      "createQuote": "Save proposal",
+      "sendQuoteAction": "Send proposal",
+      "scheduleHeading": "Payment plan",
+      "termsLabel": "Cancellation terms",
+      "withdraw": "Withdraw proposal"
+    },
+    "introTitle": "Hire the right planner"
   }
 }

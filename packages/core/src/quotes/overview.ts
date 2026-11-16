@@ -1,3 +1,4 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -31,6 +32,7 @@ export async function getCategoryOverview(actor: UserActor, raw: z.infer<typeof 
           id: true,
           name: true,
           slug: true,
+          kind: true,
           profile: { select: { categories: true, city: true, startingPriceMinor: true, currency: true } },
         },
       })
@@ -38,7 +40,12 @@ export async function getCategoryOverview(actor: UserActor, raw: z.infer<typeof 
   const byId = new Map(orgs.map((org) => [org.id, org]));
   const shortlisted = picks.flatMap((pick) => {
     const org = byId.get(pick.orgId);
-    if (!org || !org.profile?.categories.includes(input.category)) return [];
+    // D-X64: shortlisted planners belong to the planning category.
+    const fits =
+      input.category === PLANNING_CATEGORY
+        ? org?.kind === 'PLANNER'
+        : org?.kind === 'VENDOR' && org.profile?.categories.includes(input.category);
+    if (!org?.profile || !fits) return [];
     return [
       {
         orgId: org.id,

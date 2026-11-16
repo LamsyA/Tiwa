@@ -246,3 +246,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - README rewritten: problem, features, how it works, architecture, how to use by role, demo businesses, local run, deploy.
 - D-X63: /money page for hosts (was 404); sign-in back to one full-resolution gele photo (q90).
 - README: added How AI helps you decide, user flow diagrams, fuller architecture (overview, request flow, layers, stack, principles).
+- D-X64: hire a planner — proposal request, planner proposal, accept & hire. core 4/4, e2e planner-proposal + demo-booking + quotes pass desktop and mobile. Known: day/progress.test fails without this change too.

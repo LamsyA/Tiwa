@@ -8,7 +8,13 @@ import { expect, isolateIp } from './support/auth.js';
 test.describe.configure({ mode: 'serial', timeout: 300_000 });
 test.use({ actionTimeout: 20_000, navigationTimeout: 30_000 });
 
-const RUN = Date.now().toString(36);
+const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+// A different date each run: photographers can't be double-booked, so a
+// fixed date fails on the second run against the same database.
+const EVENT_DATE = (() => {
+  const day = new Date(Date.UTC(2032, 0, 1) + Math.floor(Math.random() * 3000) * 86_400_000);
+  return day.toISOString().slice(0, 10);
+})();
 const DEMO_PASSWORD = process.env.DEMO_BUSINESS_PASSWORD ?? 'TiwaDemo2026!';
 
 async function gotoSettled(page: Page, url: string): Promise<void> {
@@ -46,7 +52,7 @@ async function newHostWithEvent(page: Page, eventName: string): Promise<string> 
     .first()
     .click();
   await page.getByLabel('Event name').fill(eventName);
-  await page.getByLabel('Date', { exact: true }).fill('2031-06-01');
+  await page.getByLabel('Date', { exact: true }).fill(EVENT_DATE);
   await page.getByLabel('Starts').fill('16:00');
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('heading', { name: 'Where and when' })).toBeVisible();
@@ -82,7 +88,8 @@ test('D-X61: a host books a demo vendor whose owner signs in with the demo passw
   await vendor.getByRole('button', { name: 'Sign in' }).click();
   await expect(vendor).toHaveURL(/\/quotes/);
   await expect(vendor.getByText(brief)).toBeVisible({ timeout: 30_000 });
-  await vendor.getByRole('link', { name: 'New quote' }).first().click();
+  // Open this run's request, not another run's (parallel projects share the vendor).
+  await vendor.getByRole('listitem').filter({ hasText: brief }).getByRole('link', { name: 'New quote' }).click();
   await vendor.getByPlaceholder('Item').fill('Half day coverage');
   await vendor.getByLabel('Qty').fill('1');
   await vendor.getByLabel('Unit price').fill('350000');

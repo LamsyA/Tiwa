@@ -1,4 +1,4 @@
-import { VENDOR_CATEGORIES } from '@tiwa/config';
+import { isQuoteCategory, PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { requireEventAccess } from '../events/access.js';
@@ -10,6 +10,8 @@ import { audit, enqueue } from '../shared/outbox.js';
 // category per event for a quote. The brief is prefilled from the event so
 // vendors get date, venue, headcount and budget context without guest
 // contacts (vendor isolation: brief never carries phones or emails).
+// D-X64: the reserved `planning` category asks planner orgs for a proposal
+// through the same pipeline; every other category goes to vendor orgs only.
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
@@ -65,7 +67,7 @@ export async function buildQuoteBrief(eventId: string): Promise<QuoteBriefPrefil
 
 export async function requestQuotes(actor: UserActor, raw: z.infer<typeof requestQuotesSchema>) {
   const input = requestQuotesSchema.parse(raw);
-  if (!(input.category in VENDOR_CATEGORIES)) {
+  if (!isQuoteCategory(input.category)) {
     throw new ValidationError('Unknown vendor category', { field: 'category', key: 'categoryUnknown' });
   }
   await requireEventAccess(actor, input.eventId, 'event.edit');
@@ -103,12 +105,13 @@ export async function requestQuotes(actor: UserActor, raw: z.infer<typeof reques
     const org = byId.get(vendorOrgId);
     // A vendor who hasn't picked categories yet (they can publish early, D-X34)
     // can be asked for any service; otherwise the request must match one.
+    const planning = input.category === PLANNING_CATEGORY;
     const offers = org?.profile?.categories ?? [];
     if (
       !org ||
-      org.kind !== 'VENDOR' ||
+      org.kind !== (planning ? 'PLANNER' : 'VENDOR') ||
       !org.profile?.published ||
-      (offers.length > 0 && !offers.includes(input.category))
+      (!planning && offers.length > 0 && !offers.includes(input.category))
     ) {
       throw new ValidationError('Vendor cannot receive this request', {
         field: 'vendorOrgIds',
