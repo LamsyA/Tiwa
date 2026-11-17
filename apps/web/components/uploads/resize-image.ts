@@ -76,7 +76,7 @@ export async function compressImage(file: File): Promise<File> {
   let best: Blob | null = null;
   for (let attempt = 0; attempt < 7; attempt += 1) {
     const out = await resizeImageForUpload(file, file.type, maxSide, RESIZE_QUALITY);
-    if (!out.resized) return file;
+    if (!out.resized) return attempt === 0 ? convertOnServer(file) : file;
     best = out.blob;
     if (out.blob.size <= IMAGE_TARGET_BYTES) break;
     // Area scales with the square of the side: aim just under the target.
@@ -86,6 +86,26 @@ export async function compressImage(file: File): Promise<File> {
   const ext = best.type === 'image/jpeg' ? 'jpg' : 'webp';
   const base = file.name.replace(/\.[a-zA-Z0-9]+$/, '') || 'photo';
   return new File([best], `${base}.${ext}`, { type: best.type, lastModified: file.lastModified });
+}
+
+/**
+ * D-X83 fallback: the browser could not read this photo (an iPhone HEIC on
+ * Chrome or Android). The server turns it into a 95%-quality JPEG, then the
+ * normal compressor takes it under 800 KB. Any failure returns the original.
+ */
+async function convertOnServer(file: File): Promise<File> {
+  const heif = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+  if (!heif || typeof fetch === 'undefined') return file;
+  try {
+    const response = await fetch('/api/uploads/convert', { method: 'POST', body: file });
+    if (!response.ok) return file;
+    const jpeg = await response.blob();
+    const base = file.name.replace(/\.[a-zA-Z0-9]+$/, '') || 'photo';
+    const converted = new File([jpeg], `${base}.jpg`, { type: 'image/jpeg', lastModified: file.lastModified });
+    return converted.size <= IMAGE_TARGET_BYTES ? converted : compressImage(converted);
+  } catch {
+    return file;
+  }
 }
 
 /** WebP output name for a resized original ("IMG_1.HEIC" becomes "IMG_1.webp"). */

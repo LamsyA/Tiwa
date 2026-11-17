@@ -268,3 +268,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X80: own photos or branded placeholder (no stock); per-kind request briefs, inbox cards and suggested quote lines
 - D-X81: image uploads ≤ 800 KB at 95% quality; logos shown; site-visit notifications
 - D-X82: pin Node 22 for Vercel (failed deploys on Node 26)
+- D-X83: HEIC server fallback (1.5 MB → 593 KB on Chrome)
