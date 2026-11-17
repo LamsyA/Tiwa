@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": ">=20 <24"
+    "node": "22.x"
   },
   "scripts": {
     "load:invites": "tsx scripts/load-invites.mjs",
