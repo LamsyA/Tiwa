@@ -29,6 +29,8 @@ interface QuoteView {
   cancellationTerms: string;
   schedule: { label: string; percentBps?: number; amountMinor?: string | null; due: string }[];
   expiresAt: string;
+  changeRequest?: string | null;
+  revision?: number;
 }
 
 function errorKey(
@@ -112,7 +114,9 @@ function QuoteCard({
     }
   }
 
-  const actionable = (quote.status === 'SENT' || quote.status === 'CHANGES_REQUESTED') && !expired;
+  // While the vendor revises, the host waits (D-X66); decline stays available.
+  const actionable = quote.status === 'SENT' && !expired;
+  const waiting = quote.status === 'CHANGES_REQUESTED' && !expired;
 
   return (
     <Card>
@@ -154,6 +158,28 @@ function QuoteCard({
             </li>
           ))}
         </ul>
+        {quote.status === 'SENT' && (quote.revision ?? 1) > 1 && (
+          <p className="text-brand-strong text-xs font-semibold">
+            {t('revisedLabel', { revision: quote.revision ?? 2 })}
+          </p>
+        )}
+        {waiting && (
+          <div className="border-warning/30 bg-warning/10 flex flex-col gap-2 rounded-xl border px-3 py-2">
+            {quote.changeRequest && <p className="whitespace-pre-line">“{quote.changeRequest}”</p>}
+            <p className="text-muted text-xs">{t('waitingRevision', { vendor: quote.vendorName })}</p>
+            <ConfirmDialog
+              trigger={
+                <Button variant="secondary" size="sm" className="w-fit">
+                  {t('decline')}
+                </Button>
+              }
+              title={t('declineTitle')}
+              body={t('declineBody')}
+              confirmLabel={t('decline')}
+              onConfirm={() => void onDecline()}
+            />
+          </div>
+        )}
         {actionable && (
           <div className="flex flex-wrap gap-2 pt-1">
             <Button onClick={() => setAcceptOpen(true)}>{t('accept')}</Button>

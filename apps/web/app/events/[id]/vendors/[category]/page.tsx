@@ -72,6 +72,8 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
     cancellationTerms: quote.cancellationTerms,
     schedule: quote.proposedSchedule as { label: string; percentBps?: number; amountMinor?: string; due: string }[],
     expiresAt: quote.expiresAt instanceof Date ? quote.expiresAt.toISOString() : String(quote.expiresAt),
+    changeRequest: quote.changeRequest ?? null,
+    revision: quote.revision ?? 1,
   }));
 
   return (

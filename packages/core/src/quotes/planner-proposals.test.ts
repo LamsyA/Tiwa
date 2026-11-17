@@ -6,7 +6,8 @@ import { acceptQuote } from '../bookings/accept.js';
 import { loadEventAccess, permissionsFor, toStoredPermissions } from '../events/access.js';
 import { ValidationError } from '../shared/errors.js';
 import { getCategoryOverview } from './overview.js';
-import { createQuote, listEnquiries } from './quotes.js';
+import { requestQuoteChanges } from './decisions.js';
+import { createQuote, getEnquiry, listEnquiries, sendQuote, updateQuote } from './quotes.js';
 import { requestQuotes } from './requests.js';
 
 // D-X64: a host asks a planner for a proposal through the quote pipeline,
@@ -130,6 +131,54 @@ describe('planner proposals (D-X64)', () => {
       expiresAt: new Date(Date.now() + 14 * 86_400_000).toISOString(),
     };
     await expect(createQuote(planner.owner, base)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('runs the change-request loop: message kept, inbox resurfaces it, revision re-sent (D-X66)', async () => {
+    const request = await prisma.quoteRequest.findFirstOrThrow({
+      where: { eventId, category: PLANNING_CATEGORY, vendorOrgId: planner.orgId },
+    });
+    const draft = await createQuote(planner.owner, {
+      requestId: request.id,
+      eventId,
+      vendorOrgId: planner.orgId,
+      items: [{ name: 'Full planning', qty: 1, unitMinor: '150000000' }],
+      taxBps: 0,
+      serviceBps: 0,
+      travelFeeMinor: '0',
+      cancellationTerms: 'Retainer non-refundable',
+      proposedSchedule: [{ label: 'Retainer', percentBps: 10000, due: 'on_accept' }],
+      expiresAt: new Date(Date.now() + 14 * 86_400_000).toISOString(),
+    });
+    await sendQuote(planner.owner, { quoteId: draft.quoteId });
+    // Once answered, the request leaves the inbox…
+    expect((await listEnquiries(planner.owner)).some((row) => row.id === request.id)).toBe(false);
+
+    await requestQuoteChanges(host, { quoteId: draft.quoteId, message: 'Please include the Friday engagement' });
+    const stored = await prisma.quote.findUniqueOrThrow({ where: { id: draft.quoteId } });
+    expect(stored.status).toBe('CHANGES_REQUESTED');
+    expect(stored.changeRequest).toBe('Please include the Friday engagement');
+    // …and comes back, first, with the client's message.
+    const inbox = await listEnquiries(planner.owner);
+    expect(inbox[0]?.id).toBe(request.id);
+    expect(inbox[0]?.changeRequest?.message).toBe('Please include the Friday engagement');
+    const enquiry = await getEnquiry(planner.owner, { requestId: request.id });
+    expect(enquiry.quotes.find((row) => row.id === draft.quoteId)?.changeRequest).toBe(
+      'Please include the Friday engagement',
+    );
+
+    await updateQuote(planner.owner, {
+      quoteId: draft.quoteId,
+      items: [
+        { name: 'Full planning', qty: 1, unitMinor: '150000000' },
+        { name: 'Friday engagement', qty: 1, unitMinor: '30000000' },
+      ],
+    });
+    await sendQuote(planner.owner, { quoteId: draft.quoteId });
+    const revised = await prisma.quote.findUniqueOrThrow({ where: { id: draft.quoteId } });
+    expect(revised.status).toBe('SENT');
+    expect(revised.revision).toBe(2);
+    expect(revised.totalMinor).toBe(180_000_000n);
+    expect((await listEnquiries(planner.owner)).some((row) => row.id === request.id)).toBe(false);
   });
 
   it('hires the planner onto the event when the host accepts the proposal', async () => {

@@ -249,3 +249,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X64: hire a planner — proposal request, planner proposal, accept & hire. core 4/4, e2e planner-proposal + demo-booking + quotes pass desktop and mobile. Known: day/progress.test fails without this change too.
 - D-X65: planner inbox/builder redesign (budget, real %, due dates), host planner entry points, venue optional, booked venue fills event. core 16/16 touched, e2e 16/16 desktop+mobile.
 - Next.js 16.4.3 -> 16.4.6 (security patch); build, typecheck and smoke e2e pass.
+- D-X66: change requests reach vendor/planner; revise in place; notifications. core quotes 26/26, e2e planner/quotes/demo-booking 10/10 x2 desktop+mobile. Known: worker retention.test fails without this change too.

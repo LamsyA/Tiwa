@@ -1171,6 +1171,11 @@ model Quote {
   proposedSchedule  Json // [{label, percentBps | amountMinor, due: "on_accept"|"days_before:N"|"date:YYYY-MM-DD"}]
   expiresAt         DateTime
   sentAt            DateTime?
+  // D-X66: the host's latest "request changes" message, kept so the vendor
+  // or planner can see what to revise; revision counts resends after it.
+  changeRequest     String?
+  changeRequestedAt DateTime?
+  revision          Int         @default(1)
   createdAt         DateTime    @default(now())
   event             Event       @relation(fields: [eventId], references: [id])
 

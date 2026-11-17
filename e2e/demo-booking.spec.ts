@@ -83,6 +83,7 @@ test('D-X61: a host books a demo vendor whose owner signs in with the demo passw
 
   await isolateIp(vendor);
   await vendor.goto('/login?next=%2Fquotes');
+  await vendor.waitForLoadState('networkidle');
   await vendor.getByLabel('Username or email').fill('lensandlight');
   await vendor.getByLabel('Password', { exact: true }).fill(DEMO_PASSWORD);
   await vendor.getByRole('button', { name: 'Sign in' }).click();

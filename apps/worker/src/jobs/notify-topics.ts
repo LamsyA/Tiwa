@@ -352,6 +352,56 @@ export async function handleQuoteRequested(data: unknown, log: Log) {
   );
 }
 
+/** D-X66: the client asked for changes → the vendor or planner team, with the message. */
+export async function handleQuoteChangesRequested(data: unknown, log: Log) {
+  const payload = asRecord(data);
+  const quoteId = asString(payload.quoteId);
+  const eventId = asString(payload.eventId);
+  const vendorOrgId = asString(payload.vendorOrgId);
+  if (!quoteId || !eventId || !vendorOrgId) throw new Error('quote.changes_requested needs ids');
+  const [event, quote] = await Promise.all([
+    prisma.event.findUnique({ where: { id: eventId }, select: { name: true } }),
+    prisma.quote.findUnique({ where: { id: quoteId }, select: { requestId: true } }),
+  ]);
+  if (!event) return { missing: true as const };
+  const message = asString(payload.message) ?? '';
+  return fanout(
+    {
+      userIds: await orgMemberUserIds(vendorOrgId),
+      type: 'booking.changed',
+      title: 'Changes requested',
+      body: `${event.name}: ${message.length > 140 ? `${message.slice(0, 139)}…` : message}`,
+      url: quote?.requestId ? `/quotes/${quote.requestId}` : '/quotes',
+      data: { quoteId, eventId },
+      key: `qc:${quoteId}:${Date.now()}`,
+    },
+    log,
+  );
+}
+
+/** D-X66: the client declined → the vendor or planner team. */
+export async function handleQuoteDeclined(data: unknown, log: Log) {
+  const payload = asRecord(data);
+  const quoteId = asString(payload.quoteId);
+  const eventId = asString(payload.eventId);
+  const vendorOrgId = asString(payload.vendorOrgId);
+  if (!quoteId || !eventId || !vendorOrgId) throw new Error('quote.declined needs ids');
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { name: true } });
+  if (!event) return { missing: true as const };
+  return fanout(
+    {
+      userIds: await orgMemberUserIds(vendorOrgId),
+      type: 'booking.changed',
+      title: 'Quote declined',
+      body: `${event.name} chose not to go ahead with this one.`,
+      url: '/quotes',
+      data: { quoteId, eventId },
+      key: `qd:${quoteId}`,
+    },
+    log,
+  );
+}
+
 /** P14: a new review lands → the vendor team. */
 export async function handleReviewReceived(data: unknown, log: Log) {
   const payload = asRecord(data);
@@ -422,11 +472,11 @@ export async function handleQuoteSent(data: unknown, log: Log) {
     {
       userIds: await teamUserIds(eventId),
       type: 'booking.changed',
-      title: 'Quote received',
+      title: payload.revised === true ? 'Revised quote received' : 'Quote received',
       body: `${event.name} · ${vendor?.name ?? 'vendor'}`,
       url: `/events/${eventId}/vendors`,
       data: { quoteId, eventId },
-      key: `qs:${quoteId}`,
+      key: payload.revised === true ? `qs:${quoteId}:${Date.now()}` : `qs:${quoteId}`,
     },
     log,
   );

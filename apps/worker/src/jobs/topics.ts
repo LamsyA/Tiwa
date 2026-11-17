@@ -23,6 +23,8 @@ import {
   handlePaymentRecorded,
   handleQuoteRequested,
   handleQuoteSent,
+  handleQuoteChangesRequested,
+  handleQuoteDeclined,
   handleReviewReceived,
   handleReviewReplied,
 } from './notify-topics.js';
@@ -60,6 +62,8 @@ export const TOPIC_HANDLERS: Record<string, (data: unknown, log: Log, sink: FanO
   ['booking.change_declined']: async (data, log) => handleChangeDeclined(data, log),
   ['quote.requested']: async (data, log) => handleQuoteRequested(data, log),
   ['quote.sent']: async (data, log) => handleQuoteSent(data, log),
+  ['quote.changes_requested']: async (data, log) => handleQuoteChangesRequested(data, log),
+  ['quote.declined']: async (data, log) => handleQuoteDeclined(data, log),
   ['review.received']: async (data, log) => handleReviewReceived(data, log),
   ['review.replied']: async (data, log) => handleReviewReplied(data, log),
   [MEDIA_PROCESS_IMAGE_TOPIC]: async (data, log, sink) => handleProcessImage(data, log, sink),

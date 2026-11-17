@@ -8,17 +8,11 @@ type Log = ReturnType<typeof createLogger>;
 export const DAY_PROGRESS_JOB = 'day/progress' as const;
 export const DAY_PROGRESS_EVERY_MS = 60 * 60 * 1000;
 
-export async function handleDayProgress(
-  log: Log,
-  now = new Date(),
-): Promise<{ started: number; prompted: number }> {
+export async function handleDayProgress(log: Log, now = new Date()): Promise<{ started: number; prompted: number }> {
   const started = await progressDueBookings(now);
   const prompted = await promptDueSignoffs(now);
   if (started.started > 0 || prompted.prompted > 0) {
-    log.info(
-      { topic: DAY_PROGRESS_JOB, started: started.started, prompted: prompted.prompted },
-      'booking progress',
-    );
+    log.info({ topic: DAY_PROGRESS_JOB, started: started.started, prompted: prompted.prompted }, 'booking progress');
   }
   return { started: started.started, prompted: prompted.prompted };
 }

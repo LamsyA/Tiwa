@@ -91,6 +91,7 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   // The planner signs in, finds it under Proposals and sends a proposal.
   await isolateIp(planner);
   await planner.goto('/login?next=%2Fquotes');
+  await planner.waitForLoadState('networkidle');
   await planner.getByLabel('Username or email').fill('occasionsbytemi');
   await planner.getByLabel('Password', { exact: true }).fill(DEMO_PASSWORD);
   await planner.getByRole('button', { name: 'Sign in' }).click();
@@ -116,6 +117,29 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   await expect(host.getByRole('heading', { name: 'Planner proposals' }).first()).toBeVisible();
   await expect(host.getByText('Scope of work')).toBeVisible({ timeout: 30_000 });
   await expect(host.getByText(/450,000/).first()).toBeVisible();
+
+  // D-X66: the host asks for changes; the planner sees the message and revises.
+  const changeNote = `Add a second coordinator ${RUN}`;
+  await host.getByRole('button', { name: 'Request changes' }).first().click();
+  const changes = host.getByRole('dialog');
+  await changes.getByRole('textbox').fill(changeNote);
+  await changes.getByRole('button', { name: 'Send request' }).click();
+  await expect(host.getByText('You asked for changes')).toBeVisible({ timeout: 30_000 });
+  await expect(host.getByRole('button', { name: 'Accept & hire' })).toHaveCount(0);
+
+  await gotoSettled(planner, '/quotes');
+  const sentBack = planner.getByRole('listitem').filter({ hasText: changeNote });
+  await expect(sentBack.getByText('Changes requested')).toBeVisible({ timeout: 30_000 });
+  await sentBack.getByRole('link', { name: 'Revise proposal' }).click();
+  await expect(planner.getByText('The client asked for changes')).toBeVisible();
+  await expect(planner.getByText(changeNote).first()).toBeVisible();
+  await planner.getByLabel('Unit price').first().fill('500000');
+  await planner.getByRole('button', { name: 'Send revised proposal' }).click();
+  await expect(planner.getByText('SENT')).toBeVisible({ timeout: 30_000 });
+
+  await gotoSettled(host, `/events/${eventId}/vendors/planning`);
+  await expect(host.getByText(/Revised · v2/)).toBeVisible({ timeout: 30_000 });
+  await expect(host.getByText(/500,000/).first()).toBeVisible();
   await host.getByRole('button', { name: 'Accept & hire' }).first().click();
   const accept = host.getByRole('dialog');
   await accept.getByLabel(/I agree to this scope/).check();

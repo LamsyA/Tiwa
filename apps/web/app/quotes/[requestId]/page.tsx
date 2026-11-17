@@ -2,7 +2,7 @@ import { PLANNING_CATEGORY } from '@tiwa/config';
 import { getEnquiry, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { MoneyText } from '@tiwa/ui';
-import { CalendarDays, MapPin, MessageSquareText, Users, Wallet } from 'lucide-react';
+import { CalendarDays, MapPin, MessageSquareText, RefreshCw, Users, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { AppFrame } from '@/components/app-frame.js';
@@ -18,6 +18,8 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
   const enquiry = await getEnquiry(ctx.actor, { requestId }).catch(() => null);
   if (!enquiry) notFound();
   const proposal = enquiry.request.category === PLANNING_CATEGORY;
+  // D-X66: a quote the client sent back is revised in place, not re-created.
+  const revising = enquiry.quotes.find((quote) => quote.status === 'CHANGES_REQUESTED') ?? null;
   const packages = await prisma.servicePackage.findMany({
     where: { orgId: enquiry.request.vendorOrgId, active: true },
     orderBy: { priceMinor: 'asc' },
@@ -146,6 +148,21 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           )}
         </section>
 
+        {revising?.changeRequest && (
+          <section className="border-warning/40 bg-warning/10 flex flex-col gap-2 rounded-3xl border p-5 sm:p-6">
+            <p className="text-warning flex items-center gap-2 text-xs font-semibold tracking-[0.14em] uppercase">
+              <RefreshCw aria-hidden className="size-4" />
+              {t('changes.bannerTitle')}
+            </p>
+            <blockquote className="font-display text-lg leading-snug font-semibold whitespace-pre-line">
+              “{revising.changeRequest}”
+            </blockquote>
+            <p className="text-muted text-sm">
+              {t('changes.bannerBody', { kind: proposal ? t('changes.kindProposal') : t('changes.kindQuote') })}
+            </p>
+          </section>
+        )}
+
         <QuoteBuilder
           requestId={enquiry.request.id}
           eventId={enquiry.request.eventId}
@@ -153,6 +170,21 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           currency={enquiry.event.currency}
           existing={enquiry.quotes}
           proposal={proposal}
+          revise={
+            revising
+              ? {
+                  id: revising.id,
+                  items: revising.items as { name: string; qty: number; unitMinor: string }[],
+                  taxBps: revising.taxBps,
+                  serviceBps: revising.serviceBps,
+                  travelFeeMinor: revising.travelFeeMinor,
+                  notes: revising.notes,
+                  cancellationTerms: revising.cancellationTerms,
+                  schedule: revising.proposedSchedule as { label: string; percentBps?: number; due: string }[],
+                  expiresAt: new Date(revising.expiresAt).toISOString(),
+                }
+              : null
+          }
           budgetMinor={brief.budgetMaxMinor ?? null}
           packages={packages
             .filter((row) => row.currency === enquiry.event.currency)

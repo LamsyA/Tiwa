@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { totalsOf } from '@/components/marketplace/quote-totals.js';
-import { createQuoteAction, sendQuoteAction, withdrawQuoteAction } from '../actions.js';
+import { createQuoteAction, sendQuoteAction, updateQuoteAction, withdrawQuoteAction } from '../actions.js';
 
 // Quote / proposal builder (QTE-02; D-X65 redesign). Form on the left, a live
 // summary on the right: total, the host's budget beside it, and the payment
@@ -27,6 +27,19 @@ interface DraftQuote {
   totalMinor: string;
   currency: string;
   expiresAt: string | Date;
+}
+
+/** A quote the client sent back for changes, loaded into the form (D-X66). */
+export interface RevisableQuote {
+  id: string;
+  items: { name: string; qty: number; unitMinor: string }[];
+  taxBps: number;
+  serviceBps: number;
+  travelFeeMinor: string;
+  notes: string | null;
+  cancellationTerms: string;
+  schedule: { label: string; percentBps?: number; due: string }[];
+  expiresAt: string;
 }
 
 interface Line {
@@ -61,6 +74,7 @@ export function QuoteBuilder({
   packages = [],
   proposal = false,
   budgetMinor = null,
+  revise = null,
 }: {
   requestId: string;
   eventId: string;
@@ -72,6 +86,8 @@ export function QuoteBuilder({
   proposal?: boolean;
   /** The client's budget from the brief, in minor units. */
   budgetMinor?: string | null;
+  /** D-X66: revise this quote in place instead of creating a new one. */
+  revise?: RevisableQuote | null;
 }) {
   const tq = useTranslations('quotes');
   const tb = useTranslations('proposals.builder');
@@ -85,17 +101,30 @@ export function QuoteBuilder({
   );
   const te = useTranslations('quotes.errors');
   const router = useRouter();
-  const [items, setItems] = React.useState<Line[]>([{ name: '', qty: 1, unitMinor: '0' }]);
-  const [taxPercent, setTaxPercent] = React.useState('0');
-  const [servicePercent, setServicePercent] = React.useState('0');
-  const [travelFeeMinor, setTravelFeeMinor] = React.useState('0');
-  const [notes, setNotes] = React.useState('');
-  const [terms, setTerms] = React.useState('');
-  const [schedule, setSchedule] = React.useState<Instalment[]>([
-    { label: tq('builder.depositLabel'), percent: '50', due: 'on_accept' },
-    { label: tq('builder.balanceLabel'), percent: '50', due: 'days_before:7' },
-  ]);
-  const [expiresAt, setExpiresAt] = React.useState(defaultExpiry);
+  const [items, setItems] = React.useState<Line[]>(
+    revise?.items.length ? revise.items : [{ name: '', qty: 1, unitMinor: '0' }],
+  );
+  const [taxPercent, setTaxPercent] = React.useState(String((revise?.taxBps ?? 0) / 100));
+  const [servicePercent, setServicePercent] = React.useState(String((revise?.serviceBps ?? 0) / 100));
+  const [travelFeeMinor, setTravelFeeMinor] = React.useState(revise?.travelFeeMinor ?? '0');
+  const [notes, setNotes] = React.useState(revise?.notes ?? '');
+  const [terms, setTerms] = React.useState(revise?.cancellationTerms ?? '');
+  const [schedule, setSchedule] = React.useState<Instalment[]>(
+    revise?.schedule.length
+      ? revise.schedule.map((entry) => ({
+          label: entry.label,
+          percent: entry.percentBps !== undefined ? String(entry.percentBps / 100) : '',
+          due: entry.due,
+        }))
+      : [
+          { label: tq('builder.depositLabel'), percent: '50', due: 'on_accept' },
+          { label: tq('builder.balanceLabel'), percent: '50', due: 'days_before:7' },
+        ],
+  );
+  const [expiresAt, setExpiresAt] = React.useState(() => {
+    const kept = revise?.expiresAt.slice(0, 10);
+    return kept && kept > new Date().toISOString().slice(0, 10) ? kept : defaultExpiry();
+  });
   const [error, setError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [picked, setPicked] = React.useState<string | null>(null);
@@ -136,10 +165,7 @@ export function QuoteBuilder({
     setError(null);
     setSaving(true);
     try {
-      const created = await createQuoteAction({
-        requestId,
-        eventId,
-        vendorOrgId,
+      const body = {
         items: items.map((item) => ({ name: item.name.trim(), qty: item.qty, unitMinor: item.unitMinor })),
         taxBps,
         serviceBps,
@@ -154,13 +180,26 @@ export function QuoteBuilder({
             due: entry.due,
           })),
         expiresAt: new Date(`${expiresAt}T23:59:00`).toISOString(),
-      });
-      if (!created.ok) {
-        setError(te(created.code as 'VALIDATION'));
-        return;
+      };
+      // D-X66: a sent-back quote is updated in place, then re-sent as a new revision.
+      let quoteId: string;
+      if (revise) {
+        const updated = await updateQuoteAction({ quoteId: revise.id, ...body });
+        if (!updated.ok) {
+          setError(te(updated.code as 'VALIDATION'));
+          return;
+        }
+        quoteId = revise.id;
+      } else {
+        const created = await createQuoteAction({ requestId, eventId, vendorOrgId, ...body });
+        if (!created.ok) {
+          setError(te(created.code as 'VALIDATION'));
+          return;
+        }
+        quoteId = created.data.quoteId;
       }
       if (send) {
-        const sent = await sendQuoteAction({ quoteId: created.data.quoteId });
+        const sent = await sendQuoteAction({ quoteId });
         if (!sent.ok) setError(te(sent.code as 'VALIDATION'));
       }
       router.refresh();
@@ -536,7 +575,9 @@ export function QuoteBuilder({
               onClick={() => void onSave(true)}
             >
               <Send aria-hidden className="size-4" />
-              {t('sendQuoteAction')}
+              {revise
+                ? tq('changes.sendRevision', { kind: proposal ? tq('changes.kindProposal') : tq('changes.kindQuote') })
+                : t('sendQuoteAction')}
             </Button>
             <Button
               variant="secondary"

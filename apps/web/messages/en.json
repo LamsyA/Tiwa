@@ -2216,7 +2216,21 @@
       "fillHint": "Name every line, add a price and schedule at least one payment."
     },
     "requestsTitle": "New requests",
-    "noBudget": "No budget given"
+    "noBudget": "No budget given",
+    "changes": {
+      "pill": "Changes requested",
+      "fromClient": "What the client wants changed",
+      "reviseProposal": "Revise proposal",
+      "reviseQuote": "Revise quote",
+      "bannerTitle": "The client asked for changes",
+      "bannerBody": "Update the {kind} below and send it again. They’ll get the new version straight away.",
+      "kindProposal": "proposal",
+      "kindQuote": "quote",
+      "sendRevision": "Send revised {kind}",
+      "revisionNote": "Version {revision} · sent back on {date}"
+    },
+    "revisedLabel": "Revised quote · version {revision}",
+    "waitingRevision": "You asked for changes. Waiting for {vendor} to send a revised quote."
   },
   "bookings": {
     "title": "Booking",
@@ -3456,6 +3470,12 @@
       "termsLabel": "Cancellation terms",
       "withdraw": "Withdraw proposal"
     },
-    "introTitle": "Hire the right planner"
+    "introTitle": "Hire the right planner",
+    "revisedPill": "Revised · v{revision}",
+    "changes": {
+      "waitingTitle": "You asked for changes",
+      "waitingBody": "Waiting for {planner} to send a revised proposal. You’ll get a notification when it arrives.",
+      "answeredTitle": "Your change request"
+    }
   }
 }

@@ -124,23 +124,31 @@ export default async function QuotesInboxPage() {
                   brief.venue,
                 ].filter((chip): chip is string => Boolean(chip));
                 const budget = brief.budgetMaxMinor && brief.budgetMaxMinor !== '0' ? brief.budgetMaxMinor : null;
+                const change = row.changeRequest;
                 return (
                   <li
                     key={row.id}
                     className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border shadow-[var(--shadow-1)] transition hover:shadow-[var(--shadow-2)]"
                   >
-                    <span aria-hidden className="bg-brand-strong absolute inset-y-0 left-0 w-1" />
+                    <span
+                      aria-hidden
+                      className={`absolute inset-y-0 left-0 w-1 ${change ? 'bg-warning' : 'bg-brand-strong'}`}
+                    />
                     <div className="flex flex-col gap-4 p-5 pl-6 sm:flex-row sm:items-start sm:p-6 sm:pl-7">
                       <div className="flex min-w-0 flex-1 flex-col gap-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-display min-w-0 truncate text-xl font-bold tracking-tight">
                             {brief.eventName ?? row.event.name}
                           </h3>
-                          <StatusPill tone={row.status === 'OPEN' ? 'brand' : 'neutral'}>
-                            {t.has(`enquiry.status.${row.status}`)
-                              ? t(`enquiry.status.${row.status}` as 'enquiry.status.OPEN')
-                              : row.status}
-                          </StatusPill>
+                          {change ? (
+                            <StatusPill tone="warning">{t('changes.pill')}</StatusPill>
+                          ) : (
+                            <StatusPill tone={row.status === 'OPEN' ? 'brand' : 'neutral'}>
+                              {t.has(`enquiry.status.${row.status}`)
+                                ? t(`enquiry.status.${row.status}` as 'enquiry.status.OPEN')
+                                : row.status}
+                            </StatusPill>
+                          )}
                         </div>
                         <ul className="flex flex-wrap gap-1.5">
                           {chips.map((chip) => (
@@ -149,6 +157,14 @@ export default async function QuotesInboxPage() {
                             </li>
                           ))}
                         </ul>
+                        {change?.message && (
+                          <div className="border-warning/30 bg-warning/10 rounded-2xl border px-4 py-3">
+                            <p className="text-warning text-xs font-semibold tracking-[0.12em] uppercase">
+                              {t('changes.fromClient')}
+                            </p>
+                            <p className="mt-1 text-sm leading-relaxed whitespace-pre-line">{change.message}</p>
+                          </div>
+                        )}
                         {brief.notes && (
                           <p className="bg-surface-2/70 rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-line">
                             {brief.notes}
@@ -156,11 +172,15 @@ export default async function QuotesInboxPage() {
                         )}
                         <div className="flex flex-wrap items-center gap-2">
                           <Link href={`/quotes/${row.id}`} className={buttonClasses({ className: 'rounded-2xl' })}>
-                            {row.status === 'OPEN'
+                            {change
                               ? proposal
-                                ? t('proposalBuilderTitle')
-                                : t('builderTitle')
-                              : t('enquiry.open')}
+                                ? t('changes.reviseProposal')
+                                : t('changes.reviseQuote')
+                              : row.status === 'OPEN'
+                                ? proposal
+                                  ? t('proposalBuilderTitle')
+                                  : t('builderTitle')
+                                : t('enquiry.open')}
                           </Link>
                           {row.status === 'OPEN' && <DeclineEnquiry requestId={row.id} />}
                         </div>

@@ -104,9 +104,6 @@ export async function handleNotify(
     }
   }
 
-  log.info(
-    { topic: NOTIFY_TOPIC, notificationId: resolved.id, sent: sent.length, skipped },
-    'notification fanned out',
-  );
+  log.info({ topic: NOTIFY_TOPIC, notificationId: resolved.id, sent: sent.length, skipped }, 'notification fanned out');
   return { sent, skipped, notificationId: resolved.id };
 }

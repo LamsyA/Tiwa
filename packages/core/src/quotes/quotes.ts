@@ -136,7 +136,15 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
 
   return prisma
     .$transaction(async (tx) => {
-      const updated = await tx.quote.update({ where: { id: quoteId }, data: { status: 'SENT', sentAt: new Date() } });
+      // A resend after a change request is a new revision (D-X66).
+      const updated = await tx.quote.update({
+        where: { id: quoteId },
+        data: {
+          status: 'SENT',
+          sentAt: new Date(),
+          ...(quote.status === 'CHANGES_REQUESTED' ? { revision: { increment: 1 } } : {}),
+        },
+      });
       if (quote.requestId) {
         await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'QUOTED' } });
       }
@@ -147,7 +155,12 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
         targetId: quoteId,
         data: { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId },
       });
-      await enqueue(tx, 'quote.sent', { quoteId, eventId: quote.eventId, vendorOrgId: quote.vendorOrgId });
+      await enqueue(tx, 'quote.sent', {
+        quoteId,
+        eventId: quote.eventId,
+        vendorOrgId: quote.vendorOrgId,
+        revised: quote.status === 'CHANGES_REQUESTED',
+      });
       return { status: updated.status };
     })
     .then(async (result) => {
@@ -344,8 +357,17 @@ export async function listEnquiries(actor: UserActor) {
   });
   if (memberships.length === 0) throw new ForbiddenError('Only business teams have an enquiries inbox');
   const orgIds = memberships.map((membership) => membership.orgId);
+  // Open requests, plus answered ones the client sent back for changes (D-X66).
+  const sentBack = await prisma.quote.findMany({
+    where: { vendorOrgId: { in: orgIds }, status: 'CHANGES_REQUESTED', requestId: { not: null } },
+    select: { requestId: true },
+  });
+  const sentBackIds = sentBack.map((row) => row.requestId as string);
   const requests = await prisma.quoteRequest.findMany({
-    where: { vendorOrgId: { in: orgIds }, status: 'OPEN' },
+    where: {
+      vendorOrgId: { in: orgIds },
+      OR: [{ status: 'OPEN' }, { id: { in: sentBackIds } }],
+    },
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,
@@ -366,7 +388,21 @@ export async function listEnquiries(actor: UserActor) {
     _count: true,
   });
   const counts = new Map(quoteCounts.map((row) => [row.requestId, row._count]));
-  return requests.map((row) => ({ ...row, draftQuotes: row.id ? (counts.get(row.id) ?? 0) : 0 }));
+  const pending = await prisma.quote.findMany({
+    where: { requestId: { in: requests.map((row) => row.id) }, status: 'CHANGES_REQUESTED' },
+    select: { requestId: true, changeRequest: true, changeRequestedAt: true },
+  });
+  const changes = new Map(pending.map((row) => [row.requestId, row]));
+  return requests
+    .map((row) => {
+      const change = changes.get(row.id);
+      return {
+        ...row,
+        draftQuotes: row.id ? (counts.get(row.id) ?? 0) : 0,
+        changeRequest: change ? { message: change.changeRequest, at: change.changeRequestedAt } : null,
+      };
+    })
+    .sort((a, b) => Number(Boolean(b.changeRequest)) - Number(Boolean(a.changeRequest)));
 }
 
 /** One enquiry with its brief and the vendor's drafts (quote builder page). */
@@ -390,7 +426,23 @@ export async function getEnquiry(actor: UserActor, raw: unknown) {
   const quotes = await prisma.quote.findMany({
     where: { requestId },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, status: true, totalMinor: true, currency: true, expiresAt: true },
+    select: {
+      id: true,
+      status: true,
+      totalMinor: true,
+      currency: true,
+      expiresAt: true,
+      items: true,
+      taxBps: true,
+      serviceBps: true,
+      travelFeeMinor: true,
+      notes: true,
+      cancellationTerms: true,
+      proposedSchedule: true,
+      changeRequest: true,
+      changeRequestedAt: true,
+      revision: true,
+    },
   });
   return {
     request: {
@@ -402,7 +454,12 @@ export async function getEnquiry(actor: UserActor, raw: unknown) {
       status: request.status,
     },
     event,
-    quotes: quotes.map((quote) => ({ ...quote, totalMinor: quote.totalMinor.toString() })),
+    quotes: quotes.map((quote) => ({
+      ...quote,
+      totalMinor: quote.totalMinor.toString(),
+      travelFeeMinor: quote.travelFeeMinor.toString(),
+      changeRequestedAt: quote.changeRequestedAt?.toISOString() ?? null,
+    })),
   };
 }
 

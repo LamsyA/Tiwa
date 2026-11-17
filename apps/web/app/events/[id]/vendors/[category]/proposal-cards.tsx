@@ -13,6 +13,8 @@ import {
 } from '@tiwa/ui';
 import {
   CalendarClock,
+  Hourglass,
+  RefreshCw,
   CheckCircle2,
   FileSignature,
   Quote as QuoteIcon,
@@ -42,6 +44,8 @@ export interface ProposalView {
   cancellationTerms: string;
   schedule: { label: string; percentBps?: number; amountMinor?: string | null; due: string }[];
   expiresAt: string;
+  changeRequest?: string | null;
+  revision?: number;
 }
 
 type ErrorCode =
@@ -106,7 +110,10 @@ function ProposalCard({
   const [declineOthers, setDeclineOthers] = React.useState(true);
   const [working, setWorking] = React.useState(false);
   const expired = new Date(proposal.expiresAt) <= new Date();
-  const actionable = (proposal.status === 'SENT' || proposal.status === 'CHANGES_REQUESTED') && !expired;
+  // While the planner revises, only declining makes sense (D-X66).
+  const actionable = proposal.status === 'SENT' && !expired;
+  const waiting = proposal.status === 'CHANGES_REQUESTED' && !expired;
+  const revised = proposal.status === 'SENT' && (proposal.revision ?? 1) > 1;
   const accepted = proposal.status === 'ACCEPTED';
   const validUntil = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(
     new Date(proposal.expiresAt),
@@ -170,7 +177,15 @@ function ProposalCard({
             </span>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold tracking-[0.18em] text-white/70 uppercase">{t('eyebrow')}</p>
+            <p className="flex flex-wrap items-center gap-2 text-xs font-semibold tracking-[0.18em] text-white/70 uppercase">
+              {t('eyebrow')}
+              {revised && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#f2b705] px-2 py-0.5 tracking-normal text-[#3a1a0e] normal-case">
+                  <RefreshCw aria-hidden className="size-3" />
+                  {t('revisedPill', { revision: proposal.revision ?? 2 })}
+                </span>
+              )}
+            </p>
             <h3 className="font-display text-xl font-bold tracking-tight sm:text-2xl">{proposal.vendorName}</h3>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-white/75">
               <CalendarClock aria-hidden className="size-3.5 shrink-0" />
@@ -280,6 +295,33 @@ function ProposalCard({
           <p className="text-sm leading-relaxed whitespace-pre-line">{proposal.cancellationTerms}</p>
         </section>
 
+        {proposal.changeRequest && (waiting || revised) && (
+          <div
+            className={cn(
+              'rounded-2xl border px-4 py-3',
+              waiting ? 'border-warning/30 bg-warning/10' : 'border-border/70 bg-surface-2/60',
+            )}
+          >
+            <p
+              className={cn(
+                'flex items-center gap-1.5 text-xs font-semibold tracking-[0.12em] uppercase',
+                waiting ? 'text-warning' : 'text-muted',
+              )}
+            >
+              {waiting ? (
+                <Hourglass aria-hidden className="size-3.5" />
+              ) : (
+                <RefreshCw aria-hidden className="size-3.5" />
+              )}
+              {waiting ? t('changes.waitingTitle') : t('changes.answeredTitle')}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed whitespace-pre-line">“{proposal.changeRequest}”</p>
+            {waiting && (
+              <p className="text-muted mt-2 text-xs">{t('changes.waitingBody', { planner: proposal.vendorName })}</p>
+            )}
+          </div>
+        )}
+
         {accepted && (
           <p className="bg-success-soft text-success flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium">
             <UserPlus aria-hidden className="size-4" />
@@ -287,8 +329,28 @@ function ProposalCard({
           </p>
         )}
 
+        {waiting && (
+          <div className="mt-auto flex justify-end">
+            <ConfirmDialog
+              trigger={
+                <Button variant="ghost" className="rounded-2xl whitespace-nowrap">
+                  {t('decline')}
+                </Button>
+              }
+              title={t('declineTitle', { planner: proposal.vendorName })}
+              body={t('declineBody')}
+              confirmLabel={t('decline')}
+              onConfirm={() =>
+                void run(
+                  () => declineQuoteAction({ quoteId: proposal.id }),
+                  () => onDone(),
+                )
+              }
+            />
+          </div>
+        )}
         {actionable && (
-          <div className="mt-auto grid gap-2 pt-1 sm:grid-cols-[1fr_auto_auto]">
+          <div className="mt-auto flex flex-wrap gap-2 pt-1 [&>*:first-child]:flex-1">
             <Button className="rounded-2xl whitespace-nowrap" onClick={() => setAcceptOpen(true)}>
               <FileSignature aria-hidden className="size-4" />
               {t('acceptCta')}

@@ -33,9 +33,13 @@ function toQuoteRow(quote: {
   proposedSchedule: unknown;
   expiresAt: Date;
   sentAt: Date | null;
+  changeRequest: string | null;
+  changeRequestedAt: Date | null;
+  revision: number;
 }) {
   return {
     ...quote,
+    changeRequestedAt: quote.changeRequestedAt?.toISOString() ?? null,
     travelFeeMinor: quote.travelFeeMinor.toString(),
     subtotalMinor: quote.subtotalMinor.toString(),
     totalMinor: quote.totalMinor.toString(),
@@ -104,7 +108,11 @@ export async function requestQuoteChanges(actor: UserActor, raw: z.infer<typeof 
     access: await loadEventAccess(actor.userId, quote.eventId),
   });
   assertQuoteTransition(quote.status, 'CHANGES_REQUESTED');
-  const updated = await prisma.quote.update({ where: { id: quote.id }, data: { status: 'CHANGES_REQUESTED' } });
+  // D-X66: keep the message on the quote so the vendor/planner sees what to revise.
+  const updated = await prisma.quote.update({
+    where: { id: quote.id },
+    data: { status: 'CHANGES_REQUESTED', changeRequest: input.message, changeRequestedAt: new Date() },
+  });
   await audit(prisma, {
     actor,
     action: 'quote.requestChanges',
