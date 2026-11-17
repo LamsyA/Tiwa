@@ -81,6 +81,14 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
     ? ((await prisma.organization.findUnique({ where: { id: hiredPlanner.orgId }, select: { name: true } }))?.name ??
       null)
     : null;
+  // D-X76: the hired planner's own booking, so the host can see the agreement and pay it.
+  const plannerBooking = hiredPlanner?.orgId
+    ? await prisma.booking.findFirst({
+        where: { eventId, vendorOrgId: hiredPlanner.orgId, category: PLANNING_CATEGORY },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true },
+      })
+    : null;
   return (
     <EventFrame
       eventId={eventId}
@@ -152,6 +160,14 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
                     <CheckCircle2 aria-hidden className="size-4" />
                     {t('hirePlanner.hiredPill')}
                   </p>
+                  {plannerBooking && (
+                    <Link
+                      href={`/events/${eventId}/bookings/${plannerBooking.id}?tab=payments`}
+                      className="inline-flex h-10 w-fit items-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-[#1c1917] transition hover:bg-white/90"
+                    >
+                      {t('hirePlanner.viewBooking')}
+                    </Link>
+                  )}
                 </>
               ) : (
                 <>

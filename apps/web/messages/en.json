@@ -1947,7 +1947,8 @@
       "proposalsReady": "{count, plural, one {# proposal is ready to review} other {# proposals are ready to review}}.",
       "hiredTitle": "{planner} is planning this event",
       "hiredBody": "Your planner can see the plan, budget, guests and vendors, and works on them with you.",
-      "hiredPill": "Hired through Tiwa"
+      "hiredPill": "Hired through Tiwa",
+      "viewBooking": "View agreement & payments"
     }
   },
   "inbox": {

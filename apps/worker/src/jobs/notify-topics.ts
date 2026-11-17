@@ -465,16 +465,19 @@ export async function handleQuoteSent(data: unknown, log: Log) {
   if (!quoteId || !eventId || !vendorOrgId) throw new Error('quote.sent needs ids');
   const [event, vendor] = await Promise.all([
     prisma.event.findUnique({ where: { id: eventId }, select: { name: true } }),
-    prisma.organization.findUnique({ where: { id: vendorOrgId }, select: { name: true } }),
+    prisma.organization.findUnique({ where: { id: vendorOrgId }, select: { name: true, kind: true } }),
   ]);
   if (!event) return { missing: true as const };
+  // D-X76: a planner sends a proposal, not a quote; link straight to it.
+  const proposal = vendor?.kind === 'PLANNER';
+  const noun = proposal ? 'proposal' : 'quote';
   return fanout(
     {
       userIds: await teamUserIds(eventId),
       type: 'booking.changed',
-      title: payload.revised === true ? 'Revised quote received' : 'Quote received',
+      title: payload.revised === true ? `Revised ${noun} received` : `${proposal ? 'Proposal' : 'Quote'} received`,
       body: `${event.name} · ${vendor?.name ?? 'vendor'}`,
-      url: `/events/${eventId}/vendors`,
+      url: proposal ? `/events/${eventId}/vendors/planning` : `/events/${eventId}/vendors`,
       data: { quoteId, eventId },
       key: payload.revised === true ? `qs:${quoteId}:${Date.now()}` : `qs:${quoteId}`,
     },

@@ -61,7 +61,9 @@ export function stageForQuote(status: QuoteStatus): OrderStage {
   return 'closed';
 }
 
-const label = (key: string) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key;
+// D-X76: the reserved planning category reads as a proper label, like every other category.
+const label = (key: string) =>
+  key === 'planning' ? 'Planner' : (VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key);
 const iso = (date: Date | null | undefined) => (date ? date.toISOString() : null);
 const RECENT_MS = 60 * 86_400_000;
 

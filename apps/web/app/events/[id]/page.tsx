@@ -562,8 +562,8 @@ function Panel({
         <span className="bg-brand-soft text-brand-strong grid size-8 shrink-0 place-items-center rounded-lg">
           <Icon aria-hidden className="size-[18px]" />
         </span>
-        <h2 className="font-display min-w-0 flex-1 truncate text-lg font-bold">{title}</h2>
-        {badge}
+        <h2 className="font-display shrink-0 text-lg font-bold">{title}</h2>
+        <span className="flex min-w-0 flex-1 justify-end">{badge}</span>
         {action && (
           <Link href={action.href} className="text-brand-strong shrink-0 text-sm font-semibold hover:underline">
             {action.label}

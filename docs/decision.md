@@ -655,3 +655,5 @@ Template:
 - **D-X74 (AGENT, 2026-11-17):** Client page shows one Continue (live event before a draft). The payee (vendor, or a hired planner on their own booking) can confirm or reject an offline payment from the event booking Payments tab, not only from /bookings. Upload queue resumes on reconnect and its backoff no longer resets. Stale e2e markers updated (plans start empty; Money heading). Open: guest uploads stall after the first 3 on throttled 3G (moments UF-10).
 
 - **D-X75 (AGENT, 2026-11-17):** Event Money drops the Income tab (sponsor or other income can still be logged as a contribution). Inbox and Chat are separate: the nav item for conversations is now "Chat" (route /inbox kept); "Inbox" is the bell's notifications page for requests, proposals and payments.
+
+- **D-X76 (AGENT, 2026-11-17):** From the wedding story test: hired-planner card links to the planner agreement and payments; a planner proposal notifies as "Proposal received" and opens the proposal; planning bookings read "Planner" in order lists; overview panel titles no longer truncate; unallocated spend is no longer flagged "Over budget".

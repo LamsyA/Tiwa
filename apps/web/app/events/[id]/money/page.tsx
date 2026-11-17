@@ -86,9 +86,7 @@ export default async function EventMoneyPage({
   const [schedule, expenses, contributions, fee, plannerSeat] = await Promise.all([
     listPaymentSchedule(ctx.actor, { eventId: id }, access),
     active === 'expenses' ? listExpenses(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
-    active === 'contributions'
-      ? listContributions(ctx.actor, { eventId: id }, access)
-      : Promise.resolve([]),
+    active === 'contributions' ? listContributions(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
     prisma.event.findUniqueOrThrow({
       where: { id },
       select: { plannerFeeBps: true, plannerFeeMinor: true, plannerFeeNote: true, plannedBudgetMinor: true },
@@ -265,7 +263,8 @@ export default async function EventMoneyPage({
                     <summary className="flex cursor-pointer list-none flex-col gap-1 px-2 py-3 sm:flex-row sm:items-center">
                       <span className="flex-1 font-medium">
                         {line.key === OTHER_KEY ? t('otherLine') : (line.label ?? line.key)}
-                        {line.uncommittedMinor < 0n && (
+                        {/* Unallocated spend is not "over budget" — there was no budget to go over (D-X76). */}
+                        {line.uncommittedMinor < 0n && line.key !== OTHER_KEY && (
                           <StatusPill tone="danger" className="ml-2">
                             {t('overBudget')}
                           </StatusPill>
