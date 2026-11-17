@@ -264,7 +264,7 @@ export default async function EventMoneyPage({
                       <span className="flex-1 font-medium">
                         {line.key === OTHER_KEY ? t('otherLine') : (line.label ?? line.key)}
                         {/* Unallocated spend is not "over budget" — there was no budget to go over (D-X76). */}
-                        {line.uncommittedMinor < 0n && line.key !== OTHER_KEY && (
+                        {line.uncommittedMinor < 0n && line.plannedMinor > 0n && (
                           <StatusPill tone="danger" className="ml-2">
                             {t('overBudget')}
                           </StatusPill>

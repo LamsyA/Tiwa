@@ -1,7 +1,7 @@
 import { PLANNING_CATEGORY } from '@tiwa/config';
 import { getEnquiry, quoteHistory, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { MoneyText } from '@tiwa/ui';
+import { Banner, MoneyText } from '@tiwa/ui';
 import { CalendarDays, MapPin, MessageSquareText, RefreshCw, Users, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -71,6 +71,17 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
       : enquiry.request.status === 'OPEN'
         ? 'requested'
         : 'closed';
+
+  // D-X77: warn before quoting a day this business is already booked or blocked.
+  const day = brief.startsAt
+    ? new Date(
+        `${new Intl.DateTimeFormat('en-CA', { timeZone: brief.timezone ?? 'UTC' }).format(new Date(brief.startsAt))}T00:00:00Z`,
+      )
+    : null;
+  const dayTaken =
+    day && !locked && !proposal
+      ? (await prisma.availabilityBlock.count({ where: { orgId: enquiry.request.vendorOrgId, date: day } })) > 0
+      : false;
 
   const facts = [
     brief.startsAt
@@ -193,39 +204,42 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
             </div>
           </section>
         ) : (
-          <QuoteBuilder
-            requestId={enquiry.request.id}
-            eventId={enquiry.request.eventId}
-            vendorOrgId={enquiry.request.vendorOrgId}
-            currency={enquiry.event.currency}
-            existing={enquiry.quotes}
-            proposal={proposal}
-            revise={
-              revising
-                ? {
-                    id: revising.id,
-                    items: revising.items as { name: string; qty: number; unitMinor: string }[],
-                    taxBps: revising.taxBps,
-                    serviceBps: revising.serviceBps,
-                    travelFeeMinor: revising.travelFeeMinor,
-                    notes: revising.notes,
-                    cancellationTerms: revising.cancellationTerms,
-                    schedule: revising.proposedSchedule as { label: string; percentBps?: number; due: string }[],
-                    expiresAt: new Date(revising.expiresAt).toISOString(),
-                  }
-                : null
-            }
-            budgetMinor={brief.budgetMaxMinor ?? null}
-            packages={packages
-              .filter((row) => row.currency === enquiry.event.currency)
-              .map((row) => ({
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                priceMinor: row.priceMinor?.toString() ?? null,
-                includes: row.includes,
-              }))}
-          />
+          <>
+            {dayTaken && <Banner tone="warning">{t('dayTakenWarning')}</Banner>}
+            <QuoteBuilder
+              requestId={enquiry.request.id}
+              eventId={enquiry.request.eventId}
+              vendorOrgId={enquiry.request.vendorOrgId}
+              currency={enquiry.event.currency}
+              existing={enquiry.quotes}
+              proposal={proposal}
+              revise={
+                revising
+                  ? {
+                      id: revising.id,
+                      items: revising.items as { name: string; qty: number; unitMinor: string }[],
+                      taxBps: revising.taxBps,
+                      serviceBps: revising.serviceBps,
+                      travelFeeMinor: revising.travelFeeMinor,
+                      notes: revising.notes,
+                      cancellationTerms: revising.cancellationTerms,
+                      schedule: revising.proposedSchedule as { label: string; percentBps?: number; due: string }[],
+                      expiresAt: new Date(revising.expiresAt).toISOString(),
+                    }
+                  : null
+              }
+              budgetMinor={brief.budgetMaxMinor ?? null}
+              packages={packages
+                .filter((row) => row.currency === enquiry.event.currency)
+                .map((row) => ({
+                  id: row.id,
+                  name: row.name,
+                  description: row.description,
+                  priceMinor: row.priceMinor?.toString() ?? null,
+                  includes: row.includes,
+                }))}
+            />
+          </>
         )}
       </div>
     </AppFrame>

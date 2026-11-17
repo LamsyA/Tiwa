@@ -1,4 +1,4 @@
-import { budgetKeyFor } from '@tiwa/config';
+import { VENDOR_CATEGORIES, budgetKeyFor } from '@tiwa/config';
 import { prisma, type MilestoneState } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor, EventAccess } from '../auth/authorize.js';
@@ -82,11 +82,11 @@ export function computeBudget(input: BudgetInput): BudgetSummary {
       expenses: [],
     });
   }
-  const lineFor = (key: string | null): BudgetLine => {
+  const lineFor = (key: string | null, label: string | null = null): BudgetLine => {
     const resolved = key ?? OTHER_KEY;
     let line = lines.get(resolved);
     if (!line) {
-      line = { key: resolved, label: null, ...figures(0n, 0n, 0n), bookings: [], expenses: [] };
+      line = { key: resolved, label, ...figures(0n, 0n, 0n), bookings: [], expenses: [] };
       lines.set(resolved, line);
     }
     return line;
@@ -95,7 +95,17 @@ export function computeBudget(input: BudgetInput): BudgetSummary {
   for (const booking of input.bookings) {
     if (booking.status === 'CANCELLED') continue;
     const paid = bookingMoney(booking.milestones).securedMinor;
-    const line = lineFor(budgetKeyFor(booking.category, keys));
+    // D-X77: a booking with no matching budget line gets a line of its own service
+    // (Venue, Photography, Planner…) instead of disappearing into "Other".
+    const matched = budgetKeyFor(booking.category, keys);
+    const line = matched
+      ? lineFor(matched)
+      : lineFor(
+          `svc:${booking.category}`,
+          booking.category === 'planning'
+            ? 'Planner'
+            : (VENDOR_CATEGORIES[booking.category as keyof typeof VENDOR_CATEGORIES] ?? booking.category),
+        );
     line.committedMinor += booking.totalMinor;
     line.paidMinor += paid;
     line.bookings.push({

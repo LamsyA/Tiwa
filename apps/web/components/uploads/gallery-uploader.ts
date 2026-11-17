@@ -365,11 +365,21 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
       return key;
     },
     signRequest: async (request: SignRequestShape) => {
-      const response = await fetchImpl('/api/uploads/sign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(toSignRequestBody(request)),
-      });
+      // D-X77: a dropped connection must fail, not hang — a hung sign holds one of
+      // the UPLOAD_LIMIT slots forever and stalls every file behind it.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      let response: Response;
+      try {
+        response = await fetchImpl('/api/uploads/sign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(toSignRequestBody(request)),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
       const body = (await response.json().catch(() => null)) as { ok?: boolean; data?: { url?: string } } | null;
       if (!response.ok || !body?.ok || typeof body.data?.url !== 'string') throw new Error('signing failed');
       return { url: body.data.url };

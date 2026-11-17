@@ -400,7 +400,57 @@
       "plannerEyebrow": "Professional planning",
       "plannerTitle": "Want someone to run it for you?",
       "plannerBody": "Ask planners for a proposal. Accept one and they join this event straight away.",
-      "plannerCta": "Find a planner"
+      "plannerCta": "Find a planner",
+      "activityActions": {
+        "event_create": "created the event",
+        "event_finalize": "finished setting up the event",
+        "event_member_add": "added a team member",
+        "event_planner_hired": "hired a planner",
+        "quote_request": "asked for a quote",
+        "quote_create": "started a quote",
+        "quote_send": "sent a quote",
+        "quote_update": "updated a quote",
+        "quote_decline": "declined a quote",
+        "quote_requestChanges": "asked for changes to a quote",
+        "booking_accept": "accepted a quote and booked",
+        "booking_instant": "booked instantly",
+        "booking_requestChange": "asked to change a booking",
+        "booking_acceptChange": "accepted a booking change",
+        "booking_declineChange": "declined a booking change",
+        "booking_holdExpired": "let a booking hold expire",
+        "payment_offline_record": "recorded a payment made outside Tiwa",
+        "payment_offline_confirm": "confirmed a payment was received",
+        "guests_addGuests": "added guests",
+        "guests_updateGuest": "updated a guest",
+        "guests_deleteGuests": "removed guests",
+        "guests_mergeGuests": "merged duplicate guests",
+        "guests_createGroup": "created a guest group",
+        "guests_deleteGroup": "deleted a guest group",
+        "guests_createTable": "added a table",
+        "guests_deleteTable": "removed a table",
+        "guests_setRsvp": "updated an RSVP",
+        "invites_createInviteBatch": "drafted invites",
+        "invites_sendInviteBatch": "sent invites",
+        "invites_answerRsvp": "replied to the invite",
+        "invites_sharedLinkRsvp": "RSVP’d through the shared link",
+        "invites_toggleSharedLink": "changed the shared RSVP link",
+        "invites_revokeInvite": "revoked an invite",
+        "invites_markSentManually": "marked invites as sent",
+        "invites_enableInvites": "turned on invites",
+        "task_complete": "completed a task",
+        "day_item_create": "added to the run-of-show",
+        "day_status": "updated the run-of-show",
+        "day_incident_log": "logged an incident",
+        "day_contact_create": "added a day-of contact",
+        "moments_approveMedia": "approved photos",
+        "moments_completeUpload": "uploaded photos",
+        "moments_updateSettings": "changed gallery settings",
+        "siteVisit_request": "asked for a site visit",
+        "siteVisit_confirm": "confirmed a site visit",
+        "review_create": "left a review",
+        "chat_postCard": "shared an update in chat"
+      },
+      "activityFallback": "made a change"
     },
     "forbiddenTitle": "You don't have access to this",
     "forbiddenBody": "Ask the host to change your permissions.",
@@ -850,12 +900,13 @@
       "addDialog": {
         "title": "Add a guest",
         "name": "Name",
-        "phone": "Phone (optional)",
+        "phone": "Phone",
         "email": "Email",
         "groups": "Groups",
         "save": "Add guest",
         "fromContacts": "Pick from contacts",
-        "added": "Guest added"
+        "added": "Guest added",
+        "contactHint": "Add an email or a phone number — one is enough."
       },
       "pasteDialog": {
         "title": "Paste a guest list",
@@ -929,7 +980,7 @@
         "mergeSelf": "Pick different guests to merge",
         "invalidFileKey": "That upload isn't valid — please try again",
         "tableNotFound": "That table doesn't exist",
-        "emailRequired": "Add an email so we can send them the invite"
+        "emailRequired": "Add an email or a phone number so we can send them the invite"
       },
       "rsvpLabels": {
         "YES": "Coming",
@@ -2134,7 +2185,8 @@
       "NOT_FOUND": "That item no longer exists.",
       "LIMIT_REACHED": "Quote requests are limited to 5 vendors per category.",
       "INVALID_TRANSITION": "That action is not available for this quote right now.",
-      "FEATURE_DISABLED": "Held payments are not enabled."
+      "FEATURE_DISABLED": "Held payments are not enabled.",
+      "slotTaken": "This vendor is already booked on that date. Ask them about another date, or choose someone else."
     },
     "percentLabel": "Share %",
     "dueLabel": "Due",
@@ -2279,7 +2331,8 @@
       "title": "You’re all caught up",
       "body": "New requests appear here the moment a client sends one. A complete, published profile gets more of them.",
       "cta": "Polish your profile"
-    }
+    },
+    "dayTakenWarning": "You already have a booking or a blocked date on this day. If you send a quote, the client won’t be able to accept it unless you free the date in your calendar."
   },
   "bookings": {
     "title": "Booking",

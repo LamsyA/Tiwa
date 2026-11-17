@@ -18,7 +18,14 @@ export interface UserCtx extends Ctx {
 }
 
 export type ActionResult<O> =
-  { ok: true; data: O } | { ok: false; code: ErrorCode; fieldErrors?: Record<string, string[] | undefined> };
+  | { ok: true; data: O }
+  | {
+      ok: false;
+      code: ErrorCode;
+      fieldErrors?: Record<string, string[] | undefined>;
+      /** The domain error's machine key (e.g. `slotTaken`) so a page can say exactly what went wrong. */
+      reason?: string;
+    };
 
 export type ErrorReporter = (error: unknown, context: { requestId: string; userId?: string }) => void;
 
@@ -38,7 +45,7 @@ export function mapDomainError(
     if (error.code === 'VALIDATION' && typeof details?.field === 'string' && typeof details.key === 'string') {
       return { ok: false, code: 'VALIDATION', fieldErrors: { [details.field]: [details.key] } };
     }
-    return { ok: false, code: error.code };
+    return { ok: false, code: error.code, ...(typeof details?.key === 'string' ? { reason: details.key } : {}) };
   }
   report(error, { requestId: ctx.requestId, ...(ctx.actor ? { userId: ctx.actor.userId } : {}) });
   return { ok: false, code: 'INTERNAL' };

@@ -127,7 +127,7 @@ export function AddGuestDialog({
               aria-describedby={describedBy}
               value={email}
               type="email"
-              required
+              required={!phone.trim()}
               inputMode="email"
               autoComplete="email"
               onChange={(event) => setEmail(event.target.value)}
@@ -141,11 +141,13 @@ export function AddGuestDialog({
               aria-describedby={describedBy}
               value={phone}
               inputMode="tel"
+              required={!email.trim()}
               autoComplete="tel"
               onChange={(event) => setPhone(event.target.value)}
             />
           )}
         </FieldShell>
+        <p className="text-muted -mt-2 text-xs">{t('addDialog.contactHint')}</p>
         {groups.length > 0 && (
           <Select
             label={t('addDialog.groups')}

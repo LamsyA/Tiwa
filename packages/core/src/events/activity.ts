@@ -16,6 +16,7 @@ export interface ActivityEntry {
   action: string;
   targetType: string;
   actorName: string | null;
+  actorOrg: string | null;
   createdAt: Date;
 }
 
@@ -44,12 +45,22 @@ export async function eventActivity(
       ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } })
       : [];
   const names = new Map(users.map((row) => [row.id, row.name] as const));
+  // D-X77: say which business a vendor or planner acts for, so "Seyi Williams" reads as "Seyi Williams · Lens & Light".
+  const memberships =
+    userIds.length > 0
+      ? await prisma.membership.findMany({
+          where: { userId: { in: userIds }, org: { kind: { in: ['VENDOR', 'PLANNER'] }, deletedAt: null } },
+          select: { userId: true, org: { select: { name: true } } },
+        })
+      : [];
+  const orgs = new Map(memberships.map((row) => [row.userId, row.org.name] as const));
   return {
     entries: visible.slice(0, take).map((row) => ({
       id: row.id,
       action: row.action,
       targetType: row.targetType,
       actorName: row.actorId ? (names.get(row.actorId) ?? '?') : 'System',
+      actorOrg: row.actorId ? (orgs.get(row.actorId) ?? null) : null,
       createdAt: row.createdAt,
     })),
   };

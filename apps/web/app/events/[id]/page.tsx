@@ -57,11 +57,6 @@ const SECTION_ICONS: Record<EventSection, typeof Users> = {
 
 /** Human-readable audit action ("day.item.late" -> "Item late"). Runtime
  * transform, so no per-action catalogue strings to maintain. */
-function prettyAction(action: string): string {
-  const last = action.split('.').pop() ?? action;
-  const words = last.replace(/_/g, ' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
 export default async function EventOverviewPage({
   params,
   searchParams,
@@ -384,9 +379,14 @@ export default async function EventOverviewPage({
                       key={row.id}
                       className="before:bg-brand relative flex items-baseline justify-between gap-2 text-sm before:absolute before:top-1.5 before:-left-[21px] before:size-2 before:rounded-full"
                     >
-                      <span className="min-w-0 truncate">
-                        {prettyAction(row.action)}
-                        {row.actorName ? ` · ${row.actorName}` : ''}
+                      <span className="min-w-0">
+                        <span className="font-medium">{row.actorName}</span>
+                        {row.actorOrg && <span className="text-muted"> · {row.actorOrg}</span>}{' '}
+                        {t.has(`overview.activityActions.${row.action.replace(/\./g, '_')}`)
+                          ? t(
+                              `overview.activityActions.${row.action.replace(/\./g, '_')}` as 'overview.activityFallback',
+                            )
+                          : t('overview.activityFallback')}
                       </span>
                       <span className="text-muted shrink-0 text-xs">
                         <RelativeTime value={row.createdAt} />

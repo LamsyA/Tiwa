@@ -262,3 +262,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X74: one Continue per client; payee confirms offline payments on the event booking page; upload resume on reconnect; full desktop e2e 56/62, remaining: home.spec (old), moments UF-10 upload stall
 - D-X75: removed Money Income tab; nav Chat vs notifications Inbox
 - D-X76: wedding story test (host, planner, photographer, venue, guest) 42 steps; fixes for planner booking link, proposal notification, labels, money pill
+- D-X77: guest email-or-phone, booked-day warnings, readable activity, budget lines per service; wedding story run on mobile (44 steps)

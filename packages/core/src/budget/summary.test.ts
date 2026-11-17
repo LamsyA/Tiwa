@@ -128,9 +128,12 @@ describe('computeBudget examples', () => {
     expect(catering.committedMinor).toBe(200_000n);
     expect(catering.paidMinor).toBe(50_000n);
     expect(summary.lines.find((line) => line.key === 'media')!.committedMinor).toBe(10_000n);
-    const other = summary.lines.find((line) => line.key === OTHER_KEY)!;
-    expect(other.committedMinor).toBe(70_000n);
-    expect(other.plannedMinor).toBe(0n);
+    // D-X77: an unmatched booking gets a line of its own service, not "Other".
+    expect(summary.lines.find((line) => line.key === OTHER_KEY)).toBeUndefined();
+    const security = summary.lines.find((line) => line.key === 'svc:security')!;
+    expect(security.label).toBe('Security');
+    expect(security.committedMinor).toBe(70_000n);
+    expect(security.plannedMinor).toBe(0n);
     expect(summary.totals).toMatchObject({ plannedMinor: 1_000_000n, committedMinor: 280_000n, paidMinor: 60_000n });
     expect(summary.unallocatedMinor).toBe(100_000n);
     expect(summary.income).toEqual([{ kind: 'family', pledgedMinor: 150n, receivedMinor: 90n }]);

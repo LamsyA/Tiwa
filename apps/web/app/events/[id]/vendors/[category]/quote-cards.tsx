@@ -109,6 +109,10 @@ function QuoteCard({
     if (!agreed) return;
     setWorking(true);
     const result = await acceptQuoteAction({ quoteId: quote.id, paymentMode: mode, declineOthers });
+    if (!result.ok && result.reason === 'slotTaken') {
+      setWorking(false);
+      return setError(te('slotTaken'));
+    }
     setWorking(false);
     if (!result.ok) setError(te(errorKey(result.code)));
     else {
