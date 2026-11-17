@@ -1901,10 +1901,10 @@
     },
     "searchVenuesTitle": "Find a venue",
     "dateLabel": "Date",
-    "slotLabel": "Slot",
+    "slotLabel": "Time of day",
     "guestsLabel": "Guests",
     "allSlots": "Any slot",
-    "spaceFor": "{count} matching spaces",
+    "spaceFor": "{count, plural, one {# matching space} other {# matching spaces}}",
     "noVenues": "No venues match. Try another date or fewer guests.",
     "findVenue": "Find a venue",
     "blockDate": "Block date",
@@ -1930,7 +1930,7 @@
     "noResultsBody": "Try a different city, category or price range.",
     "from": "from",
     "searchLabel": "Search the marketplace",
-    "cityPlaceholder": "Any city",
+    "cityPlaceholder": "Where?",
     "filters": "Filters",
     "anyRating": "Any rating",
     "showResults": "Show results",
@@ -2021,7 +2021,15 @@
       "view": "View",
       "requestQuotes": "Request quotes"
     },
-    "noPhotosYet": "No photos yet"
+    "noPhotosYet": "No photos yet",
+    "slotName": {
+      "MORNING": "Morning",
+      "AFTERNOON": "Afternoon",
+      "EVENING": "Evening",
+      "FULL_DAY": "Full day"
+    },
+    "guestsPlaceholder": "How many?",
+    "moreFilters": "Filters"
   },
   "inbox": {
     "title": "Chat",

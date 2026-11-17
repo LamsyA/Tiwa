@@ -1,3 +1,6 @@
+'use client';
+
+import * as React from 'react';
 import { ImageOff } from 'lucide-react';
 
 /**
@@ -18,7 +21,9 @@ export function BusinessCover({
   className?: string;
   eager?: boolean;
 }) {
-  if (src) {
+  // D-X86: a photo that fails to load (deleted file, bad key) falls back to the placeholder, never a broken icon.
+  const [failed, setFailed] = React.useState(false);
+  if (src && !failed) {
     return (
       // Plain img: these are signed/proxied routes, not static imports the image loader can size.
       <img
@@ -26,6 +31,7 @@ export function BusinessCover({
         alt=""
         loading={eager ? 'eager' : 'lazy'}
         decoding="async"
+        onError={() => setFailed(true)}
         className={`size-full object-cover ${className}`}
       />
     );
@@ -60,12 +66,14 @@ export function BusinessLogo({
   name: string;
   className?: string;
 }) {
-  if (src) {
+  const [failed, setFailed] = React.useState(false);
+  if (src && !failed) {
     return (
       <img
         src={src}
         alt=""
         loading="lazy"
+        onError={() => setFailed(true)}
         className={`shrink-0 bg-white object-contain p-1 shadow-[var(--shadow-1)] ring-1 ring-black/5 ${className}`}
       />
     );

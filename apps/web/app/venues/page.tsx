@@ -1,7 +1,7 @@
 import { coverUrls, listShortlist, loadEventAccess, searchVenues } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { EmptyState, MoneyText, StatusPill } from '@tiwa/ui';
-import { BadgeCheck, Building2, MapPin, Star, Users } from 'lucide-react';
+import { BadgeCheck, Building2, Check, MapPin, Star, Users } from 'lucide-react';
 
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -85,7 +85,7 @@ export default async function VenuesPage({
         {hits.length === 0 ? (
           <EmptyState icon={<Building2 className="size-6" />} title={t('noVenues')} body={t('noVenuesBody')} />
         ) : (
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {hits.map((hit) => {
               const own = hit.spaces.flatMap((space) =>
                 space.photoIds.map((photoId) => ({ space: space.id, photoId })),
@@ -100,96 +100,109 @@ export default async function VenuesPage({
                 .map((space) => (filters.slot ? space.slotPriceMinor : space.fromMinor))
                 .filter((value): value is string => value !== null)
                 .sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1))[0];
-              const amenities = [...new Set(hit.spaces.flatMap((space) => space.amenities))].slice(0, 3);
+              const amenitySet = [...new Set(hit.spaces.flatMap((space) => space.amenities))];
+              const allAmenities = amenitySet.length;
+              const amenities = amenitySet.slice(0, 3);
               const href = `/vendors/${hit.slug}${eventId ? `?eventId=${eventId}` : ''}`;
               return (
                 <li
                   key={hit.orgId}
-                  className="group border-border/80 bg-bg relative flex flex-col overflow-hidden rounded-3xl border shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2"
+                  className="group border-border/70 bg-surface relative flex flex-col overflow-hidden rounded-3xl border shadow-[var(--shadow-1)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]"
                 >
-                  <div className="bg-surface-2 relative aspect-[4/3] overflow-hidden">
-                    {own ? (
-                      <img
-                        src={`/api/space-photo/${hit.orgId}/${own.space}/${own.photoId}`}
-                        alt=""
-                        loading="lazy"
-                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : (
-                      <BusinessCover
-                        src={covers.get(hit.orgId) ?? null}
-                        name={hit.name}
-                        emptyLabel={t('noPhotosYet')}
-                        className="transition-transform duration-700 group-hover:scale-105"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-                    <span className="absolute top-3 left-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+                  {/* D-X86: name, city and verified sit on the photo; the body stays short. */}
+                  <div className="bg-surface-2 relative aspect-[16/10] overflow-hidden">
+                    <BusinessCover
+                      src={
+                        own
+                          ? `/api/space-photo/${hit.orgId}/${own.space}/${own.photoId}`
+                          : (covers.get(hit.orgId) ?? null)
+                      }
+                      name={hit.name}
+                      emptyLabel={t('noPhotosYet')}
+                      className="transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                    <span className="absolute top-3 left-3 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-[#1c1917] backdrop-blur-sm">
                       {t('spaceFor', { count: hit.spaces.length })}
                     </span>
                     <div className="absolute top-2 right-2 z-10">
                       <ShortlistButton eventId={eventId} orgId={hit.orgId} initial={shortlisted.has(hit.orgId)} />
                     </div>
-                    {capacity > 0 && (
-                      <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-black">
-                        <Users className="size-3.5" aria-hidden />
-                        {t('upToGuests', { count: capacity })}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col gap-2 p-4">
-                    <div className="flex items-center gap-2">
+                    <div className="absolute inset-x-3 bottom-3 flex items-end gap-2.5">
                       <BusinessLogo
                         src={logos.has(hit.orgId) ? `/api/org-logo/${hit.orgId}` : null}
                         name={hit.name}
-                        className="size-8 rounded-lg"
+                        className="size-9 rounded-xl"
                       />
-                      <Link
-                        href={href}
-                        className="font-display truncate text-lg font-bold tracking-tight after:absolute after:inset-0"
-                      >
-                        {hit.name}
-                      </Link>
-                      {hit.verified && (
-                        <BadgeCheck className="text-brand-strong size-4 shrink-0" aria-label={t('verified')} />
-                      )}
+                      <div className="min-w-0 flex-1 text-white">
+                        <p className="flex items-center gap-1">
+                          <Link
+                            href={href}
+                            className="font-display truncate text-base leading-tight font-bold tracking-tight after:absolute after:inset-0"
+                          >
+                            {hit.name}
+                          </Link>
+                          {hit.verified && (
+                            <BadgeCheck className="size-4 shrink-0 text-white" aria-label={t('verified')} />
+                          )}
+                        </p>
+                        <p className="flex items-center gap-1 truncate text-xs text-white/80">
+                          <MapPin className="size-3 shrink-0" aria-hidden />
+                          {hit.city}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-muted flex items-center gap-1 text-sm">
-                      <MapPin className="size-3.5" aria-hidden />
-                      {hit.city}
-                    </p>
-                    <ul className="flex flex-wrap gap-1.5" aria-label={t('spaceFor', { count: hit.spaces.length })}>
-                      {hit.spaces.slice(0, 3).map((space) => (
-                        <li
+                  </div>
+                  <div className="flex flex-1 flex-col gap-2.5 p-3.5">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+                      {capacity > 0 && (
+                        <span className="bg-teal-soft text-teal-strong inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold">
+                          <Users className="size-3" aria-hidden />
+                          {t('upToGuests', { count: capacity })}
+                        </span>
+                      )}
+                      {hit.spaces.slice(0, 2).map((space) => (
+                        <span
                           key={space.id}
-                          className="bg-brand-soft/70 text-brand-strong rounded-full px-2.5 py-0.5 text-xs font-medium"
+                          className="bg-surface-2 text-text max-w-[9rem] truncate rounded-full px-2 py-0.5"
                         >
                           {space.name}
-                        </li>
+                        </span>
                       ))}
-                    </ul>
+                      {hit.spaces.length > 2 && <span className="text-muted">+{hit.spaces.length - 2}</span>}
+                    </div>
                     {amenities.length > 0 && (
-                      <p className="text-muted truncate text-xs">
-                        {amenities.map((key) => t(`amenity_${key}`)).join(' · ')}
-                      </p>
+                      <ul className="text-muted flex flex-wrap gap-x-2.5 gap-y-1 text-[11px]">
+                        {amenities.map((key) => (
+                          <li key={key} className="inline-flex items-center gap-1">
+                            <Check className="text-success size-3" aria-hidden />
+                            {t(`amenity_${key}`)}
+                          </li>
+                        ))}
+                        {allAmenities > amenities.length && <li>+{allAmenities - amenities.length}</li>}
+                      </ul>
                     )}
-                    <div className="border-border/70 mt-auto flex items-end justify-between gap-2 border-t pt-3 text-sm">
+                    <div className="border-border/60 mt-auto flex items-center justify-between gap-2 border-t pt-2.5">
+                      {from ? (
+                        <span className="leading-tight">
+                          <span className="text-muted block text-[10px] font-semibold tracking-[0.12em] uppercase">
+                            {t('from')}
+                          </span>
+                          <span className="font-display text-base font-bold tabular-nums">
+                            <MoneyText value={from} currency={hit.currency} />
+                          </span>
+                        </span>
+                      ) : (
+                        <span />
+                      )}
                       {hit.ratingCount >= 5 && hit.ratingAvg !== null ? (
-                        <span className="flex items-center gap-1">
-                          <Star className="fill-accent text-accent size-4" aria-hidden />
+                        <span className="bg-surface-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs">
+                          <Star className="fill-accent text-accent size-3.5" aria-hidden />
                           <span className="font-semibold">{hit.ratingAvg.toFixed(1)}</span>
                           <span className="text-muted">({hit.ratingCount})</span>
                         </span>
                       ) : (
                         <StatusPill tone="neutral">{t('newOnTiwa')}</StatusPill>
-                      )}
-                      {from && (
-                        <span className="flex flex-col items-end">
-                          <span className="text-muted text-xs">{t('from')}</span>
-                          <span className="font-semibold">
-                            <MoneyText value={from} currency={hit.currency} />
-                          </span>
-                        </span>
                       )}
                     </div>
                   </div>
