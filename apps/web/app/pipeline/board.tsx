@@ -1,7 +1,7 @@
 'use client';
 
 import { Banner, DropdownMenu, cn } from '@tiwa/ui';
-import { ArrowRightLeft, FileText, GripVertical, Mail, Phone, Receipt } from 'lucide-react';
+import { ArrowRightLeft, ChevronRight, FileText, GripVertical, Mail, Phone, Receipt, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,8 @@ export interface PipelineCard {
   createdAt: string;
   proposals: number;
   invoices: number;
+  /** D-X69: the Tiwa proposal request this lead came from. */
+  request?: { requestId: string; eventName: string } | null;
 }
 
 const ACCENT: Record<Stage, string> = {
@@ -162,6 +164,22 @@ export function PipelineBoard({ cards }: { cards: PipelineCard[] }) {
                         )}
                         <span className="truncate">{card.phone ?? card.email}</span>
                       </p>
+                    )}
+                    {card.request && (
+                      <Link
+                        href={`/quotes/${card.request.requestId}`}
+                        className="bg-brand-soft/50 hover:bg-brand-soft group/proposal flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs transition"
+                      >
+                        <Sparkles className="text-brand-strong size-3.5 shrink-0" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-semibold">{card.request.eventName}</span>
+                          <span className="text-brand-strong font-medium">{t('viewProposal')}</span>
+                        </span>
+                        <ChevronRight
+                          className="text-brand-strong size-3.5 shrink-0 transition group-hover/proposal:translate-x-0.5"
+                          aria-hidden
+                        />
+                      </Link>
                     )}
                     <div className="text-muted flex items-center gap-3 text-xs">
                       <span className="inline-flex items-center gap-1">

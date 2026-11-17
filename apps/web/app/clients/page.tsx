@@ -70,9 +70,17 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                 >
                   <Avatar name={c.name} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{c.name}</p>
+                    <p className="flex items-center gap-2 truncate font-semibold">
+                      {c.name}
+                      {c.onTiwa && (
+                        <span className="bg-brand-soft text-brand-strong rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                          {t('fromTiwa')}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-muted truncate text-xs">
                       {[
+                        c.proposal?.eventName,
                         c.phone ?? c.email,
                         t('activity', { proposals: c._count.proposals, invoices: c._count.invoices }),
                       ]

@@ -114,6 +114,14 @@ describe('planner proposals (D-X64)', () => {
       notes: 'Full planning for 120 guests',
     });
     expect(result.requests).toHaveLength(1);
+    // D-X69: the host lands in the planner's pipeline as an enquiry.
+    const client = await prisma.client.findUniqueOrThrow({
+      where: { orgId_userId: { orgId: planner.orgId, userId: host.userId } },
+    });
+    expect(client.stage).toBe('ENQUIRY');
+    expect((await prisma.quoteRequest.findUniqueOrThrow({ where: { id: result.requests[0]!.id } })).clientId).toBe(
+      client.id,
+    );
     const inbox = await listEnquiries(planner.owner);
     expect(inbox.some((row) => row.category === PLANNING_CATEGORY && row.eventId === eventId)).toBe(true);
     const overview = await getCategoryOverview(host, { eventId, category: PLANNING_CATEGORY });
@@ -152,6 +160,13 @@ describe('planner proposals (D-X64)', () => {
       expiresAt: new Date(Date.now() + 14 * 86_400_000).toISOString(),
     });
     await sendQuote(planner.owner, { quoteId: draft.quoteId });
+    const stage = async () =>
+      (
+        await prisma.client.findUniqueOrThrow({
+          where: { orgId_userId: { orgId: planner.orgId, userId: host.userId } },
+        })
+      ).stage;
+    expect(await stage()).toBe('PROPOSAL_SENT');
     // Once answered, the request leaves the inbox…
     expect((await listEnquiries(planner.owner)).some((row) => row.id === request.id)).toBe(false);
 
@@ -232,6 +247,13 @@ describe('planner proposals (D-X64)', () => {
       where: { eventId, userId: planner.owner.userId, removedAt: null },
     });
     expect(row.orgId).toBe(planner.orgId);
+    expect(
+      (
+        await prisma.client.findUniqueOrThrow({
+          where: { orgId_userId: { orgId: planner.orgId, userId: host.userId } },
+        })
+      ).stage,
+    ).toBe('WON');
 
     // D-X68: the hired planner hides vendor prices — but never their own fee from the host.
     await prisma.event.update({ where: { id: eventId }, data: { hostCanSeeVendorPrices: false } });

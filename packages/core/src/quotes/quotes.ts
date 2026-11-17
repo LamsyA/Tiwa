@@ -6,6 +6,7 @@ import type { Actor } from '../auth/authorize.js';
 import { loadEventAccess } from '../events/access.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { syncPipelineForRequest } from '../planner/pipeline-sync.js';
 import { authorize } from '../auth/authorize.js';
 import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { checkVenueAvailability } from '../bookings/venue.js';
@@ -148,6 +149,7 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
       if (quote.requestId) {
         await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'QUOTED' } });
       }
+      await syncPipelineForRequest(tx, quote.requestId, 'PROPOSAL_SENT');
       // D-X67: freeze this version for the history both sides can review later.
       await tx.quoteRevision.upsert({
         where: { quoteId_revision: { quoteId, revision: updated.revision } },
@@ -315,7 +317,10 @@ export async function declineEnquiry(actor: UserActor, raw: unknown) {
   if (!request) throw new NotFoundError('Quote request not found');
   await loadOrgAccess(actor, request.vendorOrgId, 'org.manage');
   if (request.status !== 'OPEN') throw new ValidationError('This request is no longer open', { key: 'requestClosed' });
-  await prisma.quoteRequest.update({ where: { id: requestId }, data: { status: 'DECLINED_BY_VENDOR' } });
+  await prisma.$transaction(async (tx) => {
+    await tx.quoteRequest.update({ where: { id: requestId }, data: { status: 'DECLINED_BY_VENDOR' } });
+    await syncPipelineForRequest(tx, requestId, 'LOST');
+  });
   await audit(prisma, {
     actor,
     action: 'quote.declineEnquiry',

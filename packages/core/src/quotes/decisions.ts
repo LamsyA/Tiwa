@@ -6,6 +6,7 @@ import { loadEventAccess, requireEventAccess } from '../events/access.js';
 import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { NotFoundError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { syncPipelineForRequest } from '../planner/pipeline-sync.js';
 import type { Actor } from '../auth/authorize.js';
 import { assertQuoteTransition } from './state.js';
 
@@ -158,7 +159,11 @@ export async function declineQuote(actor: UserActor, raw: z.infer<typeof decline
     access: await loadEventAccess(actor.userId, quote.eventId),
   });
   assertQuoteTransition(quote.status, 'DECLINED');
-  const updated = await prisma.quote.update({ where: { id: quote.id }, data: { status: 'DECLINED' } });
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.quote.update({ where: { id: quote.id }, data: { status: 'DECLINED' } });
+    await syncPipelineForRequest(tx, quote.requestId, 'LOST');
+    return row;
+  });
   await audit(prisma, {
     actor,
     action: 'quote.decline',

@@ -252,3 +252,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X66: change requests reach vendor/planner; revise in place; notifications. core quotes 26/26, e2e planner/quotes/demo-booking 10/10 x2 desktop+mobile. Known: worker retention.test fails without this change too.
 - D-X67: proposal/quote version history (QuoteRevision) shared by host and planner, sent pop-up, Sent list. core quotes+bookings 57/57; e2e 10/10 x2 desktop+mobile.
 - D-X68: hidden vendor prices never hide the planner’s own proposal from the host. quotes + prices tests 30/30.
+- D-X69: proposals drive the planner pipeline (ENQUIRY/PROPOSAL_SENT/WON/LOST) and clients; events cards and empty inbox redesigned. core 68/68; e2e 16/16 + planner 3/4 (UF-21-3 mobile fails without this change too).

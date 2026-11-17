@@ -7,6 +7,7 @@ import { isEnabled } from '../flags/flags.js';
 import { ConflictError, FeatureDisabledError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { mulBps } from '../shared/money.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { syncPipelineForRequest } from '../planner/pipeline-sync.js';
 import { attachVenueToEvent, checkVenueAvailability } from './venue.js';
 import { ensureBookingThread, mirrorToEventTeam, postCard } from '../chat/cards.js';
 import { createLogger } from '../shared/logger.js';
@@ -211,6 +212,7 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
             },
           });
         }
+        await syncPipelineForRequest(tx, quote.requestId, 'WON');
         await audit(tx, {
           actor,
           action: 'event.planner.hired',
@@ -286,6 +288,10 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
         }
         if (toDecline.length > 0) {
           await tx.quote.updateMany({ where: { id: { in: toDecline } }, data: { status: 'DECLINED' } });
+          // D-X69: planners not chosen see the lead as lost in their pipeline.
+          for (const other of others.filter((row) => toDecline.includes(row.id))) {
+            await syncPipelineForRequest(tx, other.requestId, 'LOST');
+          }
         }
       }
       await audit(tx, {

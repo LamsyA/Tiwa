@@ -623,3 +623,11 @@ Template:
 - Decision: The planner’s "hide vendor prices from the host" switch (EVT-12) now applies to vendor quotes only. The planner’s own planning proposal (category `planning`) always shows its amounts to the host, in proposal cards (compareQuotes) and in its history (quoteHistory).
 - Why: once hired, a planner could switch prices off and the host would lose sight of the fee they agreed to pay that planner.
 - Affects: packages/core quotes/decisions (compareQuotes), quotes/history + planner-proposals.test.
+
+### 2026-11-17 — Proposals drive the planner pipeline; events cards; compact empty inbox
+- ID: D-X69
+- Date: 2026-11-17
+- Status: LOCKED (owner, 2026-11-17)
+- Decision: Planner CRM clients are now linked to Tiwa hosts (Client.userId, unique per planner org) and planning requests to clients (QuoteRequest.clientId); migration 20261117150000 backfills clients and stages from existing requests. Pipeline stage follows the proposal automatically: request → ENQUIRY (creates the client, or reopens a LOST one), sent → PROPOSAL_SENT, host accepts → WON, host declines / planner declines the request / another planner is hired → LOST; WON is sticky. Pipeline cards and the Clients list show the event and a View proposal link; the client page lists every Tiwa proposal with status, version and total. Events list cards redesigned (cover photo or theme-colour gradient, date tile, countdown, type, role, progress bar). Planner inbox empty state is a compact "You’re all caught up" card with a profile prompt.
+- Why: owner reported the pipeline did not move to Won on acceptance, was not linked to proposals, clients were not synced, and the events cards and empty inbox looked unpolished.
+- Affects: packages/db schema + migration; packages/core planner/pipeline-sync (new), planner/clients, quotes/requests, quotes/quotes, quotes/decisions, bookings/accept + planner-proposals.test; apps/web events list, pipeline, clients list and detail, quotes inbox, messages/en.json; e2e planner.spec (exact link names).

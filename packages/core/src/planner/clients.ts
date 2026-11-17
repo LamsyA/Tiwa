@@ -79,7 +79,7 @@ export async function createClient(actor: UserActor, raw: z.input<typeof createC
 export async function listClients(actor: UserActor, raw: z.input<typeof listClientsSchema>) {
   const input = listClientsSchema.parse(raw);
   await requirePlannerOrg(actor, input.orgId, 'org.view');
-  return prisma.client.findMany({
+  const clients = await prisma.client.findMany({
     where: { orgId: input.orgId },
     orderBy: [{ stage: 'asc' }, { createdAt: 'desc' }],
     select: {
@@ -88,10 +88,31 @@ export async function listClients(actor: UserActor, raw: z.input<typeof listClie
       phone: true,
       email: true,
       stage: true,
+      userId: true,
       createdAt: true,
       _count: { select: { proposals: true, invoices: true } },
     },
   });
+  // D-X69: the newest Tiwa proposal request behind each client, so the
+  // pipeline and client list link straight to the proposal and its history.
+  const requests = await prisma.quoteRequest.findMany({
+    where: { clientId: { in: clients.map((row) => row.id) } },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, clientId: true, eventId: true, createdAt: true },
+  });
+  const events = await prisma.event.findMany({
+    where: { id: { in: [...new Set(requests.map((row) => row.eventId))] } },
+    select: { id: true, name: true },
+  });
+  const eventName = new Map(events.map((row) => [row.id, row.name]));
+  const latest = new Map<string, { requestId: string; eventName: string; requests: number }>();
+  for (const row of requests) {
+    const key = row.clientId as string;
+    const seen = latest.get(key);
+    if (seen) seen.requests += 1;
+    else latest.set(key, { requestId: row.id, eventName: eventName.get(row.eventId) ?? '', requests: 1 });
+  }
+  return clients.map((row) => ({ ...row, onTiwa: row.userId !== null, proposal: latest.get(row.id) ?? null }));
 }
 
 export async function getClient(actor: UserActor, clientId: string) {
@@ -102,7 +123,43 @@ export async function getClient(actor: UserActor, clientId: string) {
     prisma.proposal.findMany({ where: { clientId }, orderBy: { createdAt: 'desc' } }),
     prisma.invoice.findMany({ where: { clientId }, orderBy: { createdAt: 'desc' } }),
   ]);
-  return { client: row, proposals, invoices };
+  // D-X69: every proposal request this client sent on Tiwa, with where it stands.
+  const requests = await prisma.quoteRequest.findMany({
+    where: { clientId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, eventId: true, status: true, createdAt: true },
+  });
+  const [events, quotes] = await Promise.all([
+    prisma.event.findMany({
+      where: { id: { in: requests.map((r) => r.eventId) } },
+      select: { id: true, name: true, startsAt: true },
+    }),
+    prisma.quote.findMany({
+      where: { requestId: { in: requests.map((r) => r.id) }, status: { not: 'DRAFT' } },
+      orderBy: { createdAt: 'desc' },
+      select: { requestId: true, status: true, totalMinor: true, currency: true, revision: true },
+    }),
+  ]);
+  const eventById = new Map(events.map((e) => [e.id, e]));
+  const tiwaRequests = requests.map((r) => {
+    const quote = quotes.find((q) => q.requestId === r.id) ?? null;
+    return {
+      requestId: r.id,
+      requestStatus: r.status,
+      eventName: eventById.get(r.eventId)?.name ?? '',
+      eventDate: eventById.get(r.eventId)?.startsAt?.toISOString() ?? null,
+      requestedAt: r.createdAt.toISOString(),
+      quote: quote
+        ? {
+            status: quote.status,
+            totalMinor: quote.totalMinor.toString(),
+            currency: quote.currency,
+            revision: quote.revision,
+          }
+        : null,
+    };
+  });
+  return { client: row, proposals, invoices, tiwaRequests };
 }
 
 export async function moveLead(actor: UserActor, raw: z.input<typeof moveLeadSchema>) {

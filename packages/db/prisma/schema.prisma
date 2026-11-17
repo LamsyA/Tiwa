@@ -1134,6 +1134,8 @@ model QuoteRequest {
   vendorOrgId String
   brief       Json
   status      QuoteRequestStatus @default(OPEN)
+  // D-X69: the planner CRM client this planning request belongs to.
+  clientId    String?
   createdById String
   createdAt   DateTime           @default(now())
   event       Event              @relation(fields: [eventId], references: [id])
@@ -1400,12 +1402,15 @@ model Client {
   email     String?      @db.Citext
   notes     String?
   stage     LeadStage    @default(ENQUIRY)
+  // D-X69: a host who asked for a proposal on Tiwa; their requests drive the pipeline.
+  userId    String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   org       Organization @relation("OrgClients", fields: [orgId], references: [id], onDelete: Cascade)
   proposals Proposal[]
   invoices  Invoice[]
 
+  @@unique([orgId, userId])
   @@index([orgId, stage])
 }
 

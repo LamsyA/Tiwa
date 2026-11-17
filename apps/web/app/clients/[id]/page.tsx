@@ -82,6 +82,59 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           </div>
         </section>
 
+        {data.tiwaRequests.length > 0 && (
+          <section aria-labelledby="client-tiwa" className="flex flex-col gap-3">
+            <h3 id="client-tiwa" className="font-display text-lg font-bold tracking-tight">
+              {t('tiwaRequestsTitle')}
+            </h3>
+            <ul className="border-border/70 bg-surface divide-border/60 divide-y overflow-hidden rounded-3xl border shadow-[var(--shadow-1)]">
+              {data.tiwaRequests.map((row) => (
+                <li key={row.requestId}>
+                  <Link
+                    href={`/quotes/${row.requestId}`}
+                    className="hover:bg-surface-2/60 group flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-4 transition"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">{row.eventName}</span>
+                      <span className="text-muted block text-xs">
+                        {t('tiwaRequestedOn', {
+                          date: new Intl.DateTimeFormat('en', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          }).format(new Date(row.requestedAt)),
+                        })}
+                        {row.quote ? ` · v${row.quote.revision}` : ''}
+                      </span>
+                    </span>
+                    <StatusPill
+                      tone={
+                        row.quote?.status === 'ACCEPTED'
+                          ? 'success'
+                          : row.quote?.status === 'CHANGES_REQUESTED' || (!row.quote && row.requestStatus === 'OPEN')
+                            ? 'warning'
+                            : row.quote?.status === 'SENT'
+                              ? 'brand'
+                              : 'neutral'
+                      }
+                    >
+                      {t(
+                        `tiwaStatus.${row.quote?.status ?? (row.requestStatus === 'OPEN' ? 'NEW' : 'CLOSED')}` as 'tiwaStatus.NEW',
+                      )}
+                    </StatusPill>
+                    {row.quote && (
+                      <span className="font-display font-bold tabular-nums">
+                        <MoneyText value={row.quote.totalMinor} currency={row.quote.currency} />
+                      </span>
+                    )}
+                    <ChevronRight aria-hidden className="text-muted size-4 transition group-hover:translate-x-0.5" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section aria-labelledby="client-events" className="flex flex-col gap-3">
           <h3 id="client-events" className="font-display text-lg font-bold tracking-tight">
             {t('clientEvents')}

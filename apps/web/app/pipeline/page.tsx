@@ -54,6 +54,9 @@ export default async function PipelinePage() {
               createdAt: client.createdAt.toISOString(),
               proposals: client._count.proposals,
               invoices: client._count.invoices,
+              request: client.proposal
+                ? { requestId: client.proposal.requestId, eventName: client.proposal.eventName }
+                : null,
             }))}
           />
         )}

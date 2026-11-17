@@ -57,9 +57,9 @@ test.describe('UF-21 planner dashboard', () => {
     await expect(page.getByText('2 open enquiries')).toBeVisible();
 
     // This week's events: days 1, 3, 6.
-    await expect(page.getByRole('link', { name: 'Funmi & Dayo’s Wedding' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Adewale’s 50th Birthday' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Chiamaka’s Bridal Shower' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Funmi & Dayo’s Wedding', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Adewale’s 50th Birthday', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Chiamaka’s Bridal Shower', exact: true })).toBeVisible();
 
     // Pipeline badges: ENQUIRY 2, PROPOSAL_SENT 1, WON 1.
     await expect(page.getByText('New · 2')).toBeVisible();

@@ -419,7 +419,18 @@
       "emptyDraftsBody": "Events you start but don't finish setting up wait here.",
       "continueSetup": "Continue setup",
       "noDate": "Date not set",
-      "progress": "{done} of {total} tasks done"
+      "progress": "{done} of {total} tasks done",
+      "draft": "Draft",
+      "today": "Today",
+      "inDays": "{count, plural, one {Tomorrow} other {In # days}}",
+      "role": {
+        "HOST": "Host",
+        "CO_HOST": "Co-host",
+        "PLANNER": "Planner",
+        "PLANNER_STAFF": "Planner team",
+        "VENDOR": "Vendor",
+        "PHOTOGRAPHER": "Photographer"
+      }
     },
     "settingsPage": {
       "title": "Event settings",
@@ -2256,7 +2267,12 @@
     },
     "lockedTitle": "This {kind} is with the client",
     "lockedBody": "You can’t edit it while they decide. If they ask for changes, it comes back here to revise.",
-    "theClient": "The client"
+    "theClient": "The client",
+    "emptyInbox": {
+      "title": "You’re all caught up",
+      "body": "New requests appear here the moment a client sends one. A complete, published profile gets more of them.",
+      "cta": "Polish your profile"
+    }
   },
   "bookings": {
     "title": "Booking",
@@ -2615,7 +2631,22 @@
     "downloadPdf": "Download PDF",
     "proposalWord": "Proposal",
     "preparedFor": "Prepared for",
-    "preparedBy": "Prepared by"
+    "preparedBy": "Prepared by",
+    "viewProposal": "View proposal",
+    "fromTiwa": "Requested on Tiwa",
+    "tiwaRequestsTitle": "Proposals on Tiwa",
+    "tiwaRequestedOn": "Requested {date}",
+    "tiwaStatus": {
+      "NEW": "New request",
+      "SENT": "Awaiting decision",
+      "CHANGES_REQUESTED": "Changes requested",
+      "ACCEPTED": "Won",
+      "DECLINED": "Lost",
+      "WITHDRAWN": "Withdrawn",
+      "EXPIRED": "Expired",
+      "CLOSED": "Closed",
+      "DRAFT": "Draft"
+    }
   },
   "vendor": {
     "title": "Vendor workspace",

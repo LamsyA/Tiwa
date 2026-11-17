@@ -5,6 +5,7 @@ import { requireEventAccess } from '../events/access.js';
 import type { Actor } from '../auth/authorize.js';
 import { ConflictError, LimitReachedError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
+import { ensurePlannerClient } from '../planner/pipeline-sync.js';
 
 // Quote requests (QTE-01, UF-14): host/planner asks up to 5 vendors in one
 // category per event for a quote. The brief is prefilled from the event so
@@ -135,8 +136,20 @@ export async function requestQuotes(actor: UserActor, raw: z.infer<typeof reques
         select: { id: true, status: true },
       });
       if (existing) throw new ConflictError('This vendor was already asked for this category', { vendorOrgId });
+      // D-X69: a planning request lands the host in that planner's pipeline.
+      const clientId =
+        input.category === PLANNING_CATEGORY
+          ? await ensurePlannerClient(tx, { orgId: vendorOrgId, hostUserId: actor.userId })
+          : null;
       const row = await tx.quoteRequest.create({
-        data: { eventId: input.eventId, category: input.category, vendorOrgId, brief, createdById: actor.userId },
+        data: {
+          eventId: input.eventId,
+          category: input.category,
+          vendorOrgId,
+          brief,
+          createdById: actor.userId,
+          clientId,
+        },
         select: { id: true, vendorOrgId: true },
       });
       created.push(row);

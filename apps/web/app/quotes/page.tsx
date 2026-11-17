@@ -8,7 +8,7 @@ import {
   listVendorBookingMoney,
 } from '@tiwa/core';
 import { PLANNING_CATEGORY, serviceLabel } from '@tiwa/config';
-import { Banner, EmptyState, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
+import { Banner, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { ArrowRight, History, Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -98,7 +98,26 @@ export default async function QuotesInboxPage() {
             )}
           </h2>
           {!enquiries || enquiries.length === 0 ? (
-            <EmptyState icon={<Inbox className="size-8" aria-hidden />} title={t('noEnquiries')} body="" />
+            <div className="border-border/70 bg-surface relative flex flex-col gap-4 overflow-hidden rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:flex-row sm:items-center sm:p-6">
+              <span aria-hidden className="bg-brand/10 absolute -top-10 -right-10 size-40 rounded-full blur-3xl" />
+              <span className="bg-brand-soft text-brand-strong relative flex size-12 shrink-0 items-center justify-center rounded-2xl">
+                <Inbox aria-hidden className="size-5" />
+              </span>
+              <div className="relative min-w-0 flex-1">
+                <p className="font-semibold">{t('emptyInbox.title')}</p>
+                <p className="text-muted text-sm">{t('emptyInbox.body')}</p>
+              </div>
+              <Link
+                href="/business/profile"
+                className={buttonClasses({
+                  variant: 'secondary',
+                  size: 'sm',
+                  className: 'relative shrink-0 rounded-full',
+                })}
+              >
+                {t('emptyInbox.cta')}
+              </Link>
+            </div>
           ) : (
             <ul className="flex flex-col gap-4">
               {enquiries.map((row) => {
