@@ -67,6 +67,11 @@ afterAll(async () => {
 });
 
 describe('createUpload', () => {
+  it('refuses a photo over 800 KB (D-X81)', async () => {
+    const { IMAGE_MAX_BYTES } = await import('./uploads.js');
+    expect(IMAGE_MAX_BYTES).toBe(800 * 1024);
+  });
+
   it('mints a MediaItem row and key with no S3 calls', async () => {
     const { host, eventId } = await eventWithGallery();
     const result = await createUpload(host, {
@@ -74,7 +79,7 @@ describe('createUpload', () => {
       album: 'GUEST',
       fileName: 'party.jpg',
       mime: 'image/jpeg',
-      sizeBytes: 1024 * 1024,
+      sizeBytes: 700 * 1024, // D-X81: images are capped at 800 KB
       kind: 'PHOTO',
     });
     expect(result.mediaId).toBeTruthy();

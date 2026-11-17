@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { Banner } from '@tiwa/ui';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -16,7 +18,9 @@ export function LogoUploader({ orgId, orgName, hasLogo }: { orgId: string; orgNa
   const [error, setError] = React.useState<string | null>(null);
   const [version, setVersion] = React.useState(0);
 
-  async function onFile(file: File | undefined) {
+  async function onFile(picked: File | undefined) {
+    // D-X81: every image ends up ≤ 800 KB at 95% quality before it leaves the device.
+    const file = picked ? await compressImage(picked) : undefined;
     if (!file) return;
     setBusy(true);
     setError(null);

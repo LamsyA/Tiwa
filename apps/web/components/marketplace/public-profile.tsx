@@ -106,7 +106,12 @@ export async function PublicProfileView({
         )}
         <section aria-label={profile.org.name}>
           <div className="flex items-start gap-4">
-            <Avatar name={profile.org.name} />
+            <Avatar
+              name={profile.org.name}
+              size="lg"
+              className="border-border/70 bg-white shadow-[var(--shadow-1)] ring-1 ring-black/5"
+              {...(profile.org.logoKey ? { src: `/api/org-logo/${profile.org.id}` } : {})}
+            />
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold">{profile.org.name}</h1>
               <p className="text-brand-strong text-sm font-medium">@{profile.org.slug}</p>

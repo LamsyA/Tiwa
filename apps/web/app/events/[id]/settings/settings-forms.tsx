@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
 import {
   Banner,
@@ -417,7 +419,9 @@ function AppearanceForm({ eventId, canEdit, themeColor, coverUrl }: SettingsForm
   const [coverBusy, setCoverBusy] = React.useState(false);
   const [coverError, setCoverError] = React.useState<string | undefined>();
 
-  async function upload(file: File | undefined) {
+  async function upload(picked: File | undefined) {
+    // D-X81: compress to ≤ 800 KB at 95% quality first.
+    const file = picked ? await compressImage(picked) : undefined;
     if (!file) return;
     setCoverError(undefined);
     if (!COVER_TYPES.includes(file.type)) return setCoverError(t('errors.coverType'));

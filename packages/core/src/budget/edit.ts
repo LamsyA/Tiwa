@@ -6,7 +6,7 @@ import { requireEventAccess } from '../events/access.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capUpload, refineImageSize } from '../shared/upload-limit.js';
 
 // Budget edits (BUD-02–BUD-06, UF-20 steps 3; D-X28). Everything needs
 // `money.edit`; every change writes an AuditLog `budget.*` row with the
@@ -31,11 +31,13 @@ export const setAllocationsSchema = z.object({
   allocations: z.array(z.object({ key: z.string().min(1).max(60), plannedMinor: minor })).max(50),
 });
 
-export const startExpenseReceiptSchema = z.object({
-  eventId: z.string().uuid(),
-  mime: z.string().refine((mime) => mime in RECEIPT_TYPES, 'typeNotAllowed'),
-  sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_EXPENSE_RECEIPT_BYTES, 'tooLarge'),
-});
+export const startExpenseReceiptSchema = z
+  .object({
+    eventId: z.string().uuid(),
+    mime: z.string().refine((mime) => mime in RECEIPT_TYPES, 'typeNotAllowed'),
+    sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_EXPENSE_RECEIPT_BYTES, 'tooLarge'),
+  })
+  .superRefine(refineImageSize);
 
 export const addExpenseSchema = z.object({
   eventId: z.string().uuid(),

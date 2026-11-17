@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { Banner, Button, Card, StatusPill } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -137,7 +139,7 @@ export function PublishManager({
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   event.target.value = '';
-                  void onFile('id', file);
+                  void (file ? compressImage(file) : Promise.resolve(undefined)).then((ready) => onFile('id', ready));
                 }}
               />
               <input
@@ -148,7 +150,7 @@ export function PublishManager({
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   event.target.value = '';
-                  void onFile('cac', file);
+                  void (file ? compressImage(file) : Promise.resolve(undefined)).then((ready) => onFile('cac', ready));
                 }}
               />
               {docs.length > 0 && (
@@ -156,7 +158,11 @@ export function PublishManager({
                   {docs.map((doc) => (
                     <li key={doc.storageKey} className="flex items-center gap-2">
                       <span>{doc.type.toUpperCase()}</span>
-                      <button type="button" className="text-brand-strong font-medium underline-offset-4 hover:underline" onClick={() => void onRemoveDoc(doc)}>
+                      <button
+                        type="button"
+                        className="text-brand-strong font-medium underline-offset-4 hover:underline"
+                        onClick={() => void onRemoveDoc(doc)}
+                      >
                         {t('removeDoc')}
                       </button>
                     </li>

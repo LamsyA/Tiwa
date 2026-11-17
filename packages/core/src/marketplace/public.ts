@@ -40,7 +40,15 @@ export async function getPublicProfileForOrg(orgId: string, kind: PublicProfileK
   ]);
   const categoryLabels = profile.categories.map((key) => serviceLabel(key));
   return {
-    org: { id: org.id, name: org.name, slug: org.slug, kind: org.kind, city: org.city, verification: org.verification },
+    org: {
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      kind: org.kind,
+      city: org.city,
+      verification: org.verification,
+      logoKey: org.logoKey,
+    },
     profile: {
       bio: profile.bio,
       city: profile.city,

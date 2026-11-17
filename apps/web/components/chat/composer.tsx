@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { IconButton, Textarea } from '@tiwa/ui';
 import { Paperclip, SendHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -73,9 +75,10 @@ export function Composer({
             tabIndex={-1}
             aria-hidden
             onChange={(event) => {
-              const files = Array.from(event.target.files ?? []);
-              if (files.length) onAttach(files.slice(0, 10));
+              const files = Array.from(event.target.files ?? []).slice(0, 10);
               event.target.value = '';
+              // D-X81: images go out ≤ 800 KB at 95% quality.
+              if (files.length) void Promise.all(files.map(compressImage)).then(onAttach);
             }}
           />
           <IconButton

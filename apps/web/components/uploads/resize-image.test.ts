@@ -24,7 +24,7 @@ describe('resizeImageForUpload', () => {
 
   it('keeps defaults and sanitises output names', () => {
     expect(RESIZE_MAX_SIDE).toBe(2048);
-    expect(RESIZE_QUALITY).toBe(0.78);
+    expect(RESIZE_QUALITY).toBe(0.95); // D-X81: at most a 5% quality reduction
     expect(resizedFileName('IMG_1.HEIC')).toBe('IMG_1.webp');
     expect(resizedFileName('no-extension')).toBe('no-extension.webp');
     expect(resizedFileName('a.jpeg')).toBe('a.webp');

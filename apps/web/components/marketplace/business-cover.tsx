@@ -49,3 +49,33 @@ export function BusinessCover({
     </div>
   );
 }
+
+/** A business's logo (D-X81): the uploaded logo on white, else its initial on brand. */
+export function BusinessLogo({
+  src,
+  name,
+  className = 'size-9 rounded-xl',
+}: {
+  src: string | null;
+  name: string;
+  className?: string;
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        className={`shrink-0 bg-white object-contain p-1 shadow-[var(--shadow-1)] ring-1 ring-black/5 ${className}`}
+      />
+    );
+  }
+  return (
+    <span
+      aria-hidden
+      className={`bg-brand-soft text-brand-strong grid shrink-0 place-items-center font-bold ${className}`}
+    >
+      {name.trim().charAt(0).toUpperCase() || '•'}
+    </span>
+  );
+}

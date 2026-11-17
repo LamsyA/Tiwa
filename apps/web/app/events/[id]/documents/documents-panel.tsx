@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { Banner, Button, ConfirmDialog, EmptyState, RelativeTime } from '@tiwa/ui';
 import { Download, FileText, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -59,7 +61,9 @@ export function DocumentsPanel({
   const errorFor = (name: string, key: string | undefined) =>
     t(`errors.${key && t.has(`errors.${key}`) ? key : 'generic'}`, { name });
 
-  async function uploadOne(file: File): Promise<string | null> {
+  async function uploadOne(picked: File): Promise<string | null> {
+    // D-X81: images are compressed to ≤ 800 KB at 95% quality; other files go as they are.
+    const file = await compressImage(picked);
     const mime = mimeOf(file);
     const started = await startUpload({ eventId, name: file.name, mime, sizeBytes: file.size });
     if (!started.ok) return errorFor(file.name, Object.values(started.fieldErrors ?? {}).flat()[0]);

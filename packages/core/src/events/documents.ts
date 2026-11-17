@@ -6,7 +6,7 @@ import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
 import { requireEventAccess, resolveEventAccess } from './access.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capUpload, refineImageSize } from '../shared/upload-limit.js';
 
 // Event documents (EVT-08): PDFs, images and office files up to 25 MB.
 // Flow: start (signed PUT) → browser uploads straight to storage (D-A05) →
@@ -28,12 +28,14 @@ export const DOCUMENT_TYPES: Record<string, string> = {
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/zip',
 };
 
-export const startDocumentSchema = z.object({
-  eventId: z.string().uuid(),
-  name: z.string().trim().min(1, 'nameRequired').max(200, 'nameTooLong'),
-  mime: z.string().refine((mime) => mime in DOCUMENT_TYPES, 'typeNotAllowed'),
-  sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_DOCUMENT_BYTES, 'tooLarge'),
-});
+export const startDocumentSchema = z
+  .object({
+    eventId: z.string().uuid(),
+    name: z.string().trim().min(1, 'nameRequired').max(200, 'nameTooLong'),
+    mime: z.string().refine((mime) => mime in DOCUMENT_TYPES, 'typeNotAllowed'),
+    sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_DOCUMENT_BYTES, 'tooLarge'),
+  })
+  .superRefine(refineImageSize);
 
 export const documentIdSchema = z.object({ eventId: z.string().uuid(), documentId: z.string().uuid() });
 

@@ -196,9 +196,10 @@ test('UF-31: after the event, an attending guest messages the venue; the venue s
   await expect(row).toBeVisible();
   await row.click();
   await expect(thread(vendor).getByText(`Loved the venue! ${RUN}`)).toBeVisible();
-  await vendor.getByLabel('Message', { exact: true }).fill('Thank you! Happy to help.');
+  const reply = `Thank you! Happy to help. ${Date.now().toString(36)}`;
+  await vendor.getByLabel('Message', { exact: true }).fill(reply);
   await vendor.getByLabel('Message', { exact: true }).press('Enter');
-  await expect(thread(guest).getByText('Thank you! Happy to help.')).toBeVisible();
+  await expect(thread(guest).getByText(reply)).toBeVisible();
 
   await guest.context().close();
   await vendor.context().close();

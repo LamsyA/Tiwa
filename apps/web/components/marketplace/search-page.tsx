@@ -5,7 +5,7 @@ import { BadgeCheck, MapPin, SearchX, Star } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BusinessCover } from './business-cover.js';
+import { BusinessCover, BusinessLogo } from './business-cover.js';
 import { MarketplaceFrame } from './marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { SearchFilters, ShortlistButton, type SearchFilterValues } from './search.js';
@@ -141,9 +141,7 @@ export async function SearchPageBody({
                   href={`${base}/${hit.slug}${eventId ? `?eventId=${eventId}` : ''}`}
                   className="border-border/70 bg-surface hover:border-brand/50 flex items-center gap-3 rounded-2xl border p-3 transition hover:shadow-[var(--shadow-1)]"
                 >
-                  <span className="bg-brand-soft text-brand-strong flex size-11 shrink-0 items-center justify-center rounded-xl font-bold">
-                    {hit.name.slice(0, 1).toUpperCase()}
-                  </span>
+                  <BusinessLogo src={hit.logoUrl} name={hit.name} className="size-11 rounded-xl" />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{hit.name}</span>
                     <span className="text-muted block truncate text-xs">
@@ -185,7 +183,8 @@ export async function SearchPageBody({
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-4">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <BusinessLogo src={hit.logoUrl} name={hit.name} className="size-8 rounded-lg" />
                     <Link
                       href={`${base}/${hit.slug}${eventId ? `?eventId=${eventId}` : ''}`}
                       className="font-display truncate text-lg font-bold tracking-tight after:absolute after:inset-0"

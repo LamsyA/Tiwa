@@ -6,7 +6,7 @@ import { BadgeCheck, Building2, MapPin, Star, Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BusinessCover } from '@/components/marketplace/business-cover.js';
+import { BusinessCover, BusinessLogo } from '@/components/marketplace/business-cover.js';
 import { MarketplaceFrame } from '@/components/marketplace/marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { ShortlistButton } from '@/components/marketplace/search.js';
@@ -58,6 +58,14 @@ export default async function VenuesPage({
     select: { id: true, orgId: true },
   });
   const covers = await coverUrls(profiles.map((row) => ({ orgId: row.orgId, profileId: row.id })));
+  const logos = new Set(
+    (
+      await prisma.organization.findMany({
+        where: { id: { in: hits.map((hit) => hit.orgId) }, logoKey: { not: null } },
+        select: { id: true },
+      })
+    ).map((row) => row.id),
+  );
 
   return (
     <MarketplaceFrame active={'venues'} title={t('searchVenuesTitle')}>
@@ -130,7 +138,12 @@ export default async function VenuesPage({
                     )}
                   </div>
                   <div className="flex flex-1 flex-col gap-2 p-4">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <BusinessLogo
+                        src={logos.has(hit.orgId) ? `/api/org-logo/${hit.orgId}` : null}
+                        name={hit.name}
+                        className="size-8 rounded-lg"
+                      />
                       <Link
                         href={href}
                         className="font-display truncate text-lg font-bold tracking-tight after:absolute after:inset-0"

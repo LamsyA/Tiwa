@@ -44,6 +44,8 @@ export interface SearchHit {
   availabilityFresh: boolean;
   /** The business's own first photo (D-X80); null = it has not uploaded any — never a stock picture. */
   coverUrl: string | null;
+  /** D-X81: the business logo route, when it has uploaded one. */
+  logoUrl: string | null;
 }
 
 const AVAILABILITY_FRESH_MS = 14 * 86_400_000;
@@ -126,7 +128,7 @@ export async function searchMarketplace(
       ratingAvg: true,
       ratingCount: true,
       availabilityConfirmedAt: true,
-      org: { select: { name: true, slug: true, verification: true } },
+      org: { select: { name: true, slug: true, verification: true, logoKey: true } },
     },
   });
 
@@ -149,6 +151,7 @@ export async function searchMarketplace(
         Boolean(row.availabilityConfirmedAt) &&
         Date.now() - row.availabilityConfirmedAt!.getTime() < AVAILABILITY_FRESH_MS,
       coverUrl: covers.get(row.orgId) ?? null,
+      logoUrl: row.org.logoKey ? `/api/org-logo/${row.orgId}` : null,
     })),
     nextCursor: rows.length > input.take ? page[page.length - 1]!.id : null,
   };

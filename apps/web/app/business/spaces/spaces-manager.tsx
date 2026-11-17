@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { DAY_SLOTS, VENUE_AMENITY_KEYS } from '@tiwa/config';
 import {
   Banner,
@@ -441,7 +443,8 @@ function SpacePhotos({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   async function onFiles(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = [...(event.target.files ?? [])];
+    // D-X81: compress each photo to ≤ 800 KB at 95% quality.
+    const files = await Promise.all([...(event.target.files ?? [])].map(compressImage));
     event.target.value = '';
     if (files.length === 0) return;
     setUploading(true);
@@ -578,7 +581,11 @@ function SpaceAvailability({ orgId, space, canManage }: { orgId: string; space: 
                 <StatusPill tone="brand">{t('bookedSlot')}</StatusPill>
               ) : (
                 canManage && (
-                  <button type="button" className="text-brand-strong font-medium underline-offset-4 hover:underline" onClick={() => void onUnblock(block.id)}>
+                  <button
+                    type="button"
+                    className="text-brand-strong font-medium underline-offset-4 hover:underline"
+                    onClick={() => void onUnblock(block.id)}
+                  >
                     {t('unblock')}
                   </button>
                 )

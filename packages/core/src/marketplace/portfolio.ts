@@ -7,7 +7,7 @@ import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { requireEventAccess } from '../events/access.js';
 import { audit } from '../shared/outbox.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capImage } from '../shared/upload-limit.js';
 
 // Portfolio items (MKT-01, P6-T02): the public proof of past work. Same
 // start → browser PUT → complete pattern as event documents (D-A05):
@@ -15,7 +15,7 @@ import { capUpload } from '../shared/upload-limit.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
-export const MAX_PORTFOLIO_BYTES = capUpload(10 * 1024 * 1024);
+export const MAX_PORTFOLIO_BYTES = capImage(10 * 1024 * 1024); // D-X81: images ≤ 800 KB
 
 export const PORTFOLIO_TYPES: Record<string, string> = {
   'image/jpeg': 'image/jpeg',

@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import { Banner, Button, Card, ConfirmDialog } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -30,7 +32,8 @@ export function PortfolioManager({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   async function onFiles(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = [...(event.target.files ?? [])];
+    // D-X81: compress each photo to ≤ 800 KB at 95% quality.
+    const files = await Promise.all([...(event.target.files ?? [])].map(compressImage));
     event.target.value = '';
     if (files.length === 0) return;
     setUploading(true);

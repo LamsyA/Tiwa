@@ -4,7 +4,10 @@
 // always beats a failed one. Videos skip resizing entirely.
 
 export const RESIZE_MAX_SIDE = 2048;
-export const RESIZE_QUALITY = 0.78;
+// D-X81: at most a 5% quality reduction; size comes down by dimensions, not quality.
+export const RESIZE_QUALITY = 0.95;
+/** Every image upload in the app ends up at or under this size. */
+export const IMAGE_TARGET_BYTES = 800 * 1024;
 const RESIZE_TIMEOUT_MS = 60_000;
 
 export interface ResizeOutcome {
@@ -55,6 +58,34 @@ export async function resizeImageForUpload(
     // upload the original; the server still validates and processes it.
     return { blob: file, resized: false };
   }
+}
+
+const PASSTHROUGH = ['image/gif', 'image/svg+xml'];
+
+/**
+ * Shrink an image to at most IMAGE_TARGET_BYTES (D-X81). Files already under
+ * the target go up untouched (no quality loss at all). Larger ones are
+ * re-encoded at 95% quality; if still too big, only the pixel size steps
+ * down (never the quality) until it fits. Returns the original when the
+ * browser cannot decode it — the server then refuses anything over the cap.
+ */
+export async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith('image/') || PASSTHROUGH.includes(file.type)) return file;
+  if (file.size <= IMAGE_TARGET_BYTES) return file;
+  let maxSide = 4096;
+  let best: Blob | null = null;
+  for (let attempt = 0; attempt < 7; attempt += 1) {
+    const out = await resizeImageForUpload(file, file.type, maxSide, RESIZE_QUALITY);
+    if (!out.resized) return file;
+    best = out.blob;
+    if (out.blob.size <= IMAGE_TARGET_BYTES) break;
+    // Area scales with the square of the side: aim just under the target.
+    maxSide = Math.max(480, Math.floor(maxSide * Math.sqrt(IMAGE_TARGET_BYTES / out.blob.size) * 0.95));
+  }
+  if (!best) return file;
+  const ext = best.type === 'image/jpeg' ? 'jpg' : 'webp';
+  const base = file.name.replace(/\.[a-zA-Z0-9]+$/, '') || 'photo';
+  return new File([best], `${base}.${ext}`, { type: best.type, lastModified: file.lastModified });
 }
 
 /** WebP output name for a resized original ("IMG_1.HEIC" becomes "IMG_1.webp"). */

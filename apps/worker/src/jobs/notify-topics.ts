@@ -484,3 +484,56 @@ export async function handleQuoteSent(data: unknown, log: Log) {
     log,
   );
 }
+
+/** D-X81: site visits had no handler ("unknown job"), so nobody was told. The venue team hears of a request… */
+export async function handleSiteVisitRequested(data: unknown, log: Log) {
+  const payload = asRecord(data);
+  const visitId = asString(payload.visitId);
+  const vendorOrgId = asString(payload.vendorOrgId);
+  if (!visitId || !vendorOrgId) throw new Error('site_visit.requested needs visitId + vendorOrgId');
+  const eventId = asString(payload.eventId);
+  const event = eventId ? await prisma.event.findUnique({ where: { id: eventId }, select: { name: true } }) : null;
+  return fanout(
+    {
+      userIds: await orgMemberUserIds(vendorOrgId),
+      type: 'booking.changed',
+      title: 'Site visit requested',
+      body: event ? `${event.name} wants to see your space` : 'A client wants to see your space',
+      url: '/quotes',
+      data: { visitId, vendorOrgId, ...(eventId ? { eventId } : {}) },
+      key: `sv:req:${visitId}`,
+    },
+    log,
+  );
+}
+
+/** …and the event team hears when the venue confirms a time. */
+export async function handleSiteVisitConfirmed(data: unknown, log: Log) {
+  const payload = asRecord(data);
+  const visitId = asString(payload.visitId);
+  const eventId = asString(payload.eventId);
+  const vendorOrgId = asString(payload.vendorOrgId);
+  if (!visitId || !vendorOrgId) throw new Error('site_visit.confirmed needs visitId + vendorOrgId');
+  if (!eventId) return { skipped: 'no-event' as const };
+  const [visit, venue] = await Promise.all([
+    prisma.siteVisit.findUnique({ where: { id: visitId }, select: { confirmedAt: true } }),
+    prisma.organization.findUnique({ where: { id: vendorOrgId }, select: { name: true } }),
+  ]);
+  const when = visit?.confirmedAt
+    ? new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(
+        visit.confirmedAt,
+      )
+    : '';
+  return fanout(
+    {
+      userIds: await teamUserIds(eventId),
+      type: 'booking.changed',
+      title: 'Site visit confirmed',
+      body: `${venue?.name ?? 'The venue'}${when ? ` · ${when} UTC` : ''}`,
+      url: `/events/${eventId}/vendors`,
+      data: { visitId, eventId, vendorOrgId },
+      key: `sv:ok:${visitId}`,
+    },
+    log,
+  );
+}

@@ -29,7 +29,9 @@ self.onmessage = async (event: MessageEvent<ResizeRequest>) => {
     if (!context) throw new Error('no 2d context');
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    const out = await canvas.convertToBlob({ type: 'image/webp', quality });
+    let out = await canvas.convertToBlob({ type: 'image/webp', quality });
+    // Safari cannot encode WebP and silently returns a (much larger) PNG: use JPEG at the same quality.
+    if (out.type !== 'image/webp') out = await canvas.convertToBlob({ type: 'image/jpeg', quality });
     const result: ResizeResponse = { ok: true, blob: out };
     self.postMessage(result);
   } catch (error) {

@@ -9,7 +9,7 @@ import { audit } from '../shared/outbox.js';
 import { addDays } from '../shared/time.js';
 import { zonedTimeToUtc } from '../shared/zoned.js';
 import { requireEventAccess } from './access.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capImage } from '../shared/upload-limit.js';
 
 // Event settings (P3-T10, Frontend.md §6.3): details, features, visibility,
 // cover image and theme colour (EVT-13). Cancel lives in commands.ts (EVT-10).
@@ -130,7 +130,7 @@ export async function updateEventAppearance(actor: UserActor, input: z.infer<typ
 
 // ── Cover image (EVT-13): public bucket, used on guest pages ──
 
-export const MAX_COVER_BYTES = capUpload(5 * 1024 * 1024);
+export const MAX_COVER_BYTES = capImage(5 * 1024 * 1024); // D-X81: images ≤ 800 KB
 const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 export const startCoverSchema = z.object({

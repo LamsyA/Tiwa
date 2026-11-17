@@ -5,7 +5,7 @@ import type { Actor } from '../auth/authorize.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { requireParticipant } from './participants.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capUpload, refineImageSize } from '../shared/upload-limit.js';
 
 // Chat attachments (Backend.md §9a.4, lean per D-X20): photos and files up to
 // 25 MB, uploaded straight to private storage with a signed PUT (D-A05),
@@ -31,11 +31,13 @@ export const ATTACHMENT_TYPES: Record<string, string> = {
 
 export const isImage = (mime: string) => mime.startsWith('image/');
 
-export const startAttachmentSchema = z.object({
-  threadId: z.string().uuid(),
-  mime: z.string().refine((mime) => mime in ATTACHMENT_TYPES, 'typeNotAllowed'),
-  sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_ATTACHMENT_BYTES, 'tooLarge'),
-});
+export const startAttachmentSchema = z
+  .object({
+    threadId: z.string().uuid(),
+    mime: z.string().refine((mime) => mime in ATTACHMENT_TYPES, 'typeNotAllowed'),
+    sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_ATTACHMENT_BYTES, 'tooLarge'),
+  })
+  .superRefine(refineImageSize);
 
 export const attachmentSchema = z.object({
   key: z.string().min(1).max(200),

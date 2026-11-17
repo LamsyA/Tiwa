@@ -7,7 +7,7 @@ import { loadEventAccess } from '../events/access.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit, enqueue } from '../shared/outbox.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capUpload, refineImageSize } from '../shared/upload-limit.js';
 
 // Offline payments (lean P8, D-X27; Backend.md §7.7, UF-17 step 5). The host
 // side records "I paid outside Tiwa" → milestone RECORDED_OFFLINE + Payment
@@ -29,11 +29,13 @@ const RECEIPT_TYPES: Record<string, string> = {
 };
 const PAYABLE: MilestoneState[] = ['SCHEDULED', 'PENDING_PAYMENT'];
 
-export const startReceiptSchema = z.object({
-  milestoneId: z.string().uuid(),
-  mime: z.string().refine((mime) => mime in RECEIPT_TYPES, 'typeNotAllowed'),
-  sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_RECEIPT_BYTES, 'tooLarge'),
-});
+export const startReceiptSchema = z
+  .object({
+    milestoneId: z.string().uuid(),
+    mime: z.string().refine((mime) => mime in RECEIPT_TYPES, 'typeNotAllowed'),
+    sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_RECEIPT_BYTES, 'tooLarge'),
+  })
+  .superRefine(refineImageSize);
 
 export const recordOfflineSchema = z.object({
   milestoneId: z.string().uuid(),

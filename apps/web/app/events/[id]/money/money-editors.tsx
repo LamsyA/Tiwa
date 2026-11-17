@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/components/uploads/resize-image.js';
+
 import {
   Banner,
   Button,
@@ -344,7 +346,12 @@ export function AddExpenseDialog({
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const picked = e.target.files?.[0];
+                // D-X81: receipts as images are compressed to ≤ 800 KB at 95% quality.
+                if (picked) void compressImage(picked).then(setFile);
+                else setFile(null);
+              }}
             />
           </label>
           <Button disabled={working || !description.trim() || !amount} onClick={() => void onSave()}>

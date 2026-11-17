@@ -266,3 +266,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X78: guest uploads fixed (single PUT with timeout, no reload on reconnect); moments e2e 11/13 incl. UF-10 desktop+mobile
 - D-X79: vendor pages aligned with planner design; event Vendors status rows; bookings/quotes/calendar fixes
 - D-X80: own photos or branded placeholder (no stock); per-kind request briefs, inbox cards and suggested quote lines
+- D-X81: image uploads ≤ 800 KB at 95% quality; logos shown; site-visit notifications

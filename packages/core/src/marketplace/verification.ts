@@ -6,7 +6,7 @@ import { authorizeOrg, type OrgAction } from '../auth/org.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { uuidv7 } from '../shared/ids.js';
 import { audit } from '../shared/outbox.js';
-import { capUpload } from '../shared/upload-limit.js';
+import { capUpload, refineImageSize } from '../shared/upload-limit.js';
 
 // Business verification (MKT-06, P6-T03): the business uploads an ID and its
 // CAC registration certificate; status goes PENDING for the admin queue
@@ -24,12 +24,14 @@ export const VERIFICATION_TYPES: Record<string, string> = {
 
 export const VERIFICATION_DOC_TYPES = ['id', 'cac', 'other'] as const;
 
-export const startVerificationUploadSchema = z.object({
-  orgId: z.string().uuid(),
-  docType: z.enum(VERIFICATION_DOC_TYPES),
-  mime: z.string().refine((mime) => mime in VERIFICATION_TYPES, 'typeNotAllowed'),
-  sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_VERIFICATION_BYTES, 'tooLarge'),
-});
+export const startVerificationUploadSchema = z
+  .object({
+    orgId: z.string().uuid(),
+    docType: z.enum(VERIFICATION_DOC_TYPES),
+    mime: z.string().refine((mime) => mime in VERIFICATION_TYPES, 'typeNotAllowed'),
+    sizeBytes: z.number().int().min(1, 'emptyFile').max(MAX_VERIFICATION_BYTES, 'tooLarge'),
+  })
+  .superRefine(refineImageSize);
 
 function keyFor(orgId: string, uploadId: string): string {
   return `business/${orgId}/verification/${uploadId}`;

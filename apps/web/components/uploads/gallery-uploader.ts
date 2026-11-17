@@ -5,9 +5,17 @@ import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
 // Client-safe copy of packages/core moments/uploads limits.
 // Do not import from '@tiwa/core' here: the barrel pulls node:crypto +
 // prisma and breaks the client webpack build (node: scheme).
-const IMAGE_MAX_BYTES = UPLOAD_MAX_BYTES;
+// D-X81: photos are compressed to ≤ 800 KB at 95% quality before upload.
+const IMAGE_MAX_BYTES = IMAGE_TARGET_BYTES;
 const VIDEO_MAX_BYTES = UPLOAD_MAX_BYTES;
-import { resizeImageForUpload, resizedFileName } from './resize-image.js';
+import { IMAGE_TARGET_BYTES, compressImage, resizeImageForUpload, resizedFileName } from './resize-image.js';
+
+/** Default photo prep: compress to ≤ 800 KB at 95% quality (D-X81). */
+async function compressForGallery(blob: Blob, mime: string) {
+  const original = new File([blob], 'photo', { type: mime });
+  const out = await compressImage(original);
+  return { blob: out as Blob, resized: out !== original };
+}
 
 // Uppy wiring for Moments uploads (Frontend §7.4): multipart with 5 MB
 // parts, up to 3 files at once, retries with backoff. Signing goes through
@@ -123,7 +131,7 @@ export function toSignRequestBody(input: SignRequestShape): {
 
 export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<UploadMeta> {
   const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
-  const resize = options.resize ?? resizeImageForUpload;
+  const resize = options.resize ?? compressForGallery;
   const mixed = options.kind === 'MIXED';
   const isPhoto = options.kind === 'PHOTO';
 
@@ -204,20 +212,25 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
       if (resized.blob.size > (fileKind === 'PHOTO' ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES)) {
         throw new Error('File too large');
       }
-      const name = resized.resized ? resizedFileName(current.name ?? 'photo') : (current.name ?? 'photo');
+      const name = resized.resized
+        ? resizedFileName(current.name ?? 'photo').replace(
+            /\.webp$/,
+            resized.blob.type === 'image/jpeg' ? '.jpg' : '.webp',
+          )
+        : (current.name ?? 'photo');
       const record = await createMediaRecord(fetchImpl, {
         eventId: options.eventId,
         album: options.album,
         kind: fileKind,
         fileName: name,
-        mime: resized.resized ? 'image/webp' : current.type || 'application/octet-stream',
+        mime: resized.resized ? resized.blob.type || 'image/webp' : current.type || 'application/octet-stream',
         sizeBytes: Math.max(1, resized.blob.size),
       });
       if (!alive(file.id)) return false;
       uppy.setFileState(file.id, {
         data: resized.blob,
         name,
-        type: resized.resized ? 'image/webp' : current.type,
+        type: resized.resized ? resized.blob.type || 'image/webp' : current.type,
         size: resized.blob.size,
         meta: {
           name,
