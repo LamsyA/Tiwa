@@ -2230,7 +2230,33 @@
       "revisionNote": "Version {revision} · sent back on {date}"
     },
     "revisedLabel": "Revised quote · version {revision}",
-    "waitingRevision": "You asked for changes. Waiting for {vendor} to send a revised quote."
+    "waitingRevision": "You asked for changes. Waiting for {vendor} to send a revised quote.",
+    "sentToast": {
+      "proposalTitle": "Proposal sent",
+      "proposalRevisedTitle": "Revised proposal sent",
+      "quoteTitle": "Quote sent",
+      "quoteRevisedTitle": "Revised quote sent",
+      "body": "The client has been notified. You’ll find it under Sent, with its full history."
+    },
+    "sentSection": {
+      "title": "Sent",
+      "body": "Everything you’ve sent, with its history. Open one to see every version and change request.",
+      "view": "View history",
+      "version": "v{revision}",
+      "empty": "Nothing sent yet."
+    },
+    "statusLabel": {
+      "SENT": "Awaiting decision",
+      "CHANGES_REQUESTED": "Changes requested",
+      "ACCEPTED": "Accepted",
+      "DECLINED": "Declined",
+      "WITHDRAWN": "Withdrawn",
+      "EXPIRED": "Expired",
+      "DRAFT": "Draft"
+    },
+    "lockedTitle": "This {kind} is with the client",
+    "lockedBody": "You can’t edit it while they decide. If they ask for changes, it comes back here to revise.",
+    "theClient": "The client"
   },
   "bookings": {
     "title": "Booking",
@@ -3477,5 +3503,37 @@
       "waitingBody": "Waiting for {planner} to send a revised proposal. You’ll get a notification when it arrives.",
       "answeredTitle": "Your change request"
     }
+  },
+  "history": {
+    "kind": {
+      "proposal": "proposal",
+      "quote": "quote"
+    },
+    "title": "{kind, select, proposal {Proposal} other {Quote}} history",
+    "summary": "{versions, plural, one {# version} other {# versions}} · last sent {date}",
+    "you": "You",
+    "sent": "{who} sent version {revision}",
+    "resent": "{who} sent a revised version {revision}",
+    "changesRequested": "{who} asked for changes",
+    "repriced": "{name} re-priced",
+    "viewVersion": "View version {revision}",
+    "total": "Total",
+    "paymentPlan": "Payment plan",
+    "note": "Message",
+    "terms": "Cancellation terms",
+    "due": {
+      "onAccept": "on acceptance",
+      "daysBefore": "{days} days before the event",
+      "onDate": "on {date}"
+    },
+    "end": {
+      "accepted": "{who} accepted and it became a booking",
+      "declined": "{who} declined",
+      "withdrawn": "{who} withdrew it",
+      "expired": "It expired before a decision",
+      "awaitingDecision": "Waiting for {who, select, You {your} other {{who}’s}} decision",
+      "awaitingRevision": "Waiting for {who, select, You {your} other {{who}’s}} revised version"
+    },
+    "viewAgreement": "View the agreement"
   }
 }

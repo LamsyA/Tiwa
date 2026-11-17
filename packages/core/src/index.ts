@@ -79,6 +79,7 @@ export * from './quotes/requests.js';
 export * from './quotes/quotes.js';
 export * from './quotes/decisions.js';
 export * from './quotes/overview.js';
+export * from './quotes/history.js';
 export * from './bookings/state.js';
 export * from './bookings/accept.js';
 export * from './bookings/changes.js';

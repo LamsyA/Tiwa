@@ -1,5 +1,5 @@
 import { env, PLANNING_CATEGORY, serviceLabel, isQuoteCategory } from '@tiwa/config';
-import { getCategoryOverview, getFlagsFor } from '@tiwa/core';
+import { getCategoryOverview, getFlagsFor, quoteHistory } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, EmptyState, StatusPill } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -60,6 +60,14 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
       ),
   );
 
+  // D-X67: each quote's full history, read by the host with the same access rules.
+  const histories = new Map(
+    await Promise.all(
+      overview.quotes.map(
+        async (quote) => [quote.id, await quoteHistory(ctx.actor, { quoteId: quote.id }).catch(() => null)] as const,
+      ),
+    ),
+  );
   const quoteViews = overview.quotes.map((quote) => ({
     id: quote.id,
     vendorName: quote.vendor?.name ?? quote.vendorOrgId,
@@ -74,6 +82,7 @@ export default async function VendorCategoryPage({ params }: { params: Promise<{
     expiresAt: quote.expiresAt instanceof Date ? quote.expiresAt.toISOString() : String(quote.expiresAt),
     changeRequest: quote.changeRequest ?? null,
     revision: quote.revision ?? 1,
+    history: histories.get(quote.id) ?? null,
   }));
 
   return (

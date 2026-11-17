@@ -113,6 +113,11 @@ export async function requestQuoteChanges(actor: UserActor, raw: z.infer<typeof 
     where: { id: quote.id },
     data: { status: 'CHANGES_REQUESTED', changeRequest: input.message, changeRequestedAt: new Date() },
   });
+  // D-X67: the request belongs to the version it was about.
+  await prisma.quoteRevision.updateMany({
+    where: { quoteId: quote.id, revision: quote.revision },
+    data: { changeRequest: input.message, changeRequestedAt: new Date(), changeRequestedById: actor.userId },
+  });
   await audit(prisma, {
     actor,
     action: 'quote.requestChanges',

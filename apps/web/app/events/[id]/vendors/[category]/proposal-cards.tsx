@@ -26,6 +26,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
+import type { QuoteHistory } from '@tiwa/core';
+import { ProposalHistory } from '@/components/quotes/proposal-history.js';
 import { acceptQuoteAction, declineQuoteAction, requestChangesAction } from '../actions.js';
 
 // Planner proposals (D-X64): the host's view of a planner's answer, laid out
@@ -46,6 +48,7 @@ export interface ProposalView {
   expiresAt: string;
   changeRequest?: string | null;
   revision?: number;
+  history?: QuoteHistory | null;
 }
 
 type ErrorCode =
@@ -90,11 +93,13 @@ function initials(name: string): string {
 
 function ProposalCard({
   proposal,
+  eventId,
   heldEnabled,
   onlineEnabled,
   onDone,
 }: {
   proposal: ProposalView;
+  eventId: string;
   heldEnabled: boolean;
   onlineEnabled: boolean;
   onDone: (bookingId?: string) => void;
@@ -316,6 +321,16 @@ function ProposalCard({
               {waiting ? t('changes.waitingTitle') : t('changes.answeredTitle')}
             </p>
             <p className="mt-1 text-sm leading-relaxed whitespace-pre-line">“{proposal.changeRequest}”</p>
+            {proposal.history && proposal.history.versions.length > 0 && (
+              <ProposalHistory
+                history={proposal.history}
+                kind="proposal"
+                viewer="host"
+                counterpart={proposal.vendorName}
+                eventId={eventId}
+              />
+            )}
+
             {waiting && (
               <p className="text-muted mt-2 text-xs">{t('changes.waitingBody', { planner: proposal.vendorName })}</p>
             )}
@@ -528,11 +543,12 @@ export function ProposalCards({
           </Link>
         </div>
       )}
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className={cn('grid gap-5', proposals.length > 1 && 'lg:grid-cols-2')}>
         {proposals.map((proposal) => (
           <ProposalCard
             key={proposal.id}
             proposal={proposal}
+            eventId={eventId}
             heldEnabled={heldEnabled}
             onlineEnabled={onlineEnabled}
             onDone={(created) => {

@@ -153,7 +153,9 @@ test('UF-14/15/16/19: request → quote → accept → booking → change to v2'
   await vendor.getByLabel(/Cancellation terms/).fill('50% refund before 7 days');
   await vendor.getByLabel(/Valid until/).fill('2031-01-01');
   await vendor.getByRole('button', { name: 'Send quote' }).click();
-  await expect(vendor.getByText('SENT')).toBeVisible();
+  await expect(vendor.getByText(/^(Proposal|Quote|Revised proposal|Revised quote) sent$/).first()).toBeVisible({
+    timeout: 30_000,
+  });
 
   // UF-16: host compares and accepts; milestones mirror the schedule.
   await gotoSettled(host, `/events/${eventId}/vendors/catering`);

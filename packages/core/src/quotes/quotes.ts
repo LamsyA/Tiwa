@@ -1,5 +1,5 @@
 import { PLANNING_CATEGORY } from '@tiwa/config';
-import { prisma } from '@tiwa/db';
+import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorizeOrg, type OrgAction } from '../auth/org.js';
 import type { Actor } from '../auth/authorize.js';
@@ -148,6 +148,28 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
       if (quote.requestId) {
         await tx.quoteRequest.update({ where: { id: quote.requestId }, data: { status: 'QUOTED' } });
       }
+      // D-X67: freeze this version for the history both sides can review later.
+      await tx.quoteRevision.upsert({
+        where: { quoteId_revision: { quoteId, revision: updated.revision } },
+        create: {
+          quoteId,
+          revision: updated.revision,
+          items: updated.items as Prisma.InputJsonValue,
+          taxBps: updated.taxBps,
+          serviceBps: updated.serviceBps,
+          travelFeeMinor: updated.travelFeeMinor,
+          subtotalMinor: updated.subtotalMinor,
+          totalMinor: updated.totalMinor,
+          currency: updated.currency,
+          notes: updated.notes,
+          cancellationTerms: updated.cancellationTerms,
+          proposedSchedule: updated.proposedSchedule as Prisma.InputJsonValue,
+          expiresAt: updated.expiresAt,
+          sentAt: updated.sentAt ?? new Date(),
+          sentById: actor.userId,
+        },
+        update: {},
+      });
       await audit(tx, {
         actor,
         action: 'quote.send',

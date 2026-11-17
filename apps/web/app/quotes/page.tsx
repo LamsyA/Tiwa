@@ -1,5 +1,6 @@
 import {
   listEnquiries,
+  listSentQuotes,
   listMyOrgs,
   listPendingChanges,
   listPendingOfflinePayments,
@@ -8,7 +9,7 @@ import {
 } from '@tiwa/core';
 import { PLANNING_CATEGORY, serviceLabel } from '@tiwa/config';
 import { Banner, EmptyState, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
-import { Inbox } from 'lucide-react';
+import { ArrowRight, History, Inbox } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
@@ -17,6 +18,8 @@ import { ChangeCards } from './change-cards.js';
 import { BookingMoneyList } from './booking-money.js';
 import { PaymentCards } from './payment-cards.js';
 import { DeclineEnquiry } from './decline-enquiry.js';
+import { SentToast } from '@/components/quotes/sent-toast.js';
+import { Suspense } from 'react';
 import { VisitCards } from './visit-cards.js';
 
 /** Vendor quote inbox (VND-01, P7-T04): open briefs with status. Full quotes arrive with P7-T05. */
@@ -33,6 +36,7 @@ export default async function QuotesInboxPage() {
       return value;
     };
   const enquiries = await listEnquiries(ctx.actor).catch(() => null);
+  const sentQuotes = await listSentQuotes(ctx.actor).catch(() => []);
   const orgs = enquiries === null ? [] : await listMyOrgs(ctx.actor.userId).catch(() => []);
   // D-X64: planner orgs receive proposal requests here too.
   const vendorOrgIds = (orgs ?? [])
@@ -79,6 +83,9 @@ export default async function QuotesInboxPage() {
     <AppFrame userId={ctx.actor.userId} active="quotes" title={plannerOnly ? t('proposalInboxTitle') : t('inboxTitle')}>
       <div className="flex flex-col gap-6 py-4">
         <p className="text-muted text-sm">{plannerOnly ? t('proposalInboxBody') : t('inboxBody')}</p>
+        <Suspense fallback={null}>
+          <SentToast />
+        </Suspense>
         {load.failed && <Banner tone="warning">{t('sectionFailed')}</Banner>}
         {/* New requests first (D-X65): the reason the inbox exists. */}
         <section aria-labelledby="requests-heading" className="flex flex-col gap-3">
@@ -204,6 +211,57 @@ export default async function QuotesInboxPage() {
             </ul>
           )}
         </section>
+        {sentQuotes.length > 0 && (
+          <section aria-labelledby="sent-heading" className="flex flex-col gap-3">
+            <div>
+              <h2 id="sent-heading" className="font-display text-lg font-bold tracking-tight">
+                {t('sentSection.title')}
+              </h2>
+              <p className="text-muted text-sm">{t('sentSection.body')}</p>
+            </div>
+            <ul className="border-border/70 bg-surface divide-border/60 divide-y overflow-hidden rounded-3xl border shadow-[var(--shadow-1)]">
+              {sentQuotes.map((row) => (
+                <li key={row.id}>
+                  <Link
+                    href={`/quotes/${row.requestId}`}
+                    className="hover:bg-surface-2/60 group flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 transition"
+                  >
+                    <span className="bg-brand-soft text-brand-strong flex size-10 shrink-0 items-center justify-center rounded-xl">
+                      <History aria-hidden className="size-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">{row.eventName}</span>
+                      <span className="text-muted block text-xs">
+                        {t('sentSection.version', { revision: row.revision })}
+                        {row.sentAt &&
+                          ` · ${new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(row.sentAt))}`}
+                      </span>
+                    </span>
+                    <StatusPill
+                      tone={
+                        row.status === 'ACCEPTED'
+                          ? 'success'
+                          : row.status === 'CHANGES_REQUESTED'
+                            ? 'warning'
+                            : row.status === 'SENT'
+                              ? 'brand'
+                              : 'neutral'
+                      }
+                    >
+                      {t.has(`statusLabel.${row.status}`)
+                        ? t(`statusLabel.${row.status}` as 'statusLabel.SENT')
+                        : row.status}
+                    </StatusPill>
+                    <span className="font-display w-32 text-right font-bold tabular-nums">
+                      <MoneyText value={row.totalMinor} currency={row.currency} />
+                    </span>
+                    <ArrowRight aria-hidden className="text-muted size-4 transition group-hover:translate-x-0.5" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <PaymentCards payments={payments} />
         <ChangeCards changes={changes} />
         <VisitCards visits={visits} />

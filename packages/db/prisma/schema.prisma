@@ -1182,6 +1182,7 @@ model Quote {
   @@index([eventId, status])
   @@index([vendorOrgId, status])
   @@index([requestId])
+  revisions         QuoteRevision[]
 }
 
 enum QuoteStatus {
@@ -1666,4 +1667,32 @@ model AiUsage {
 
   @@index([userId, createdAt])
   @@index([eventId, createdAt])
+}
+
+// D-X67: every version of a quote or proposal as it was sent, kept for good so
+// host and vendor/planner can review the whole negotiation later. The host's
+// change request is stored on the version it was about.
+model QuoteRevision {
+  id                  String    @id @default(uuid(7))
+  quoteId             String
+  revision            Int
+  items               Json
+  taxBps              Int
+  serviceBps          Int
+  travelFeeMinor      BigInt
+  subtotalMinor       BigInt
+  totalMinor          BigInt
+  currency            String
+  notes               String?
+  cancellationTerms   String
+  proposedSchedule    Json
+  expiresAt           DateTime
+  sentAt              DateTime
+  sentById            String?
+  changeRequest       String?
+  changeRequestedAt   DateTime?
+  changeRequestedById String?
+  quote               Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, revision])
 }

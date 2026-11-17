@@ -1,6 +1,7 @@
 import { resolveTheme, themeNoFlashScript, parseThemeChoice } from '@tiwa/ui/theme';
 import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { ToastProvider } from '@tiwa/ui';
 import { NextIntlClientProvider } from 'next-intl';
 import { cookies } from 'next/headers';
 import en from '../messages/en.json';
@@ -54,7 +55,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Client components (onboarding, settings) translate via this provider;
           next-intl v4 passes the request's messages through automatically. */}
       <body>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          {/* App-wide pop-up confirmations (D-X67), e.g. "Proposal sent". */}
+          <ToastProvider>{children}</ToastProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

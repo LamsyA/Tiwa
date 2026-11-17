@@ -15,6 +15,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
+import type { QuoteHistory } from '@tiwa/core';
+import { ProposalHistory } from '@/components/quotes/proposal-history.js';
 import { acceptQuoteAction, declineQuoteAction, requestChangesAction } from '../actions.js';
 
 interface QuoteView {
@@ -31,6 +33,7 @@ interface QuoteView {
   expiresAt: string;
   changeRequest?: string | null;
   revision?: number;
+  history?: QuoteHistory | null;
 }
 
 function errorKey(
@@ -179,6 +182,9 @@ function QuoteCard({
               onConfirm={() => void onDecline()}
             />
           </div>
+        )}
+        {quote.history && quote.history.versions.length > 0 && (
+          <ProposalHistory history={quote.history} kind="quote" viewer="host" counterpart={quote.vendorName} />
         )}
         {actionable && (
           <div className="flex flex-wrap gap-2 pt-1">

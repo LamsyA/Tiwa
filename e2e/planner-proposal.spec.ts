@@ -110,7 +110,9 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   await planner.getByLabel(/Cancellation terms/).fill('Retainer is non-refundable within 14 days of the event');
   await planner.getByLabel(/Valid until/).fill('2031-01-01');
   await planner.getByRole('button', { name: 'Send proposal' }).click();
-  await expect(planner.getByText('SENT')).toBeVisible();
+  await expect(planner.getByText(/^(Proposal|Quote|Revised proposal|Revised quote) sent$/).first()).toBeVisible({
+    timeout: 30_000,
+  });
 
   // The host reviews the proposal document and accepts & hires.
   await host.goto(`/events/${eventId}/vendors/planning`);
@@ -124,7 +126,7 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   const changes = host.getByRole('dialog');
   await changes.getByRole('textbox').fill(changeNote);
   await changes.getByRole('button', { name: 'Send request' }).click();
-  await expect(host.getByText('You asked for changes')).toBeVisible({ timeout: 30_000 });
+  await expect(host.getByText('You asked for changes').first()).toBeVisible({ timeout: 30_000 });
   await expect(host.getByRole('button', { name: 'Accept & hire' })).toHaveCount(0);
 
   await gotoSettled(planner, '/quotes');
@@ -132,14 +134,29 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   await expect(sentBack.getByText('Changes requested')).toBeVisible({ timeout: 30_000 });
   await sentBack.getByRole('link', { name: 'Revise proposal' }).click();
   await expect(planner.getByText('The client asked for changes')).toBeVisible();
-  await expect(planner.getByText(changeNote).first()).toBeVisible();
+  await expect(planner.getByText(`“${changeNote}”`)).toBeVisible();
   await planner.getByLabel('Unit price').first().fill('500000');
   await planner.getByRole('button', { name: 'Send revised proposal' }).click();
-  await expect(planner.getByText('SENT')).toBeVisible({ timeout: 30_000 });
+  await expect(planner.getByText(/^(Proposal|Quote|Revised proposal|Revised quote) sent$/).first()).toBeVisible({
+    timeout: 30_000,
+  });
+  // …and for the planner, under Sent.
+  await expect(planner).toHaveURL(/\/quotes$/);
+  await planner
+    .getByRole('link', { name: new RegExp(`Proposal Party ${RUN}`) })
+    .first()
+    .click();
+  await expect(planner.getByText(/You sent a revised version 2/).first()).toBeVisible();
+  await expect(planner.getByText(changeNote).locator('visible=true').first()).toBeVisible();
 
   await gotoSettled(host, `/events/${eventId}/vendors/planning`);
   await expect(host.getByText(/Revised · v2/)).toBeVisible({ timeout: 30_000 });
   await expect(host.getByText(/500,000/).first()).toBeVisible();
+  // D-X67: the whole negotiation is on record for the host…
+  await host.getByText('Proposal history').first().click();
+  await expect(host.getByText(/sent version 1/).first()).toBeVisible();
+  await expect(host.getByText('You asked for changes').first()).toBeVisible();
+  await expect(host.getByText(/sent a revised version 2/).first()).toBeVisible();
   await host.getByRole('button', { name: 'Accept & hire' }).first().click();
   const accept = host.getByRole('dialog');
   await accept.getByLabel(/I agree to this scope/).check();

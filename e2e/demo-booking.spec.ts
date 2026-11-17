@@ -97,7 +97,9 @@ test('D-X61: a host books a demo vendor whose owner signs in with the demo passw
   await vendor.getByLabel(/Cancellation terms/).fill('50% refund up to 14 days before');
   await vendor.getByLabel(/Valid until/).fill('2031-01-01');
   await vendor.getByRole('button', { name: 'Send quote' }).click();
-  await expect(vendor.getByText('SENT')).toBeVisible();
+  await expect(vendor.getByText(/^(Proposal|Quote|Revised proposal|Revised quote) sent$/).first()).toBeVisible({
+    timeout: 30_000,
+  });
 
   await gotoSettled(host, `/events/${eventId}/vendors/photography`);
   await expect(host.getByRole('button', { name: 'Accept' }).first()).toBeVisible({ timeout: 30_000 });

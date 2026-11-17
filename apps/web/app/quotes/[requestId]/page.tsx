@@ -1,5 +1,5 @@
 import { PLANNING_CATEGORY } from '@tiwa/config';
-import { getEnquiry, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
+import { getEnquiry, quoteHistory, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { MoneyText } from '@tiwa/ui';
 import { CalendarDays, MapPin, MessageSquareText, RefreshCw, Users, Wallet } from 'lucide-react';
@@ -9,6 +9,8 @@ import { AppFrame } from '@/components/app-frame.js';
 import { OrderTimeline } from '@/components/orders/order-timeline.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { QuoteBuilder } from './quote-builder.js';
+import { ProposalHistory } from '@/components/quotes/proposal-history.js';
+import { Lock } from 'lucide-react';
 
 /** Quote builder (QTE-02, P7-T04): order timeline and brief on top, itemised builder below. */
 export default async function QuoteBuilderPage({ params }: { params: Promise<{ requestId: string }> }) {
@@ -20,6 +22,11 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
   const proposal = enquiry.request.category === PLANNING_CATEGORY;
   // D-X66: a quote the client sent back is revised in place, not re-created.
   const revising = enquiry.quotes.find((quote) => quote.status === 'CHANGES_REQUESTED') ?? null;
+  // D-X67: the newest sent version and its history; once it's with the client
+  // (and not sent back), the page is read-only.
+  const current = enquiry.quotes.find((quote) => quote.status !== 'DRAFT') ?? null;
+  const history = current ? await quoteHistory(ctx.actor, { quoteId: current.id }).catch(() => null) : null;
+  const locked = !revising && enquiry.request.status !== 'OPEN' && current !== null;
   const packages = await prisma.servicePackage.findMany({
     where: { orgId: enquiry.request.vendorOrgId, active: true },
     orderBy: { priceMinor: 'asc' },
@@ -148,6 +155,16 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           )}
         </section>
 
+        {history && history.versions.length > 0 && (
+          <ProposalHistory
+            history={history}
+            kind={proposal ? 'proposal' : 'quote'}
+            viewer="vendor"
+            counterpart={client?.name ?? t('theClient')}
+            defaultOpen={locked}
+          />
+        )}
+
         {revising?.changeRequest && (
           <section className="border-warning/40 bg-warning/10 flex flex-col gap-2 rounded-3xl border p-5 sm:p-6">
             <p className="text-warning flex items-center gap-2 text-xs font-semibold tracking-[0.14em] uppercase">
@@ -163,39 +180,53 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           </section>
         )}
 
-        <QuoteBuilder
-          requestId={enquiry.request.id}
-          eventId={enquiry.request.eventId}
-          vendorOrgId={enquiry.request.vendorOrgId}
-          currency={enquiry.event.currency}
-          existing={enquiry.quotes}
-          proposal={proposal}
-          revise={
-            revising
-              ? {
-                  id: revising.id,
-                  items: revising.items as { name: string; qty: number; unitMinor: string }[],
-                  taxBps: revising.taxBps,
-                  serviceBps: revising.serviceBps,
-                  travelFeeMinor: revising.travelFeeMinor,
-                  notes: revising.notes,
-                  cancellationTerms: revising.cancellationTerms,
-                  schedule: revising.proposedSchedule as { label: string; percentBps?: number; due: string }[],
-                  expiresAt: new Date(revising.expiresAt).toISOString(),
-                }
-              : null
-          }
-          budgetMinor={brief.budgetMaxMinor ?? null}
-          packages={packages
-            .filter((row) => row.currency === enquiry.event.currency)
-            .map((row) => ({
-              id: row.id,
-              name: row.name,
-              description: row.description,
-              priceMinor: row.priceMinor?.toString() ?? null,
-              includes: row.includes,
-            }))}
-        />
+        {locked ? (
+          <section className="border-border/70 bg-surface flex items-start gap-4 rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-6">
+            <span className="bg-surface-2 flex size-11 shrink-0 items-center justify-center rounded-2xl">
+              <Lock aria-hidden className="text-muted size-5" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-bold tracking-tight">
+                {t('lockedTitle', { kind: proposal ? t('changes.kindProposal') : t('changes.kindQuote') })}
+              </h2>
+              <p className="text-muted mt-1 text-sm">{t('lockedBody')}</p>
+            </div>
+          </section>
+        ) : (
+          <QuoteBuilder
+            requestId={enquiry.request.id}
+            eventId={enquiry.request.eventId}
+            vendorOrgId={enquiry.request.vendorOrgId}
+            currency={enquiry.event.currency}
+            existing={enquiry.quotes}
+            proposal={proposal}
+            revise={
+              revising
+                ? {
+                    id: revising.id,
+                    items: revising.items as { name: string; qty: number; unitMinor: string }[],
+                    taxBps: revising.taxBps,
+                    serviceBps: revising.serviceBps,
+                    travelFeeMinor: revising.travelFeeMinor,
+                    notes: revising.notes,
+                    cancellationTerms: revising.cancellationTerms,
+                    schedule: revising.proposedSchedule as { label: string; percentBps?: number; due: string }[],
+                    expiresAt: new Date(revising.expiresAt).toISOString(),
+                  }
+                : null
+            }
+            budgetMinor={brief.budgetMaxMinor ?? null}
+            packages={packages
+              .filter((row) => row.currency === enquiry.event.currency)
+              .map((row) => ({
+                id: row.id,
+                name: row.name,
+                description: row.description,
+                priceMinor: row.priceMinor?.toString() ?? null,
+                includes: row.includes,
+              }))}
+          />
+        )}
       </div>
     </AppFrame>
   );

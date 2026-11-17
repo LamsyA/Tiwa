@@ -200,7 +200,13 @@ export function QuoteBuilder({
       }
       if (send) {
         const sent = await sendQuoteAction({ quoteId });
-        if (!sent.ok) setError(te(sent.code as 'VALIDATION'));
+        if (!sent.ok) {
+          setError(te(sent.code as 'VALIDATION'));
+          return;
+        }
+        // D-X67: close the builder and confirm on the inbox with a pop-up.
+        router.push(`/quotes?sent=${proposal ? 'proposal' : 'quote'}${revise ? '&revised=1' : ''}`);
+        return;
       }
       router.refresh();
     } finally {

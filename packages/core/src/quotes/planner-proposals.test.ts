@@ -7,6 +7,8 @@ import { loadEventAccess, permissionsFor, toStoredPermissions } from '../events/
 import { ValidationError } from '../shared/errors.js';
 import { getCategoryOverview } from './overview.js';
 import { requestQuoteChanges } from './decisions.js';
+import { listSentQuotes, quoteHistory } from './history.js';
+import { NotFoundError } from '../shared/errors.js';
 import { createQuote, getEnquiry, listEnquiries, sendQuote, updateQuote } from './quotes.js';
 import { requestQuotes } from './requests.js';
 
@@ -178,6 +180,19 @@ describe('planner proposals (D-X64)', () => {
     expect(revised.status).toBe('SENT');
     expect(revised.revision).toBe(2);
     expect(revised.totalMinor).toBe(180_000_000n);
+
+    // D-X67: both sides read the same history; outsiders can't.
+    for (const reader of [planner.owner, host]) {
+      const history = await quoteHistory(reader, { quoteId: draft.quoteId });
+      expect(history.versions.map((row) => row.revision)).toEqual([1, 2]);
+      expect(history.versions[0]?.totalMinor).toBe('150000000');
+      expect(history.versions[0]?.changeRequest).toBe('Please include the Friday engagement');
+      expect(history.versions[1]?.totalMinor).toBe('180000000');
+      expect(history.versions[1]?.changeRequest).toBeNull();
+    }
+    await expect(quoteHistory(vendor.owner, { quoteId: draft.quoteId })).rejects.toBeInstanceOf(NotFoundError);
+    const sent = await listSentQuotes(planner.owner);
+    expect(sent.find((row) => row.id === draft.quoteId)?.revision).toBe(2);
     expect((await listEnquiries(planner.owner)).some((row) => row.id === request.id)).toBe(false);
   });
 
