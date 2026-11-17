@@ -136,6 +136,8 @@ export const signUploadSchema = z.object({
   method: z.enum(['PUT', 'POST', 'DELETE', 'GET']),
   uploadId: z.string().max(200).optional(),
   partNumber: z.number().int().min(1).max(MAX_PART_NUMBER).optional(),
+  /** Single-request upload (D-X78): the file's type, checked against the media kind. */
+  contentType: z.string().min(1).max(100).optional(),
 });
 
 async function loadOwnUpload(actor: UploaderActor, mediaId: string) {
@@ -180,6 +182,16 @@ export async function signS3Upload(
       if (input.uploadId) return { url: await storage.signCompleteMultipart(key, input.uploadId) };
       return { url: await storage.signCreateMultipart(key) };
     case 'PUT':
+      // D-X78: every file is at most UPLOAD_MAX_BYTES, so the browser sends it in one
+      // signed PUT. The size is pinned to the one recorded at create; the type must
+      // fit the media kind.
+      if (input.partNumber === undefined && !input.uploadId) {
+        const allowed = item.kind === 'PHOTO' ? IMAGE_MIMES : VIDEO_MIMES;
+        if (!input.contentType || !(allowed as readonly string[]).includes(input.contentType)) {
+          throw new ValidationError('Unsupported file type', { key: 'unsupportedType' });
+        }
+        return { url: await storage.signPut(key, input.contentType, item.sizeBytes) };
+      }
       if (input.partNumber === undefined) throw new ValidationError('Missing part number', { key: 'missingPart' });
       if (!input.uploadId) throw new ValidationError('Missing upload id', { key: 'missingUploadId' });
       return { url: await storage.signPart(key, input.uploadId, input.partNumber) };

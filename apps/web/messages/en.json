@@ -1638,7 +1638,16 @@
     "guestMessagePlaceholder": "Wishing you...",
     "signButton": "Sign guestbook",
     "signingIn": "Signing…",
-    "downloadPhoto": "Download photo"
+    "downloadPhoto": "Download photo",
+    "uploadErrors": {
+      "galleryFull": "This gallery is full. Ask the host to make room.",
+      "tooLarge": "This file is too big.",
+      "unsupportedType": "This file type can’t be uploaded.",
+      "RATE_LIMITED": "Too many uploads at once. Wait a minute and try again.",
+      "uploadUnavailable": "Uploads aren’t open right now."
+    },
+    "deletePhotoN": "Delete photo {index}",
+    "someFailed": "{count, plural, one {# photo couldn’t upload. Tap Retry next to it.} other {# photos couldn’t upload. Tap Retry next to them.}}"
   },
   "business": {
     "title": "Business profile",

@@ -300,7 +300,7 @@ export function GalleryGrid({
                 index={index}
                 openLabel={t('openPhoto', { index: index + 1 })}
                 processingLabel={t('processing')}
-                deleteLabel={item.mine ? t('deletePhoto') : null}
+                deleteLabel={item.mine ? t('deletePhotoN', { index: index + 1 }) : null}
                 onOpen={openAt}
                 onDelete={item.mine ? deleteItem : null}
               />
@@ -331,7 +331,7 @@ export function GalleryGrid({
                         index={index}
                         openLabel={t('openPhoto', { index: index + 1 })}
                         processingLabel={t('processing')}
-                        deleteLabel={item.mine ? t('deletePhoto') : null}
+                        deleteLabel={item.mine ? t('deletePhotoN', { index: index + 1 }) : null}
                         onOpen={openAt}
                         onDelete={item.mine ? deleteItem : null}
                       />

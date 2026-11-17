@@ -1,4 +1,4 @@
-import AwsS3 from '@uppy/aws-s3';
+import XHRUpload from '@uppy/xhr-upload';
 import Uppy, { type UppyFile } from '@uppy/core';
 import GoldenRetriever from '@uppy/golden-retriever';
 import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
@@ -84,9 +84,11 @@ export async function createMediaRecord(
   const body = (await response.json().catch(() => null)) as {
     ok?: boolean;
     data?: { mediaId?: string; key?: string } | undefined;
+    error?: { code?: string; key?: string };
   } | null;
   if (!response.ok || !body?.ok || typeof body.data?.mediaId !== 'string' || typeof body.data?.key !== 'string') {
-    throw new Error('upload slot unavailable');
+    // D-X78: carry the server's reason (galleryFull, tooLarge, RATE_LIMITED…) to the screen.
+    throw new Error(body?.error?.key ?? body?.error?.code ?? 'uploadUnavailable');
   }
   return { mediaId: body.data.mediaId, key: body.data.key };
 }
@@ -251,11 +253,11 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
         }
         prepareAttempts.delete(file.id);
       }
+      // D-X78: never drop a photo silently — keep it in the list with the reason.
       try {
         uppy.setFileState(file.id, {
-          error: error instanceof Error ? error.message : 'Upload setup failed',
+          error: error instanceof Error ? error.message : 'uploadUnavailable',
         });
-        uppy.removeFile(file.id);
       } catch {
         // Uppy went away mid-setup; nothing left to clean up.
       }
@@ -279,6 +281,8 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
     } catch {
       return;
     }
+    // A file that failed setup shows its reason; it must not hold back the rest.
+    files = files.filter((file) => !file.error);
     if (files.length === 0) return;
     const ready = files.every(
       (file) =>
@@ -354,27 +358,31 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
     void postMedia('abort', mediaId);
   });
 
-  uppy.use(AwsS3, {
-    shouldUseMultipart: () => true,
+  // D-X78: every file is at most UPLOAD_MAX_BYTES, so it goes up in ONE signed
+  // PUT straight to storage. XHRUpload's `timeout` fires when progress stops, so a
+  // request cut off mid-flight fails and is retried — it can no longer hang and
+  // hold an upload slot (the multipart S3 client had no timeout and stalled the queue).
+  uppy.use(XHRUpload, {
+    method: 'PUT',
+    formData: false,
     limit: UPLOAD_LIMIT,
-    getChunkSize: () => UPLOAD_CHUNK_SIZE,
+    timeout: 30_000,
     allowedMetaFields: [],
-    generateObjectKey: (file) => {
-      const key = (file.meta as Record<string, unknown> | undefined)?.key;
-      if (typeof key !== 'string' || key.length === 0) throw new Error('upload key missing: media row not created');
-      return key;
-    },
-    signRequest: async (request: SignRequestShape) => {
-      // D-X77: a dropped connection must fail, not hang — a hung sign holds one of
-      // the UPLOAD_LIMIT slots forever and stalls every file behind it.
+    headers: (file) => ({ 'Content-Type': file.type || 'application/octet-stream' }),
+    endpoint: async (fileOrBundle) => {
+      const file = Array.isArray(fileOrBundle) ? fileOrBundle[0] : fileOrBundle;
+      const key = (file?.meta as Record<string, unknown> | undefined)?.key;
+      if (!file || typeof key !== 'string' || key.length === 0) {
+        throw new Error('upload key missing: media row not created');
+      }
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 20000);
+      const timer = setTimeout(() => controller.abort(), 20_000);
       let response: Response;
       try {
         response = await fetchImpl('/api/uploads/sign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(toSignRequestBody(request)),
+          body: JSON.stringify({ key, method: 'PUT', contentType: file.type || 'application/octet-stream' }),
           signal: controller.signal,
         });
       } finally {
@@ -382,8 +390,10 @@ export function createGalleryUploader(options: GalleryUploaderOptions): Uppy<Upl
       }
       const body = (await response.json().catch(() => null)) as { ok?: boolean; data?: { url?: string } } | null;
       if (!response.ok || !body?.ok || typeof body.data?.url !== 'string') throw new Error('signing failed');
-      return { url: body.data.url };
+      return body.data.url;
     },
+    // Storage answers a PUT with an empty body; nothing to parse.
+    getResponseData: () => ({}),
   });
 
   if (typeof indexedDB !== 'undefined') {

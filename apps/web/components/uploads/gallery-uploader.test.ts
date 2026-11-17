@@ -40,8 +40,8 @@ describe('createMediaRecord', () => {
     });
   });
 
-  it('throws a friendly error when the server refuses', async () => {
-    const fetchImpl = mockFetch(() => ({ ok: false, error: { code: 'LIMIT' } }));
+  it('throws the server reason when it refuses (D-X78: shown to the guest)', async () => {
+    const fetchImpl = mockFetch(() => ({ ok: false, error: { code: 'VALIDATION', key: 'galleryFull' } }));
     await expect(
       createMediaRecord(fetchImpl, {
         eventId: 'event-1',
@@ -51,7 +51,7 @@ describe('createMediaRecord', () => {
         mime: 'image/jpeg',
         sizeBytes: 10,
       }),
-    ).rejects.toThrow('upload slot unavailable');
+    ).rejects.toThrow('galleryFull');
   });
 });
 

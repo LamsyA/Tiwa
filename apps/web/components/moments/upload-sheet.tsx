@@ -22,6 +22,7 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
 
   const done = queue.files.filter((file) => file.status === 'complete').length;
   const active = queue.files.filter((file) => file.status === 'uploading' || file.status === 'queued').length;
+  const failed = queue.files.filter((file) => file.status === 'error').length;
 
   const onPick = (event: React.ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(event.target.files ?? []);
@@ -82,11 +83,13 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
                 {file.status === 'complete'
                   ? t('done')
                   : file.status === 'error'
-                    ? (file.error ?? t('failed'))
+                    ? file.error && t.has(`uploadErrors.${file.error}`)
+                      ? t(`uploadErrors.${file.error}` as 'failed')
+                      : t('failed')
                     : `${Math.round(file.progress * 100)}%`}
               </p>
             </div>
-            {file.status === 'error' && (
+            {file.status === 'error' && file.canRetry && (
               <button type="button" onClick={() => queue.retryFile(file.id)} className="text-sm font-medium underline">
                 {t('retry')}
               </button>
@@ -107,6 +110,11 @@ function Sheet({ moderation }: { moderation: 'INSTANT' | 'APPROVE_FIRST' }) {
       {done > 0 && queue.files.length === done && (
         <p className="bg-success-soft text-success mt-4 rounded-xl p-3 text-sm font-medium">
           {moderation === 'APPROVE_FIRST' ? t('sentForApproval') : t('sharedThanks', { count: done })}
+        </p>
+      )}
+      {active === 0 && failed > 0 && (
+        <p className="bg-danger-soft text-danger mt-4 rounded-xl p-3 text-sm font-medium">
+          {t('someFailed', { count: failed })}
         </p>
       )}
       <p className="text-muted mt-4 text-xs">{t('limitNote')}</p>

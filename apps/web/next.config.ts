@@ -7,7 +7,8 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === '1' });
-const withSerwist = withSerwistInit({ swSrc: 'app/sw.ts', swDest: 'public/sw.js' });
+// D-X78: never reload on reconnect — it wiped in-progress uploads, drafts and forms.
+const withSerwist = withSerwistInit({ swSrc: 'app/sw.ts', swDest: 'public/sw.js', reloadOnOnline: false });
 
 const nextConfig: NextConfig = {
   // The dev badge adds a "Next.js Dev Tools" button that collides with "Next" in e2e locators.

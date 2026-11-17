@@ -13,6 +13,8 @@ export interface QueuedFile {
   status: 'queued' | 'uploading' | 'paused' | 'complete' | 'error';
   error: string | null;
   isRestored: boolean;
+  /** False when the server refused the upload itself (e.g. gallery full): retrying cannot help. */
+  canRetry: boolean;
 }
 
 export interface UploadQueue {
@@ -44,6 +46,7 @@ function snapshot(uppy: Uppy<UploadMeta>): QueuedFile[] {
       status: done ? 'complete' : failed ? 'error' : started ? 'uploading' : 'queued',
       error: failed ? (file.error ?? 'upload failed') : null,
       isRestored: Boolean(file.isRestored),
+      canRetry: typeof (file.meta as Record<string, unknown> | undefined)?.mediaId === 'string',
     };
   });
 }
@@ -102,6 +105,22 @@ export function UploadQueueProvider({ children, ...options }: { children: React.
       }
     };
     window.addEventListener('online', onOnline);
+    // D-X78: safety net. Some browsers (WebKit) drop a request that failed while
+    // offline without raising an error, leaving the file started but in no active
+    // upload. While online, restart any unfinished file nothing is handling.
+    const sweep = setInterval(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      const active = new Set(
+        Object.values(uppy.getState().currentUploads ?? {}).flatMap((upload) => upload.fileIDs ?? []),
+      );
+      for (const file of uppy.getFiles()) {
+        const meta = file.meta as Record<string, unknown> | undefined;
+        if (file.progress?.uploadComplete || file.error || active.has(file.id)) continue;
+        if (file.progress?.uploadStarted == null) continue;
+        if (typeof meta?.mediaId !== 'string' || retryTimers.current.has(file.id)) continue;
+        void uppy.retryUpload(file.id).catch(() => undefined);
+      }
+    }, 8000);
     uppy.on('file-added', onChange);
     uppy.on('file-removed', onChange);
     uppy.on('upload-progress', onChange);
@@ -114,6 +133,7 @@ export function UploadQueueProvider({ children, ...options }: { children: React.
     uppy.on('restored', onRestored);
     uppy.on('cancel-all', onChange);
     return () => {
+      clearInterval(sweep);
       window.removeEventListener('online', onOnline);
       uppy.off('file-added', onChange);
       uppy.off('file-removed', onChange);
