@@ -10,6 +10,7 @@ import { previewGuestChange, sendGuestChange } from './actions.js';
 
 interface SentRow {
   bookingId: string;
+  versionId: string;
   vendorName: string;
   vendorPhone: string | null;
   diffMinor: string;
@@ -50,6 +51,42 @@ export function GuestChangeFlow({
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState<string | null>(null);
+  // D-X85 "Send all on WhatsApp": shared vendors, and the one whose chat is open now.
+  const [shared, setShared] = React.useState<Set<string>>(new Set());
+  const [opening, setOpening] = React.useState<string | null>(null);
+
+  // Browsers only open WhatsApp from a tap, so the queue steps one vendor per tap.
+  // When the planner comes back from WhatsApp, the vendor just opened counts as shared.
+  React.useEffect(() => {
+    if (!opening) return;
+    const onBack = () => {
+      if (document.visibilityState !== 'visible') return;
+      setShared((current) => new Set(current).add(opening));
+      setOpening(null);
+    };
+    document.addEventListener('visibilitychange', onBack);
+    window.addEventListener('focus', onBack);
+    return () => {
+      document.removeEventListener('visibilitychange', onBack);
+      window.removeEventListener('focus', onBack);
+    };
+  }, [opening]);
+
+  // Progress survives closing the sheet or a reload (keyed by this batch of changes).
+  const batchKey = sent ? `tiwa:gc-shared:${sent.map((row) => row.versionId).join(',')}` : null;
+  React.useEffect(() => {
+    if (!batchKey) return;
+    try {
+      window.localStorage.setItem(batchKey, JSON.stringify([...shared]));
+    } catch {
+      // Storage blocked.
+    }
+  }, [batchKey, shared]);
+
+  function openWhatsApp(row: SentRow) {
+    setOpening(row.bookingId);
+    window.open(waLink(row.vendorPhone, message(row)), '_blank', 'noopener');
+  }
 
   function reset(next: boolean) {
     setOpen(next);
@@ -80,6 +117,14 @@ export function GuestChangeFlow({
     const result = await sendGuestChange({ eventId, newCount: preview.toCount, bookingIds: [...picked] });
     setBusy(false);
     if (!result.ok) return setError(t('failed'));
+    // Resume a half-shared batch (same changes) after a reload.
+    try {
+      const key = `tiwa:gc-shared:${result.data.sent.map((row) => row.versionId).join(',')}`;
+      const saved = window.localStorage.getItem(key);
+      setShared(new Set(saved ? (JSON.parse(saved) as string[]) : []));
+    } catch {
+      setShared(new Set());
+    }
     setSent(result.data.sent);
   }
 
@@ -233,47 +278,107 @@ export function GuestChangeFlow({
           </>
         )}
 
-        {/* Step 3: share each approve link on WhatsApp */}
-        {sent && (
-          <ul className="flex flex-col gap-2">
-            {sent.map((row) => (
-              <li
-                key={row.bookingId}
-                className="border-border/70 bg-surface flex flex-col gap-2 rounded-2xl border p-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-semibold">{row.vendorName}</span>
-                  <StatusPill tone="brand">{t('waiting')}</StatusPill>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={waLink(row.vendorPhone, message(row))}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-3 text-sm font-semibold text-white transition hover:brightness-105"
-                  >
-                    <MessageCircle aria-hidden className="size-4" />
-                    {t('whatsapp')}
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(message(row)).then(() => setCopied(row.bookingId));
-                    }}
-                    className="border-border/70 hover:bg-surface-2 inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition"
-                  >
-                    {copied === row.bookingId ? (
+        {/* Step 3: share each approve link on WhatsApp, one tap per vendor (D-X85). */}
+        {sent &&
+          sent.length > 0 &&
+          (() => {
+            const next = sent.find((row) => !shared.has(row.bookingId)) ?? null;
+            const done = sent.filter((row) => shared.has(row.bookingId)).length;
+            return (
+              <div className="flex flex-col gap-3">
+                <div className="border-border/70 bg-surface flex flex-col gap-3 rounded-2xl border p-4">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-semibold">{t('progress', { done, total: sent.length })}</span>
+                    {done === sent.length && <StatusPill tone="success">{t('allSent')}</StatusPill>}
+                  </div>
+                  <div className="bg-surface-2 h-1.5 overflow-hidden rounded-full">
+                    <span
+                      className="block h-full rounded-full bg-[#25D366] transition-[width] duration-500"
+                      style={{ width: `${(done / sent.length) * 100}%` }}
+                    />
+                  </div>
+                  {next ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openWhatsApp(next)}
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 text-base font-semibold text-white shadow-[var(--shadow-1)] transition hover:brightness-105"
+                      >
+                        <MessageCircle aria-hidden className="size-5" />
+                        {done === 0 ? t('sendAll', { count: sent.length }) : t('sendNext', { vendor: next.vendorName })}
+                      </button>
+                      <div className="text-muted flex items-center justify-between gap-2 text-xs">
+                        <span className="truncate">
+                          {opening ? t('tapSend') : t('nextUp', { vendor: next.vendorName })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpening(null);
+                            setShared((current) => new Set(current).add(next.bookingId));
+                          }}
+                          className="hover:text-text shrink-0 font-semibold underline-offset-2 hover:underline"
+                        >
+                          {t('skip')}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-success flex items-center gap-2 text-sm font-semibold">
                       <Check aria-hidden className="size-4" />
-                    ) : (
-                      <Copy aria-hidden className="size-4" />
-                    )}
-                    {copied === row.bookingId ? t('copied') : t('copy')}
-                  </button>
+                      {t('everyoneHasIt', { count: sent.length })}
+                    </p>
+                  )}
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                <ul className="flex flex-col gap-1.5">
+                  {sent.map((row) => {
+                    const isShared = shared.has(row.bookingId);
+                    return (
+                      <li
+                        key={row.bookingId}
+                        className="border-border/70 bg-surface flex items-center gap-2 rounded-xl border px-3 py-2"
+                      >
+                        <span
+                          className={`grid size-6 shrink-0 place-items-center rounded-full ${
+                            isShared ? 'bg-[#25D366] text-white' : 'bg-surface-2 text-muted'
+                          }`}
+                        >
+                          {isShared ? (
+                            <Check aria-hidden className="size-3.5" />
+                          ) : (
+                            <MessageCircle aria-hidden className="size-3.5" />
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{row.vendorName}</span>
+                        <button
+                          type="button"
+                          onClick={() => openWhatsApp(row)}
+                          aria-label={t('whatsappFor', { vendor: row.vendorName })}
+                          className="text-[#128C7E] hover:bg-surface-2 grid size-8 place-items-center rounded-lg transition"
+                        >
+                          <MessageCircle aria-hidden className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(message(row)).then(() => setCopied(row.bookingId));
+                          }}
+                          aria-label={t('copyFor', { vendor: row.vendorName })}
+                          className="text-muted hover:bg-surface-2 hover:text-text grid size-8 place-items-center rounded-lg transition"
+                        >
+                          {copied === row.bookingId ? (
+                            <Check aria-hidden className="size-4" />
+                          ) : (
+                            <Copy aria-hidden className="size-4" />
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })()}
       </div>
     </ResponsiveDialog>
   );

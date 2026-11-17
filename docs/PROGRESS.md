@@ -270,3 +270,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X82: pin Node 22 for Vercel (failed deploys on Node 26)
 - D-X83: HEIC server fallback (1.5 MB → 593 KB on Chrome)
 - D-X84: guest-count change showcase (draft per-guest changes, WhatsApp approve link, live balance); e2e passing desktop and mobile
+- D-X85: Send all on WhatsApp step-through

@@ -111,8 +111,18 @@ test('D-X84: guest count 80 → 100, caterer approves from the WhatsApp link', a
   await expect(sheet.getByText(/60,000/).first()).toBeVisible();
   await sheet.getByRole('button', { name: /Update and send to 1 vendor/ }).click();
   await expect(sheet.getByText('Sent to 1 vendor')).toBeVisible({ timeout: 30_000 });
-  const wa = await sheet.getByRole('link', { name: 'Send on WhatsApp' }).getAttribute('href');
-  const text = decodeURIComponent(new URL(wa as string).searchParams.get('text') ?? '');
+  // D-X85: "Send all on WhatsApp" opens the vendor's chat; coming back marks it sent.
+  const [popup] = await Promise.all([
+    host.waitForEvent('popup'),
+    sheet.getByRole('button', { name: /Send all on WhatsApp \(1\)/ }).click(),
+  ]);
+  const wa = popup.url();
+  await popup.close();
+  await host.bringToFront();
+  await host.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(sheet.getByText('1 of 1 sent')).toBeVisible();
+  await expect(sheet.getByText(/Your vendor has the link/)).toBeVisible();
+  const text = decodeURIComponent(new URL(wa).searchParams.get('text') ?? '');
   expect(text).toContain('from 80 to 100');
   const link = text.match(/https?:\/\/\S+\/c\/\S+/)?.[0];
   expect(link).toBeTruthy();

@@ -3806,6 +3806,16 @@
     "copy": "Copy message",
     "copied": "Copied",
     "waMessage": "Hello {vendor}, the guest count for {event} has changed from {from} to {to}. I have updated your booking on Tiwa. Please review and approve here: {url}",
-    "failed": "That did not go through. Try again."
+    "failed": "That did not go through. Try again.",
+    "progress": "{done} of {total} sent",
+    "allSent": "All sent",
+    "sendAll": "Send all on WhatsApp ({count})",
+    "sendNext": "Next: {vendor}",
+    "tapSend": "Tap Send in WhatsApp, then come back here.",
+    "nextUp": "Up next: {vendor}",
+    "skip": "Skip",
+    "everyoneHasIt": "{count, plural, one {Your vendor has the link.} other {All # vendors have their link.}} You will be told the moment each one approves.",
+    "whatsappFor": "Send to {vendor} on WhatsApp",
+    "copyFor": "Copy the message for {vendor}"
   }
 }
