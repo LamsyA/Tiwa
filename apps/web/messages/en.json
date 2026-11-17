@@ -2009,6 +2009,17 @@
       "hiredBody": "Your planner can see the plan, budget, guests and vendors, and works on them with you.",
       "hiredPill": "Hired through Tiwa",
       "viewBooking": "View agreement & payments"
+    },
+    "vendorRow": {
+      "quoted": "Quote waiting · {name}",
+      "requested": "{count, plural, one {Waiting for # quote} other {Waiting for # quotes}}",
+      "booked": "Booked · {name}",
+      "confirmed": "Confirmed · {name}",
+      "shortlisted": "{count} shortlisted — ask for quotes",
+      "notStarted": "Not started",
+      "review": "Review",
+      "view": "View",
+      "requestQuotes": "Request quotes"
     }
   },
   "inbox": {
@@ -2322,7 +2333,8 @@
       "body": "Everything you’ve sent, with its history. Open one to see every version and change request.",
       "view": "View history",
       "version": "v{revision}",
-      "empty": "Nothing sent yet."
+      "empty": "Nothing sent yet.",
+      "seeAll": "See all {count} in Orders"
     },
     "statusLabel": {
       "SENT": "Awaiting decision",
@@ -2764,7 +2776,11 @@
       "overdue": "Overdue · {count}",
       "trend": "Money received over the last six months",
       "note": "Counted when a payment is confirmed. Bank payouts arrive with online payments."
-    }
+    },
+    "openRequests": "Open requests",
+    "comingUp": "Coming up",
+    "noUpcoming": "No booked jobs coming up yet.",
+    "funnel": "Your funnel"
   },
   "landing": {
     "theme": {
@@ -3152,6 +3168,14 @@
       "open": "Open guest view",
       "copy": "Copy link",
       "copied": "Link copied"
+    },
+    "todayTitle": "Today · {event}",
+    "itemStatus": {
+      "PLANNED": "Planned",
+      "STARTED": "In progress",
+      "DONE": "Done",
+      "SKIPPED": "Skipped",
+      "LATE": "Late"
     }
   },
   "moneyHub": {
@@ -3419,7 +3443,8 @@
     "askedByClient": "Client asked",
     "message": "Message the client",
     "open": "Open booking",
-    "changeWaiting": "Change request waiting"
+    "changeWaiting": "Change request waiting",
+    "noDate": "Date to be set"
   },
   "ai": {
     "errors": {

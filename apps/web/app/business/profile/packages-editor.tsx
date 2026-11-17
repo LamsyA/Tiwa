@@ -45,21 +45,31 @@ export function PackagesEditor({ orgId, packages }: { orgId: string; packages: P
           {packages
             .filter((row) => row.active)
             .map((row) => (
-              <li key={row.id} className="border-border flex items-center gap-3 rounded-lg border p-3">
+              // D-X79: name on its own line on phones; the buttons drop below instead of squeezing it to one letter.
+              <li
+                key={row.id}
+                className="border-border/70 bg-surface flex flex-col gap-2 rounded-2xl border p-3 sm:flex-row sm:items-center sm:gap-3"
+              >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{row.name}</p>
-                  <p className="text-muted truncate text-sm">{row.includes.slice(0, 3).join(' · ')}</p>
+                  <p className="truncate text-sm font-semibold">{row.name}</p>
+                  <p className="text-muted truncate text-xs">{row.includes.slice(0, 3).join(' · ')}</p>
                 </div>
-                <Button variant="secondary" onClick={() => setEditing(row)}>
-                  {t('editPackage')}
-                </Button>
-                <ConfirmDialog
-                  trigger={<Button variant="secondary">{t('archivePackage')}</Button>}
-                  title={t('archiveTitle', { name: row.name })}
-                  body={t('archiveBody')}
-                  confirmLabel={t('archivePackage')}
-                  onConfirm={() => void onArchive(row.id)}
-                />
+                <div className="flex shrink-0 gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => setEditing(row)}>
+                    {t('editPackage')}
+                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button size="sm" variant="ghost">
+                        {t('archivePackage')}
+                      </Button>
+                    }
+                    title={t('archiveTitle', { name: row.name })}
+                    body={t('archiveBody')}
+                    confirmLabel={t('archivePackage')}
+                    onConfirm={() => void onArchive(row.id)}
+                  />
+                </div>
               </li>
             ))}
         </ul>

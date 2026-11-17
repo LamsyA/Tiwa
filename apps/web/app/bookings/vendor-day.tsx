@@ -41,8 +41,7 @@ export function VendorDayCard(props: { row: VendorBookingDay }) {
   return (
     <Card className="flex flex-col gap-2 p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-medium">{props.row.eventName}</span>
-        <span className="text-muted text-sm">{props.row.status}</span>
+        <span className="font-medium">{t('todayTitle', { event: props.row.eventName })}</span>
         <span className="ml-auto" />
         {props.row.arrivedAt ? (
           <span className="text-sm">
@@ -65,7 +64,7 @@ export function VendorDayCard(props: { row: VendorBookingDay }) {
                 {new Date(item.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
               <span className="font-medium">{item.title}</span>
-              <span className="text-muted text-xs">{item.status}</span>
+              <span className="text-muted text-xs">{t(`itemStatus.${item.status}` as 'arrive')}</span>
               <span className="ml-auto flex gap-1">
                 {item.status !== 'DONE' && (
                   <Button variant="ghost" disabled={pending} onClick={() => move(item.id, 'DONE')}>

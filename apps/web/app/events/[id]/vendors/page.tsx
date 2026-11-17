@@ -18,7 +18,6 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
   const { id: eventId } = await params;
   const { ctx, access, allowed, invitesOn, momentsOn, ticketsOn } = await loadEventPage(eventId, '/vendors');
   const t = await getTranslations('marketplace');
-  const to = await getTranslations('orders');
   if (!allowed) {
     return (
       <EventFrame
@@ -39,12 +38,18 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
     getEventVendorCategories(ctx.actor, { eventId }),
     eventOrders(ctx.actor, { eventId }),
   ]);
-  // Furthest stage reached per category, for the card badge.
+  // Furthest stage reached per category and who it is with (D-X79: the row says where it stands).
   const stageByCategory = new Map<string, OrderStage>();
+  const leadByCategory = new Map<string, string>();
+  const requestsByCategory = new Map<string, number>();
   for (const row of orders.rows) {
+    if (row.stage === 'requested') {
+      requestsByCategory.set(row.categoryKey, (requestsByCategory.get(row.categoryKey) ?? 0) + 1);
+    }
     const current = stageByCategory.get(row.categoryKey);
     if (!current || STAGE_RANK.indexOf(row.stage) > STAGE_RANK.indexOf(current)) {
       stageByCategory.set(row.categoryKey, row.stage);
+      if (row.counterparty) leadByCategory.set(row.categoryKey, row.counterparty);
     }
   }
   const shortlistTotal = categories.reduce((sum, row) => sum + row.shortlisted, 0);
@@ -210,61 +215,88 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
           <h2 id="categories-heading" className="font-display text-xl font-bold tracking-tight">
             {t('categoriesHeading')}
           </h2>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((row, index) => {
-              const stage = stageByCategory.get(row.category);
-              const findHref =
-                row.category === 'venue'
-                  ? `/venues?eventId=${eventId}`
-                  : `/vendors?category=${encodeURIComponent(row.category)}&eventId=${eventId}`;
-              return (
-                <li
-                  key={row.category}
-                  className="group border-border/70 bg-surface relative overflow-hidden rounded-3xl border transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]"
-                >
-                  <div className="relative aspect-[16/9] overflow-hidden">
+          {/* D-X79: compact status rows (planner workspace style) instead of 15 photo tiles. */}
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {[...categories]
+              .map((row, index) => ({ row, index, stage: stageByCategory.get(row.category) }))
+              .sort((a, b) => {
+                const rank = (x: typeof a) => (x.stage && x.stage !== 'closed' ? 0 : x.row.shortlisted > 0 ? 1 : 2);
+                return rank(a) - rank(b) || a.index - b.index;
+              })
+              .map(({ row, index, stage }) => {
+                const lead = leadByCategory.get(row.category) ?? '';
+                const boardHref = `/events/${eventId}/vendors/${encodeURIComponent(row.category)}`;
+                const findHref =
+                  row.category === 'venue'
+                    ? `/venues?eventId=${eventId}`
+                    : `/vendors?category=${encodeURIComponent(row.category)}&eventId=${eventId}`;
+                const live = stage && stage !== 'closed' ? stage : null;
+                const status = live
+                  ? live === 'quoted'
+                    ? { text: t('vendorRow.quoted', { name: lead }), tone: 'text-teal-strong', dot: 'bg-teal' }
+                    : live === 'requested'
+                      ? {
+                          text: t('vendorRow.requested', { count: requestsByCategory.get(row.category) ?? 1 }),
+                          tone: 'text-muted',
+                          dot: 'bg-[var(--accent)]',
+                        }
+                      : live === 'booked'
+                        ? { text: t('vendorRow.booked', { name: lead }), tone: 'text-brand-strong', dot: 'bg-brand' }
+                        : { text: t('vendorRow.confirmed', { name: lead }), tone: 'text-success', dot: 'bg-success' }
+                  : row.shortlisted > 0
+                    ? {
+                        text: t('vendorRow.shortlisted', { count: row.shortlisted }),
+                        tone: 'text-text',
+                        dot: 'bg-brand',
+                      }
+                    : { text: t('vendorRow.notStarted'), tone: 'text-muted', dot: 'bg-border' };
+                const action =
+                  live === 'quoted'
+                    ? { href: boardHref, label: t('vendorRow.review'), primary: true }
+                    : live || row.shortlisted > 0
+                      ? {
+                          href: boardHref,
+                          label: live ? t('vendorRow.view') : t('vendorRow.requestQuotes'),
+                          primary: !live,
+                        }
+                      : { href: findHref, label: t('findButton'), primary: false };
+                return (
+                  <li
+                    key={row.category}
+                    className={`bg-surface relative flex items-center gap-3 rounded-2xl border px-3 py-2.5 shadow-[var(--shadow-1)] transition hover:shadow-[var(--shadow-2)] ${
+                      live === 'quoted' ? 'border-teal/40' : 'border-border/70'
+                    }`}
+                  >
                     <Image
                       src={coverFor([row.category], index)}
                       alt=""
                       placeholder="blur"
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                      className="size-full object-cover transition duration-500 group-hover:scale-105"
+                      sizes="44px"
+                      className="size-11 shrink-0 rounded-xl object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                    <p className="font-display absolute bottom-3 left-4 text-lg font-bold text-white">{row.label}</p>
-                    {stage && stage !== 'closed' && (
-                      <span className="text-text absolute top-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold">
-                        {to(`stage.${stage}`)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 p-4">
-                    {row.shortlisted > 0 ? (
-                      <StatusPill tone="brand">{t('shortlistedCount', { count: row.shortlisted })}</StatusPill>
-                    ) : (
-                      <span className="text-muted text-sm">{t('noneYet')}</span>
-                    )}
-                    <div className="ml-auto flex items-center gap-3 text-sm font-semibold">
-                      {stage && (
-                        <Link
-                          href={`/events/${eventId}/vendors/${encodeURIComponent(row.category)}`}
-                          className="text-muted hover:text-text relative z-10"
-                        >
-                          {t('viewButton')}
-                        </Link>
-                      )}
-                      <Link
-                        href={findHref}
-                        className="text-brand-strong inline-flex items-center gap-1 after:absolute after:inset-0"
-                      >
-                        {t('findButton')}
-                        <ArrowRight aria-hidden className="size-4" />
-                      </Link>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{row.label}</p>
+                      <p className={`flex items-center gap-1.5 truncate text-xs font-medium ${status.tone}`}>
+                        <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${status.dot}`} />
+                        <span className="truncate">{status.text}</span>
+                      </p>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
+                    <Link
+                      href={action.href}
+                      className={`relative z-10 inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold transition ${
+                        action.primary
+                          ? live === 'quoted'
+                            ? 'bg-teal text-white hover:brightness-110'
+                            : 'bg-brand-strong text-on-brand hover:brightness-110'
+                          : 'bg-surface-2 text-text hover:bg-border/60'
+                      }`}
+                    >
+                      {action.label}
+                      <ArrowRight aria-hidden className="size-3.5" />
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
           <Link
             href={`/vendors?eventId=${eventId}`}

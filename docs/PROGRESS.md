@@ -264,3 +264,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X76: wedding story test (host, planner, photographer, venue, guest) 42 steps; fixes for planner booking link, proposal notification, labels, money pill
 - D-X77: guest email-or-phone, booked-day warnings, readable activity, budget lines per service; wedding story run on mobile (44 steps)
 - D-X78: guest uploads fixed (single PUT with timeout, no reload on reconnect); moments e2e 11/13 incl. UF-10 desktop+mobile
+- D-X79: vendor pages aligned with planner design; event Vendors status rows; bookings/quotes/calendar fixes

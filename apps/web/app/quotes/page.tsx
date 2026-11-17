@@ -5,7 +5,6 @@ import {
   listPendingChanges,
   listPendingOfflinePayments,
   listSiteVisits,
-  listVendorBookingMoney,
 } from '@tiwa/core';
 import { PLANNING_CATEGORY, serviceLabel } from '@tiwa/config';
 import { Banner, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
@@ -15,7 +14,6 @@ import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { ChangeCards } from './change-cards.js';
-import { BookingMoneyList } from './booking-money.js';
 import { PaymentCards } from './payment-cards.js';
 import { DeclineEnquiry } from './decline-enquiry.js';
 import { SentToast } from '@/components/quotes/sent-toast.js';
@@ -71,11 +69,6 @@ export default async function QuotesInboxPage() {
   const payments = (
     await Promise.all(
       vendorOrgIds.map((orgId) => listPendingOfflinePayments(ctx.actor, { vendorOrgId: orgId }).catch(fallback([]))),
-    )
-  ).flat();
-  const vendorBookings = (
-    await Promise.all(
-      vendorOrgIds.map((orgId) => listVendorBookingMoney(ctx.actor, { vendorOrgId: orgId }).catch(fallback([]))),
     )
   ).flat();
 
@@ -239,52 +232,63 @@ export default async function QuotesInboxPage() {
               <p className="text-muted text-sm">{t('sentSection.body')}</p>
             </div>
             <ul className="border-border/70 bg-surface divide-border/60 divide-y overflow-hidden rounded-3xl border shadow-[var(--shadow-1)]">
-              {sentQuotes.map((row) => (
+              {/* D-X79: the latest few; the full history lives in Orders. */}
+              {sentQuotes.slice(0, 8).map((row) => (
                 <li key={row.id}>
                   <Link
                     href={`/quotes/${row.requestId}`}
-                    className="hover:bg-surface-2/60 group flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 transition"
+                    className="hover:bg-surface-2/60 group flex items-center gap-3 px-3.5 py-3 transition sm:px-5"
                   >
-                    <span className="bg-brand-soft text-brand-strong flex size-10 shrink-0 items-center justify-center rounded-xl">
+                    {/* D-X79: one line that never wraps — name and meta truncate, amount stays right. */}
+                    <span className="bg-brand-soft text-brand-strong flex size-9 shrink-0 items-center justify-center rounded-xl">
                       <History aria-hidden className="size-4" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold">{row.eventName}</span>
-                      <span className="text-muted block text-xs">
-                        {t('sentSection.version', { revision: row.revision })}
-                        {row.sentAt &&
-                          ` · ${new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(row.sentAt))}`}
+                      <span className="block truncate text-sm font-semibold">{row.eventName}</span>
+                      <span className="mt-0.5 flex min-w-0 items-center gap-2">
+                        <StatusPill
+                          tone={
+                            row.status === 'ACCEPTED'
+                              ? 'success'
+                              : row.status === 'CHANGES_REQUESTED'
+                                ? 'warning'
+                                : row.status === 'SENT'
+                                  ? 'brand'
+                                  : 'neutral'
+                          }
+                        >
+                          {t.has(`statusLabel.${row.status}`)
+                            ? t(`statusLabel.${row.status}` as 'statusLabel.SENT')
+                            : row.status}
+                        </StatusPill>
+                        <span className="text-muted truncate text-xs">
+                          {t('sentSection.version', { revision: row.revision })}
+                          {row.sentAt &&
+                            ` · ${new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' }).format(new Date(row.sentAt))}`}
+                        </span>
                       </span>
                     </span>
-                    <StatusPill
-                      tone={
-                        row.status === 'ACCEPTED'
-                          ? 'success'
-                          : row.status === 'CHANGES_REQUESTED'
-                            ? 'warning'
-                            : row.status === 'SENT'
-                              ? 'brand'
-                              : 'neutral'
-                      }
-                    >
-                      {t.has(`statusLabel.${row.status}`)
-                        ? t(`statusLabel.${row.status}` as 'statusLabel.SENT')
-                        : row.status}
-                    </StatusPill>
-                    <span className="font-display w-32 text-right font-bold tabular-nums">
+                    <span className="font-display shrink-0 text-right text-sm font-bold tabular-nums sm:text-base">
                       <MoneyText value={row.totalMinor} currency={row.currency} />
                     </span>
-                    <ArrowRight aria-hidden className="text-muted size-4 transition group-hover:translate-x-0.5" />
+                    <ArrowRight
+                      aria-hidden
+                      className="text-muted size-4 shrink-0 transition group-hover:translate-x-0.5"
+                    />
                   </Link>
                 </li>
               ))}
             </ul>
+            {sentQuotes.length > 8 && (
+              <Link href="/orders" className="text-brand-strong w-fit text-sm font-semibold hover:underline">
+                {t('sentSection.seeAll', { count: sentQuotes.length })}
+              </Link>
+            )}
           </section>
         )}
         <PaymentCards payments={payments} />
         <ChangeCards changes={changes} />
         <VisitCards visits={visits} />
-        <BookingMoneyList bookings={vendorBookings} />
       </div>
     </AppFrame>
   );

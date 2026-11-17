@@ -77,6 +77,21 @@ export default async function HomePage() {
       vendorDashboard(ctx.actor, { orgId: vendorOrg.id }),
       vendorOrders(ctx.actor, { orgId: vendorOrg.id }),
     ]);
+    const upcoming = orders.rows
+      .filter(
+        (row) =>
+          (row.stage === 'booked' || row.stage === 'confirmed') &&
+          row.date !== null &&
+          daysUntil(new Date(row.date)) >= 0,
+      )
+      .sort((a, b) => new Date(a.date as string).getTime() - new Date(b.date as string).getTime())
+      .slice(0, 4);
+    const funnel = [
+      { stage: 'requested', bar: 'bg-brand' },
+      { stage: 'quoted', bar: 'bg-[var(--accent)]' },
+      { stage: 'booked', bar: 'bg-teal' },
+      { stage: 'confirmed', bar: 'bg-success' },
+    ] as const;
     const tiles = [
       { stage: 'requested', icon: Inbox },
       { stage: 'quoted', icon: FileText },
@@ -86,7 +101,29 @@ export default async function HomePage() {
     return (
       <AppFrame userId={ctx.actor.userId} active="home" title={tv('title')}>
         <div className="flex flex-col gap-6 py-2">
-          <RoleHero role="vendor" name={myName} org={vendorOrg.name} />
+          <RoleHero
+            role="vendor"
+            name={myName}
+            org={vendorOrg.name}
+            actions={
+              <>
+                <Link
+                  href="/quotes"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold text-[#1c1917] transition hover:bg-white/90"
+                >
+                  <Inbox aria-hidden className="size-4" />
+                  {tv('openRequests')}
+                </Link>
+                <Link
+                  href="/business/profile"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/30 px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  <FileText aria-hidden className="size-4" />
+                  {to('editProfile')}
+                </Link>
+              </>
+            }
+          />
           <section aria-label={to('stagesLabel')} className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             {tiles.map(({ stage, icon: Icon }, index) => (
               <Link
@@ -120,15 +157,72 @@ export default async function HomePage() {
               {tv('warningsHeading')}: {dash.doubleBookingWarnings.map((w) => w.date).join(', ')}
             </p>
           )}
-          <OrdersBoard rows={orders.rows} counts={orders.counts} side="vendor" limit={6} />
-          <div className="flex flex-wrap gap-2">
-            <Link href="/business/profile" className={buttonClasses({ variant: 'secondary' })}>
-              {to('editProfile')}
-            </Link>
-            <Link href="/calendar" className={buttonClasses({ variant: 'secondary' })}>
-              {tv('viewCalendar')}
-            </Link>
+          {/* D-X79: the planner workspace's two panels, for a vendor: next jobs and the quote funnel. */}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <section className="border-border/70 bg-surface flex flex-col gap-3 rounded-3xl border p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-display text-base font-bold tracking-tight">{tv('comingUp')}</h2>
+                <Link href="/calendar" className="text-brand-strong text-xs font-semibold hover:underline">
+                  {tv('viewCalendar')}
+                </Link>
+              </div>
+              {upcoming.length === 0 ? (
+                <p className="text-muted text-sm">{tv('noUpcoming')}</p>
+              ) : (
+                <ul className="flex flex-col gap-1.5">
+                  {upcoming.map((row) => {
+                    const start = new Date(row.date as string);
+                    return (
+                      <li key={row.id}>
+                        <Link
+                          href={row.bookingId ? `/bookings/${row.bookingId}` : '/orders'}
+                          className="hover:bg-surface-2 flex items-center gap-3 rounded-2xl p-2 transition"
+                        >
+                          <span className="bg-bg border-border/70 flex w-11 shrink-0 flex-col items-center rounded-xl border py-1 shadow-[var(--shadow-1)]">
+                            <span className="text-brand-strong text-[10px] font-bold uppercase">
+                              {new Intl.DateTimeFormat('en', { month: 'short' }).format(start)}
+                            </span>
+                            <span className="font-display text-base leading-none font-bold">{start.getDate()}</span>
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{row.eventName}</span>
+                            <span className="text-muted block truncate text-xs">
+                              {row.counterparty} · {to(`stage.${row.stage}`)} · {start.getFullYear()}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+            <section className="border-border/70 bg-surface flex flex-col gap-3 rounded-3xl border p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-display text-base font-bold tracking-tight">{tv('funnel')}</h2>
+                <Link href="/orders" className="text-brand-strong text-xs font-semibold hover:underline">
+                  {tp('viewAll')}
+                </Link>
+              </div>
+              <div className="bg-surface-2 flex h-2 overflow-hidden rounded-full">
+                {funnel.map(({ stage, bar }) =>
+                  orders.counts[stage] > 0 ? (
+                    <span key={stage} className={bar} style={{ flexGrow: orders.counts[stage] }} />
+                  ) : null,
+                )}
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {funnel.map(({ stage, bar }) => (
+                  <div key={stage} className="flex items-center gap-2">
+                    <span aria-hidden className={`size-2 rounded-full ${bar}`} />
+                    <dt className="text-muted flex-1 truncate text-xs">{to(`stage.${stage}`)}</dt>
+                    <dd className="font-semibold tabular-nums">{orders.counts[stage]}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
           </div>
+          <OrdersBoard rows={orders.rows} counts={orders.counts} side="vendor" limit={6} />
         </div>
       </AppFrame>
     );

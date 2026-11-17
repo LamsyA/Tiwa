@@ -16,6 +16,18 @@ function daysUntil(date: Date): number {
   return Math.ceil((date.getTime() - Date.now()) / 86_400_000);
 }
 
+/** A booking's service day is stored as midnight UTC with no time (D-X79): show the day, not "1:00 AM". */
+function isDateOnly(date: Date): boolean {
+  return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0;
+}
+
+/** "in 12 days", or months/years when far off — "In 1,910 days" helps nobody. */
+function countdown(days: number, inDays: (count: number) => string): string {
+  if (days <= 60) return inDays(days);
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  return days < 730 ? rtf.format(Math.round(days / 30), 'month') : rtf.format(Math.round(days / 365), 'year');
+}
+
 export function Agenda({
   items,
   labels,
@@ -24,11 +36,19 @@ export function Agenda({
   labels: { today: string; inDays: (count: number) => string; past: string; noDate: string };
 }) {
   const groups = new Map<string, AgendaItem[]>();
-  for (const item of items) {
+  // Soonest first; undated last (D-X79: the list was in creation order).
+  const sorted = [...items].sort((a, b) => {
+    const at = a.startsAt ? new Date(a.startsAt).getTime() : Infinity;
+    const bt = b.startsAt ? new Date(b.startsAt).getTime() : Infinity;
+    return at - bt;
+  });
+  for (const item of sorted) {
     const key = item.startsAt
-      ? new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric', timeZone: item.timezone ?? undefined }).format(
-          new Date(item.startsAt),
-        )
+      ? new Intl.DateTimeFormat('en', {
+          month: 'long',
+          year: 'numeric',
+          timeZone: isDateOnly(new Date(item.startsAt)) ? 'UTC' : (item.timezone ?? undefined),
+        }).format(new Date(item.startsAt))
       : labels.noDate;
     groups.set(key, [...(groups.get(key) ?? []), item]);
   }
@@ -44,7 +64,8 @@ export function Agenda({
               const start = item.startsAt ? new Date(item.startsAt) : null;
               const days = start ? daysUntil(start) : null;
               const past = days !== null && days < 0;
-              const tz = item.timezone ?? undefined;
+              const dateOnly = start ? isDateOnly(start) : false;
+              const tz = dateOnly ? 'UTC' : (item.timezone ?? undefined);
               return (
                 <li key={item.id}>
                   <Link
@@ -63,7 +84,7 @@ export function Agenda({
                       <span className="block truncate text-sm font-semibold group-hover:underline">{item.title}</span>
                       <span className="text-muted block truncate text-xs">
                         {[
-                          start
+                          start && !dateOnly
                             ? new Intl.DateTimeFormat('en', {
                                 hour: 'numeric',
                                 minute: '2-digit',
@@ -86,7 +107,7 @@ export function Agenda({
                               : 'bg-teal-soft text-teal-strong'
                         }`}
                       >
-                        {past ? labels.past : days === 0 ? labels.today : labels.inDays(days)}
+                        {past ? labels.past : days === 0 ? labels.today : countdown(days, labels.inDays)}
                       </span>
                     )}
                   </Link>
