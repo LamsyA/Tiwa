@@ -28,6 +28,7 @@ import {
   saveEventDetails,
   saveEventFeatures,
   savePriceVisibility,
+  savePlannerGuests,
   startCover,
 } from './actions.js';
 
@@ -41,6 +42,7 @@ export interface SettingsFormsProps {
   eventName: string;
   pricesVisible: boolean;
   canChangePrices: boolean;
+  plannerGuests: boolean;
   details: {
     name: string;
     description: string;
@@ -116,6 +118,7 @@ export function SettingsForms(props: SettingsFormsProps) {
       <DetailsForm {...props} />
       <FeaturesForm {...props} />
       <PricesForm {...props} />
+      <PlannerGuestsForm {...props} />
       <AppearanceForm {...props} />
       {props.isHost && props.status !== 'CANCELLED' && props.status !== 'COMPLETED' && <DangerZone {...props} />}
     </div>
@@ -331,6 +334,32 @@ function FeaturesForm({ eventId, canEdit, features, allowedVisibilities, tickets
           </div>
         )}
       </form>
+    </Card>
+  );
+}
+
+/** D-X73: the host decides whether a hired planner may manage the guest list. Saves on toggle. */
+function PlannerGuestsForm({ eventId, isHost, canEdit, plannerGuests }: SettingsFormsProps) {
+  const t = useTranslations('events.settingsPage');
+  const { run, error, saved } = useRun();
+  const [on, setOn] = React.useState(plannerGuests);
+  if (!isHost) return null;
+  return (
+    <Card>
+      <div className="flex flex-col gap-3">
+        <h3 className="font-display text-base font-bold tracking-tight">{t('plannerGuestsHeading')}</h3>
+        <Feedback error={error} saved={saved} />
+        <FeatureRow
+          label={t('plannerGuestsLabel')}
+          help={t('plannerGuestsBody')}
+          checked={on}
+          disabled={!canEdit}
+          onChange={(next) => {
+            setOn(next);
+            void run(() => savePlannerGuests({ eventId, allowed: next }));
+          }}
+        />
+      </div>
     </Card>
   );
 }

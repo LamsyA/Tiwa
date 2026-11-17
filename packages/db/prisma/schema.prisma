@@ -161,6 +161,8 @@ model Event {
   allowForwarding        Boolean            @default(true)
   remindersEnabled       Boolean            @default(true)
   hostCanSeeVendorPrices Boolean            @default(true)
+  /// D-X73: the host decides whether a hired planner may add and edit guests.
+  plannerManagesGuests   Boolean            @default(false)
   // Planner engagement (D-X47): the CRM client this event is for, and the
   // planner's fee agreement — a share of the budget (bps) and/or a fixed fee.
   clientId               String?

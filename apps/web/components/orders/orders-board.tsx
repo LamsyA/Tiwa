@@ -128,7 +128,11 @@ export async function OrdersBoard({
                     <div className="min-w-0 flex-1">
                       <p className="flex min-w-0 items-center gap-x-1.5 text-sm font-semibold">
                         <span className="truncate">{row.counterparty || t('unknownParty')}</span>
-                        {row.category && <span className="text-muted hidden truncate text-xs font-normal sm:inline">· {row.category}</span>}
+                        {row.category && (
+                          <span className="text-muted hidden truncate text-xs font-normal sm:inline">
+                            · {row.category}
+                          </span>
+                        )}
                       </p>
                       <p className="text-muted flex items-center gap-1.5 truncate text-xs">
                         <CalendarDays aria-hidden className="size-3.5 shrink-0" />

@@ -7,6 +7,8 @@ import {
   eventIdSchema,
   removeCover,
   setVendorPriceVisibility,
+  setPlannerManagesGuests,
+  setPlannerGuestsSchema,
   setPriceVisibilitySchema,
   startCoverSchema,
   startCoverUpload,
@@ -40,6 +42,12 @@ export const savePriceVisibility = userAction(setPriceVisibilitySchema, async (i
   const result = await setVendorPriceVisibility(ctx.actor, input);
   revalidate(input.eventId);
   return result;
+});
+
+/** D-X73: host-only switch handing the guest list to the hired planner. */
+export const savePlannerGuests = userAction(setPlannerGuestsSchema, async (input, ctx) => {
+  await setPlannerManagesGuests(ctx.actor, input);
+  revalidate(input.eventId);
 });
 
 export const saveEventAppearance = userAction(updateEventAppearanceSchema, async (input, ctx) => {

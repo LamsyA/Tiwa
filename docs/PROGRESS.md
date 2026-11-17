@@ -258,3 +258,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 
 ## 2026-11-17
 - D-X72: compact, premium card pass across host, vendor and money views; money e2e passing
+- D-X73: host decides if the planner manages guests; richer, compact Plan task rows; plan, guests and planner e2e passing

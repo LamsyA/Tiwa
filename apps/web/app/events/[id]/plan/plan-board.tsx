@@ -12,7 +12,7 @@ import {
   Textarea,
   cn,
 } from '@tiwa/ui';
-import { CalendarDays, Check, ChevronRight, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react';
+import { CalendarDays, Check, ChevronRight, Flag, Pencil, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -38,6 +38,18 @@ export interface PlanTask {
 }
 
 const DAY_MS = 86_400_000;
+
+const STATUS_TONE: Record<Status, string> = {
+  TODO: 'bg-surface-2 text-muted',
+  IN_PROGRESS: 'bg-teal-soft text-teal-strong',
+  DONE: 'bg-success-soft text-success',
+  BLOCKED: 'bg-warning-soft text-warning',
+};
+const PRIORITY_TONE: Record<Priority, string> = {
+  LOW: 'bg-surface-2 text-muted',
+  NORMAL: 'bg-surface-2 text-muted',
+  HIGH: 'bg-danger-soft text-danger',
+};
 
 /** Missed = has a due date that has passed and is not done (D-X31). */
 function isMissed(task: PlanTask, now: number): boolean {
@@ -71,13 +83,13 @@ function ProgressRing({ value, total }: { value: number; total: number }) {
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
   return (
-    <div className="relative grid size-32 shrink-0 place-items-center">
+    <div className="relative grid size-20 shrink-0 place-items-center sm:size-24">
       <div
         aria-hidden
         className="absolute inset-3 rounded-full blur-2xl transition-opacity duration-700"
         style={{ background: 'color-mix(in oklab, var(--brand) 35%, transparent)', opacity: pct > 0 ? 0.7 : 0.25 }}
       />
-      <svg viewBox="0 0 100 100" className="relative size-32 -rotate-90" aria-hidden>
+      <svg viewBox="0 0 100 100" className="relative size-20 -rotate-90 sm:size-24" aria-hidden>
         <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--surface-2)" strokeWidth="8" />
         <circle
           cx="50"
@@ -99,7 +111,7 @@ function ProgressRing({ value, total }: { value: number; total: number }) {
         </defs>
       </svg>
       <span className="absolute flex flex-col items-center">
-        <span className="font-display text-3xl font-bold tracking-tight">{pct}%</span>
+        <span className="font-display text-xl font-bold tracking-tight">{pct}%</span>
       </span>
     </div>
   );
@@ -185,16 +197,16 @@ export function PlanBoard({
       {/* Summary */}
       <section
         aria-label={t('summaryLabel')}
-        className="border-border/80 bg-bg tiwa-fade-up relative overflow-hidden rounded-3xl border p-5 sm:p-6"
+        className="border-border/80 bg-bg tiwa-fade-up relative overflow-hidden rounded-2xl border p-4 sm:p-5"
       >
-        <div className="flex flex-col items-center gap-6 sm:flex-row">
+        <div className="flex items-center gap-4 sm:gap-6">
           <ProgressRing value={done} total={tasks.length} />
-          <div className="flex w-full flex-1 flex-col gap-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
             <div>
-              <h3 className="font-display text-2xl font-bold tracking-tight">
+              <h3 className="font-display text-lg font-bold tracking-tight sm:text-xl">
                 {tasks.length === 0 ? t('emptyTitle') : left === 0 ? t('allDoneTitle') : t('progressTitle')}
               </h3>
-              <p className="text-muted mt-1" data-testid="plan-progress">
+              <p className="text-muted text-sm" data-testid="plan-progress">
                 {t('progress', { done, total: tasks.length })}
               </p>
             </div>
@@ -206,9 +218,9 @@ export function PlanBoard({
                   ['statMissed', missed, missed > 0 ? 'text-danger' : 'text-text'],
                 ] as const
               ).map(([key, value, tone]) => (
-                <div key={key} className="bg-surface rounded-2xl px-3 py-2.5">
-                  <dt className="text-muted text-xs font-medium">{t(key)}</dt>
-                  <dd className={cn('font-display text-2xl font-bold', tone)}>{value}</dd>
+                <div key={key} className="bg-surface rounded-xl px-2.5 py-1.5">
+                  <dt className="text-muted text-[11px] font-medium">{t(key)}</dt>
+                  <dd className={cn('font-display text-lg font-bold', tone)}>{value}</dd>
                 </div>
               ))}
             </dl>
@@ -218,7 +230,7 @@ export function PlanBoard({
           <button
             type="button"
             onClick={() => setAiOpen(true)}
-            className="tiwa-ai-glow from-brand-strong to-brand group mt-5 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r px-4 py-3.5 text-left text-white transition-transform hover:-translate-y-0.5"
+            className="tiwa-ai-glow from-brand-strong to-brand group mt-4 flex w-full items-center gap-3 rounded-xl bg-gradient-to-r px-3.5 py-2.5 text-left text-white transition-transform hover:-translate-y-0.5"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15">
               <Sparkles className="size-5" aria-hidden />
@@ -285,7 +297,7 @@ export function PlanBoard({
                 key={task.id}
                 style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}
                 className={cn(
-                  'group border-border/80 bg-bg tiwa-fade-up flex items-center gap-3 rounded-2xl border px-3 py-3 transition-all hover:shadow-[0_8px_24px_-16px_rgb(0_0_0/0.3)] sm:px-4',
+                  'group border-border/70 bg-surface tiwa-fade-up flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 shadow-[var(--shadow-1)] transition-all hover:shadow-[var(--shadow-2)] sm:gap-3 sm:px-4',
                   late && 'border-danger/30',
                   isDone && 'bg-surface/60',
                 )}
@@ -310,36 +322,67 @@ export function PlanBoard({
                 </button>
                 <button
                   type="button"
+                  aria-label={task.title}
                   onClick={() => setOpenId(task.id)}
                   className="flex min-w-0 flex-1 flex-col items-start text-left"
                 >
                   <span
                     className={cn(
-                      'w-full truncate text-[15px] font-medium transition-colors',
+                      'w-full truncate text-sm font-semibold transition-colors sm:text-[15px]',
                       isDone && 'text-muted line-through',
                     )}
                   >
                     {task.title}
                   </span>
-                  <span className="flex flex-wrap items-center gap-x-2 text-[13px]">
+                  <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+                    <span className={cn('rounded-full px-2 py-0.5', STATUS_TONE[task.status])}>
+                      {t(`status.${task.status}`)}
+                    </span>
+                    {task.priority !== 'NORMAL' && (
+                      <span
+                        className={cn('flex items-center gap-1 rounded-full px-2 py-0.5', PRIORITY_TONE[task.priority])}
+                      >
+                        <Flag className="size-3" aria-hidden />
+                        {t(`priority.${task.priority}`)}
+                      </span>
+                    )}
                     {task.dueAt && !isDone && (
-                      <span className={cn('flex items-center gap-1', late ? 'text-danger font-medium' : 'text-muted')}>
-                        <CalendarDays className="size-3.5" aria-hidden />
+                      <span
+                        className={cn(
+                          'flex items-center gap-1 rounded-full px-2 py-0.5',
+                          late ? 'bg-danger-soft text-danger' : 'bg-surface-2 text-muted',
+                        )}
+                      >
+                        <CalendarDays className="size-3" aria-hidden />
                         {late
                           ? t('missedOn', { date: shortDate(task.dueAt, timezone) })
                           : shortDate(task.dueAt, timezone)}
                       </span>
                     )}
-                    {task.ownerName && <span className="text-muted">{task.ownerName}</span>}
-                    {task.status === 'BLOCKED' && <span className="text-warning">{t('status.BLOCKED')}</span>}
+                    {task.ownerName && (
+                      <span className="bg-surface-2 text-muted flex max-w-[10rem] items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5">
+                        <span className="bg-teal-soft text-teal-strong grid size-4 place-items-center rounded-full text-[9px] font-bold">
+                          {task.ownerName.trim().charAt(0).toUpperCase()}
+                        </span>
+                        <span className="truncate">{task.ownerName}</span>
+                      </span>
+                    )}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  aria-label={t('editTask', { title: task.title })}
+                  onClick={() => setOpenId(task.id)}
+                  className="text-muted hover:text-text hover:bg-surface-2 grid size-8 shrink-0 place-items-center rounded-lg transition"
+                >
+                  <Pencil className="size-4" aria-hidden />
                 </button>
                 {canEdit && (
                   <button
                     type="button"
                     aria-label={t('deleteTask', { title: task.title })}
                     onClick={() => void remove(task)}
-                    className="text-muted hover:text-danger hover:bg-danger-soft grid size-9 shrink-0 place-items-center rounded-xl opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                    className="text-muted hover:text-danger hover:bg-danger-soft grid size-8 shrink-0 place-items-center rounded-lg opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                   >
                     <Trash2 className="size-4" aria-hidden />
                   </button>

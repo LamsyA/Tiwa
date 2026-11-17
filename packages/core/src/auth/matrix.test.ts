@@ -31,7 +31,7 @@ const EVENT_ROWS: Partial<Record<Action, Row>> = {
   'money.edit':                       ['Y', 'G', 'Y', 'G', 'N', 'N'],
   'quote.accept':                     ['G', 'G', 'G', 'N', 'N', 'N'],
   'payment.make':                     ['G', 'G', 'G', 'N', 'N', 'N'],
-  'guests.manage':                    ['Y', 'G', 'Y', 'Y', 'N', 'N'],
+  'guests.manage':                    ['Y', 'G', 'G', 'G', 'N', 'N'],
   'guests.contacts.view':             ['Y', 'G', 'Y', 'Y', 'N', 'N'],
   'tickets.manage':                   ['Y', 'G', 'Y', 'G', 'N', 'N'],
   'checkin.scan':                     ['Y', 'G', 'Y', 'Y', 'N', 'N'],

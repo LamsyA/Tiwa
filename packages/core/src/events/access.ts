@@ -44,10 +44,15 @@ export async function loadEventAccess(userId: string, eventId: string): Promise<
   const row = await prisma.eventParticipant.findFirst({
     where: { eventId, userId, removedAt: null, event: { deletedAt: null } },
     orderBy: { createdAt: 'asc' },
-    select: { role: true, permissions: true },
+    select: { role: true, permissions: true, event: { select: { plannerManagesGuests: true } } },
   });
   if (!row) return null;
-  return { eventId, role: row.role, permissions: fromStoredPermissions(row.permissions) };
+  const permissions = fromStoredPermissions(row.permissions);
+  // D-X73: the guest list is the host's unless they hand it to the planner.
+  if (row.role === 'PLANNER' || row.role === 'PLANNER_STAFF') {
+    permissions.guests = row.event.plannerManagesGuests ? 'edit' : 'view';
+  }
+  return { eventId, role: row.role, permissions };
 }
 
 /**

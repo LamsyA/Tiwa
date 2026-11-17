@@ -117,7 +117,10 @@ export default async function EventMoneyPage({
               </Banner>
             ) : (
               <Banner key={alert.milestoneId} tone={alert.within === '1d' ? 'danger' : 'info'}>
-                <Link href={`/events/${id}/bookings/${alert.bookingId}?tab=payments`} className="text-brand-strong font-medium underline-offset-4 hover:underline">
+                <Link
+                  href={`/events/${id}/bookings/${alert.bookingId}?tab=payments`}
+                  className="text-brand-strong font-medium underline-offset-4 hover:underline"
+                >
                   {t(alert.within === '1d' ? 'alerts.dueDay' : 'alerts.dueWeek', {
                     vendor: alert.vendorName,
                     label: alert.label,
@@ -140,9 +143,14 @@ export default async function EventMoneyPage({
             ['uncommitted', totals.uncommittedMinor],
           ] as const
         ).map(([key, value]) => (
-          <div key={key} className={`flex min-w-0 flex-col gap-0.5 px-3.5 py-3 ${key === 'uncommitted' ? 'col-span-2 sm:col-span-1' : ''}`}>
+          <div
+            key={key}
+            className={`flex min-w-0 flex-col gap-0.5 px-3.5 py-3 ${key === 'uncommitted' ? 'col-span-2 sm:col-span-1' : ''}`}
+          >
             <span className="text-muted truncate text-[11px] font-semibold uppercase tracking-wide">{t(key)}</span>
-            <span className={`font-display truncate text-base font-bold tabular-nums sm:text-lg ${key === 'uncommitted' && value < 0n ? 'text-danger' : ''}`}>
+            <span
+              className={`font-display truncate text-base font-bold tabular-nums sm:text-lg ${key === 'uncommitted' && value < 0n ? 'text-danger' : ''}`}
+            >
               {money(value)}
             </span>
             {key === 'uncommitted' && value < 0n && <span className="text-danger text-xs">{t('overBudget')}</span>}
@@ -167,14 +175,22 @@ export default async function EventMoneyPage({
           <div className="flex gap-1.5">
             <a
               href={`/events/${id}/money/export`}
-              className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'h-8 rounded-full px-3 text-xs' })}
+              className={buttonClasses({
+                variant: 'secondary',
+                size: 'sm',
+                className: 'h-8 rounded-full px-3 text-xs',
+              })}
             >
               <Download className="size-4" aria-hidden />
               {t('exportCsv')}
             </a>
             <Link
               href={`/events/${id}/money/print`}
-              className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'h-8 rounded-full px-3 text-xs' })}
+              className={buttonClasses({
+                variant: 'secondary',
+                size: 'sm',
+                className: 'h-8 rounded-full px-3 text-xs',
+              })}
             >
               <Printer className="size-4" aria-hidden />
               {t('exportPdf')}
@@ -188,7 +204,10 @@ export default async function EventMoneyPage({
             ['paid', totals.paidMinor, 'bg-brand'],
           ] as const
         ).map(([key, value, tone]) => (
-          <div key={key} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[8rem_1fr_auto]">
+          <div
+            key={key}
+            className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[8rem_1fr_auto]"
+          >
             <span className="text-muted truncate">{t(key)}</span>
             <div className="bg-surface-2 h-2 overflow-hidden rounded-full">
               <div

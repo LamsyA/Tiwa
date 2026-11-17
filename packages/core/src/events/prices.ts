@@ -91,3 +91,18 @@ export function redactBooking<T extends object>(booking: T): T & RedactedBooking
     pricesHidden: true as const,
   };
 }
+
+// D-X73: the guest list belongs to the host. A hired planner may add, edit and
+// invite guests only after the host switches this on (default off).
+export const setPlannerGuestsSchema = z.object({ eventId: z.string().uuid(), allowed: z.boolean() });
+
+export async function setPlannerManagesGuests(actor: UserActor, raw: z.input<typeof setPlannerGuestsSchema>) {
+  const input = setPlannerGuestsSchema.parse(raw);
+  const access = await requireEventAccess(actor, input.eventId, 'event.edit');
+  if (access.role !== 'HOST') throw new ForbiddenError('Only the host decides this', { reason: 'host-only' });
+  return prisma.event.update({
+    where: { id: input.eventId },
+    data: { plannerManagesGuests: input.allowed },
+    select: { id: true, plannerManagesGuests: true },
+  });
+}

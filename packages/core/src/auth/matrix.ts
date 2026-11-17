@@ -146,7 +146,7 @@ const PLANNER_RULES: RoleRules = {
   'money.edit': ALLOW,
   'quote.accept': APPROVE_UP_TO,
   'payment.make': APPROVE_UP_TO,
-  'guests.manage': ALLOW,
+  'guests.manage': tier('guests', 'edit'), // only when the host hands guests over (D-X73)
   'guests.contacts.view': ALLOW,
   'tickets.manage': ALLOW,
   'checkin.scan': ALLOW,
@@ -179,7 +179,7 @@ const PLANNER_STAFF_RULES: RoleRules = {
   'money.edit': tier('money', 'edit'),
   'quote.accept': DENY,
   'payment.make': DENY,
-  'guests.manage': ALLOW,
+  'guests.manage': tier('guests', 'edit'), // only when the host hands guests over (D-X73)
   'guests.contacts.view': ALLOW,
   'tickets.manage': tier('tickets', 'edit'),
   'checkin.scan': ALLOW,

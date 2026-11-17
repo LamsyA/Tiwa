@@ -491,7 +491,10 @@
       "pricesHeading": "Vendor prices",
       "pricesBody": "When off, the host side sees no vendor amounts — quotes, bookings, milestones and per-vendor budget rows show as hidden. Totals stay visible.",
       "pricesShowLabel": "Host can see vendor prices",
-      "pricesHiddenNote": "The planner hides vendor prices on this event. Amounts show as hidden."
+      "pricesHiddenNote": "The planner hides vendor prices on this event. Amounts show as hidden.",
+      "plannerGuestsHeading": "Guest list",
+      "plannerGuestsLabel": "Let my planner manage guests",
+      "plannerGuestsBody": "When on, your planner can add, edit and invite guests for you. When off, they can see the list but only you and your co-hosts can change it."
     },
     "members": {
       "title": "Members and permissions",
@@ -768,7 +771,8 @@
       "aiTryAgain": "Try again",
       "aiRefine": "Change request",
       "plannerNoteTitle": "{planner} is planning this event with you.",
-      "plannerNoteBody": "You can still add and edit tasks; everything you change is visible to {planner}, and theirs to you."
+      "plannerNoteBody": "You can still add and edit tasks; everything you change is visible to {planner}, and theirs to you.",
+      "editTask": "Edit {title}"
     },
     "documents": {
       "heading": "Documents",

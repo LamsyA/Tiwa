@@ -32,6 +32,7 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
       format: true,
       status: true,
       hostCanSeeVendorPrices: true,
+      plannerManagesGuests: true,
     },
   });
 
@@ -97,6 +98,7 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
               coverUrl={coverUrl}
               pricesVisible={event.hostCanSeeVendorPrices}
               canChangePrices={canChangePrices}
+              plannerGuests={event.plannerManagesGuests}
             />
             <Card>
               <div className="flex flex-wrap items-center gap-3">

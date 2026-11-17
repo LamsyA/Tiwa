@@ -518,3 +518,5 @@ Template:
 - Affects: packages/core bookings/accept + planner-proposals.test; packages/db migration; packages/ui tokens.css, shell; apps/web globals.css, clients/[id] page + start-event, events/[id]/plan page, messages/en.json.
 
 - **D-X72 (AGENT, 2026-11-17):** Compact cards everywhere. Card is one box (no double padding, page classes apply); StatCard tighter; event overview, readiness steps (min-w-0, no phone overflow), home tiles and order rows slimmed; money totals merged into one divided summary strip with small export pills; global spacing sweep (p-8→p-6, py-14→py-8, gap-8→gap-5).
+
+- **D-X73 (AGENT, 2026-11-17):** The guest list is the host's. New `Event.plannerManagesGuests` (default off); PLANNER and PLANNER_STAFF `guests.manage` is now a tier grant, set from that switch in loadEventAccess (planners still view guests and scan check-in). Host-only toggle in event Settings. Plan tab: task rows show status, priority, due and owner chips with an edit button; compact summary.
