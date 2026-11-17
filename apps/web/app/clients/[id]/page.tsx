@@ -75,9 +75,11 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             {client.stage !== 'LOST' && (
               <div className="flex flex-wrap items-center gap-2">
                 {/* D-X71: an event the client already has (theirs, or one you started) is continued, not duplicated. */}
+                {/* One Continue only: the live event wins over a draft (D-X74). */}
                 {events
                   .filter((event) => event.status !== 'CANCELLED')
-                  .slice(0, 2)
+                  .sort((a, b) => Number(a.status === 'DRAFT') - Number(b.status === 'DRAFT'))
+                  .slice(0, 1)
                   .map((event) => (
                     <Link
                       key={event.id}

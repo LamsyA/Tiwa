@@ -207,7 +207,7 @@ test('UF-29-1: venue search returns only big-enough, free spaces', async ({ brow
   // 300 guests: the 500-seat Grand Hall matches, the 100-seat Garden does not.
   await pollCheck(page, '/venues?city=Lagos&guests=300', async () => {
     await expect(page.getByRole('link', { name: 'E2E Grand Hall' }).first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText('Grand Hall', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Grand Hall', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('Garden', { exact: true })).toHaveCount(0, { timeout: 10_000 });
   });
 

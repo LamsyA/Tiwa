@@ -1,4 +1,11 @@
-import { bookingMoney, describeChange, getBooking, listBookingPayments, stageForBooking } from '@tiwa/core';
+import {
+  bookingMoney,
+  describeChange,
+  getBooking,
+  listBookingPayments,
+  listPendingOfflinePayments,
+  stageForBooking,
+} from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
@@ -9,6 +16,7 @@ import { OrderTimeline } from '@/components/orders/order-timeline.js';
 import { BookingTabbar } from './booking-tabbar.js';
 import { ChangeRequestDialog, PendingDecision } from './change-dialog.js';
 import { PaymentsPanel } from './payments-panel.js';
+import { PaymentCards } from '../../../../quotes/payment-cards.js';
 import { ChangeSummary as VersionSummary } from '@/components/bookings/change-summary.js';
 
 interface ScopeView {
@@ -62,6 +70,13 @@ export default async function BookingPage({
     select: { id: true, name: true, mime: true, sizeBytes: true },
   });
   const payments = await listBookingPayments(booking.id);
+  // The payee (vendor or a hired planner on their own booking) confirms offline payments here too (D-X74).
+  const toConfirm =
+    data.viewer === 'vendor'
+      ? (await listPendingOfflinePayments(ctx.actor, { vendorOrgId: booking.vendorOrgId }).catch(() => []))
+          .filter((row) => row.milestone?.booking.id === booking.id)
+          .map((row) => ({ ...row, paidAt: row.paidAt ? new Date(row.paidAt).toISOString() : null }))
+      : [];
   // Each version against the one before it, so a change reads as "what moved" (UF-19).
   const summaries = new Map(
     pricesHidden
@@ -251,6 +266,7 @@ export default async function BookingPage({
             })}
           </ul>
         )}
+        {active === 'payments' && toConfirm.length > 0 && <PaymentCards payments={toConfirm} />}
         {active === 'payments' && (
           <PaymentsPanel
             currency={booking.currency}

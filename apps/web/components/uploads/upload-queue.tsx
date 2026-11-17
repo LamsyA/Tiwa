@@ -85,25 +85,40 @@ export function UploadQueueProvider({ children, ...options }: { children: React.
       if (attempts <= UPLOAD_RETRY_DELAYS_MS.length) {
         const delay = UPLOAD_RETRY_DELAYS_MS[attempts - 1] ?? 10000;
         const timer = setTimeout(() => {
-          retryCounts.current.delete(id);
+          timers.delete(id);
           void uppy.retryUpload(id);
         }, delay);
         timers.set(id, timer);
       }
       refresh();
     };
+    // D-X74: files picked offline (or whose retries ran out) resume on reconnect.
+    const onOnline = () => {
+      retryCounts.current.clear();
+      const files = uppy.getFiles();
+      if (files.some((file) => file.error)) void uppy.retryAll();
+      if (files.some((file) => !file.error && !file.progress?.uploadComplete && !file.progress?.uploadStarted)) {
+        void uppy.upload();
+      }
+    };
+    window.addEventListener('online', onOnline);
     uppy.on('file-added', onChange);
     uppy.on('file-removed', onChange);
     uppy.on('upload-progress', onChange);
-    uppy.on('upload-success', onChange);
+    const onSuccess = (file: { id?: string } | undefined) => {
+      if (file?.id) retryCounts.current.delete(file.id);
+      refresh();
+    };
+    uppy.on('upload-success', onSuccess);
     uppy.on('upload-error', onError);
     uppy.on('restored', onRestored);
     uppy.on('cancel-all', onChange);
     return () => {
+      window.removeEventListener('online', onOnline);
       uppy.off('file-added', onChange);
       uppy.off('file-removed', onChange);
       uppy.off('upload-progress', onChange);
-      uppy.off('upload-success', onChange);
+      uppy.off('upload-success', onSuccess);
       uppy.off('upload-error', onError);
       uppy.off('restored', onRestored);
       uppy.off('cancel-all', onChange);
