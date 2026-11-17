@@ -20,6 +20,7 @@ export default {
           soft: 'var(--brand-soft)',
         },
         accent: 'var(--accent)',
+        teal: { DEFAULT: 'var(--teal)', strong: 'var(--teal-strong)', soft: 'var(--teal-soft)' },
         success: { DEFAULT: 'var(--success)', soft: 'var(--success-soft)' },
         warning: { DEFAULT: 'var(--warning)', soft: 'var(--warning-soft)' },
         danger: { DEFAULT: 'var(--danger)', soft: 'var(--danger-soft)' },

@@ -52,7 +52,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           />
         </header>
 
-        <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <dl className="grid grid-cols-3 gap-2 sm:gap-3">
           {(
             [
               ['outstanding', sum('SENT')],
@@ -60,9 +60,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
               ['drafts', sum('DRAFT')],
             ] as const
           ).map(([key, value]) => (
-            <div key={key} className="border-border/70 bg-surface rounded-2xl border p-4">
-              <dt className="text-muted text-xs font-medium">{t(`invoiceTotals.${key}`)}</dt>
-              <dd className="font-display mt-1 text-2xl font-bold">
+            <div key={key} className="border-border/70 bg-surface min-w-0 rounded-2xl border p-2.5 sm:p-4">
+              <dt className="text-muted truncate text-[11px] font-medium sm:text-xs">{t(`invoiceTotals.${key}`)}</dt>
+              <dd className="font-display mt-1 truncate text-base font-bold sm:text-2xl">
                 <MoneyText value={value} currency={currency} />
               </dd>
             </div>

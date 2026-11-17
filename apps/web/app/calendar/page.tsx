@@ -1,7 +1,8 @@
 import { listMyOrgs, plannerCalendar, vendorDashboard } from '@tiwa/core';
-import { Card } from '@tiwa/ui';
+import { EmptyState } from '@tiwa/ui';
+import { CalendarDays } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
+import { Agenda } from '@/components/agenda.js';
 import { AppFrame } from '@/components/app-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 
@@ -16,46 +17,45 @@ export default async function CalendarPage() {
   const plannerEvents = plannerOrg ? await plannerCalendar(ctx.actor, plannerOrg.id) : [];
   const vendorDash = vendorOrg ? await vendorDashboard(ctx.actor, { orgId: vendorOrg.id }) : null;
 
-  const active = plannerOrg ? 'calendar' : 'calendar';
+  const labels = {
+    today: t('todayPill'),
+    inDays: (count: number) => t('inDays', { count }),
+    past: t('past'),
+    noDate: t('noDate'),
+  };
   return (
-    <AppFrame userId={ctx.actor.userId} active={active} title={t('calendarTitle')}>
+    <AppFrame userId={ctx.actor.userId} active="calendar" title={t('calendarTitle')}>
       <div className="flex flex-col gap-4 py-2">
         {plannerEvents.length > 0 && (
-          <Card>
-            <h2 className="mb-2 font-semibold">{t('calendarTitle')}</h2>
-            <ul className="flex flex-col gap-2">
-              {plannerEvents.map((e) => (
-                <li key={e.id} className="text-sm">
-                  <Link href={`/events/${e.id}`} className="text-brand-strong font-medium">
-                    {e.name}
-                  </Link>
-                  <span className="text-muted"> · {e.startsAt ? new Date(e.startsAt).toLocaleDateString() : '—'}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          <Agenda
+            labels={labels}
+            items={plannerEvents.map((e) => ({
+              id: e.id,
+              title: e.name,
+              href: `/events/${e.id}`,
+              startsAt: e.startsAt,
+            }))}
+          />
         )}
-        {vendorDash && (
-          <Card>
-            <h2 className="mb-2 font-semibold">{t('calendarTitle')}</h2>
-            <ul className="flex flex-col gap-2">
-              {vendorDash.upcomingBookings.map((b) => (
-                <li key={b.id} className="text-sm">
-                  <Link href={`/quotes`} className="text-brand-strong font-medium">
-                    {b.eventName}
-                  </Link>
-                  <span className="text-muted"> · {b.startsAt ? new Date(b.startsAt).toLocaleDateString() : '—'}</span>
-                </li>
-              ))}
-            </ul>
-            {vendorDash.doubleBookingWarnings.length > 0 && (
-              <p className="text-warning mt-2 text-sm">
-                {vendorDash.doubleBookingWarnings.map((w) => w.date).join(', ')}
-              </p>
-            )}
-          </Card>
+        {vendorDash && vendorDash.upcomingBookings.length > 0 && (
+          <Agenda
+            labels={labels}
+            items={vendorDash.upcomingBookings.map((b) => ({
+              id: b.id,
+              title: b.eventName,
+              href: '/bookings',
+              startsAt: b.startsAt,
+            }))}
+          />
         )}
-        {plannerEvents.length === 0 && !vendorDash && <p className="text-muted text-sm">{t('noEvents')}</p>}
+        {vendorDash && vendorDash.doubleBookingWarnings.length > 0 && (
+          <p className="border-warning/40 bg-warning-soft text-warning rounded-2xl border px-4 py-3 text-sm font-medium">
+            {vendorDash.doubleBookingWarnings.map((w) => w.date).join(', ')}
+          </p>
+        )}
+        {plannerEvents.length === 0 && (!vendorDash || vendorDash.upcomingBookings.length === 0) && (
+          <EmptyState icon={<CalendarDays aria-hidden />} title={t('noEvents')} />
+        )}
       </div>
     </AppFrame>
   );

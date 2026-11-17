@@ -2646,7 +2646,24 @@
       "EXPIRED": "Expired",
       "CLOSED": "Closed",
       "DRAFT": "Draft"
-    }
+    },
+    "tiles": {
+      "overdue": "Overdue tasks",
+      "payments": "Payments due",
+      "enquiries": "Open enquiries"
+    },
+    "inDays": "{count, plural, one {Tomorrow} other {In # days}}",
+    "past": "Past",
+    "noDate": "No date yet",
+    "todayPill": "Today",
+    "you": "you",
+    "unnamed": "Unnamed member",
+    "orgRole": {
+      "OWNER": "Owner",
+      "ADMIN": "Admin",
+      "STAFF": "Staff"
+    },
+    "staffCount": "{count, plural, =0 {No staff} one {# staff} other {# staff}}"
   },
   "vendor": {
     "title": "Vendor workspace",

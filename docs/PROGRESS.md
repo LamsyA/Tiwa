@@ -253,3 +253,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X67: proposal/quote version history (QuoteRevision) shared by host and planner, sent pop-up, Sent list. core quotes+bookings 57/57; e2e 10/10 x2 desktop+mobile.
 - D-X68: hidden vendor prices never hide the planner’s own proposal from the host. quotes + prices tests 30/30.
 - D-X69: proposals drive the planner pipeline (ENQUIRY/PROPOSAL_SENT/WON/LOST) and clients; events cards and empty inbox redesigned. core 68/68; e2e 16/16 + planner 3/4 (UF-21-3 mobile fails without this change too).
+- D-X70: planner design pass + teal third colour; compact shared cards; team names bug fixed. UI tests 102/102; e2e planner-proposal/create-event pass desktop+mobile; planner UF-21-1 passes (sign-in rate limit on immediate reruns), UF-21-3 mobile and home.spec fail without this change too.

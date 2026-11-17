@@ -45,12 +45,24 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           </div>
         </header>
 
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="grid grid-cols-4 gap-2 sm:gap-3">
           {STAGES.map((stage) => (
-            <div key={stage} className="border-border/70 bg-surface rounded-2xl border p-4">
-              <dt className="text-muted text-xs font-medium">{t(`stages.${stage}`)}</dt>
-              <dd className="font-display mt-1 text-2xl font-bold tabular-nums">{count(stage)}</dd>
-            </div>
+            <Link
+              key={stage}
+              href="/pipeline"
+              className="border-border/70 bg-surface group flex min-w-0 flex-col gap-1 rounded-2xl border p-2.5 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:p-3.5"
+            >
+              <dt className="text-muted flex min-w-0 items-center gap-1.5 text-[11px] font-medium sm:text-xs">
+                <span
+                  aria-hidden
+                  className={`size-2 shrink-0 rounded-full ${
+                    { ENQUIRY: 'bg-brand', PROPOSAL_SENT: 'bg-accent', WON: 'bg-teal', LOST: 'bg-border' }[stage]
+                  }`}
+                />
+                <span className="truncate">{t(`stages.${stage}`)}</span>
+              </dt>
+              <dd className="font-display text-xl leading-none font-bold tabular-nums sm:text-2xl">{count(stage)}</dd>
+            </Link>
           ))}
         </dl>
 

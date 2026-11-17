@@ -10,6 +10,10 @@
   --brand-soft: #fdece6; /* tinted backgrounds */
   --on-brand: #ffffff;
   --accent: #f2b705; /* celebration highlights */
+  /* D-X70: third colour — deep teal, the complement of terracotta: planning, progress, info. */
+  --teal: #14b8a6;
+  --teal-strong: #0f766e;
+  --teal-soft: #e6f6f4;
   --success: #15803d;
   --success-soft: #e8f5ec;
   --warning: #b45309;
@@ -54,6 +58,9 @@
   --brand-soft: #2a1610;
   --on-brand: #140804;
   --accent: #f5c842;
+  --teal: #2dd4bf;
+  --teal-strong: #5eead4;
+  --teal-soft: #0b2826;
   --success: #4ade80;
   --success-soft: #0f2416;
   --warning: #fbbf24;
@@ -77,6 +84,12 @@
     --brand-soft: #2a1610;
     --on-brand: #140804;
     --accent: #f5c842;
+    --teal: #2dd4bf;
+    --teal-strong: #5eead4;
+    --teal-soft: #0b2826;
+  --teal: #2dd4bf;
+  --teal-strong: #5eead4;
+  --teal-soft: #0b2826;
     --success: #4ade80;
     --success-soft: #0f2416;
     --warning: #fbbf24;

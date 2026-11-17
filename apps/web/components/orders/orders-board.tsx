@@ -97,12 +97,16 @@ export async function OrdersBoard({
       )}
 
       {shown.length === 0 ? (
-        <div className="border-border/70 bg-surface flex flex-col items-center gap-2 rounded-3xl border border-dashed px-6 py-12 text-center">
-          <span className="bg-brand-soft text-brand-strong flex size-12 items-center justify-center rounded-2xl">
-            <Inbox aria-hidden className="size-6" />
+        <div className="border-border/70 bg-surface flex items-center gap-3 rounded-2xl border border-dashed px-4 py-3.5">
+          <span className="bg-teal-soft text-teal-strong flex size-10 shrink-0 items-center justify-center rounded-xl">
+            <Inbox aria-hidden className="size-5" />
           </span>
-          <p className="font-semibold">{t(side === 'vendor' ? 'emptyVendor' : 'emptyClient')}</p>
-          <p className="text-muted max-w-sm text-sm">{t(side === 'vendor' ? 'emptyVendorBody' : 'emptyClientBody')}</p>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold">{t(side === 'vendor' ? 'emptyVendor' : 'emptyClient')}</span>
+            <span className="text-muted block text-xs">
+              {t(side === 'vendor' ? 'emptyVendorBody' : 'emptyClientBody')}
+            </span>
+          </span>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">

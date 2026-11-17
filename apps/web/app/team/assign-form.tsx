@@ -10,7 +10,7 @@ export function AssignForm({
   events,
 }: {
   orgId: string;
-  members: { userId: string; role: string }[];
+  members: { userId: string; role: string; name?: string | null; contact?: string | null }[];
   events: { id: string; name: string }[];
 }) {
   const t = useTranslations('planner');
@@ -50,7 +50,7 @@ export function AssignForm({
           <select name="userId" required className="border-border rounded-xl border px-3 py-2">
             {members.map((m) => (
               <option key={m.userId} value={m.userId}>
-                {m.userId} · {m.role}
+                {m.name ?? m.contact ?? m.userId} · {m.role}
               </option>
             ))}
           </select>

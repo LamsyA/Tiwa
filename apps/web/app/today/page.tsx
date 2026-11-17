@@ -28,19 +28,19 @@ export default async function TodayPage() {
   return (
     <AppFrame userId={ctx.actor.userId} active="today" title={t('title')}>
       <div className="flex flex-col gap-5 py-2">
-        <section className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_88%,black)_0%,#140b07_100%)] p-6 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:p-8">
+        <section className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_88%,black)_0%,#140b07_100%)] p-5 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:p-6">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-24 -right-16 -z-10 size-72 rounded-full bg-amber-300/20 blur-3xl"
+            className="pointer-events-none absolute -top-24 -right-16 -z-10 size-72 rounded-full bg-teal-400/25 blur-3xl"
           />
           <p className="inline-flex items-center gap-2 text-sm font-medium text-white/70">
             <Sun aria-hidden className="size-4" />
             <DateText value={now} format="date" />
           </p>
-          <p className="font-display mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          <p className="font-display mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
             {total === 0 ? t('clearHeading') : t('heading', { count: total })}
           </p>
-          <dl className="mt-6 grid grid-cols-3 gap-3 sm:max-w-lg">
+          <dl className="mt-4 grid grid-cols-3 gap-2 sm:max-w-md">
             {(
               [
                 ['tasks', today.tasks.length],
@@ -48,9 +48,9 @@ export default async function TodayPage() {
                 ['payments', today.payments.length],
               ] as const
             ).map(([key, value]) => (
-              <div key={key} className="rounded-2xl bg-white/[0.08] p-3 ring-1 ring-white/10 backdrop-blur">
+              <div key={key} className="rounded-xl bg-white/[0.08] px-3 py-2 ring-1 ring-white/10 backdrop-blur">
                 <dt className="text-xs text-white/70">{t(`stat.${key}`)}</dt>
-                <dd className="font-display text-2xl font-bold tabular-nums">{value}</dd>
+                <dd className="font-display text-xl font-bold tabular-nums">{value}</dd>
               </div>
             ))}
           </dl>

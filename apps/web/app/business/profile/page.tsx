@@ -43,7 +43,10 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
           title={t('noOrgTitle')}
           body={t('noOrgBody')}
           action={
-            <Link href="/onboarding/role" className="text-brand-strong font-semibold underline-offset-4 hover:underline">
+            <Link
+              href="/onboarding/role"
+              className="text-brand-strong font-semibold underline-offset-4 hover:underline"
+            >
               {t('noOrgAction')}
             </Link>
           }
@@ -158,11 +161,11 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               {t('liveBanner')}
             </Banner>
           )}
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          <ul className="mt-4 grid grid-cols-2 gap-2">
             {steps.map((step) => (
               <li
                 key={step.key}
-                className={`flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm ${
+                className={`flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs leading-tight sm:gap-3 sm:px-3.5 sm:py-2.5 sm:text-sm ${
                   step.done ? 'bg-surface-2/60' : 'border-border/70 border'
                 }`}
               >

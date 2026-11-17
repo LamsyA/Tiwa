@@ -52,19 +52,19 @@ test.describe('UF-21 planner dashboard', () => {
     await expect(page).toHaveURL(/\/home$/);
 
     // Needs you today: 2 overdue tasks, 1 payment due, 2 open enquiries.
-    await expect(page.getByText('2 overdue tasks')).toBeVisible();
-    await expect(page.getByText('1 payments due')).toBeVisible();
-    await expect(page.getByText('2 open enquiries')).toBeVisible();
+    await expect(page.getByRole('link', { name: /^2\s*Overdue tasks$/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^1\s*Payments due$/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^2\s*Open enquiries$/ })).toBeVisible();
 
     // This week's events: days 1, 3, 6.
-    await expect(page.getByRole('link', { name: 'Funmi & Dayo’s Wedding', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Adewale’s 50th Birthday', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Chiamaka’s Bridal Shower', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: new RegExp(`Funmi & Dayo’s Wedding.*(Tomorrow|In \\d+ days|Today)`) }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: new RegExp(`Adewale’s 50th Birthday.*(Tomorrow|In \\d+ days|Today)`) }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: new RegExp(`Chiamaka’s Bridal Shower.*(Tomorrow|In \\d+ days|Today)`) }).first()).toBeVisible();
 
     // Pipeline badges: ENQUIRY 2, PROPOSAL_SENT 1, WON 1.
-    await expect(page.getByText('New · 2')).toBeVisible();
-    await expect(page.getByText('Proposal sent · 1')).toBeVisible();
-    await expect(page.getByText('Won · 1')).toBeVisible();
+    await expect(page.getByRole('link', { name: /^New\s*2$/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Proposal sent\s*1$/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Won\s*1$/ })).toBeVisible();
 
     expect(errors, `page errors: ${errors.join('; ')}`).toEqual([]);
   });

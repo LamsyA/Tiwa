@@ -17,18 +17,23 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-col items-center gap-3 px-6 py-14 text-center', className)}>
+    <div
+      className={cn(
+        'border-border/70 bg-surface/60 flex flex-col items-center gap-2 rounded-2xl border border-dashed px-5 py-7 text-center',
+        className,
+      )}
+    >
       {icon && (
         <span
           aria-hidden
-          className="text-brand-strong bg-brand-soft ring-bg flex size-14 items-center justify-center rounded-2xl ring-8"
+          className="text-brand-strong bg-brand-soft flex size-10 items-center justify-center rounded-xl [&>svg]:size-5"
         >
           {icon}
         </span>
       )}
-      <p className="font-display text-xl font-bold tracking-tight">{title}</p>
-      {body && <p className="text-muted max-w-sm text-base">{body}</p>}
-      {action && <div className="mt-2">{action}</div>}
+      <p className="font-display text-base font-bold tracking-tight">{title}</p>
+      {body && <p className="text-muted max-w-sm text-sm">{body}</p>}
+      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 }
