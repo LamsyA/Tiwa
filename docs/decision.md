@@ -615,3 +615,11 @@ Template:
 - Decision: New QuoteRevision table (migration 20261117120000, backfilled from every quote ever sent): each send freezes that version (items, fees, totals, payment plan, terms, message, sender, time); the host change request is stored on the version it was about. quoteHistory() returns one shared record to the vendor/planner team and the host side of that event only (vendor-role participants and other events get NOT_FOUND; planner-hidden prices stay hidden). UI: a history timeline on host proposal and quote cards and on the planner builder page — version N sent (total, +/- change, lines added/removed/re-priced, expandable full version), changes requested (message, time), and how it ended (accepted with agreement link, declined, withdrawn, expired, or waiting). Sending closes the builder and returns to the inbox with a "Proposal sent" / "Revised proposal sent" pop-up (ToastProvider now mounted app-wide); the inbox gains a Sent list (status, version, total) linking to each history; a quote with the client shows as read-only with its history instead of an empty form.
 - Why: owner wants every proposal change tracked, saved and visible to both parties later, and a clear confirmation after sending.
 - Affects: packages/db schema + migration; packages/core quotes/history (new), quotes (sendQuote snapshot), decisions (change request on revision) + planner-proposals.test; apps/web layout (ToastProvider), components/quotes (proposal-history, sent-toast), quotes inbox, builder page, quote-builder, vendors/[category] page, proposal-cards, quote-cards, messages/en.json; e2e planner-proposal, quotes, demo-booking.
+
+### 2026-11-17 — Price hiding never covers the host’s own planner
+- ID: D-X68
+- Date: 2026-11-17
+- Status: LOCKED (owner, 2026-11-17)
+- Decision: The planner’s "hide vendor prices from the host" switch (EVT-12) now applies to vendor quotes only. The planner’s own planning proposal (category `planning`) always shows its amounts to the host, in proposal cards (compareQuotes) and in its history (quoteHistory).
+- Why: once hired, a planner could switch prices off and the host would lose sight of the fee they agreed to pay that planner.
+- Affects: packages/core quotes/decisions (compareQuotes), quotes/history + planner-proposals.test.

@@ -1,3 +1,4 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -48,7 +49,7 @@ const CLOSING_ACTION: Record<string, string> = {
   EXPIRED: 'quote.expire',
 };
 
-async function canRead(actor: UserActor, quote: { eventId: string; vendorOrgId: string }) {
+async function canRead(actor: UserActor, quote: { eventId: string; vendorOrgId: string; requestId: string | null }) {
   const member = await prisma.membership.findUnique({
     where: { orgId_userId: { orgId: quote.vendorOrgId, userId: actor.userId } },
     select: { role: true },
@@ -57,6 +58,11 @@ async function canRead(actor: UserActor, quote: { eventId: string; vendorOrgId: 
   const access = await loadEventAccess(actor.userId, quote.eventId);
   if (!access || access.role === 'VENDOR' || access.role === 'PHOTOGRAPHER') return null;
   // A planner may hide vendor prices from the host (EVT-12); history follows the same rule.
+  // The host always sees their own planner's proposal; the switch only hides vendors (D-X68).
+  const request = quote.requestId
+    ? await prisma.quoteRequest.findUnique({ where: { id: quote.requestId }, select: { category: true } })
+    : null;
+  if (request?.category === PLANNING_CATEGORY) return { side: 'host' as const, hidden: false };
   return { side: 'host' as const, hidden: pricesHiddenFor(access, await priceVisibilityFor(quote.eventId)) };
 }
 
@@ -64,7 +70,7 @@ export async function quoteHistory(actor: UserActor, raw: z.infer<typeof quoteHi
   const { quoteId } = quoteHistorySchema.parse(raw);
   const quote = await prisma.quote.findUnique({
     where: { id: quoteId },
-    select: { id: true, eventId: true, vendorOrgId: true, status: true },
+    select: { id: true, eventId: true, vendorOrgId: true, status: true, requestId: true },
   });
   if (!quote) throw new NotFoundError('Quote not found');
   const reader = await canRead(actor, quote);

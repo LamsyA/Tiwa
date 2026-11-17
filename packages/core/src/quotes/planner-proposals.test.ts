@@ -6,7 +6,7 @@ import { acceptQuote } from '../bookings/accept.js';
 import { loadEventAccess, permissionsFor, toStoredPermissions } from '../events/access.js';
 import { ValidationError } from '../shared/errors.js';
 import { getCategoryOverview } from './overview.js';
-import { requestQuoteChanges } from './decisions.js';
+import { compareQuotes, requestQuoteChanges } from './decisions.js';
 import { listSentQuotes, quoteHistory } from './history.js';
 import { NotFoundError } from '../shared/errors.js';
 import { createQuote, getEnquiry, listEnquiries, sendQuote, updateQuote } from './quotes.js';
@@ -232,5 +232,12 @@ describe('planner proposals (D-X64)', () => {
       where: { eventId, userId: planner.owner.userId, removedAt: null },
     });
     expect(row.orgId).toBe(planner.orgId);
+
+    // D-X68: the hired planner hides vendor prices — but never their own fee from the host.
+    await prisma.event.update({ where: { id: eventId }, data: { hostCanSeeVendorPrices: false } });
+    const seen = await compareQuotes(host, { eventId, category: PLANNING_CATEGORY });
+    expect(seen.find((q) => q.id === quote.id)?.totalMinor).toBe('150000000');
+    const history = await quoteHistory(host, { quoteId: quote.id });
+    expect(history.versions.every((v) => v.totalMinor !== null)).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorize } from '../auth/authorize.js';
@@ -66,6 +67,16 @@ export async function compareQuotes(actor: UserActor, raw: z.infer<typeof compar
   const access = await requireEventAccess(actor, input.eventId, 'event.view');
   const [visible] = await Promise.all([priceVisibilityFor(input.eventId)]);
   const hidden = pricesHiddenFor(access, visible);
+  const planningIds = new Set(
+    hidden
+      ? (
+          await prisma.quoteRequest.findMany({
+            where: { eventId: input.eventId, category: PLANNING_CATEGORY },
+            select: { id: true },
+          })
+        ).map((row) => row.id)
+      : [],
+  );
   let requestIds: string[] | undefined;
   if (input.category) {
     const requests = await prisma.quoteRequest.findMany({
@@ -90,7 +101,9 @@ export async function compareQuotes(actor: UserActor, raw: z.infer<typeof compar
   const byId = new Map(orgs.map((org) => [org.id, org]));
   return quotes.map((quote) => {
     const row = toQuoteRow(quote);
-    return { ...(hidden ? redactQuote(row) : row), vendor: byId.get(quote.vendorOrgId) ?? null };
+    // D-X68: the switch hides other vendors' prices, never the host's own planner proposal.
+    const redact = hidden && !(quote.requestId && planningIds.has(quote.requestId));
+    return { ...(redact ? redactQuote(row) : row), vendor: byId.get(quote.vendorOrgId) ?? null };
   });
 }
 

@@ -251,3 +251,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - Next.js 16.4.3 -> 16.4.6 (security patch); build, typecheck and smoke e2e pass.
 - D-X66: change requests reach vendor/planner; revise in place; notifications. core quotes 26/26, e2e planner/quotes/demo-booking 10/10 x2 desktop+mobile. Known: worker retention.test fails without this change too.
 - D-X67: proposal/quote version history (QuoteRevision) shared by host and planner, sent pop-up, Sent list. core quotes+bookings 57/57; e2e 10/10 x2 desktop+mobile.
+- D-X68: hidden vendor prices never hide the planner’s own proposal from the host. quotes + prices tests 30/30.
