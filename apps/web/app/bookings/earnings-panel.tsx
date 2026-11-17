@@ -17,7 +17,7 @@ export async function EarningsPanel({ summary }: { summary: EarningsSummary }) {
   return (
     <section
       aria-labelledby="earnings-heading"
-      className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_88%,black)_0%,#140b07_100%)] p-5 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:p-7"
+      className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_88%,black)_0%,#140b07_100%)] p-5 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:p-5"
     >
       <div
         aria-hidden

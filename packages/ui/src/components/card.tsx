@@ -15,29 +15,32 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
  */
 export function Card({ interactive = false, href, linkLabel, onNavigate, className, children, ...rest }: CardProps) {
   const stretchedLabel = linkLabel ?? (typeof children === 'string' ? children : undefined);
+  // D-X72: one box. Page classes (padding, flex, gap…) apply to the content
+  // directly — before, they landed on an outer wrapper around a padded inner
+  // div, doubling padding and leaving layout classes without effect.
+  const ownPadding = /(^|\s)(?:[a-z]+:)?p[xytrbl]?-/.test(className ?? '');
   return (
     <div
       className={cn(
-        'border-border/80 bg-bg rounded-2xl border shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.08)]',
+        'border-border/70 bg-surface relative rounded-2xl border shadow-[var(--shadow-1)]',
+        !ownPadding && 'p-4 sm:p-5',
         interactive &&
           'hover:border-text/15 transition-all duration-fast ease-out hover:-translate-y-0.5 hover:shadow-2 active:scale-[0.99]',
         className,
       )}
       {...rest}
     >
-      <div className="relative p-5">
-        {href ? (
-          <a href={href} aria-label={stretchedLabel} className="after:absolute after:inset-0 after:rounded-2xl" />
-        ) : onNavigate ? (
-          <button
-            type="button"
-            onClick={onNavigate}
-            aria-label={stretchedLabel ?? 'Open'}
-            className="after:absolute after:inset-0 after:rounded-2xl"
-          />
-        ) : null}
-        {children}
-      </div>
+      {href ? (
+        <a href={href} aria-label={stretchedLabel} className="absolute inset-0 z-0 rounded-2xl" />
+      ) : onNavigate ? (
+        <button
+          type="button"
+          onClick={onNavigate}
+          aria-label={stretchedLabel ?? 'Open'}
+          className="absolute inset-0 z-0 rounded-2xl"
+        />
+      ) : null}
+      {children}
     </div>
   );
 }
@@ -73,7 +76,7 @@ export function StatCard({ label, value, delta, help, className, icon, tone = 'n
   return (
     <div
       className={cn(
-        'border-border/70 bg-bg group/stat relative min-w-0 overflow-hidden rounded-2xl border p-3.5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-14px_rgb(0_0_0/0.25)] sm:p-4',
+        'border-border/70 bg-surface group/stat relative min-w-0 overflow-hidden rounded-2xl border p-3 shadow-[var(--shadow-1)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:p-4',
         className,
       )}
     >
@@ -92,7 +95,7 @@ export function StatCard({ label, value, delta, help, className, icon, tone = 'n
         <p className="text-muted min-w-0 truncate text-[11px] font-semibold tracking-[0.08em] uppercase">{label}</p>
       </div>
       <p
-        className="font-display mt-2 truncate text-xl leading-none font-bold tracking-tight sm:text-2xl"
+        className="font-display mt-1.5 truncate text-lg leading-none font-bold tracking-tight sm:text-2xl"
         aria-describedby={helpId}
       >
         {value}

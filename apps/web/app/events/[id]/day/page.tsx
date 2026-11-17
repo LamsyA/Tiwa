@@ -123,7 +123,7 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
     >
       <div className="flex flex-col gap-4 py-2">
         {items.length === 0 && (
-          <section className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-5 sm:p-7">
+          <section className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-5 sm:p-5">
             <div aria-hidden className="bg-brand/10 absolute -top-20 -right-20 size-56 rounded-full blur-3xl" />
             <span className="bg-brand-soft text-brand-strong flex size-11 items-center justify-center rounded-2xl">
               <ListChecks aria-hidden className="size-5" />
@@ -188,7 +188,7 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
         </section>
         {items.length > 0 && (
           <section
-            className="relative overflow-hidden rounded-3xl p-5 text-white shadow-[var(--shadow-2)] sm:p-7"
+            className="relative overflow-hidden rounded-3xl p-5 text-white shadow-[var(--shadow-2)] sm:p-5"
             style={{
               background:
                 'linear-gradient(135deg, color-mix(in oklab, var(--brand) 80%, black 25%), color-mix(in oklab, var(--brand-strong) 60%, #0b0b10))',

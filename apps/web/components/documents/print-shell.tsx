@@ -15,7 +15,7 @@ export function PrintShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="bg-bg text-text mx-auto flex min-h-dvh max-w-3xl flex-col gap-4 p-4 sm:p-8 print:max-w-none print:p-0">
+    <main className="bg-bg text-text mx-auto flex min-h-dvh max-w-3xl flex-col gap-4 p-4 sm:p-6 print:max-w-none print:p-0">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
         <Link href={backHref} className="text-brand-strong flex-1 text-sm font-semibold hover:underline">
           ← {backLabel}

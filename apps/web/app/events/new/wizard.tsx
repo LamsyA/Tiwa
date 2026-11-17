@@ -163,7 +163,7 @@ export function Wizard({
         {step === 'type' || !draft ? (
           <TypeStep types={types} formats={formats} />
         ) : (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
             <StepForm key={step} step={step} draft={draft} />
             <Preview draft={draft} />
           </div>
@@ -205,7 +205,7 @@ function TypeStep({ types, formats }: { types: TypeCard[]; formats: { key: Event
   }
 
   return (
-    <section aria-labelledby="type-heading" className="tiwa-fade-up flex flex-col gap-8">
+    <section aria-labelledby="type-heading" className="tiwa-fade-up flex flex-col gap-5">
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 text-center">
         <p className="text-brand-strong text-sm font-semibold tracking-wide uppercase">{t('typeEyebrow')}</p>
         <h1
@@ -341,7 +341,7 @@ function CustomType({
   const [format, setFormat] = React.useState<EventFormat>('PRIVATE_CELEBRATION');
   return (
     <form
-      className="tiwa-pop border-brand/40 bg-surface flex flex-col gap-5 rounded-3xl border p-5 shadow-[var(--shadow-2)] sm:p-7"
+      className="tiwa-pop border-brand/40 bg-surface flex flex-col gap-5 rounded-3xl border p-5 shadow-[var(--shadow-2)] sm:p-5"
       onSubmit={(event) => {
         event.preventDefault();
         if (label.trim().length >= 2) onCreate(label.trim(), format);
@@ -515,7 +515,7 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
       </div>
       {errors.form && <Banner tone="danger">{errors.form}</Banner>}
 
-      <div className="border-border/70 bg-surface/80 flex flex-col gap-5 rounded-3xl border p-5 shadow-[var(--shadow-1)] backdrop-blur-xl sm:p-7">
+      <div className="border-border/70 bg-surface/80 flex flex-col gap-5 rounded-3xl border p-5 shadow-[var(--shadow-1)] backdrop-blur-xl sm:p-5">
         {step === 'basics' && (
           <>
             <FieldShell id="event-name" label={t('nameLabel')} error={errors.name}>

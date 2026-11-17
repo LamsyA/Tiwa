@@ -60,7 +60,7 @@ function FormError({ message }: { message: string | undefined }) {
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-border/70 bg-surface/80 rounded-3xl border p-6 shadow-[var(--shadow-2)] backdrop-blur-xl sm:p-8">
+    <div className="border-border/70 bg-surface/80 rounded-3xl border p-6 shadow-[var(--shadow-2)] backdrop-blur-xl sm:p-6">
       {children}
     </div>
   );

@@ -130,18 +130,25 @@ export default async function EventMoneyPage({
           )}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard label={t('planned')} value={money(totals.plannedMinor)} />
-        <StatCard label={t('committed')} value={money(totals.committedMinor)} />
-        <StatCard label={t('paid')} value={money(totals.paidMinor)} />
-        <StatCard label={t('outstanding')} value={money(totals.outstandingMinor)} />
-        <StatCard
-          className="col-span-2 lg:col-span-1"
-          label={t('uncommitted')}
-          value={money(totals.uncommittedMinor)}
-          {...(totals.uncommittedMinor < 0n ? { delta: { tone: 'danger' as const, text: t('overBudget') } } : {})}
-        />
-      </div>
+      <Card className="grid grid-cols-2 gap-px overflow-hidden p-0 sm:grid-cols-5 [&>*]:bg-surface bg-border/60">
+        {(
+          [
+            ['planned', totals.plannedMinor],
+            ['committed', totals.committedMinor],
+            ['paid', totals.paidMinor],
+            ['outstanding', totals.outstandingMinor],
+            ['uncommitted', totals.uncommittedMinor],
+          ] as const
+        ).map(([key, value]) => (
+          <div key={key} className={`flex min-w-0 flex-col gap-0.5 px-3.5 py-3 ${key === 'uncommitted' ? 'col-span-2 sm:col-span-1' : ''}`}>
+            <span className="text-muted truncate text-[11px] font-semibold uppercase tracking-wide">{t(key)}</span>
+            <span className={`font-display truncate text-base font-bold tabular-nums sm:text-lg ${key === 'uncommitted' && value < 0n ? 'text-danger' : ''}`}>
+              {money(value)}
+            </span>
+            {key === 'uncommitted' && value < 0n && <span className="text-danger text-xs">{t('overBudget')}</span>}
+          </div>
+        ))}
+      </Card>
 
       <PlannerFeeCard
         eventId={id}
@@ -154,20 +161,20 @@ export default async function EventMoneyPage({
         canEdit={plannerOrg !== null && canEdit}
       />
 
-      <Card className="flex flex-col gap-3 p-5" aria-label={t('barLabel')}>
+      <Card className="flex flex-col gap-2.5 p-4" aria-label={t('barLabel')}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-lg font-bold">{t('barLabel')}</h2>
-          <div className="flex flex-wrap gap-2">
+          <h2 className="font-display text-base font-bold">{t('barLabel')}</h2>
+          <div className="flex gap-1.5">
             <a
               href={`/events/${id}/money/export`}
-              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'rounded-full' })}
+              className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'h-8 rounded-full px-3 text-xs' })}
             >
               <Download className="size-4" aria-hidden />
               {t('exportCsv')}
             </a>
             <Link
               href={`/events/${id}/money/print`}
-              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'rounded-full' })}
+              className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'h-8 rounded-full px-3 text-xs' })}
             >
               <Printer className="size-4" aria-hidden />
               {t('exportPdf')}
@@ -181,15 +188,15 @@ export default async function EventMoneyPage({
             ['paid', totals.paidMinor, 'bg-brand'],
           ] as const
         ).map(([key, value, tone]) => (
-          <div key={key} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3 text-sm">
+          <div key={key} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[8rem_1fr_auto]">
             <span className="text-muted truncate">{t(key)}</span>
-            <div className="bg-surface-2 h-2.5 overflow-hidden rounded-full">
+            <div className="bg-surface-2 h-2 overflow-hidden rounded-full">
               <div
                 className={`${tone} h-full rounded-full transition-[width] duration-700`}
                 style={{ width: `${value > 0n ? Math.max(pct(value), 2) : 0}%` }}
               />
             </div>
-            <span className="w-28 text-right font-medium tabular-nums">{money(value)}</span>
+            <span className="text-right font-medium tabular-nums">{money(value)}</span>
           </div>
         ))}
       </Card>

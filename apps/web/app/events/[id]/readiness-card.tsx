@@ -12,7 +12,7 @@ export async function ReadinessCard({ eventId, readiness }: { eventId: string; r
   return (
     <section
       aria-labelledby="readiness-heading"
-      className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-6"
+      className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-4 shadow-[var(--shadow-1)] sm:p-5"
     >
       <div
         aria-hidden
@@ -24,31 +24,31 @@ export async function ReadinessCard({ eventId, readiness }: { eventId: string; r
             <Sparkles aria-hidden className="size-3.5" />
             {t('eyebrow')}
           </p>
-          <h2 id="readiness-heading" className="font-display mt-1 text-xl font-bold tracking-tight">
+          <h2 id="readiness-heading" className="font-display mt-0.5 text-lg font-bold tracking-tight">
             {t('heading')}
           </h2>
           <p className="text-muted mt-1 text-sm">{t('body', { done: readiness.done, total: readiness.total })}</p>
         </div>
         <div
-          className="relative grid size-14 shrink-0 place-items-center rounded-full"
+          className="relative grid size-12 shrink-0 place-items-center rounded-full"
           style={{ background: `conic-gradient(var(--brand) ${percent * 3.6}deg, var(--surface-2) 0deg)` }}
           role="img"
           aria-label={t('percent', { percent })}
         >
-          <span className="bg-surface font-display grid size-11 place-items-center rounded-full text-sm font-bold tabular-nums">
+          <span className="bg-surface font-display grid size-9 place-items-center rounded-full text-xs font-bold tabular-nums">
             {percent}%
           </span>
         </div>
       </div>
-      <ol className="mt-5 grid gap-2 sm:grid-cols-2">
+      <ol className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {readiness.steps.map((step, index) => {
           const isNext = step.key === next?.key;
           return (
-            <li key={step.key}>
+            <li key={step.key} className="min-w-0">
               <Link
                 href={`/events/${eventId}${step.path}`}
                 className={cn(
-                  'group flex items-center gap-3 rounded-2xl border px-3.5 py-3 transition',
+                  'group flex min-w-0 items-center gap-3 rounded-xl border px-3 py-2.5 transition',
                   step.done
                     ? 'border-transparent bg-[var(--surface-2)]/60'
                     : isNext

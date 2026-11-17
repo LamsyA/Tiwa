@@ -87,19 +87,30 @@ export default async function HomePage() {
       <AppFrame userId={ctx.actor.userId} active="home" title={tv('title')}>
         <div className="flex flex-col gap-6 py-2">
           <RoleHero role="vendor" name={myName} org={vendorOrg.name} />
-          <section aria-label={to('stagesLabel')} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {tiles.map(({ stage, icon: Icon }) => (
+          <section aria-label={to('stagesLabel')} className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+            {tiles.map(({ stage, icon: Icon }, index) => (
               <Link
                 key={stage}
                 href={`/orders?stage=${stage}`}
-                className="border-border/70 bg-surface group flex flex-col gap-3 rounded-3xl border p-4 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:p-5"
+                className="border-border/70 bg-surface group flex min-w-0 items-center gap-2.5 rounded-2xl border p-3 shadow-[var(--shadow-1)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:p-4"
               >
-                <span className="bg-brand-soft text-brand-strong flex size-10 items-center justify-center rounded-2xl">
-                  <Icon aria-hidden className="size-5" />
+                <span
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
+                    [
+                      'bg-brand-soft text-brand-strong',
+                      'bg-accent/15 text-[#8a6500]',
+                      'bg-teal-soft text-teal-strong',
+                      'bg-success-soft text-success',
+                    ][index]
+                  }`}
+                >
+                  <Icon aria-hidden className="size-4" />
                 </span>
-                <span>
-                  <span className="font-display block text-3xl font-bold tracking-tight">{orders.counts[stage]}</span>
-                  <span className="text-muted text-sm">{to(`tile.${stage}`)}</span>
+                <span className="min-w-0">
+                  <span className="font-display block text-xl leading-none font-bold tabular-nums">
+                    {orders.counts[stage]}
+                  </span>
+                  <span className="text-muted mt-1 block truncate text-xs">{to(`tile.${stage}`)}</span>
                 </span>
               </Link>
             ))}
@@ -139,7 +150,7 @@ export default async function HomePage() {
     ]);
     return (
       <AppFrame userId={ctx.actor.userId} active="home" title={t('title')}>
-        <div className="flex flex-col gap-8 py-2">
+        <div className="flex flex-col gap-5 py-2">
           <RoleHero role="host" name={myName} />
           {events.length === 0 ? (
             <EmptyState
@@ -168,9 +179,9 @@ export default async function HomePage() {
                   <li key={event.id}>
                     <Link
                       href={event.status === 'DRAFT' ? `/events/new?id=${event.id}` : `/events/${event.id}`}
-                      className="border-border/70 bg-surface flex h-full flex-col gap-2 rounded-3xl border p-5 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]"
+                      className="border-border/70 bg-surface flex h-full flex-col gap-1.5 rounded-2xl border p-4 shadow-[var(--shadow-1)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]"
                     >
-                      <span className="font-display text-lg leading-tight font-bold">{event.name}</span>
+                      <span className="font-display truncate text-base leading-tight font-bold">{event.name}</span>
                       <span className="text-muted text-sm">
                         {event.startsAt ? event.startsAt.toISOString().slice(0, 10) : t('noDate')}
                         {event.expectedGuests ? ` · ${t('guests', { count: event.expectedGuests })}` : ''}

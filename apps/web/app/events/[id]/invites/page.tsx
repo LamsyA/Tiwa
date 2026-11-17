@@ -127,7 +127,7 @@ export default async function InvitesPage({
     >
       <div className="flex flex-col gap-6 py-2">
         <section
-          className="relative overflow-hidden rounded-3xl p-6 text-white shadow-[var(--shadow-2)] sm:p-8"
+          className="relative overflow-hidden rounded-3xl p-6 text-white shadow-[var(--shadow-2)] sm:p-6"
           style={{
             background:
               'linear-gradient(135deg, color-mix(in oklab, var(--brand) 88%, black 6%), color-mix(in oklab, var(--accent) 60%, var(--brand)))',

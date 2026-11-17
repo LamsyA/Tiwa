@@ -137,7 +137,7 @@ export async function ComparePageBody({
           {t(kind === 'VENDOR' ? 'searchVendors' : 'searchPlanners')}
         </Link>
         {picks.length === 0 ? (
-          <div className="border-border/70 bg-surface flex flex-col items-center gap-3 rounded-3xl border border-dashed px-6 py-14 text-center">
+          <div className="border-border/70 bg-surface flex flex-col items-center gap-3 rounded-3xl border border-dashed px-6 py-8 text-center">
             <p className="font-display text-xl font-bold">{t('compareEmptyTitle')}</p>
             <p className="text-muted max-w-md text-sm">{t('compareEmpty')}</p>
             <Link href={`${base}?eventId=${eventId}`} className={buttonClasses({ className: 'mt-2 rounded-full' })}>

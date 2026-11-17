@@ -192,7 +192,7 @@ export async function MarketplaceFrame({
       </header>
 
       <section className="border-border/70 border-b">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
           <p className="text-brand-strong text-xs font-semibold tracking-[0.2em] uppercase">{t('eyebrow')}</p>
           <h1 className="font-display mt-3 max-w-3xl text-4xl font-bold tracking-[-0.03em] text-balance sm:text-5xl">
             {title}
@@ -201,7 +201,7 @@ export async function MarketplaceFrame({
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-7">{children}</main>
     </div>
   );
 }

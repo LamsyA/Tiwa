@@ -92,7 +92,7 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
       momentsOn={momentsOn}
       ticketsOn={ticketsOn}
     >
-      <div className="flex flex-col gap-8 py-4">
+      <div className="flex flex-col gap-5 py-4">
         <section className="border-border/70 bg-surface flex flex-col gap-4 rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-6">
           <div>
             <h2 className="font-display text-xl font-bold tracking-tight">{t('findHeading')}</h2>
@@ -137,7 +137,7 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
               className="absolute inset-y-0 right-0 hidden h-full w-1/2 object-cover opacity-80 md:block"
             />
             <div className="absolute inset-0 hidden bg-gradient-to-r from-[#1c1917] via-[#1c1917]/95 to-transparent md:block" />
-            <div className="relative flex flex-col gap-4 p-6 sm:p-8 md:max-w-[60%]">
+            <div className="relative flex flex-col gap-4 p-6 sm:p-6 md:max-w-[60%]">
               <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-[#f2b705] uppercase">
                 <Sparkles aria-hidden className="size-3.5" />
                 {t('hirePlanner.eyebrow')}

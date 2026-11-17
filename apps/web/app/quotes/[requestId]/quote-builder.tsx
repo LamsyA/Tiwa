@@ -305,7 +305,7 @@ export function QuoteBuilder({
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* ── Form ── */}
-        <div className="border-border/70 bg-surface flex flex-col gap-8 rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-7">
+        <div className="border-border/70 bg-surface flex flex-col gap-5 rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-5">
           <section className="flex flex-col gap-3">
             <h3 className={sectionTitle}>{t('itemsHeading')}</h3>
             <div className="text-muted hidden grid-cols-[minmax(0,1fr)_76px_160px_36px] gap-2 px-1 text-xs font-medium sm:grid">

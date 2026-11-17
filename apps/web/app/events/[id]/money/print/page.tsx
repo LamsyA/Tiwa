@@ -22,7 +22,7 @@ export default async function MoneyPrintPage({ params }: { params: Promise<{ id:
   const money = (value: bigint) => <MoneyText value={value.toString()} currency={summary.currency} />;
 
   return (
-    <main className="bg-bg text-text mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-8 print:max-w-none print:p-0">
+    <main className="bg-bg text-text mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6 print:max-w-none print:p-0">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
         <Link href={`/events/${id}/money`} className="text-muted flex-1 text-sm underline">
           {t('backToMoney')}

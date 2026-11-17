@@ -155,7 +155,7 @@ export default async function EventOverviewPage({
         {event.status === 'CANCELLED' && <Banner tone="danger">{t('overview.cancelledBanner')}</Banner>}
 
         <header
-          className="relative isolate overflow-hidden rounded-3xl px-5 py-6 text-white shadow-[0_20px_50px_-24px_rgb(0_0_0/0.45)] sm:px-8 sm:py-8"
+          className="relative isolate overflow-hidden rounded-3xl px-4 py-4 text-white shadow-[0_20px_50px_-24px_rgb(0_0_0/0.45)] sm:px-6 sm:py-5"
           style={{
             background: `radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, ${event.themeColor ?? 'var(--brand)'} 70%, white 0%) 0%, transparent 55%), linear-gradient(135deg, color-mix(in oklab, ${event.themeColor ?? 'var(--brand-strong)'} 85%, black) 0%, #1a0f0a 100%)`,
           }}
@@ -179,10 +179,10 @@ export default async function EventOverviewPage({
               </span>
             )}
           </div>
-          <p className="font-display mt-4 text-3xl leading-tight font-bold tracking-[-0.02em] sm:text-4xl lg:hidden">
+          <p className="font-display mt-2.5 truncate text-2xl leading-tight font-bold tracking-[-0.02em] lg:hidden">
             {event.name}
           </p>
-          <div className="mt-4 flex flex-col gap-2 text-[15px] text-white/85 sm:flex-row sm:items-center sm:gap-6">
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-white/85">
             <p className="flex flex-wrap items-center gap-2">
               <CalendarDays aria-hidden className="size-4" />
               {event.startsAt ? (
@@ -199,7 +199,7 @@ export default async function EventOverviewPage({
             )}
           </div>
           {event.startsAt && event.startsAt > now && (
-            <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-black">
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black">
               <span className="size-1.5 rounded-full bg-[var(--brand-strong)]" />
               <RelativeTime value={event.startsAt} />
             </p>
@@ -212,10 +212,10 @@ export default async function EventOverviewPage({
               <li key={key}>
                 <Link
                   href={href}
-                  className="border-border/70 bg-surface hover:border-brand/40 group flex items-center gap-2 rounded-full border py-1.5 pr-4 pl-1.5 text-sm font-medium whitespace-nowrap transition hover:shadow-[var(--shadow-1)]"
+                  className="border-border/70 bg-surface hover:border-brand/40 group flex items-center gap-1.5 rounded-full border py-1 pr-3 pl-1 text-[13px] font-medium whitespace-nowrap transition hover:shadow-[var(--shadow-1)]"
                 >
-                  <span className="bg-brand-soft text-brand-strong grid size-7 place-items-center rounded-full transition group-hover:scale-105">
-                    <Icon aria-hidden className="size-4" />
+                  <span className="bg-brand-soft text-brand-strong grid size-6 place-items-center rounded-full transition group-hover:scale-105">
+                    <Icon aria-hidden className="size-3.5" />
                   </span>
                   {tabs(key)}
                 </Link>
@@ -239,9 +239,9 @@ export default async function EventOverviewPage({
                 <p className="text-muted text-sm" data-testid="progress-counts">
                   {t('overview.progressCounts', { done: progress.done, total: progress.total })}
                 </p>
-                <p className="font-display text-4xl leading-none font-bold tabular-nums">
+                <p className="font-display text-2xl leading-none font-bold tabular-nums">
                   {percent}
-                  <span className="text-muted text-lg">%</span>
+                  <span className="text-muted text-sm">%</span>
                 </p>
               </div>
               <div
@@ -557,9 +557,9 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-border/70 bg-surface flex flex-col gap-4 rounded-3xl border p-5 shadow-[var(--shadow-1)]">
+    <section className="border-border/70 bg-surface flex min-w-0 flex-col gap-3 rounded-2xl border p-4 shadow-[var(--shadow-1)]">
       <header className="flex items-center gap-2.5">
-        <span className="bg-brand-soft text-brand-strong grid size-9 shrink-0 place-items-center rounded-xl">
+        <span className="bg-brand-soft text-brand-strong grid size-8 shrink-0 place-items-center rounded-lg">
           <Icon aria-hidden className="size-[18px]" />
         </span>
         <h2 className="font-display min-w-0 flex-1 truncate text-lg font-bold">{title}</h2>

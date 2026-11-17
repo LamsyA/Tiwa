@@ -41,7 +41,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   return (
     <AppFrame userId={ctx.actor.userId} active="clients" title={client.name}>
       <div className="flex flex-col gap-5 py-2">
-        <section className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-7">
+        <section className="border-border/70 bg-surface relative overflow-hidden rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-5">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 -right-20 size-64 rounded-full bg-[var(--brand)]/10 blur-3xl"

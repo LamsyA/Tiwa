@@ -52,10 +52,10 @@ export async function OrdersBoard({
   const total = open.length;
 
   return (
-    <section aria-labelledby="orders-heading" className="flex flex-col gap-4">
+    <section aria-labelledby="orders-heading" className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 id="orders-heading" className="font-display text-xl font-bold tracking-tight">
+          <h2 id="orders-heading" className="font-display text-lg font-bold tracking-tight">
             {t(side === 'vendor' ? 'vendorHeading' : 'clientHeading')}
           </h2>
           <p className="text-muted text-sm">{t(side === 'vendor' ? 'vendorBody' : 'clientBody')}</p>
@@ -109,7 +109,7 @@ export async function OrdersBoard({
           </span>
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2">
           {shown.map((row) => {
             const step = trackIndex(row.stage);
             const mine = MY_MOVE[side].includes(row.stage);
@@ -117,20 +117,20 @@ export async function OrdersBoard({
               <li key={row.id}>
                 <Link
                   href={orderHref(row, side)}
-                  className={`group bg-surface flex flex-col gap-4 rounded-3xl border p-4 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:p-5 ${
+                  className={`group bg-surface flex flex-col gap-2.5 rounded-2xl border px-3.5 py-3 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] sm:px-4 ${
                     mine ? 'border-brand/50 shadow-[var(--shadow-1)]' : 'border-border/70'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="bg-brand-soft text-brand-strong flex size-11 shrink-0 items-center justify-center rounded-2xl text-base font-bold">
+                    <span className="bg-brand-soft text-brand-strong flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold">
                       {(row.counterparty || '?').slice(0, 1).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="flex flex-wrap items-center gap-x-2 font-semibold">
+                      <p className="flex min-w-0 items-center gap-x-1.5 text-sm font-semibold">
                         <span className="truncate">{row.counterparty || t('unknownParty')}</span>
-                        {row.category && <span className="text-muted text-sm font-normal">· {row.category}</span>}
+                        {row.category && <span className="text-muted hidden truncate text-xs font-normal sm:inline">· {row.category}</span>}
                       </p>
-                      <p className="text-muted flex items-center gap-1.5 truncate text-sm">
+                      <p className="text-muted flex items-center gap-1.5 truncate text-xs">
                         <CalendarDays aria-hidden className="size-3.5 shrink-0" />
                         <span className="truncate">
                           {row.eventName}
@@ -140,7 +140,7 @@ export async function OrdersBoard({
                     </div>
                     <div className="shrink-0 text-right">
                       {row.amountMinor && row.currency && (
-                        <p className="font-semibold">
+                        <p className="text-sm font-semibold tabular-nums">
                           <MoneyText value={row.amountMinor} currency={row.currency} />
                         </p>
                       )}
@@ -154,7 +154,7 @@ export async function OrdersBoard({
                       {TRACK.map((key, index) => (
                         <li key={key} className="flex flex-1 flex-col gap-1">
                           <span
-                            className={`h-1.5 rounded-full ${
+                            className={`h-1 rounded-full ${
                               index <= step ? 'bg-brand' : 'bg-border'
                             } ${index === Math.floor(step) && mine ? 'tiwa-shimmer' : ''}`}
                           />
