@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import { EventFrame, loadEventPage } from '@/components/event-frame.js';
 import { aiAllowed } from '@/lib/ai.js';
 import { GuestImpact } from './guest-impact.js';
+import { GuestChangeFlow } from '../guest-change/guest-change.js';
 import { GuestsManager } from './guests-manager.js';
 
 /** P4-T03 / UF-06: guest list with counters, search, filters, bulk actions; groups tab. */
@@ -70,6 +71,14 @@ export default async function GuestsPage({
   ]);
   const guests = listed?.guests ?? [];
   const impactOn = await aiAllowed(ctx.actor, id, access, 'ai.draftPlan');
+  const canChangeCount = (() => {
+    try {
+      authorize(ctx.actor, 'event.edit', { eventId: id, access });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <EventFrame
@@ -82,9 +91,13 @@ export default async function GuestsPage({
       active="guests"
       title={event.name}
     >
-      {impactOn && (
-        <div className="flex justify-end pt-2">
-          <GuestImpact eventId={id} current={event.expectedGuests ?? 0} />
+      {(impactOn || canChangeCount) && (
+        <div className="flex flex-wrap justify-end gap-2 pt-2">
+          {/* D-X84: turn a new guest count into vendor changes they approve on WhatsApp. */}
+          {canChangeCount && (
+            <GuestChangeFlow eventId={id} eventName={event.name} currentCount={event.expectedGuests ?? null} />
+          )}
+          {impactOn && <GuestImpact eventId={id} current={event.expectedGuests ?? 0} />}
         </div>
       )}
       <GuestsManager

@@ -1,5 +1,5 @@
 import { PLANNING_CATEGORY } from '@tiwa/config';
-import { eventOrders, getEventVendorCategories, listSiteVisits, type OrderStage } from '@tiwa/core';
+import { authorize, eventOrders, getEventVendorCategories, listSiteVisits, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { StatusPill, buttonClasses } from '@tiwa/ui';
 import { ArrowRight, CheckCircle2, FileSignature, GitCompare, Search, Sparkles } from 'lucide-react';
@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
 import { coverFor } from '@/components/marketplace/marketplace-frame.js';
 import { OrdersBoard } from '@/components/orders/orders-board.js';
+import { GuestChangeFlow } from '../guest-change/guest-change.js';
 
 const STAGE_RANK: OrderStage[] = ['closed', 'requested', 'quoted', 'booked', 'confirmed', 'delivered', 'completed'];
 
@@ -52,6 +53,18 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
       if (row.counterparty) leadByCategory.set(row.categoryKey, row.counterparty);
     }
   }
+  const canChangeCount = (() => {
+    if (!access) return false;
+    try {
+      authorize(ctx.actor, 'event.edit', { eventId, access });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  const countEvent = canChangeCount
+    ? await prisma.event.findUnique({ where: { id: eventId }, select: { name: true, expectedGuests: true } })
+    : null;
   const shortlistTotal = categories.reduce((sum, row) => sum + row.shortlisted, 0);
   const visits = await listSiteVisits(ctx.actor, { eventId }).catch(() => []);
   const visitOrgs =
@@ -212,9 +225,19 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
         )}
 
         <section aria-labelledby="categories-heading" className="flex flex-col gap-3">
-          <h2 id="categories-heading" className="font-display text-xl font-bold tracking-tight">
-            {t('categoriesHeading')}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="categories-heading" className="font-display text-xl font-bold tracking-tight">
+              {t('categoriesHeading')}
+            </h2>
+            {/* D-X84: a new guest count becomes vendor changes, approved on WhatsApp. */}
+            {countEvent && (
+              <GuestChangeFlow
+                eventId={eventId}
+                eventName={countEvent.name}
+                currentCount={countEvent.expectedGuests ?? null}
+              />
+            )}
+          </div>
           {/* D-X79: compact status rows (planner workspace style) instead of 15 photo tiles. */}
           <ul className="grid gap-2 sm:grid-cols-2">
             {[...categories]

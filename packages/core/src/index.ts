@@ -83,6 +83,7 @@ export * from './quotes/history.js';
 export * from './bookings/state.js';
 export * from './bookings/accept.js';
 export * from './bookings/changes.js';
+export * from './bookings/guest-change.js';
 export * from './bookings/venue.js';
 export * from './bookings/site-visits.js';
 export * from './bookings/queries.js';
