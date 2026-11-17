@@ -185,7 +185,7 @@ export function AppShell({
         data-frame="desktop"
         aria-label="Sidebar"
         className={cn(
-          'border-border/70 bg-bg sticky top-0 hidden h-dvh shrink-0 flex-col border-r transition-[width] duration-fast ease-out lg:flex',
+          'border-border/70 bg-surface/85 sticky top-0 hidden h-dvh shrink-0 flex-col border-r backdrop-blur-xl transition-[width] duration-fast ease-out lg:flex',
           collapsed ? 'w-[76px]' : 'w-64',
         )}
       >

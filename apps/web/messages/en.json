@@ -766,7 +766,9 @@
       "aiThinking": "Drafting a plan for your event…",
       "aiNothing": "No new tasks came back — try describing your event in more detail.",
       "aiTryAgain": "Try again",
-      "aiRefine": "Change request"
+      "aiRefine": "Change request",
+      "plannerNoteTitle": "{planner} is planning this event with you.",
+      "plannerNoteBody": "You can still add and edit tasks; everything you change is visible to {planner}, and theirs to you."
     },
     "documents": {
       "heading": "Documents",
@@ -2604,7 +2606,8 @@
       "body": "Pick the kind of event. It opens as a draft linked to this client, and they move to Won.",
       "continue": "Continue to details",
       "working": "Creating…",
-      "error": "Could not create the event. Try again."
+      "error": "Could not create the event. Try again.",
+      "another": "Plan a different event"
     },
     "today": {
       "title": "Today",
@@ -2663,7 +2666,8 @@
       "ADMIN": "Admin",
       "STAFF": "Staff"
     },
-    "staffCount": "{count, plural, =0 {No staff} one {# staff} other {# staff}}"
+    "staffCount": "{count, plural, =0 {No staff} one {# staff} other {# staff}}",
+    "continueEvent": "Continue {name}"
   },
   "vendor": {
     "title": "Vendor workspace",

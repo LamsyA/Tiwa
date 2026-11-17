@@ -88,6 +88,7 @@ afterAll(async () => {
     await prisma.businessProfile.deleteMany({ where: { orgId: id } });
     await prisma.membership.deleteMany({ where: { orgId: id } });
   }
+  await prisma.event.updateMany({ where: { id: { in: events } }, data: { clientId: null } });
   await prisma.eventParticipant.deleteMany({ where: { eventId: { in: events } } });
   await prisma.organization.deleteMany({ where: { id: { in: orgs } } });
   await prisma.event.deleteMany({ where: { id: { in: events } } });
@@ -254,6 +255,11 @@ describe('planner proposals (D-X64)', () => {
         })
       ).stage,
     ).toBe('WON');
+    // D-X71: the host's own event is linked to the planner's client, so it is continued, not duplicated.
+    const wonClient = await prisma.client.findUniqueOrThrow({
+      where: { orgId_userId: { orgId: planner.orgId, userId: host.userId } },
+    });
+    expect((await prisma.event.findUniqueOrThrow({ where: { id: eventId } })).clientId).toBe(wonClient.id);
 
     // D-X68: the hired planner hides vendor prices — but never their own fee from the host.
     await prisma.event.update({ where: { id: eventId }, data: { hostCanSeeVendorPrices: false } });

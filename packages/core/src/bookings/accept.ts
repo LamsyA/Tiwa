@@ -213,6 +213,20 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
           });
         }
         await syncPipelineForRequest(tx, quote.requestId, 'WON');
+        // D-X71: the hired planner continues the host's own event — link it to
+        // the planner's CRM client so "Start their event" never duplicates it.
+        if (quote.requestId) {
+          const request = await tx.quoteRequest.findUnique({
+            where: { id: quote.requestId },
+            select: { clientId: true },
+          });
+          if (request?.clientId) {
+            await tx.event.updateMany({
+              where: { id: quote.eventId, clientId: null },
+              data: { clientId: request.clientId },
+            });
+          }
+        }
         await audit(tx, {
           actor,
           action: 'event.planner.hired',

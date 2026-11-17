@@ -1,8 +1,8 @@
 import { eventTypeCards } from '@tiwa/config';
 import { getClient } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Avatar, DateText, MoneyText, StatusPill } from '@tiwa/ui';
-import { CalendarDays, ChevronRight, FileText, Mail, Phone } from 'lucide-react';
+import { Avatar, DateText, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
+import { ArrowRight, CalendarDays, ChevronRight, FileText, Mail, Phone } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -73,11 +73,28 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           <div className="border-border/60 mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
             <StageButtons clientId={client.id} stage={client.stage} />
             {client.stage !== 'LOST' && (
-              <StartClientEvent
-                clientId={client.id}
-                clientName={client.name}
-                types={eventTypeCards().map((card) => ({ key: card.key, label: card.label, blurb: card.blurb }))}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                {/* D-X71: an event the client already has (theirs, or one you started) is continued, not duplicated. */}
+                {events
+                  .filter((event) => event.status !== 'CANCELLED')
+                  .slice(0, 2)
+                  .map((event) => (
+                    <Link
+                      key={event.id}
+                      href={event.status === 'DRAFT' ? `/events/new?id=${event.id}` : `/events/${event.id}`}
+                      className={buttonClasses({ className: 'max-w-full rounded-full' })}
+                    >
+                      <ArrowRight aria-hidden className="size-4" />
+                      <span className="truncate">{t('continueEvent', { name: event.name })}</span>
+                    </Link>
+                  ))}
+                <StartClientEvent
+                  clientId={client.id}
+                  clientName={client.name}
+                  secondary={events.some((event) => event.status !== 'CANCELLED')}
+                  types={eventTypeCards().map((card) => ({ key: card.key, label: card.label, blurb: card.blurb }))}
+                />
+              </div>
             )}
           </div>
         </section>

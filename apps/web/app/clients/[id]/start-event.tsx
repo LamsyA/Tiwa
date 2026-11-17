@@ -12,10 +12,13 @@ export function StartClientEvent({
   clientId,
   clientName,
   types,
+  secondary = false,
 }: {
   clientId: string;
   clientName: string;
   types: { key: string; label: string; blurb: string }[];
+  /** The client already has an event: starting another is the quieter option. */
+  secondary?: boolean;
 }) {
   const t = useTranslations('planner.startEvent');
   const router = useRouter();
@@ -39,9 +42,9 @@ export function StartClientEvent({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="rounded-full">
+      <Button onClick={() => setOpen(true)} variant={secondary ? 'ghost' : 'primary'} className="rounded-full">
         <CalendarPlus aria-hidden className="size-4" />
-        {t('button')}
+        {secondary ? t('another') : t('button')}
       </Button>
       <ResponsiveDialog open={open} onOpenChange={setOpen} title={t('title', { name: clientName })}>
         <div className="flex flex-col gap-4">
