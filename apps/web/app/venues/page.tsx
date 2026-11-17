@@ -1,12 +1,13 @@
-import { listShortlist, loadEventAccess, searchVenues } from '@tiwa/core';
+import { coverUrls, listShortlist, loadEventAccess, searchVenues } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { EmptyState, MoneyText, StatusPill } from '@tiwa/ui';
 import { BadgeCheck, Building2, MapPin, Star, Users } from 'lucide-react';
-import Image from 'next/image';
+
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MarketplaceFrame, venueGallery } from '@/components/marketplace/marketplace-frame.js';
+import { BusinessCover } from '@/components/marketplace/business-cover.js';
+import { MarketplaceFrame } from '@/components/marketplace/marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { ShortlistButton } from '@/components/marketplace/search.js';
 import { VenueFilters, type VenueFilterValues } from '@/components/marketplace/venues.js';
@@ -51,6 +52,12 @@ export default async function VenuesPage({
     amenities: filters.amenities,
     ...(filters.maxPrice ? { maxPriceMinor: filters.maxPrice } : {}),
   });
+  // D-X80: a venue's own portfolio photo when its spaces have none — never a stock picture.
+  const profiles = await prisma.businessProfile.findMany({
+    where: { orgId: { in: hits.map((hit) => hit.orgId) } },
+    select: { id: true, orgId: true },
+  });
+  const covers = await coverUrls(profiles.map((row) => ({ orgId: row.orgId, profileId: row.id })));
 
   return (
     <MarketplaceFrame active={'venues'} title={t('searchVenuesTitle')}>
@@ -58,7 +65,10 @@ export default async function VenuesPage({
         {eventName && (
           <p className="text-muted text-sm">
             {t('shortlistFor', { event: eventName })} ·{' '}
-            <Link className="text-brand-strong font-medium underline-offset-4 hover:underline" href={`/vendors/compare?eventId=${eventId}`}>
+            <Link
+              className="text-brand-strong font-medium underline-offset-4 hover:underline"
+              href={`/vendors/compare?eventId=${eventId}`}
+            >
               {t('compare')}
             </Link>
           </p>
@@ -68,7 +78,7 @@ export default async function VenuesPage({
           <EmptyState icon={<Building2 className="size-6" />} title={t('noVenues')} body={t('noVenuesBody')} />
         ) : (
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {hits.map((hit, index) => {
+            {hits.map((hit) => {
               const own = hit.spaces.flatMap((space) =>
                 space.photoIds.map((photoId) => ({ space: space.id, photoId })),
               )[0];
@@ -98,12 +108,11 @@ export default async function VenuesPage({
                         className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
-                      <Image
-                        src={venueGallery(hit.orgId || index)[0]!}
-                        alt=""
-                        placeholder="blur"
-                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      <BusinessCover
+                        src={covers.get(hit.orgId) ?? null}
+                        name={hit.name}
+                        emptyLabel={t('noPhotosYet')}
+                        className="transition-transform duration-700 group-hover:scale-105"
                       />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />

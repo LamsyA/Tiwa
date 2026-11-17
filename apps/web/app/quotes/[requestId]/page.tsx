@@ -1,8 +1,9 @@
-import { PLANNING_CATEGORY } from '@tiwa/config';
+import { PLANNING_CATEGORY, VENDOR_CATEGORIES } from '@tiwa/config';
+import { RequestBrief } from '@/components/quotes/request-brief.js';
 import { getEnquiry, quoteHistory, stageForBooking, stageForQuote, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, MoneyText } from '@tiwa/ui';
-import { CalendarDays, MapPin, MessageSquareText, RefreshCw, Users, Wallet } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { AppFrame } from '@/components/app-frame.js';
@@ -36,6 +37,7 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
     eventName?: string;
     eventType?: string;
     startsAt?: string | null;
+    endsAt?: string | null;
     timezone?: string;
     venue?: string | null;
     expectedGuests?: number | null;
@@ -83,33 +85,6 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
       ? (await prisma.availabilityBlock.count({ where: { orgId: enquiry.request.vendorOrgId, date: day } })) > 0
       : false;
 
-  const facts = [
-    brief.startsAt
-      ? {
-          icon: CalendarDays,
-          label: t('briefDate'),
-          value: new Intl.DateTimeFormat('en', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            timeZone: brief.timezone ?? 'UTC',
-          }).format(new Date(brief.startsAt)),
-        }
-      : null,
-    brief.venue ? { icon: MapPin, label: t('briefVenue'), value: brief.venue } : null,
-    typeof brief.expectedGuests === 'number'
-      ? { icon: Users, label: t('briefGuests'), value: String(brief.expectedGuests) }
-      : null,
-    brief.budgetMaxMinor && brief.budgetMaxMinor !== '0'
-      ? {
-          icon: Wallet,
-          label: t('briefBudgetFact'),
-          value: <MoneyText value={brief.budgetMaxMinor} currency={enquiry.event.currency} />,
-        }
-      : null,
-  ].filter((fact): fact is NonNullable<typeof fact> => fact !== null);
-
   return (
     <AppFrame
       userId={ctx.actor.userId}
@@ -138,33 +113,18 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
           }
         />
 
-        <section
-          aria-label={t('briefHeading')}
-          className="border-border/70 bg-surface flex flex-col gap-4 rounded-3xl border p-5 sm:p-6"
-        >
-          <h2 className="font-display text-lg font-bold">{t('briefHeading')}</h2>
-          {facts.length > 0 && (
-            <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {facts.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="bg-surface-2 flex items-center gap-3 rounded-2xl p-3">
-                  <span className="bg-brand-soft text-brand-strong flex size-9 shrink-0 items-center justify-center rounded-xl">
-                    <Icon aria-hidden className="size-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <dt className="text-muted text-xs">{label}</dt>
-                    <dd className="truncate font-semibold">{value}</dd>
-                  </span>
-                </div>
-              ))}
-            </dl>
-          )}
-          {brief.notes && (
-            <p className="bg-surface-2 flex gap-3 rounded-2xl p-4 text-sm">
-              <MessageSquareText aria-hidden className="text-muted mt-0.5 size-4 shrink-0" />
-              <span className="whitespace-pre-line">{brief.notes}</span>
-            </p>
-          )}
-        </section>
+        {/* D-X80: the brief is laid out for this kind of service. */}
+        <RequestBrief
+          category={enquiry.request.category}
+          categoryLabel={
+            proposal
+              ? t('changes.kindProposal')
+              : (VENDOR_CATEGORIES[enquiry.request.category as keyof typeof VENDOR_CATEGORIES] ??
+                enquiry.request.category)
+          }
+          brief={brief}
+          currency={enquiry.event.currency}
+        />
 
         {history && history.versions.length > 0 && (
           <ProposalHistory
@@ -229,6 +189,8 @@ export default async function QuoteBuilderPage({ params }: { params: Promise<{ r
                   : null
               }
               budgetMinor={brief.budgetMaxMinor ?? null}
+              category={enquiry.request.category}
+              guests={typeof brief.expectedGuests === 'number' ? brief.expectedGuests : null}
               packages={packages
                 .filter((row) => row.currency === enquiry.event.currency)
                 .map((row) => ({

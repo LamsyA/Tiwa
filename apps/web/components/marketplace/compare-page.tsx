@@ -1,15 +1,15 @@
-import { listShortlist, loadEventAccess } from '@tiwa/core';
+import { coverUrls, listShortlist, loadEventAccess } from '@tiwa/core';
 import { VENDOR_CATEGORIES } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { MoneyText, buttonClasses } from '@tiwa/ui';
 import { ArrowLeft, BadgeCheck, CalendarCheck, CalendarX, Star } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type * as React from 'react';
 import { MessageBusiness } from '@/components/chat/message-business.js';
-import { MarketplaceFrame, coverFor, plannerCover } from '@/components/marketplace/marketplace-frame.js';
+import { BusinessCover } from '@/components/marketplace/business-cover.js';
+import { MarketplaceFrame } from '@/components/marketplace/marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { ShortlistButton } from './search.js';
 
@@ -42,6 +42,12 @@ export async function ComparePageBody({
     prisma.event.findUnique({ where: { id: eventId }, select: { name: true } }),
   ]);
   const picks = all.filter((pick) => pick.org.kind === kind).slice(0, 4);
+  // D-X80: each business's own first photo, never a stock picture.
+  const profiles = await prisma.businessProfile.findMany({
+    where: { orgId: { in: picks.map((pick) => pick.orgId) } },
+    select: { id: true, orgId: true },
+  });
+  const covers = await coverUrls(profiles.map((row) => ({ orgId: row.orgId, profileId: row.id })));
   const label = (key: string) => VENDOR_CATEGORIES[key as keyof typeof VENDOR_CATEGORIES] ?? key;
 
   const rows: { key: string; title: string; cell: (pick: (typeof picks)[number]) => React.ReactNode }[] = [
@@ -152,19 +158,13 @@ export async function ComparePageBody({
                   <th scope="col" className="w-36 p-4 text-left align-bottom">
                     <span className="sr-only">{t('compareTitle')}</span>
                   </th>
-                  {picks.map((pick, index) => (
+                  {picks.map((pick) => (
                     <th key={pick.orgId} scope="col" className="p-4 text-left align-top font-normal">
                       <div className="relative mb-3 aspect-[4/3] overflow-hidden rounded-2xl">
-                        <Image
-                          src={
-                            kind === 'PLANNER'
-                              ? plannerCover(index)
-                              : coverFor(pick.org.profile?.categories ?? [], index)
-                          }
-                          alt=""
-                          placeholder="blur"
-                          sizes="260px"
-                          className="size-full object-cover"
+                        <BusinessCover
+                          src={covers.get(pick.orgId) ?? null}
+                          name={pick.org.name}
+                          emptyLabel={t('noPhotosYet')}
                         />
                         <div className="absolute top-2 right-2">
                           <ShortlistButton eventId={eventId} orgId={pick.orgId} initial />

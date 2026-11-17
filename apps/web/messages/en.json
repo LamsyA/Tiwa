@@ -2020,7 +2020,8 @@
       "review": "Review",
       "view": "View",
       "requestQuotes": "Request quotes"
-    }
+    },
+    "noPhotosYet": "No photos yet"
   },
   "inbox": {
     "title": "Chat",
@@ -2235,7 +2236,8 @@
         "QUOTED": "Quote sent",
         "DECLINED_BY_VENDOR": "Declined",
         "CLOSED": "Closed"
-      }
+      },
+      "capacity": "Capacity {count}"
     },
     "requestStatus": {
       "OPEN": "Waiting for quote",
@@ -2353,7 +2355,86 @@
       "body": "New requests appear here the moment a client sends one. A complete, published profile gets more of them.",
       "cta": "Polish your profile"
     },
-    "dayTakenWarning": "You already have a booking or a blocked date on this day. If you send a quote, the client won’t be able to accept it unless you free the date in your calendar."
+    "dayTakenWarning": "You already have a booking or a blocked date on this day. If you send a quote, the client won’t be able to accept it unless you free the date in your calendar.",
+    "kind": {
+      "title": {
+        "venue": "Venue booking request",
+        "coverage": "Coverage request",
+        "food": "Food order request",
+        "performance": "Performance booking request",
+        "styling": "Styling request",
+        "planning": "Proposal request",
+        "service": "Service request"
+      },
+      "fact": {
+        "date": "Date",
+        "hours": "Hours needed",
+        "capacity": "Capacity needed",
+        "currentVenue": "Venue so far",
+        "coverage": "Coverage",
+        "location": "Location",
+        "guests": "Guests",
+        "portions": "Portions",
+        "servingDay": "Serving day",
+        "servingTime": "Serving from",
+        "deliverTo": "Deliver to",
+        "setTime": "Set time",
+        "venue": "Venue",
+        "crowd": "Crowd size",
+        "startTime": "Starts",
+        "budget": "Client budget"
+      },
+      "people": "{count, plural, one {# person} other {# people}}",
+      "portions": "{count, plural, one {# portion} other {# portions}}",
+      "noDate": "Date not set",
+      "noTime": "Time not set",
+      "from": "From {time}",
+      "noVenue": "Venue not set yet",
+      "noVenueYet": "Not booked yet",
+      "notes": "From the client",
+      "checksTitle": "Before you quote, confirm",
+      "check": {
+        "dateFree": "You are free on this date",
+        "capacity": "The space fits the guest count",
+        "layout": "Seating or standing layout they need",
+        "accessHours": "Setup and clear-out times",
+        "hours": "How many hours of coverage",
+        "deliverables": "What they get and when (photos, video, album)",
+        "travel": "Travel or transport to the location",
+        "portions": "Portions for every guest, plus a buffer",
+        "dietary": "Dietary needs (vegetarian, halal, allergies)",
+        "servingTime": "When food must be ready to serve",
+        "delivery": "Delivery and setup at the venue",
+        "setTimes": "Your set times and breaks",
+        "power": "Power and space for your equipment",
+        "theme": "Theme, colours and the look they want",
+        "setupTime": "When you can get in to set up",
+        "scope": "Exactly what the job includes"
+      }
+    },
+    "suggest": {
+      "title": "Suggested lines",
+      "hallHire": "Hall hire",
+      "chairsTables": "Chairs and tables",
+      "security": "Security",
+      "cleaning": "Cleaning",
+      "coverage": "Event coverage",
+      "editedPhotos": "Edited photos",
+      "highlightVideo": "Highlight video",
+      "album": "Photo album",
+      "portions": "Food portions",
+      "servers": "Serving staff",
+      "delivery": "Delivery",
+      "setup": "Setup and service",
+      "performance": "Performance",
+      "soundSystem": "Sound system",
+      "extraHour": "Extra hour",
+      "transport": "Transport",
+      "design": "Design and styling",
+      "setupTeardown": "Setup and teardown",
+      "materials": "Materials",
+      "service": "Service"
+    }
   },
   "bookings": {
     "title": "Booking",

@@ -6,6 +6,7 @@ import {
   listPendingOfflinePayments,
   listSiteVisits,
 } from '@tiwa/core';
+import { KIND_STYLE, requestKind } from '@/components/quotes/request-kind.js';
 import { PLANNING_CATEGORY, serviceLabel } from '@tiwa/config';
 import { Banner, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { ArrowRight, History, Inbox } from 'lucide-react';
@@ -134,13 +135,21 @@ export default async function QuotesInboxPage() {
                       timeZone: brief.timezone ?? 'UTC',
                     }).format(new Date(brief.startsAt))
                   : null;
+                // D-X80: each kind of request reads as what it is.
+                const kind = requestKind(row.category);
+                const style = KIND_STYLE[kind];
+                const KindIcon = style.icon;
+                const guests = typeof brief.expectedGuests === 'number' ? brief.expectedGuests : null;
                 const chips = [
-                  serviceLabel(row.category),
                   when,
-                  typeof brief.expectedGuests === 'number'
-                    ? t('enquiry.guests', { count: brief.expectedGuests })
+                  guests !== null
+                    ? kind === 'food'
+                      ? t('kind.portions', { count: guests })
+                      : kind === 'venue'
+                        ? t('enquiry.capacity', { count: guests })
+                        : t('enquiry.guests', { count: guests })
                     : null,
-                  brief.venue,
+                  kind === 'venue' ? null : brief.venue,
                 ].filter((chip): chip is string => Boolean(chip));
                 const budget = brief.budgetMaxMinor && brief.budgetMaxMinor !== '0' ? brief.budgetMaxMinor : null;
                 const change = row.changeRequest;
@@ -151,14 +160,22 @@ export default async function QuotesInboxPage() {
                   >
                     <span
                       aria-hidden
-                      className={`absolute inset-y-0 left-0 w-1 ${change ? 'bg-warning' : 'bg-brand-strong'}`}
+                      className={`absolute inset-y-0 left-0 w-1 ${change ? 'bg-warning' : style.bar}`}
                     />
-                    <div className="flex flex-col gap-4 p-5 pl-6 sm:flex-row sm:items-start sm:p-6 sm:pl-7">
+                    <div className="flex flex-col gap-3 p-4 pl-5 sm:flex-row sm:items-start sm:gap-4 sm:p-5 sm:pl-6">
                       <div className="flex min-w-0 flex-1 flex-col gap-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-display min-w-0 truncate text-xl font-bold tracking-tight">
-                            {brief.eventName ?? row.event.name}
-                          </h3>
+                        <div className="flex items-start gap-3">
+                          <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${style.chip}`}>
+                            <KindIcon aria-hidden className="size-[18px]" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-muted truncate text-[11px] font-semibold tracking-[0.12em] uppercase">
+                              {t(`kind.title.${kind}` as 'kind.title.venue')} · {serviceLabel(row.category)}
+                            </p>
+                            <h3 className="font-display truncate text-lg font-bold tracking-tight">
+                              {brief.eventName ?? row.event.name}
+                            </h3>
+                          </div>
                           {change ? (
                             <StatusPill tone="warning">{t('changes.pill')}</StatusPill>
                           ) : (
@@ -204,12 +221,12 @@ export default async function QuotesInboxPage() {
                           {row.status === 'OPEN' && <DeclineEnquiry requestId={row.id} />}
                         </div>
                       </div>
-                      <div className="bg-surface-2 flex shrink-0 flex-col gap-0.5 rounded-2xl px-5 py-4 sm:min-w-48 sm:text-right">
-                        <span className="text-muted text-xs font-semibold tracking-[0.12em] uppercase">
+                      <div className="bg-surface-2 flex shrink-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 sm:min-w-44 sm:flex-col sm:items-end sm:gap-0.5">
+                        <span className="text-muted text-[11px] font-semibold tracking-[0.12em] uppercase">
                           {t('briefBudgetFact')}
                         </span>
                         {budget ? (
-                          <span className="font-display text-2xl font-bold tracking-tight">
+                          <span className="font-display text-lg font-bold tracking-tight sm:text-2xl">
                             <MoneyText value={budget} currency={brief.currency ?? 'NGN'} />
                           </span>
                         ) : (

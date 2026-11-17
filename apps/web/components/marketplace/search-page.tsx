@@ -2,11 +2,11 @@ import { listShortlist, loadEventAccess, searchMarketplace } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { EmptyState, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { BadgeCheck, MapPin, SearchX, Star } from 'lucide-react';
-import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MarketplaceFrame, coverFor, plannerCover } from './marketplace-frame.js';
+import { BusinessCover } from './business-cover.js';
+import { MarketplaceFrame } from './marketplace-frame.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { SearchFilters, ShortlistButton, type SearchFilterValues } from './search.js';
 
@@ -162,18 +162,17 @@ export async function SearchPageBody({
           <EmptyState icon={<SearchX className="size-6" />} title={t('noResults')} body={t('noResultsBody')} />
         ) : (
           <ul aria-label={t('resultsLabel')} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {result.hits.map((hit, index) => (
+            {result.hits.map((hit) => (
               <li
                 key={hit.orgId}
                 className="group border-border/80 bg-bg relative flex flex-col overflow-hidden rounded-2xl border shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-2"
               >
                 <div className="bg-surface-2 relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={kind === 'PLANNER' ? plannerCover(index) : coverFor(hit.categories, index)}
-                    alt=""
-                    placeholder="blur"
-                    sizes="(min-width: 1280px) 300px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  <BusinessCover
+                    src={hit.coverUrl}
+                    name={hit.name}
+                    emptyLabel={t('noPhotosYet')}
+                    className="transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
                   {(kind === 'PLANNER' || hit.categoryLabels[0]) && (

@@ -42,6 +42,8 @@ export interface SearchHit {
   ratingCount: number;
   verified: boolean;
   availabilityFresh: boolean;
+  /** The business's own first photo (D-X80); null = it has not uploaded any — never a stock picture. */
+  coverUrl: string | null;
 }
 
 const AVAILABILITY_FRESH_MS = 14 * 86_400_000;
@@ -129,6 +131,7 @@ export async function searchMarketplace(
   });
 
   const page = rows.slice(0, input.take);
+  const covers = await coverUrls(page.map((row) => ({ orgId: row.orgId, profileId: row.id })));
   return {
     hits: page.map((row) => ({
       orgId: row.orgId,
@@ -145,9 +148,43 @@ export async function searchMarketplace(
       availabilityFresh:
         Boolean(row.availabilityConfirmedAt) &&
         Date.now() - row.availabilityConfirmedAt!.getTime() < AVAILABILITY_FRESH_MS,
+      coverUrl: covers.get(row.orgId) ?? null,
     })),
     nextCursor: rows.length > input.take ? page[page.length - 1]!.id : null,
   };
+}
+
+/**
+ * First own photo per business (D-X80): a portfolio photo, else a venue space
+ * photo. Businesses with neither get no cover; the UI shows a branded placeholder.
+ */
+export async function coverUrls(rows: { orgId: string; profileId: string }[]): Promise<Map<string, string>> {
+  if (rows.length === 0) return new Map();
+  const [items, spaces] = await Promise.all([
+    prisma.portfolioItem.findMany({
+      where: { orgId: { in: rows.map((row) => row.orgId) }, kind: 'PHOTO' },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      select: { id: true, orgId: true },
+    }),
+    prisma.venueSpace.findMany({
+      where: {
+        profileId: { in: rows.map((row) => row.profileId) },
+        active: true,
+        NOT: { photoKeys: { isEmpty: true } },
+      },
+      select: { id: true, profileId: true, photoKeys: true },
+    }),
+  ]);
+  const out = new Map<string, string>();
+  for (const item of items) if (!out.has(item.orgId)) out.set(item.orgId, `/api/profile-photo/${item.id}`);
+  const orgByProfile = new Map(rows.map((row) => [row.profileId, row.orgId]));
+  for (const space of spaces) {
+    const orgId = orgByProfile.get(space.profileId);
+    const key = space.photoKeys[0];
+    if (orgId && key && !out.has(orgId))
+      out.set(orgId, `/api/space-photo/${orgId}/${space.id}/${key.split('/').pop()}`);
+  }
+  return out;
 }
 
 export interface BusinessLookupHit {

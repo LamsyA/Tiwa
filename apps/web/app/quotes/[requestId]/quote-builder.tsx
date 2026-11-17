@@ -1,5 +1,6 @@
 'use client';
 
+import { KIND_SUGGESTIONS, requestKind } from '@/components/quotes/request-kind.js';
 import { Banner, Button, Input, MoneyInput, MoneyText, StatusPill, Textarea, cn } from '@tiwa/ui';
 import { CalendarClock, Package, Plus, Send, Trash2, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -75,6 +76,8 @@ export function QuoteBuilder({
   proposal = false,
   budgetMinor = null,
   revise = null,
+  category = '',
+  guests = null,
 }: {
   requestId: string;
   eventId: string;
@@ -88,7 +91,12 @@ export function QuoteBuilder({
   budgetMinor?: string | null;
   /** D-X66: revise this quote in place instead of creating a new one. */
   revise?: RevisableQuote | null;
+  /** D-X80: request category, for the suggested lines of its kind. */
+  category?: string;
+  /** Guests in the brief: per-guest lines (portions, chairs) start at this count. */
+  guests?: number | null;
 }) {
+  const suggestions = KIND_SUGGESTIONS[requestKind(category)];
   const tq = useTranslations('quotes');
   const tb = useTranslations('proposals.builder');
   // Proposal wording where it exists, quote wording otherwise.
@@ -308,6 +316,34 @@ export function QuoteBuilder({
         <div className="border-border/70 bg-surface flex flex-col gap-5 rounded-3xl border p-5 shadow-[var(--shadow-1)] sm:p-5">
           <section className="flex flex-col gap-3">
             <h3 className={sectionTitle}>{t('itemsHeading')}</h3>
+            {/* D-X80: the usual lines for this kind of service, one tap each. */}
+            {suggestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-muted mr-1 text-xs font-medium">{tq('suggest.title')}</span>
+                {suggestions.map(({ key, perGuest }) => {
+                  const name = tq(`suggest.${key}` as 'suggest.title');
+                  const added = items.some((item) => item.name.trim() === name);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      disabled={added}
+                      onClick={() =>
+                        setItems((rows) => {
+                          const line = { name, qty: perGuest && guests ? guests : 1, unitMinor: '0' };
+                          const blank = rows.length === 1 && !rows[0]!.name.trim() && rows[0]!.unitMinor === '0';
+                          return blank ? [line] : [...rows, line];
+                        })
+                      }
+                      className="border-border/70 bg-surface hover:border-brand/50 hover:text-brand-strong inline-flex h-8 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition disabled:opacity-40"
+                    >
+                      <Plus aria-hidden className="size-3.5" />
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="text-muted hidden grid-cols-[minmax(0,1fr)_76px_160px_36px] gap-2 px-1 text-xs font-medium sm:grid">
               <span>{tq('builder.colService')}</span>
               <span>{tq('qty')}</span>
