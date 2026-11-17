@@ -8,7 +8,7 @@ import {
   plannerFeeMinor,
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Banner, Card, EmptyState, MoneyText, StatCard, StatusPill, buttonClasses } from '@tiwa/ui';
+import { Banner, Card, EmptyState, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
 import { Download, Printer, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -27,7 +27,8 @@ import {
 import { MoneyTabbar } from './money-tabbar.js';
 import { PlannerFeeCard } from './planner-fee.js';
 
-const TABS = ['budget', 'payments', 'contributions', 'expenses', 'income'] as const;
+// D-X75: the Income tab is gone; sponsor money is rare and lived better as a contribution.
+const TABS = ['budget', 'payments', 'contributions', 'expenses'] as const;
 type Tab = (typeof TABS)[number];
 const SECURED = ['PAID_DIRECT', 'HELD', 'RELEASED', 'CONFIRMED_OFFLINE'];
 
@@ -85,7 +86,7 @@ export default async function EventMoneyPage({
   const [schedule, expenses, contributions, fee, plannerSeat] = await Promise.all([
     listPaymentSchedule(ctx.actor, { eventId: id }, access),
     active === 'expenses' ? listExpenses(ctx.actor, { eventId: id }, access) : Promise.resolve([]),
-    active === 'contributions' || active === 'income'
+    active === 'contributions'
       ? listContributions(ctx.actor, { eventId: id }, access)
       : Promise.resolve([]),
     prisma.event.findUniqueOrThrow({
@@ -400,36 +401,6 @@ export default async function EventMoneyPage({
         </Card>
       )}
 
-      {active === 'income' && canEdit && (
-        <div className="flex justify-end">
-          <AddContributionDialog eventId={id} currency={currency} income />
-        </div>
-      )}
-      {active === 'income' && (
-        <Card className="flex flex-col gap-3 p-4 text-sm">
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard label={t('incomeExpected')} value={money(summary.incomeTotals.pledgedMinor)} />
-            <StatCard label={t('incomeReceived')} value={money(summary.incomeTotals.receivedMinor)} />
-          </div>
-          <ul className="divide-border divide-y">
-            {summary.income.map((row) => (
-              <li key={row.kind} className="flex items-center gap-2 py-2">
-                <span className="flex-1">{t(`kinds.${row.kind}`)}</span>
-                {money(row.receivedMinor)} / {money(row.pledgedMinor)}
-              </li>
-            ))}
-            {contributions
-              .filter((row) => row.kind === 'sponsor' || row.kind === 'other_income')
-              .map((row) => (
-                <li key={row.id} className="flex flex-wrap items-center gap-2 py-2 pl-4">
-                  <span className="text-muted flex-1">{row.contributorName}</span>
-                  {money(row.receivedMinor)} / {money(row.pledgedMinor)}
-                  {canEdit && <ContributionActions contributionId={row.id} currency={currency} />}
-                </li>
-              ))}
-          </ul>
-        </Card>
-      )}
       {canEdit ? null : <p className="text-muted text-sm">{t('viewOnly')}</p>}
     </div>,
   );

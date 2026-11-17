@@ -260,3 +260,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X72: compact, premium card pass across host, vendor and money views; money e2e passing
 - D-X73: host decides if the planner manages guests; richer, compact Plan task rows; plan, guests and planner e2e passing
 - D-X74: one Continue per client; payee confirms offline payments on the event booking page; upload resume on reconnect; full desktop e2e 56/62, remaining: home.spec (old), moments UF-10 upload stall
+- D-X75: removed Money Income tab; nav Chat vs notifications Inbox

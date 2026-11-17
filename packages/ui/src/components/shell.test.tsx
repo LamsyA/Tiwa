@@ -22,7 +22,7 @@ describe('AppShell', () => {
       </AppShell>,
     );
     const mobile = document.querySelector('[data-frame="mobile"]') as HTMLElement;
-    const inbox = within(mobile).getByRole('link', { name: 'Inbox' });
+    const inbox = within(mobile).getByRole('link', { name: 'Chat' });
     expect(inbox).toHaveAttribute('aria-current', 'page');
     expect(screen.getByText('Body')).toBeInTheDocument();
   });

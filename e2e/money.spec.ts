@@ -4,7 +4,7 @@ import { expect, freshPhone, isolateIp, signInWithPhone } from './support/auth.j
 // P9-T08: UF-20 budget and contributions (D-X28). A fresh host creates a
 // birthday with a ₦500,000 budget, then: stat cards and the template
 // categories show; an expense moves Committed/Paid; a pledge and a received
-// part show under Contributions and Income; the CSV export downloads; a
+// part show under Contributions; the CSV export downloads; a
 // second tab sees a new expense within 5 s without reload (UF-20-2, via the
 // 5 s LiveRefresh). UF-20-1 identities are property-tested in core; UF-20-3
 // (no money permission → 403) is covered by core integration tests and the
@@ -81,9 +81,8 @@ test('UF-20: budget figures, expense, pledge, income, export and live update', a
   await host.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(host.getByText(/40,000/).first()).toBeVisible();
 
-  // Income tab sums by kind.
-  await host.getByRole('tab', { name: 'Income' }).click();
-  await expect(host.getByText('Family').first()).toBeVisible();
+  // D-X75: no Income tab any more.
+  await expect(host.getByRole('tab', { name: 'Income' })).toHaveCount(0);
 
   // Step 4: CSV export downloads with the expense in it.
   const [download] = await Promise.all([
