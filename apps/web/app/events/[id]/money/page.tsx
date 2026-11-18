@@ -323,9 +323,26 @@ export default async function EventMoneyPage({
             <ul className="divide-border divide-y text-sm">
               {schedule.map((row) => (
                 <li key={row.id} className="flex flex-col gap-1 px-2 py-3 sm:flex-row sm:items-center">
-                  <Link href={`/events/${id}/bookings/${row.bookingId}?tab=payments`} className="flex-1">
+                  <Link href={`/events/${id}/bookings/${row.bookingId}?tab=payments`} className="min-w-0 flex-1">
                     <span className="font-medium">{row.vendorName}</span>
                     <span className="text-muted"> · {row.label}</span>
+                    {/* D-X97: everyone on the event sees who paid, how and when. */}
+                    {row.paidBy && (
+                      <span className="text-muted mt-0.5 block text-xs">
+                        {t('paidBy', {
+                          who: row.paidBy.isMe
+                            ? t('paidByYou')
+                            : [
+                                row.paidBy.name || t('paidBySomeone'),
+                                row.paidBy.role ? `(${t(`payerRole.${row.paidBy.role}`)})` : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' '),
+                          method: row.paidBy.method ? t(`payMethod.${row.paidBy.method}`) : t('payMethod.online'),
+                          date: new Date(row.paidBy.paidAt).toLocaleDateString(),
+                        })}
+                      </span>
+                    )}
                   </Link>
                   <span className="text-muted">
                     {row.dueAt ? t('dueOn', { date: new Date(row.dueAt).toLocaleDateString() }) : ''}

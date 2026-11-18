@@ -165,14 +165,17 @@ export async function handlePaymentRecorded(data: unknown, log: Log) {
   const vendorOrgId = asString(payload.vendorOrgId);
   if (!paymentId || !bookingId || !vendorOrgId) throw new Error('payment.offline_recorded needs ids');
   const [payment, booking] = await Promise.all([
-    prisma.payment.findUnique({ where: { id: paymentId }, select: { amountMinor: true, currency: true } }),
+    prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: { amountMinor: true, currency: true, recordedById: true, payerUserId: true },
+    }),
     prisma.booking.findUnique({
       where: { id: bookingId },
-      select: { category: true, event: { select: { id: true, name: true } } },
+      select: { category: true, event: { select: { id: true, name: true, hostCanSeeVendorPrices: true } } },
     }),
   ]);
   if (!payment || !booking) return { missing: true as const };
-  return fanout(
+  const vendorSide = await fanout(
     {
       userIds: await orgMemberUserIds(vendorOrgId),
       type: 'payment.received',
@@ -184,6 +187,61 @@ export async function handlePaymentRecorded(data: unknown, log: Log) {
     },
     log,
   );
+  // D-X97: the rest of the event team (host, co-hosts, planner) hears about it
+  // straight away, not only once the vendor confirms. The amount is left out
+  // when the planner hides vendor prices from the host.
+  const payerId = payment.recordedById ?? payment.payerUserId;
+  const [recorder, vendor, rows] = await Promise.all([
+    payerId ? prisma.user.findUnique({ where: { id: payerId }, select: { name: true, phone: true } }) : null,
+    prisma.organization.findUnique({ where: { id: vendorOrgId }, select: { name: true } }),
+    prisma.eventParticipant.findMany({
+      where: { eventId: booking.event.id, removedAt: null, userId: { not: null } },
+      select: { userId: true, role: true },
+    }),
+  ]);
+  const roleOf = new Map(rows.map((row) => [row.userId as string, row.role]));
+  const who = recorder?.name && recorder.name !== recorder.phone ? recorder.name : 'Someone on the team';
+  const team = (await teamUserIds(booking.event.id)).filter((id) => id !== payerId);
+  const pricesHidden = booking.event.hostCanSeeVendorPrices === false;
+  const plannerSide = ['PLANNER', 'PLANNER_STAFF'];
+  const label = `${who} paid ${vendor?.name ?? booking.category}`;
+  const withAmount = team.filter((id) => !pricesHidden || plannerSide.includes(roleOf.get(id) ?? ''));
+  const withoutAmount = team.filter((id) => !withAmount.includes(id));
+  const common = {
+    type: 'payment.received',
+    url: `/events/${booking.event.id}/money?tab=payments`,
+    data: { paymentId, bookingId },
+  } as const;
+  const shown =
+    withAmount.length > 0
+      ? await fanout(
+          {
+            ...common,
+            userIds: withAmount,
+            title: `${label} ${displayAmount(payment.amountMinor, payment.currency)}`,
+            body: `${booking.event.name} · ${booking.category} · waiting for the vendor to confirm`,
+            key: `payrec-team:${paymentId}`,
+          },
+          log,
+        )
+      : { notified: 0, skipped: 0 };
+  const quiet =
+    withoutAmount.length > 0
+      ? await fanout(
+          {
+            ...common,
+            userIds: withoutAmount,
+            title: label,
+            body: `${booking.event.name} · ${booking.category} · waiting for the vendor to confirm`,
+            key: `payrec-team:${paymentId}`,
+          },
+          log,
+        )
+      : { notified: 0, skipped: 0 };
+  return {
+    notified: vendorSide.notified + shown.notified + quiet.notified,
+    skipped: vendorSide.skipped + shown.skipped + quiet.skipped,
+  };
 }
 
 /** P8 offline payment confirmed/declined → the event team. */

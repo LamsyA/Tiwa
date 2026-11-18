@@ -178,6 +178,62 @@ describe('P13-T04 topic fan-out', () => {
     expect(await rowsFor(hostId, 'payment.failed')).toHaveLength(1);
   });
 
+  it('D-X97: a planner paying a vendor shows up for the host straight away', async () => {
+    const hostId = await makeUser('Pay Host');
+    const plannerId = await makeUser('Tola Planner');
+    const vendorId = await makeUser('Pay Vendor');
+    const eventId = await makeEvent(hostId, 'Pay Event');
+    await prisma.eventParticipant.createMany({
+      data: [
+        { eventId, userId: hostId, role: 'HOST', permissions: '{}', acceptedAt: new Date() },
+        { eventId, userId: plannerId, role: 'PLANNER', permissions: '{}', acceptedAt: new Date() },
+      ],
+    });
+    const org = await prisma.organization.create({
+      data: { kind: 'VENDOR', name: 'Jollof Co', slug: `jollof-${Date.now().toString(36)}`, countryCode: 'NG' },
+    });
+    orgs.push(org.id);
+    await prisma.membership.create({ data: { orgId: org.id, userId: vendorId, role: 'OWNER' } });
+    const booking = await prisma.booking.create({
+      data: {
+        eventId,
+        vendorOrgId: org.id,
+        category: 'catering',
+        status: 'CONFIRMED',
+        paymentMode: 'OFFLINE',
+        totalMinor: 300_000n,
+        currency: 'NGN',
+      },
+    });
+    const milestone = await prisma.paymentMilestone.create({
+      data: { bookingId: booking.id, label: 'Deposit', amountMinor: 150_000n, currency: 'NGN', state: 'SCHEDULED' },
+    });
+    const payment = await prisma.payment.create({
+      data: {
+        purpose: 'BOOKING_MILESTONE',
+        milestoneId: milestone.id,
+        payerUserId: plannerId,
+        recordedById: plannerId,
+        amountMinor: 150_000n,
+        currency: 'NGN',
+        status: 'PENDING',
+        mode: 'OFFLINE',
+        provider: 'offline',
+        providerRef: `payref-p-${Date.now().toString(36)}`,
+      },
+    });
+    payments.push(payment.id);
+    await handlePaymentRecorded({ paymentId: payment.id, bookingId: booking.id, vendorOrgId: org.id }, log);
+    const forHost = await rowsFor(hostId, 'payment.received');
+    expect(forHost).toHaveLength(1);
+    expect(forHost[0]?.title).toContain('Tola Planner paid Jollof Co');
+    expect(forHost[0]?.title).toContain('1,500');
+    expect(forHost[0]?.url).toBe(`/events/${eventId}/money?tab=payments`);
+    // The planner who paid is not told about their own payment; the vendor is asked to confirm.
+    expect(await rowsFor(plannerId, 'payment.received')).toHaveLength(0);
+    expect(await rowsFor(vendorId, 'payment.received')).toHaveLength(1);
+  });
+
   it('booking and quote topics reach both sides', async () => {
     const hostId = await makeUser('Q Host');
     const vendorId = await makeUser('Q Vendor');

@@ -735,6 +735,24 @@
         "saving": "Saving…",
         "cancel": "Cancel",
         "error": "Could not save the fee. Try again."
+      },
+      "paidBy": "Paid by {who} · {method} · {date}",
+      "paidByYou": "you",
+      "paidBySomeone": "a team member",
+      "payerRole": {
+        "HOST": "host",
+        "CO_HOST": "co-host",
+        "PLANNER": "planner",
+        "PLANNER_STAFF": "planner team",
+        "VENDOR": "vendor",
+        "PHOTOGRAPHER": "photographer"
+      },
+      "payMethod": {
+        "bank_transfer": "bank transfer",
+        "cash": "cash",
+        "pos": "POS / card",
+        "other": "other",
+        "online": "online"
       }
     },
     "plan": {

@@ -31,8 +31,27 @@ export async function listPaymentSchedule(
       dueAt: true,
       state: true,
       booking: { select: { id: true, category: true, vendorOrgId: true } },
+      // D-X97: who paid, how and when (latest non-failed payment).
+      payments: {
+        where: { status: { not: 'FAILED' } },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { paidAt: true, offlineMethod: true, recordedById: true, createdAt: true },
+      },
     },
   });
+  const payerIds = [
+    ...new Set(rows.map((row) => row.payments[0]?.recordedById).filter((v): v is string => Boolean(v))),
+  ];
+  const [payers, roles] = await Promise.all([
+    prisma.user.findMany({ where: { id: { in: payerIds } }, select: { id: true, name: true, phone: true } }),
+    prisma.eventParticipant.findMany({
+      where: { eventId, userId: { in: payerIds }, removedAt: null },
+      select: { userId: true, role: true },
+    }),
+  ]);
+  const payerName = new Map(payers.map((u) => [u.id, u.name && u.name !== u.phone ? u.name : '']));
+  const payerRole = new Map(roles.map((r) => [r.userId as string, r.role]));
   const orgs = await prisma.organization.findMany({
     where: { id: { in: [...new Set(rows.map((row) => row.booking.vendorOrgId))] } },
     select: { id: true, name: true },
@@ -48,6 +67,17 @@ export async function listPaymentSchedule(
     bookingId: row.booking.id,
     category: row.booking.category,
     vendorName: names.get(row.booking.vendorOrgId) ?? '',
+    paidBy: (() => {
+      const pay = row.payments[0];
+      if (!pay?.recordedById) return null;
+      return {
+        name: payerName.get(pay.recordedById) ?? '',
+        role: payerRole.get(pay.recordedById) ?? null,
+        isMe: pay.recordedById === actor.userId,
+        method: pay.offlineMethod,
+        paidAt: (pay.paidAt ?? pay.createdAt).toISOString(),
+      };
+    })(),
     ...(hidden ? { pricesHidden: true as const } : {}),
   }));
 }
