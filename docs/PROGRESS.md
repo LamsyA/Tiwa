@@ -274,3 +274,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X86: sleek venue search bar and compact venue cards
 - D-X87: full links and branded notification emails; event team joins booking chats
 - D-X88: planner staff notified on assignment, branded invite, scoped workspace; e2e passing desktop and mobile
+- D-X89: host-only guest count, decline undoes it, planner told; daily task-deadline digest (unit tests pass; guest-change e2e pending)

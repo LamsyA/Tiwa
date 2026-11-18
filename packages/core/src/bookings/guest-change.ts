@@ -2,7 +2,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
-import { requireEventAccess } from '../events/access.js';
+import { requireEventAccess, requireHost } from '../events/access.js';
+import { notify } from '../messaging/notify.js';
 import { bookingMoney } from '../payments/status.js';
 import { calcQuoteTotals } from '../quotes/totals.js';
 import { NotFoundError, ValidationError } from '../shared/errors.js';
@@ -151,7 +152,7 @@ export async function guestChangePreview(
   raw: z.input<typeof guestChangeSchema>,
 ): Promise<GuestChangePreview> {
   const input = guestChangeSchema.parse(raw);
-  await requireEventAccess(actor, input.eventId, 'event.edit');
+  requireHost(await requireEventAccess(actor, input.eventId, 'event.edit'));
   const { scopes: _scopes, ...preview } = await buildPreview(input.eventId, input.newCount);
   void _scopes;
   return preview;
@@ -181,9 +182,9 @@ export async function applyGuestChange(
   actor: UserActor,
   raw: z.input<typeof applyGuestChangeSchema>,
   secret: string,
-): Promise<{ sent: GuestChangeSent[]; skipped: string[] }> {
+): Promise<{ sent: GuestChangeSent[]; skipped: string[]; planner: { name: string; phone: string | null } | null }> {
   const input = applyGuestChangeSchema.parse(raw);
-  await requireEventAccess(actor, input.eventId, 'event.edit');
+  requireHost(await requireEventAccess(actor, input.eventId, 'event.edit'));
   const preview = await buildPreview(input.eventId, input.newCount);
   if (preview.fromCount === input.newCount) {
     throw new ValidationError('The guest count did not change', { field: 'newCount', key: 'sameCount' });
@@ -210,10 +211,13 @@ export async function applyGuestChange(
       },
     });
     const booking = await prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, select: { vendorOrgId: true } });
-    const owner = await prisma.membership.findFirst({
-      where: { orgId: booking.vendorOrgId, role: 'OWNER' },
-      select: { user: { select: { phone: true } } },
+    // D-X89: the business's WhatsApp is the first member with a phone, owner first.
+    const members = await prisma.membership.findMany({
+      where: { orgId: booking.vendorOrgId, user: { phone: { not: null } } },
+      select: { role: true, user: { select: { phone: true } } },
     });
+    const rank = { OWNER: 0, ADMIN: 1, STAFF: 2 } as const;
+    const owner = members.sort((a, b) => rank[a.role] - rank[b.role])[0];
     sent.push({
       bookingId,
       versionId: result.versionId,
@@ -226,6 +230,7 @@ export async function applyGuestChange(
     });
   }
   await prisma.event.update({ where: { id: input.eventId }, data: { expectedGuests: input.newCount } });
+  const planner = await tellPlanner(input.eventId, preview.fromCount, input.newCount, sent);
   await audit(prisma, {
     actor,
     action: 'event.guestCountChanged',
@@ -233,7 +238,38 @@ export async function applyGuestChange(
     targetId: input.eventId,
     data: { eventId: input.eventId, from: preview.fromCount, to: input.newCount, sent: sent.length },
   });
-  return { sent, skipped };
+  return { sent, skipped, planner };
+}
+
+/** D-X89: the planner hears about the new count (in-app, push, email) and gets a WhatsApp row too. */
+async function tellPlanner(
+  eventId: string,
+  from: number,
+  to: number,
+  sent: GuestChangeSent[],
+): Promise<{ name: string; phone: string | null } | null> {
+  const rows = await prisma.eventParticipant.findMany({
+    where: { eventId, role: 'PLANNER', removedAt: null, userId: { not: null } },
+    select: { userId: true, user: { select: { name: true, phone: true } } },
+  });
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { name: true } });
+  const vendors = sent.map((row) => row.vendorName).join(', ');
+  for (const row of rows) {
+    await notify(
+      { kind: 'system' },
+      {
+        userId: row.userId as string,
+        type: 'event.guestCountChanged',
+        title: `Guest count changed to ${to}`,
+        body: `${event?.name ?? 'Your event'}: the host changed the guest count from ${from} to ${to}.${
+          vendors ? ` Changes sent to ${vendors} for approval.` : ''
+        }`,
+        url: `/events/${eventId}/vendors`,
+      },
+    ).catch(() => undefined);
+  }
+  const first = rows[0]?.user;
+  return first ? { name: first.name, phone: first.phone } : null;
 }
 
 // ───────────── Signed approve link (stateless, like the headcount link) ─────────────

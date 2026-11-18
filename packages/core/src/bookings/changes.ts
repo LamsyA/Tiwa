@@ -183,6 +183,19 @@ export async function respondBookingChange(
     throw new ForbiddenError('The other side decides on a change request');
   }
   const { side } = await bookingSide(actor, version.booking.eventId, version.booking.vendorOrgId);
+  // D-X89: the OTHER side decides. A host can't decide their planner's request
+  // (or the reverse): both sit on the client side, and the vendor must agree.
+  const proposerIsVendor = version.proposedById
+    ? Boolean(
+        await prisma.membership.findFirst({
+          where: { userId: version.proposedById, orgId: version.booking.vendorOrgId },
+          select: { id: true },
+        }),
+      )
+    : false;
+  if (version.proposedById && (side === 'vendor') === proposerIsVendor) {
+    throw new ForbiddenError('The other side decides on a change request');
+  }
   const now = new Date();
 
   if (!input.accept) {
@@ -212,6 +225,7 @@ export async function respondBookingChange(
         'change card failed',
       );
     }
+    await undoGuestCountIfAllDeclined(version.booking.eventId, version.reason, version.createdAt);
     return { status: 'DECLINED' as const };
   }
 
@@ -530,4 +544,31 @@ export function diffScopes(
     dateChanged: (oldScope.serviceDate ?? null) !== (newScope.serviceDate ?? null),
     slotChanged: (oldScope.slot ?? null) !== (newScope.slot ?? null),
   };
+}
+
+const GUEST_CHANGE = /^Guest count changed from (\d+) to (\d+)\.$/;
+
+/**
+ * D-X89: a guest-count change (D-X84) moves the event's count at once. When
+ * every vendor change it raised is declined, nothing was agreed, so the count
+ * goes back — unless the host has moved it again since.
+ */
+async function undoGuestCountIfAllDeclined(eventId: string, reason: string | null, at: Date): Promise<void> {
+  const match = reason ? GUEST_CHANGE.exec(reason) : null;
+  if (!match) return;
+  const [, from, to] = match;
+  const open = await prisma.bookingVersion.count({
+    // The same change was raised on every booking within one request (seconds apart).
+    where: {
+      reason,
+      status: { not: 'DECLINED' },
+      booking: { eventId },
+      createdAt: { gte: new Date(at.getTime() - 5 * 60_000), lte: new Date(at.getTime() + 5 * 60_000) },
+    },
+  });
+  if (open > 0) return;
+  await prisma.event.updateMany({
+    where: { id: eventId, expectedGuests: Number(to) },
+    data: { expectedGuests: Number(from) },
+  });
 }

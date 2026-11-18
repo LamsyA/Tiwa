@@ -69,14 +69,50 @@ describe('events/deadline-alerts', () => {
     const result = await handleDeadlineAlerts(fakeLog, now);
     expect(result.dueSoon).toBeGreaterThanOrEqual(1);
     expect(result.overdue).toBeGreaterThanOrEqual(1);
+    // D-X89: one digest per person per day, not one ping per task.
     const rows = await prisma.notification.findMany({ where: { userId: host.userId, type: 'task.deadline' } });
-    expect(rows.map((row) => row.title).sort()).toEqual(['Due soon: Soon', 'Overdue: Overdue']);
-    const again = await handleDeadlineAlerts(fakeLog, now);
-    expect(again).toMatchObject({ dueSoon: 0, overdue: 0 });
+    expect(rows.map((row) => row.title)).toEqual(['1 overdue task, 1 due soon']);
+    expect(rows[0]?.body).toContain('Overdue: Overdue');
+    expect(rows[0]?.body).toContain('Due soon: Soon');
+    await handleDeadlineAlerts(fakeLog, now);
+    expect(await prisma.notification.count({ where: { userId: host.userId, type: 'task.deadline' } })).toBe(1);
+
+    // Next day: the due-soon task was already mentioned; the overdue one is on day 1, so it repeats.
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    await handleDeadlineAlerts(fakeLog, tomorrow);
+    const next = await prisma.notification.findMany({
+      where: { userId: host.userId, type: 'task.deadline' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(next).toHaveLength(2);
+    expect(next[0]?.body).not.toContain('Due soon: Soon');
+    // Day 2: the overdue task is not repeated (its next reminder is day 3).
+    await handleDeadlineAlerts(fakeLog, new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000));
+    const day2 = await prisma.notification.findMany({
+      where: { userId: host.userId, type: 'task.deadline' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(day2.every((row, i) => i > 0 || !row.body.includes('Overdue: Overdue'))).toBe(true);
 
     // Closed events never alert: cancel and re-scan.
     await cancelEvent(host, { eventId });
     expect(await myAlerts(now)).toEqual([]);
+  });
+
+  it('also tells the event planner (D-X89)', async () => {
+    const host = await makeHost();
+    const planner = await makeHost();
+    const now = new Date('2000-07-01T12:00:00Z');
+    const { eventId } = await createEventDraft(host, { type: 'birthday' });
+    mine.push(eventId);
+    await prisma.eventParticipant.create({
+      data: { eventId, userId: planner.userId, role: 'PLANNER', permissions: '{}', acceptedAt: new Date() },
+    });
+    await createTask(host, { eventId, title: 'Book DJ', dueAt: iso(-60_000, now.getTime()) });
+    await handleDeadlineAlerts(fakeLog, now);
+    const forPlanner = await prisma.notification.findMany({ where: { userId: planner.userId, type: 'task.deadline' } });
+    expect(forPlanner).toHaveLength(1);
+    expect(forPlanner[0]?.body).toContain('Book DJ');
   });
 
   it('is idempotent: running twice returns the same counts', async () => {

@@ -152,6 +152,8 @@ export interface DeadlineAlert {
   ownerUserId: string | null;
   eventName: string;
   creatorUserId: string;
+  /** The event's planner-side people (PLANNER rows), who also get the digest (D-X89). */
+  plannerUserIds: string[];
 }
 
 /**
@@ -162,10 +164,12 @@ export interface DeadlineAlert {
  */
 export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Promise<DeadlineAlert[]> {
   const soon = new Date(now.getTime() + soonHours * 60 * 60 * 1000);
+  // D-X89: tasks overdue more than 8 days stop nudging (their last reminder is day 7).
+  const stale = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
   const rows = await prisma.task.findMany({
     where: {
       status: { not: 'DONE' },
-      dueAt: { not: null, lte: soon },
+      dueAt: { not: null, lte: soon, gte: stale },
       event: { status: { in: ['DRAFT', 'ACTIVE'] } },
     },
     select: {
@@ -174,7 +178,13 @@ export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Prom
       dueAt: true,
       title: true,
       ownerUserId: true,
-      event: { select: { name: true, createdById: true } },
+      event: {
+        select: {
+          name: true,
+          createdById: true,
+          participants: { where: { role: 'PLANNER', removedAt: null }, select: { userId: true } },
+        },
+      },
     },
     orderBy: { dueAt: 'asc' },
     take: 500,
@@ -191,6 +201,7 @@ export async function findDeadlineAlerts(now = new Date(), soonHours = 24): Prom
             ownerUserId: row.ownerUserId,
             eventName: row.event.name,
             creatorUserId: row.event.createdById,
+            plannerUserIds: row.event.participants.flatMap((p) => (p.userId ? [p.userId] : [])),
           },
         ]
       : [],

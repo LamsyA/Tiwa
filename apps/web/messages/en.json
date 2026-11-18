@@ -3827,8 +3827,12 @@
     "tapSend": "Tap Send in WhatsApp, then come back here.",
     "nextUp": "Up next: {vendor}",
     "skip": "Skip",
-    "everyoneHasIt": "{count, plural, one {Your vendor has the link.} other {All # vendors have their link.}} You will be told the moment each one approves.",
+    "everyoneHasIt": "{count, plural, one {Your vendor has the link.} other {Everyone has their message.}} You will be told the moment each vendor approves.",
     "whatsappFor": "Send to {vendor} on WhatsApp",
-    "copyFor": "Copy the message for {vendor}"
+    "copyFor": "Copy the message for {vendor}",
+    "waPlanner": "Hello {planner}, I've changed the guest count for {event} from {from} to {to}. The updated bookings went to {vendors} for approval. You can follow it here: {url}",
+    "noNumber": "No WhatsApp number saved for {name}: pick them in WhatsApp.",
+    "plannerTag": "Your planner",
+    "noNumberTag": "No number saved"
   }
 }

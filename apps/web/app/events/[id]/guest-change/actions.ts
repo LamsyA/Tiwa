@@ -17,5 +17,7 @@ export const sendGuestChange = userAction(applyGuestChangeSchema, async (input, 
   return {
     skipped: result.skipped,
     sent: result.sent.map(({ token, ...row }) => ({ ...row, url: `${base}/c/${token}` })),
+    // D-X89: the planner gets a WhatsApp row too, pointing at the event's vendors page.
+    planner: result.planner ? { ...result.planner, url: `${base}/events/${input.eventId}/vendors` } : null,
   };
 });

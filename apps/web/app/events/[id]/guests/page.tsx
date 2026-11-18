@@ -71,14 +71,8 @@ export default async function GuestsPage({
   ]);
   const guests = listed?.guests ?? [];
   const impactOn = await aiAllowed(ctx.actor, id, access, 'ai.draftPlan');
-  const canChangeCount = (() => {
-    try {
-      authorize(ctx.actor, 'event.edit', { eventId: id, access });
-      return true;
-    } catch {
-      return false;
-    }
-  })();
+  // D-X89: only the host changes the guest count — they pay and know the number.
+  const canChangeCount = access.role === 'HOST';
 
   return (
     <EventFrame

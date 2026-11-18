@@ -145,5 +145,25 @@ test('D-X84: guest count 80 → 100, caterer approves from the WhatsApp link', a
   await expect(host.getByText(/300,000/).first()).toBeVisible({ timeout: 20_000 });
   await go(host, `/events/${eventId}/guests`);
   await host.getByRole('button', { name: 'Guest count changed' }).click();
+  const again = host.getByRole('dialog');
+  await expect(again.getByLabel(/New guest count \(now 100\)/)).toBeVisible();
+
+  // D-X89: a change every vendor declines is undone — the count goes back to 100.
+  await again.getByLabel(/New guest count/).fill('120');
+  await again.getByRole('button', { name: 'See what changes' }).click();
+  await again.getByRole('button', { name: /Update and send to 1 vendor/ }).click();
+  await expect(again.getByText('Sent to 1 vendor')).toBeVisible({ timeout: 30_000 });
+  const [popup2] = await Promise.all([
+    host.waitForEvent('popup'),
+    again.getByRole('button', { name: /Send all on WhatsApp \(1\)/ }).click(),
+  ]);
+  const text2 = decodeURIComponent(new URL(popup2.url()).searchParams.get('text') ?? '');
+  await popup2.close();
+  const link2 = text2.match(/https?:\/\/\S+\/c\/\S+/)?.[0] as string;
+  await go(phone, new URL(link2).pathname);
+  await phone.getByRole('button', { name: 'Decline' }).click();
+  await expect(phone.getByText(/Declined\. Your booking stays as it was/)).toBeVisible({ timeout: 30_000 });
+  await go(host, `/events/${eventId}/guests`);
+  await host.getByRole('button', { name: 'Guest count changed' }).click();
   await expect(host.getByRole('dialog').getByLabel(/New guest count \(now 100\)/)).toBeVisible();
 });

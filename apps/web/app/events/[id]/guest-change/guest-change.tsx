@@ -19,6 +19,15 @@ interface SentRow {
   url: string;
 }
 
+/** One WhatsApp message to send: a vendor's approve link, or the planner's heads-up (D-X89). */
+interface Recipient {
+  key: string;
+  name: string;
+  phone: string | null;
+  text: string;
+  kind: 'vendor' | 'planner';
+}
+
 /** wa.me wants digits only, with the country code. */
 function waLink(phone: string | null, text: string): string {
   const digits = phone?.replace(/\D/g, '') ?? '';
@@ -48,6 +57,7 @@ export function GuestChangeFlow({
   const [preview, setPreview] = React.useState<GuestChangePreview | null>(null);
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const [sent, setSent] = React.useState<SentRow[] | null>(null);
+  const [planner, setPlanner] = React.useState<{ name: string; phone: string | null; url: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState<string | null>(null);
@@ -83,9 +93,9 @@ export function GuestChangeFlow({
     }
   }, [batchKey, shared]);
 
-  function openWhatsApp(row: SentRow) {
-    setOpening(row.bookingId);
-    window.open(waLink(row.vendorPhone, message(row)), '_blank', 'noopener');
+  function openWhatsApp(row: Recipient) {
+    setOpening(row.key);
+    window.open(waLink(row.phone, row.text), '_blank', 'noopener');
   }
 
   function reset(next: boolean) {
@@ -125,6 +135,7 @@ export function GuestChangeFlow({
     } catch {
       setShared(new Set());
     }
+    setPlanner(result.data.planner);
     setSent(result.data.sent);
   }
 
@@ -136,6 +147,37 @@ export function GuestChangeFlow({
       to: preview?.toCount ?? 0,
       url: row.url,
     });
+
+  // Affected vendors first, then the planner (D-X89).
+  const recipients: Recipient[] = sent
+    ? [
+        ...sent.map((row) => ({
+          key: row.bookingId,
+          name: row.vendorName,
+          phone: row.vendorPhone,
+          text: message(row),
+          kind: 'vendor' as const,
+        })),
+        ...(planner
+          ? [
+              {
+                key: 'planner',
+                name: planner.name,
+                phone: planner.phone,
+                text: t('waPlanner', {
+                  planner: planner.name,
+                  event: eventName,
+                  from: preview?.fromCount ?? 0,
+                  to: preview?.toCount ?? 0,
+                  vendors: sent.map((row) => row.vendorName).join(', ') || '—',
+                  url: planner.url,
+                }),
+                kind: 'planner' as const,
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   const totalDiff = preview
     ? preview.affected.filter((row) => picked.has(row.bookingId)).reduce((sum, row) => sum + BigInt(row.diffMinor), 0n)
@@ -279,22 +321,21 @@ export function GuestChangeFlow({
         )}
 
         {/* Step 3: share each approve link on WhatsApp, one tap per vendor (D-X85). */}
-        {sent &&
-          sent.length > 0 &&
+        {recipients.length > 0 &&
           (() => {
-            const next = sent.find((row) => !shared.has(row.bookingId)) ?? null;
-            const done = sent.filter((row) => shared.has(row.bookingId)).length;
+            const next = recipients.find((row) => !shared.has(row.key)) ?? null;
+            const done = recipients.filter((row) => shared.has(row.key)).length;
             return (
               <div className="flex flex-col gap-3">
                 <div className="border-border/70 bg-surface flex flex-col gap-3 rounded-2xl border p-4">
                   <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="font-semibold">{t('progress', { done, total: sent.length })}</span>
-                    {done === sent.length && <StatusPill tone="success">{t('allSent')}</StatusPill>}
+                    <span className="font-semibold">{t('progress', { done, total: recipients.length })}</span>
+                    {done === recipients.length && <StatusPill tone="success">{t('allSent')}</StatusPill>}
                   </div>
                   <div className="bg-surface-2 h-1.5 overflow-hidden rounded-full">
                     <span
                       className="block h-full rounded-full bg-[#25D366] transition-[width] duration-500"
-                      style={{ width: `${(done / sent.length) * 100}%` }}
+                      style={{ width: `${(done / recipients.length) * 100}%` }}
                     />
                   </div>
                   {next ? (
@@ -305,17 +346,21 @@ export function GuestChangeFlow({
                         className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 text-base font-semibold text-white shadow-[var(--shadow-1)] transition hover:brightness-105"
                       >
                         <MessageCircle aria-hidden className="size-5" />
-                        {done === 0 ? t('sendAll', { count: sent.length }) : t('sendNext', { vendor: next.vendorName })}
+                        {done === 0 ? t('sendAll', { count: recipients.length }) : t('sendNext', { vendor: next.name })}
                       </button>
                       <div className="text-muted flex items-center justify-between gap-2 text-xs">
                         <span className="truncate">
-                          {opening ? t('tapSend') : t('nextUp', { vendor: next.vendorName })}
+                          {opening
+                            ? t('tapSend')
+                            : next.phone
+                              ? t('nextUp', { vendor: next.name })
+                              : t('noNumber', { name: next.name })}
                         </span>
                         <button
                           type="button"
                           onClick={() => {
                             setOpening(null);
-                            setShared((current) => new Set(current).add(next.bookingId));
+                            setShared((current) => new Set(current).add(next.key));
                           }}
                           className="hover:text-text shrink-0 font-semibold underline-offset-2 hover:underline"
                         >
@@ -326,16 +371,16 @@ export function GuestChangeFlow({
                   ) : (
                     <p className="text-success flex items-center gap-2 text-sm font-semibold">
                       <Check aria-hidden className="size-4" />
-                      {t('everyoneHasIt', { count: sent.length })}
+                      {t('everyoneHasIt', { count: recipients.length })}
                     </p>
                   )}
                 </div>
                 <ul className="flex flex-col gap-1.5">
-                  {sent.map((row) => {
-                    const isShared = shared.has(row.bookingId);
+                  {recipients.map((row) => {
+                    const isShared = shared.has(row.key);
                     return (
                       <li
-                        key={row.bookingId}
+                        key={row.key}
                         className="border-border/70 bg-surface flex items-center gap-2 rounded-xl border px-3 py-2"
                       >
                         <span
@@ -349,11 +394,16 @@ export function GuestChangeFlow({
                             <MessageCircle aria-hidden className="size-3.5" />
                           )}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{row.vendorName}</span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {row.name}
+                          <span className="text-muted ml-1.5 text-xs font-normal">
+                            {row.kind === 'planner' ? t('plannerTag') : row.phone ? '' : t('noNumberTag')}
+                          </span>
+                        </span>
                         <button
                           type="button"
                           onClick={() => openWhatsApp(row)}
-                          aria-label={t('whatsappFor', { vendor: row.vendorName })}
+                          aria-label={t('whatsappFor', { vendor: row.name })}
                           className="text-[#128C7E] hover:bg-surface-2 grid size-8 place-items-center rounded-lg transition"
                         >
                           <MessageCircle aria-hidden className="size-4" />
@@ -361,12 +411,12 @@ export function GuestChangeFlow({
                         <button
                           type="button"
                           onClick={() => {
-                            void navigator.clipboard.writeText(message(row)).then(() => setCopied(row.bookingId));
+                            void navigator.clipboard.writeText(row.text).then(() => setCopied(row.key));
                           }}
-                          aria-label={t('copyFor', { vendor: row.vendorName })}
+                          aria-label={t('copyFor', { vendor: row.name })}
                           className="text-muted hover:bg-surface-2 hover:text-text grid size-8 place-items-center rounded-lg transition"
                         >
-                          {copied === row.bookingId ? (
+                          {copied === row.key ? (
                             <Check aria-hidden className="size-4" />
                           ) : (
                             <Copy aria-hidden className="size-4" />

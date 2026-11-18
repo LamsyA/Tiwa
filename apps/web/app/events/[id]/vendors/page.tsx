@@ -1,5 +1,5 @@
 import { PLANNING_CATEGORY } from '@tiwa/config';
-import { authorize, eventOrders, getEventVendorCategories, listSiteVisits, type OrderStage } from '@tiwa/core';
+import { eventOrders, getEventVendorCategories, listSiteVisits, type OrderStage } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { StatusPill, buttonClasses } from '@tiwa/ui';
 import { ArrowRight, CheckCircle2, FileSignature, GitCompare, Search, Sparkles } from 'lucide-react';
@@ -53,15 +53,8 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
       if (row.counterparty) leadByCategory.set(row.categoryKey, row.counterparty);
     }
   }
-  const canChangeCount = (() => {
-    if (!access) return false;
-    try {
-      authorize(ctx.actor, 'event.edit', { eventId, access });
-      return true;
-    } catch {
-      return false;
-    }
-  })();
+  // D-X89: only the host changes the guest count — they pay and know the number.
+  const canChangeCount = access?.role === 'HOST';
   const countEvent = canChangeCount
     ? await prisma.event.findUnique({ where: { id: eventId }, select: { name: true, expectedGuests: true } })
     : null;
