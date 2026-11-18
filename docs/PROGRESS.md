@@ -272,3 +272,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X84: guest-count change showcase (draft per-guest changes, WhatsApp approve link, live balance); e2e passing desktop and mobile
 - D-X85: Send all on WhatsApp step-through
 - D-X86: sleek venue search bar and compact venue cards
+- D-X87: full links and branded notification emails; event team joins booking chats

@@ -11,6 +11,13 @@ type Log = ReturnType<typeof createLogger>;
  * details skip that channel; dead push subscriptions are deleted. */
 export const NOTIFY_TOPIC = 'messaging/notify' as const;
 
+/** Notification links are stored as app paths ("/quotes"); emails and texts
+ * open outside the app, so they need the full address (D-X87). */
+export function absoluteUrl(url: string, base: string = env.APP_URL): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${base.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 interface NotifyPayload {
   notificationId?: unknown;
   urgent?: unknown;
@@ -38,6 +45,7 @@ export async function handleNotify(
   });
   if (!user) return { sent, skipped: ['no-user'], notificationId: resolved.id };
   const { email, sms, whatsapp, push } = providers();
+  const link = absoluteUrl(resolved.url);
 
   if (channels.push) {
     const subs = await prisma.pushSubscription.findMany({ where: { userId: resolved.userId } });
@@ -75,7 +83,7 @@ export async function handleNotify(
       const result = await email.send({
         to: user.email,
         subject: resolved.title,
-        react: NotifyEmail({ name: user.name, title: resolved.title, body: resolved.body, url: resolved.url }),
+        react: NotifyEmail({ name: user.name, title: resolved.title, body: resolved.body, url: link }),
       });
       sent.push(`email:${result.id}`);
     }
@@ -85,7 +93,7 @@ export async function handleNotify(
     if (!user.phone) {
       skipped.push('sms:no-number');
     } else {
-      const result = await sms.send({ to: user.phone, text: `${resolved.title} — ${resolved.body} ${resolved.url}` });
+      const result = await sms.send({ to: user.phone, text: `${resolved.title} — ${resolved.body} ${link}` });
       sent.push(`sms:${result.id}`);
     }
   }

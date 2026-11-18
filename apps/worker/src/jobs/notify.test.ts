@@ -2,7 +2,7 @@ import { notify } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { FakeEmail, FakePush, FakeSms, FakeWhatsApp } from '@tiwa/messaging';
 import { afterAll, describe, expect, it } from 'vitest';
-import { handleNotify } from './notify.js';
+import { absoluteUrl, handleNotify } from './notify.js';
 import { setProvidersForTests } from './providers.js';
 import { createLogger } from '@tiwa/core';
 
@@ -80,5 +80,13 @@ describe('messaging/notify (P13-T03)', () => {
     expect(result.skipped).toContain('email:no-address');
     expect(result.skipped).toContain('sms:no-number');
     expect(await prisma.pushSubscription.count({ where: { endpoint: 'https://push.example/dead' } })).toBe(0);
+  });
+});
+
+describe('absoluteUrl (D-X87)', () => {
+  it('turns app paths into full links for email and SMS', () => {
+    expect(absoluteUrl('/quotes/abc', 'https://tiwa.app/')).toBe('https://tiwa.app/quotes/abc');
+    expect(absoluteUrl('inbox', 'https://tiwa.app')).toBe('https://tiwa.app/inbox');
+    expect(absoluteUrl('https://other.example/x', 'https://tiwa.app')).toBe('https://other.example/x');
   });
 });
