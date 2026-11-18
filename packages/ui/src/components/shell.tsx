@@ -144,6 +144,8 @@ export interface AppShellProps {
   roleLabel?: string;
   /** Counts shown on navigation items by key (e.g. `{ inbox: 3 }` for unread chats). */
   badges?: Partial<Record<string, number>>;
+  /** Nav keys this person can't use (e.g. planner staff, D-X88). */
+  hide?: string[];
   children: React.ReactNode;
 }
 
@@ -167,10 +169,13 @@ export function AppShell({
   accountCompact,
   roleLabel,
   badges = {},
+  hide = [],
   children,
 }: AppShellProps) {
   const withBadges = (items: NavItem[]) =>
-    items.map((item) => (badges[item.key] ? { ...item, badge: badges[item.key] as number } : item));
+    items
+      .filter((item) => !hide.includes(item.key))
+      .map((item) => (badges[item.key] ? { ...item, badge: badges[item.key] as number } : item));
   const nav = navigationForRole(role);
   const tabs = withBadges(nav.tabs);
   const sidebar = withBadges(nav.sidebar);

@@ -25,3 +25,4 @@ export { FakePush, WebPush } from './push.js';
 export { SignInEmail, renderSignInEmail, type SignInEmailProps } from './templates/sign-in.js';
 export { SmtpEmail, sendSmtp, smtpTransport, type SmtpConfig } from './smtp.js';
 export { PLACEHOLDER_EMAIL_DOMAINS, isDeliverableEmail, isPlaceholderEmail } from './email-address.js';
+export { TeamInviteEmail, renderTeamInviteEmail, type TeamInviteEmailProps } from './templates/team-invite.js';

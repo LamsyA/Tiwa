@@ -116,7 +116,8 @@ test.describe('UF-01 sign up and onboarding', () => {
     await isolateIp(other);
     const path = new URL(link as string).pathname + new URL(link as string).search;
     await signInWithPhone(other, path, invitee);
-    await expect(other).toHaveURL(/\/settings\/team$/);
+    await expect(other).toHaveURL(/\/home$/);
+    await other.goto('/settings/team');
     await expect(other.getByRole('heading', { name: 'Tola Events team' })).toBeVisible();
     await guest.close();
   });

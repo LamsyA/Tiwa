@@ -2835,7 +2835,12 @@
       "STAFF": "Staff"
     },
     "staffCount": "{count, plural, =0 {No staff} one {# staff} other {# staff}}",
-    "continueEvent": "Continue {name}"
+    "continueEvent": "Continue {name}",
+    "assignStatus": {
+      "done": "Assigned. They’ve been notified.",
+      "already": "They’re already on this event.",
+      "error": "Couldn’t assign. Try again."
+    }
   },
   "vendor": {
     "title": "Vendor workspace",

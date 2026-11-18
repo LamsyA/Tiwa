@@ -28,6 +28,7 @@ function roleForOrgs(orgs: Awaited<ReturnType<typeof listMyOrgs>>): AppRole {
  * changes reach the nav within 30s and every permission check still reads
  * live rows (loadEventAccess is never cached). */
 const ORGS_TTL_MS = 30_000;
+const STAFF_HIDDEN = ['orders', 'pipeline', 'quotes', 'invoices', 'business'];
 const orgsCache = new Map<string, { at: number; list: Awaited<ReturnType<typeof listMyOrgs>> }>();
 export function clearOrgsCache(userId?: string): void {
   if (userId) orgsCache.delete(userId);
@@ -61,7 +62,10 @@ const frameData = cache(async (userId: string) => {
   if (!user) throw new Error('user row vanished mid-request');
   const flags = await getFlagsFor(user.countryCode ?? '');
   const role = roleForOrgs(orgs);
-  return { role, flags, unread, bell, account: accountFrom(role, orgs, profile) };
+  // D-X88: planner staff work only on assigned events — no sales or business pages.
+  const plannerRole = orgs.find((row) => row.org.kind === 'PLANNER')?.role;
+  const hide = role === 'planner' && plannerRole === 'STAFF' ? STAFF_HIDDEN : [];
+  return { role, flags, unread, bell, hide, account: accountFrom(role, orgs, profile) };
 });
 
 function accountFrom(
@@ -98,7 +102,7 @@ export async function AppFrame({
   sectionTabs?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const { role, flags, unread, bell, account } = await frameData(userId);
+  const { role, flags, unread, bell, hide, account } = await frameData(userId);
   const t = await getTranslations('account');
   return (
     <FlagsProvider flags={flags}>
@@ -109,6 +113,7 @@ export async function AppFrame({
         sectionTabs={sectionTabs}
         actions={<BellButton initialUnread={bell} />}
         badges={{ inbox: unread }}
+        hide={hide}
         roleLabel={t(`workspace.${role}`)}
         account={<AccountMenu account={account} />}
         accountCompact={<AccountMenu account={account} compact />}

@@ -72,6 +72,10 @@ export const NOTIFY_TYPES: Record<string, NotifyTypeDef> = {
     urgent: false,
   },
   'payment.failed': { channels: { ...ALL_ON }, urgent: true },
+  'team.assigned': {
+    channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
+    urgent: false,
+  },
   'day.item_late': { channels: { ...ALL_ON }, urgent: true },
   'day.incident_raised': { channels: { ...ALL_ON }, urgent: true },
   'day.signoff_due': {

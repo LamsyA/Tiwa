@@ -1,3 +1,4 @@
+import { staffEventWhere } from './staff-scope.js';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -124,10 +125,18 @@ export interface TodayItem {
  * due within 7 days. Four queries whatever the number of events. */
 export async function plannerToday(actor: UserActor, orgId: string, now = new Date()) {
   await requirePlannerMember(actor, orgId, 'org.view');
+  const scope = await staffEventWhere(actor.userId, orgId);
   const rows = await prisma.eventParticipant.findMany({
-    where: { orgId, removedAt: null, event: { deletedAt: null, status: { in: ['DRAFT', 'ACTIVE'] } } },
+    where: {
+      orgId,
+      removedAt: null,
+      event: { deletedAt: null, status: { in: ['DRAFT', 'ACTIVE'] } },
+      ...scope,
+    },
     select: { event: { select: { id: true, name: true } } },
   });
+  // Staff have no money view (D-X88): their Today skips payments.
+  const isStaff = 'eventId' in scope;
   const names = new Map(rows.map((row) => [row.event.id, row.event.name] as const));
   const eventIds = [...names.keys()];
   if (eventIds.length === 0) return { tasks: [], run: [], payments: [] as TodayItem[] };
@@ -149,7 +158,10 @@ export async function plannerToday(actor: UserActor, orgId: string, now = new Da
     }),
     prisma.paymentMilestone.findMany({
       where: {
-        booking: { eventId: { in: eventIds }, status: { notIn: ['CANCELLED', 'COMPLETED'] } },
+        booking: {
+          eventId: { in: isStaff ? [] : eventIds },
+          status: { notIn: ['CANCELLED', 'COMPLETED'] },
+        },
         state: { in: ['SCHEDULED', 'PENDING_PAYMENT', 'RECORDED_OFFLINE'] },
         dueAt: { lte: weekOut },
       },

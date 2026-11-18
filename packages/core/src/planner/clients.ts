@@ -1,3 +1,4 @@
+import { staffClientIds } from './staff-scope.js';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { authorizeOrg } from '../auth/org.js';
@@ -79,8 +80,9 @@ export async function createClient(actor: UserActor, raw: z.input<typeof createC
 export async function listClients(actor: UserActor, raw: z.input<typeof listClientsSchema>) {
   const input = listClientsSchema.parse(raw);
   await requirePlannerOrg(actor, input.orgId, 'org.view');
+  const scope = await staffClientIds(actor.userId, input.orgId);
   const clients = await prisma.client.findMany({
-    where: { orgId: input.orgId },
+    where: { orgId: input.orgId, ...(scope ? { id: { in: scope } } : {}) },
     orderBy: [{ stage: 'asc' }, { createdAt: 'desc' }],
     select: {
       id: true,
@@ -119,6 +121,8 @@ export async function getClient(actor: UserActor, clientId: string) {
   const row = await prisma.client.findUnique({ where: { id: clientId } });
   if (!row) throw new NotFoundError('Client not found');
   await requirePlannerOrg(actor, row.orgId, 'org.view');
+  const scope = await staffClientIds(actor.userId, row.orgId);
+  if (scope && !scope.includes(clientId)) throw new NotFoundError('Client not found');
   const [proposals, invoices] = await Promise.all([
     prisma.proposal.findMany({ where: { clientId }, orderBy: { createdAt: 'desc' } }),
     prisma.invoice.findMany({ where: { clientId }, orderBy: { createdAt: 'desc' } }),

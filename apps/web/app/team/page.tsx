@@ -40,10 +40,10 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           <ul className="grid gap-2 sm:grid-cols-2">
             {members.members.map((m) => (
               <li key={m.userId} className="bg-surface-2/60 flex items-center gap-3 rounded-2xl p-2.5">
-                <Avatar name={m.name ?? m.contact ?? '?'} size="sm" />
+                <Avatar name={m.name || m.contact || '?'} size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">
-                    {m.name ?? m.contact ?? t('unnamed')}
+                    {m.name || m.contact || t('unnamed')}
                     {m.userId === ctx.actor.userId && <span className="text-muted font-normal"> · {t('you')}</span>}
                   </span>
                   {m.contact && <span className="text-muted block truncate text-xs">{m.contact}</span>}

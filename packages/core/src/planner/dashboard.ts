@@ -1,3 +1,4 @@
+import { staffClientIds, staffEventIds } from './staff-scope.js';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -55,8 +56,16 @@ export async function plannerDashboard(
   const org = await requirePlannerView(actor, input.orgId);
 
   // All events this planner org works on (active only for "today" math).
+  const scope = await staffEventIds(actor.userId, input.orgId);
+  const clientScope = await staffClientIds(actor.userId, input.orgId);
+  const clientWhere = { orgId: input.orgId, ...(clientScope ? { id: { in: clientScope } } : {}) };
   const participations = await prisma.eventParticipant.findMany({
-    where: { orgId: input.orgId, removedAt: null, event: { deletedAt: null } },
+    where: {
+      orgId: input.orgId,
+      removedAt: null,
+      event: { deletedAt: null },
+      ...(scope ? { eventId: { in: scope }, userId: actor.userId } : {}),
+    },
     select: {
       role: true,
       event: { select: { id: true, name: true, startsAt: true, status: true } },
@@ -66,7 +75,7 @@ export async function plannerDashboard(
   if (eventIds.length === 0) {
     const pipeline = await prisma.client.groupBy({
       by: ['stage'],
-      where: { orgId: input.orgId },
+      where: clientWhere,
       _count: { _all: true },
     });
     return {
@@ -88,17 +97,19 @@ export async function plannerDashboard(
       where: { eventId: { in: eventIds }, status: { not: 'DONE' }, dueAt: { lt: now } },
     }),
     // 2: milestones due within 7 days, still scheduled (lean P8: offline included)
-    prisma.paymentMilestone.count({
-      where: {
-        booking: { eventId: { in: eventIds }, status: { notIn: ['CANCELLED', 'COMPLETED'] } },
-        state: { in: ['SCHEDULED', 'RECORDED_OFFLINE', 'PENDING_PAYMENT'] },
-        OR: [{ dueAt: null }, { dueAt: { lte: weekTo } }],
-      },
-    }),
+    scope
+      ? Promise.resolve(0)
+      : prisma.paymentMilestone.count({
+          where: {
+            booking: { eventId: { in: eventIds }, status: { notIn: ['CANCELLED', 'COMPLETED'] } },
+            state: { in: ['SCHEDULED', 'RECORDED_OFFLINE', 'PENDING_PAYMENT'] },
+            OR: [{ dueAt: null }, { dueAt: { lte: weekTo } }],
+          },
+        }),
     // 3: pipeline counts (one grouped query)
-    prisma.client.groupBy({ by: ['stage'], where: { orgId: input.orgId }, _count: { _all: true } }),
+    prisma.client.groupBy({ by: ['stage'], where: clientWhere, _count: { _all: true } }),
     // 4: open quote requests addressed to this org (planner as vendor of planning services)
-    prisma.quoteRequest.count({ where: { vendorOrgId: input.orgId, status: 'OPEN' } }),
+    scope ? Promise.resolve(0) : prisma.quoteRequest.count({ where: { vendorOrgId: input.orgId, status: 'OPEN' } }),
     // 5: this week's events (already in memory — slice, no query)
     Promise.resolve(
       participations

@@ -1,5 +1,6 @@
 import { env } from '@tiwa/config';
 import type { EventInviteResult, InviteResult } from '@tiwa/core';
+import { renderTeamInviteEmail } from '@tiwa/messaging';
 import { emailSender, smsSender } from './auth.js';
 
 /**
@@ -8,16 +9,17 @@ import { emailSender, smsSender } from './auth.js';
  * Moves to packages/messaging templates with P4.
  */
 export async function notifyTeamInvite(invite: InviteResult): Promise<{ sent: boolean }> {
-  const link = `${env.APP_URL}/login?next=${encodeURIComponent('/settings/team')}`;
+  // D-X88: land on Home, which shows the events they're assigned to.
+  const link = `${env.APP_URL.replace(/\/$/, '')}/login?next=${encodeURIComponent('/home')}`;
   try {
     if (invite.channel === 'sms') {
-      await smsSender.send({ to: invite.to, body: `You've been added to ${invite.orgName} on Tiwa. Sign in: ${link}` });
-    } else {
-      await emailSender.send({
+      await smsSender.send({
         to: invite.to,
-        subject: `You've been added to ${invite.orgName} on Tiwa`,
-        html: `<p>You've been added to the ${escapeHtml(invite.orgName)} team on Tiwa.</p><p><a href="${link}">Sign in to get started</a></p>`,
+        body: `You've been added to the ${invite.orgName} team on Tiwa. Sign in with this number: ${link}`,
       });
+    } else {
+      const message = await renderTeamInviteEmail({ orgName: invite.orgName, role: invite.role, url: link });
+      await emailSender.send({ to: invite.to, subject: message.subject, html: message.html });
     }
     return { sent: true };
   } catch {

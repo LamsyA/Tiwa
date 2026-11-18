@@ -1,9 +1,11 @@
+import { staffEventWhere } from './staff-scope.js';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
 import { authorizeOrg } from '../auth/org.js';
 import { loadEventAccess } from '../events/access.js';
 import { ConflictError, NotFoundError } from '../shared/errors.js';
+import { notify } from '../messaging/notify.js';
 import { audit } from '../shared/outbox.js';
 
 // Planner team + calendar (PLN-05, PLN-07, P10-T05). Staff are org members
@@ -40,7 +42,7 @@ export interface TeamAssignment {
 export async function listTeamAssignments(actor: UserActor, orgId: string): Promise<TeamAssignment[]> {
   await requirePlanner(actor, orgId, 'org.view');
   const rows = await prisma.eventParticipant.findMany({
-    where: { orgId, removedAt: null, event: { deletedAt: null } },
+    where: { orgId, removedAt: null, event: { deletedAt: null }, ...(await staffEventWhere(actor.userId, orgId)) },
     select: {
       eventId: true,
       userId: true,
@@ -76,8 +78,8 @@ export async function assignStaffToEvent(actor: UserActor, raw: z.input<typeof a
     where: { eventId: input.eventId, userId: input.userId, orgId: input.orgId, removedAt: null },
   });
   if (existing) throw new ConflictError('Already assigned', { reason: 'already-assigned' });
-  return prisma.$transaction(async (tx) => {
-    const row = await tx.eventParticipant.create({
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.eventParticipant.create({
       data: {
         eventId: input.eventId,
         userId: input.userId,
@@ -94,8 +96,26 @@ export async function assignStaffToEvent(actor: UserActor, raw: z.input<typeof a
       targetId: input.eventId,
       data: { orgId: input.orgId },
     });
-    return row;
+    return created;
   });
+  // D-X88: tell the staff member they're on the event (in-app, push, email).
+  const [event, org] = await Promise.all([
+    prisma.event.findUnique({ where: { id: input.eventId }, select: { name: true } }),
+    prisma.organization.findUnique({ where: { id: input.orgId }, select: { name: true } }),
+  ]);
+  if (input.userId !== actor.userId) {
+    await notify(
+      { kind: 'system' },
+      {
+        userId: input.userId,
+        type: 'team.assigned',
+        title: `You're on ${event?.name ?? 'a new event'}`,
+        body: `${org?.name ?? 'Your team'} added you to this event. Open it to see the plan, the run-of-show and your tasks.`,
+        url: `/events/${input.eventId}`,
+      },
+    ).catch(() => undefined);
+  }
+  return row;
 }
 
 export interface CalendarEvent {
@@ -111,7 +131,7 @@ export interface CalendarEvent {
 export async function plannerCalendar(actor: UserActor, orgId: string): Promise<CalendarEvent[]> {
   await requirePlanner(actor, orgId, 'org.view');
   const rows = await prisma.eventParticipant.findMany({
-    where: { orgId, removedAt: null, event: { deletedAt: null } },
+    where: { orgId, removedAt: null, event: { deletedAt: null }, ...(await staffEventWhere(actor.userId, orgId)) },
     select: {
       role: true,
       event: { select: { id: true, name: true, startsAt: true, endsAt: true, status: true } },

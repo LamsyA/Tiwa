@@ -47,6 +47,7 @@ export interface InviteResult {
   channel: 'sms' | 'email';
   to: string;
   orgName: string;
+  role: 'ADMIN' | 'STAFF';
 }
 
 export async function inviteMember(actor: UserActor, input: z.infer<typeof inviteMemberSchema>): Promise<InviteResult> {
@@ -77,6 +78,7 @@ export async function inviteMember(actor: UserActor, input: z.infer<typeof invit
       channel: phone ? 'sms' : 'email',
       to: (phone ?? email) as string,
       orgName: org.name,
+      role: input.role,
     };
   });
 }
