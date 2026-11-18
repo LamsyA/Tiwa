@@ -62,7 +62,7 @@ describe('MuseAssistant', () => {
         usage.push(row);
       }).draftTasks({ ...context, request: 'Call me on 08031234567 or ada@example.com' });
       expect(usage).toEqual([
-        expect.objectContaining({ feature: 'plan', inputTokens: 10, outputTokens: 20, promptVersion: 'plan-draft@3' }),
+        expect.objectContaining({ feature: 'plan', inputTokens: 10, outputTokens: 20, promptVersion: 'plan-draft@4' }),
       ]);
       const sent = JSON.stringify(calls[0]?.body);
       expect(sent).not.toContain('08031234567');
@@ -132,5 +132,42 @@ describe('FakeBudgetDrafter', () => {
 
   it('stripContacts hides phones and emails', () => {
     expect(stripContacts('ring +234 803 123 4567 / a@b.co')).toBe('ring [phone] / [email]');
+  });
+});
+
+describe('Tiwa-specific prompts (D-X94)', () => {
+  it('every feature starts with the Tiwa briefing and points to Tiwa tabs', async () => {
+    const { PLAN_SYSTEM, BUDGET_SYSTEM, COMPARE_SYSTEM, IMPACT_SYSTEM, MESSAGE_SYSTEM, TIWA_CONTEXT } =
+      await import('./index.js');
+    for (const system of [PLAN_SYSTEM, BUDGET_SYSTEM, COMPARE_SYSTEM, IMPACT_SYSTEM, MESSAGE_SYSTEM]) {
+      expect(system.startsWith(TIWA_CONTEXT)).toBe(true);
+    }
+    expect(TIWA_CONTEXT).toContain('Programme tab');
+    expect(TIWA_CONTEXT).toContain('Guest count changed');
+    expect(PLAN_SYSTEM).toContain('daysBefore must be between 0 and the days until the event');
+  });
+
+  it("the plan request carries the event's real state", async () => {
+    const { describePlan } = await import('./index.js');
+    const text = describePlan({
+      eventType: 'Wedding',
+      eventFormat: 'PRIVATE_CELEBRATION',
+      daysUntilEvent: 45,
+      expectedGuests: 120,
+      budget: { amount: '5000000', currency: 'NGN' },
+      existingTasks: ['Book the venue'],
+      request: 'Plan the rest',
+      whenText: 'Saturday 14 March 2026, 16:00',
+      venue: 'Eko Terrace, Lekki',
+      booked: ['Venue'],
+      inProgress: ['Catering'],
+      guests: { invited: 80, attending: 50, notReplied: 30 },
+      features: { invites: true, tickets: false, moments: true },
+    });
+    expect(text).toContain('Days until the event: 45');
+    expect(text).toContain('Already booked: Venue');
+    expect(text).toContain('Shortlisted or waiting on quotes (not booked yet): Catering');
+    expect(text).toContain('80 invited, 50 attending, 30 not replied');
+    expect(text).toContain('Switched on in Tiwa: invites, moments (photo gallery)');
   });
 });

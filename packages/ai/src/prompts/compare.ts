@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withTiwa } from './tiwa.js';
 
 export interface QuoteCompareContext {
   category: string;
@@ -25,7 +26,7 @@ export interface QuoteComparison {
   questions: string[];
 }
 
-export const COMPARE_PROMPT_VERSION = 'quote-compare@1';
+export const COMPARE_PROMPT_VERSION = 'quote-compare@2';
 
 const list = z.array(z.string()).max(8);
 export const compareSchema = z.object({
@@ -36,12 +37,16 @@ export const compareSchema = z.object({
   questions: list,
 });
 
-export const COMPARE_SYSTEM = [
-  'You help an event host compare vendor quotes for the same service. You do not decide for them.',
-  'Point out: items one quote includes that others leave out, unclear or vague terms (cancellation, deposits, what "per head" covers), and extra fees (tax, service charge, travel).',
-  'Be factual and short. Only use the numbers you are given. Refer to quotes by their ref letter and vendor name.',
-  'Reply with JSON only, exactly this shape: {"summary":string,"quotes":[{"ref":string,"strengths":[string],"missing":[string],"unclear":[string],"extraFees":[string]}],"questions":[string]}. summary: two or three sentences. questions: things the host should ask vendors before deciding.',
-].join(' ');
+export const COMPARE_SYSTEM = withTiwa(
+  [
+    'Compare the vendor quotes the host received in Tiwa for the same service, so they can decide in the Vendors tab. You do not decide for them.',
+    'Check each quote line by line against the others and against the guest count: what one includes that another leaves out (e.g. drinks, small chops, servers, set-up, transport, overtime, cutlery, generator), whether quantities cover the guests, and whether prices are per head, per item or flat.',
+    'Call out unclear terms: deposit size and when it is due, cancellation and refund terms, what happens if the event runs over time, who pays for transport and logistics, and validity of the quote.',
+    'List every extra fee exactly as given (tax or VAT, service charge, travel). Work only with the numbers you are given; you may compare totals and say which is lower, never invent prices.',
+    'Refer to quotes by ref letter and vendor name.',
+    'Reply with JSON only, exactly: {"summary":string,"quotes":[{"ref":string,"strengths":[string],"missing":[string],"unclear":[string],"extraFees":[string]}],"questions":[string]}. summary: two or three sentences with the key difference and what to watch. questions: specific questions to send each vendor in Tiwa chat before accepting (name the vendor in each question).',
+  ].join('\n'),
+);
 
 export function describeCompare(context: QuoteCompareContext): string {
   const quotes = context.quotes.map((quote) =>

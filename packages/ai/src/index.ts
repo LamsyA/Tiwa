@@ -26,6 +26,7 @@ export * from './prompts/compare.js';
 export * from './prompts/impact.js';
 export * from './prompts/message.js';
 export * from './prompts/plan.js';
+export * from './prompts/tiwa.js';
 
 export interface PlanDrafter {
   draftTasks(context: PlanDraftContext): Promise<PlanDraftSuggestion[]>;

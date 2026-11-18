@@ -1,4 +1,4 @@
-import { eventTypeLabel } from '@tiwa/config';
+import { eventTypeLabel, getEventType, serviceLabel } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -6,6 +6,7 @@ import { authorize } from '../auth/authorize.js';
 import { requireFlag } from '../flags/flags.js';
 import { ValidationError } from '../shared/errors.js';
 import { audit } from '../shared/outbox.js';
+import { aiSafeText } from '../ai/context.js';
 import { requireEventAccess } from './access.js';
 
 // AI plan assistant (PRD AI-01, AI-06, UF-27; D-X31). The host describes what
@@ -25,6 +26,22 @@ export interface PlanDraftContext {
   budget: { amount: string; currency: string } | null;
   existingTasks: string[];
   request: string;
+  /** D-X94: the event's real state (see packages/ai prompts/plan.ts). */
+  eventName?: string | null;
+  whenText?: string | null;
+  city?: string | null;
+  country?: string | null;
+  venue?: string | null;
+  durationHours?: number | null;
+  guests?: { invited: number; attending: number; notReplied: number } | null;
+  booked?: string[];
+  inProgress?: string[];
+  typicalVendors?: string[];
+  templateChecklist?: string[];
+  committed?: { amount: string; currency: string } | null;
+  features?: { invites: boolean; tickets: boolean; moments: boolean };
+  hasProgramme?: boolean;
+  askedBy?: 'host' | 'planner' | 'co-host';
 }
 
 export interface PlanDraftSuggestion {
@@ -67,18 +84,67 @@ export async function draftPlan(
   const event = await prisma.event.findUniqueOrThrow({
     where: { id: input.eventId },
     select: {
+      name: true,
       type: true,
       typeLabel: true,
       format: true,
       countryCode: true,
+      timezone: true,
       startsAt: true,
+      endsAt: true,
       expectedGuests: true,
       plannedBudgetMinor: true,
       currency: true,
+      invitesEnabled: true,
+      ticketsEnabled: true,
+      momentsEnabled: true,
+      days: { orderBy: { date: 'asc' }, take: 1, select: { venueName: true, address: true } },
     },
   });
   await requireFlag('ai.enabled', event.countryCode);
-  const existing = await prisma.task.findMany({ where: { eventId: input.eventId }, select: { title: true } });
+  const [existing, rsvps, bookings, requests, programmeCount] = await Promise.all([
+    prisma.task.findMany({ where: { eventId: input.eventId }, select: { title: true } }),
+    prisma.guest.groupBy({
+      by: ['rsvp'],
+      where: { eventId: input.eventId, deletedAt: null },
+      _count: { _all: true },
+    }),
+    prisma.booking.findMany({
+      where: { eventId: input.eventId, status: { not: 'CANCELLED' } },
+      select: { category: true, totalMinor: true },
+    }),
+    prisma.quoteRequest.findMany({
+      where: { eventId: input.eventId, status: { in: ['OPEN', 'QUOTED'] } },
+      select: { category: true },
+    }),
+    prisma.programmeItem.count({ where: { eventId: input.eventId } }),
+  ]);
+  const template = getEventType(event.type);
+  const count = (status: string) => rsvps.find((row) => row.rsvp === status)?._count._all ?? 0;
+  const invited = rsvps.reduce((sum, row) => sum + row._count._all, 0);
+  const bookedKeys = [...new Set(bookings.map((row) => row.category))];
+  const label = (key: string) => {
+    try {
+      return serviceLabel(key);
+    } catch {
+      return key;
+    }
+  };
+  const moneyOk = canSeeMoney(actor, input.eventId, access);
+  const committedMinor = bookings.reduce((sum, row) => sum + row.totalMinor, 0n);
+  const venue = event.days[0]?.venueName ?? null;
+  const whenText = event.startsAt
+    ? new Intl.DateTimeFormat('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: event.timezone,
+      }).format(event.startsAt)
+    : null;
+  const roleWord = access.role === 'HOST' ? 'host' : access.role === 'CO_HOST' ? 'co-host' : 'planner';
   const digits =
     new Intl.NumberFormat('en', { style: 'currency', currency: event.currency }).resolvedOptions()
       .maximumFractionDigits ?? 2;
@@ -95,7 +161,28 @@ export async function draftPlan(
         ? { amount: (Number(event.plannedBudgetMinor) / 10 ** digits).toFixed(0), currency: event.currency }
         : null,
     existingTasks: existing.map((row) => row.title).slice(0, 80),
-    request: input.request,
+    // The host's words, with phones/emails masked before they reach the model.
+    request: aiSafeText(input.request, event.countryCode),
+    eventName: event.name,
+    whenText,
+    country: event.countryCode,
+    venue: venue ? [venue, event.days[0]?.address].filter(Boolean).join(', ') : null,
+    durationHours:
+      event.startsAt && event.endsAt
+        ? Math.max(1, Math.round((event.endsAt.getTime() - event.startsAt.getTime()) / 3_600_000))
+        : (template?.defaultDurationHours ?? null),
+    guests: invited > 0 ? { invited, attending: count('YES'), notReplied: count('NONE') + count('MAYBE') } : null,
+    booked: bookedKeys.map(label),
+    inProgress: [...new Set(requests.map((row) => row.category))].filter((key) => !bookedKeys.includes(key)).map(label),
+    typicalVendors: (template?.vendorCategories ?? []).map(label),
+    templateChecklist: (template?.checklist ?? []).map((item) => item.title).slice(0, 40),
+    committed:
+      moneyOk && committedMinor > 0n
+        ? { amount: (Number(committedMinor) / 10 ** digits).toFixed(0), currency: event.currency }
+        : null,
+    features: { invites: event.invitesEnabled, tickets: event.ticketsEnabled, moments: event.momentsEnabled },
+    hasProgramme: programmeCount > 0,
+    askedBy: roleWord,
   };
 
   const raw_suggestions = await drafter.draftTasks(context);
@@ -107,7 +194,7 @@ export async function draftPlan(
         .slice(0, 200),
       daysBefore:
         typeof row.daysBefore === 'number' && Number.isFinite(row.daysBefore)
-          ? Math.max(0, Math.min(730, Math.round(row.daysBefore)))
+          ? Math.max(0, Math.min(context.daysUntilEvent ?? 730, 730, Math.round(row.daysBefore)))
           : null,
       why: String(row.why ?? '')
         .trim()

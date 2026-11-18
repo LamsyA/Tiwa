@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withTiwa } from './tiwa.js';
 
 export interface GuestImpactContext {
   eventType: string;
@@ -13,7 +14,7 @@ export interface GuestImpactList {
   items: { area: string; change: string; action: string; urgency: 'high' | 'medium' | 'low' }[];
 }
 
-export const IMPACT_PROMPT_VERSION = 'guest-impact@1';
+export const IMPACT_PROMPT_VERSION = 'guest-impact@2';
 
 export const impactSchema = z.object({
   items: z
@@ -28,12 +29,15 @@ export const impactSchema = z.object({
     .max(15),
 });
 
-export const IMPACT_SYSTEM = [
-  'An event host is changing their guest count. List what that affects and what to do about it.',
-  'Use the bookings, quantities and seating you are given; scale per-head items in proportion and say the new numbers. Include things not booked yet only if they clearly matter (venue capacity, seating, invitations).',
-  'Be concrete and short. Never invent prices or vendor names beyond those given.',
-  'Reply with JSON only, exactly this shape: {"items":[{"area":string,"change":string,"action":string,"urgency":"high"|"medium"|"low"}]}. area: a few words; change: what changes; action: the next step.',
-].join(' ');
+export const IMPACT_SYSTEM = withTiwa(
+  [
+    'The host is changing the guest count. List exactly what that changes for this event and the next step for each.',
+    'For each booking, scale per-head items in proportion and give the new quantity (round sensibly: portions to whole numbers, tables of 10). Say whether the vendor must approve a change: in Tiwa the host uses "Guest count changed" on the Guests tab and each affected vendor approves the new total from a WhatsApp link.',
+    'Then cover what is not booked yet but clearly changes: venue capacity, seating and tables, chairs, souvenirs and take-away packs, drinks, invitations to send or withdraw, and the budget lines in the Money tab.',
+    'Be concrete and short. Never invent prices or vendor names beyond those given.',
+    'Reply with JSON only, exactly: {"items":[{"area":string,"change":string,"action":string,"urgency":"high"|"medium"|"low"}]}. area: a few words; change: what changes with numbers; action: the next step and where in Tiwa. high = affects a booked vendor or the venue.',
+  ].join('\n'),
+);
 
 export function describeImpact(context: GuestImpactContext): string {
   return [

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withTiwa } from './tiwa.js';
 
 export type MessageKind = 'INVITE' | 'UPDATE' | 'REMINDER';
 export type MessageAudience = 'all' | 'not_replied' | 'attending' | 'group';
@@ -27,7 +28,7 @@ export interface MessageDraft {
   headline: string;
 }
 
-export const MESSAGE_PROMPT_VERSION = 'guest-message@2';
+export const MESSAGE_PROMPT_VERSION = 'guest-message@3';
 
 export const messageSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -37,16 +38,17 @@ export const messageSchema = z.object({
   headline: z.string().max(120),
 });
 
-export const MESSAGE_SYSTEM = [
-  'You write short, warm messages that an event host sends to their guests by WhatsApp, SMS or email.',
-  'The host gives one instruction. Decide the message, whether it is a first invitation, an update or a reminder, and who should get it.',
-  'Use the event facts you are given; never invent dates, times, venues, prices or names.',
-  'Always include the placeholders {name} (guest first name) and {link} (their personal RSVP link) exactly once each.',
-  'Keep it under 600 characters, friendly and clear, no hashtags, at most one emoji.',
-  'If the language is pcm, write in natural Nigerian Pidgin English.',
-  'Never include phone numbers, email addresses or web links other than {link}.',
-  'Reply with JSON only, exactly this shape: {"message":string,"kind":"INVITE"|"UPDATE"|"REMINDER","audience":"all"|"not_replied"|"attending"|"group","groupName":string|null,"headline":string}. audience: all = everyone, not_replied = no reply yet, attending = said yes, group = one guest group (give its exact name). headline: three to seven words for the host.',
-].join(' ');
+export const MESSAGE_SYSTEM = withTiwa(
+  [
+    'Write the message the host sends to guests from the Invites tab by WhatsApp, SMS or email.',
+    'The host gives one instruction. Decide the message, whether it is a first invitation, an update or a reminder, and who should get it (everyone, people who have not replied, people coming, or one guest group).',
+    'Use only the event facts given (name, date, time, venue, days left); never invent dates, times, venues, dress codes, prices or names. If the host mentions a dress code or colour (aso-ebi), include it.',
+    'Always include the placeholders {name} (guest first name) and {link} (their personal RSVP link) exactly once each. Tell guests what to do with the link (reply, see the programme, get their entry pass).',
+    'Keep it under 600 characters, warm and clear, at most one emoji, no hashtags. If the language is pcm, write natural Nigerian Pidgin.',
+    'Never include phone numbers, email addresses or links other than {link}.',
+    'Reply with JSON only, exactly: {"message":string,"kind":"INVITE"|"UPDATE"|"REMINDER","audience":"all"|"not_replied"|"attending"|"group","groupName":string|null,"headline":string}. groupName: the exact group name when audience is group. headline: three to seven words for the host.',
+  ].join('\n'),
+);
 
 export function describeMessage(context: MessageDraftContext): string {
   const c = context.guestCounts;

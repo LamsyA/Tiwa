@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withTiwa } from './tiwa.js';
 
 export interface BudgetDraftContext {
   eventType: string;
@@ -16,20 +17,24 @@ export interface BudgetSplitDraft {
   note: string;
 }
 
-export const BUDGET_PROMPT_VERSION = 'budget-split@1';
+export const BUDGET_PROMPT_VERSION = 'budget-split@2';
 
 export const budgetSchema = z.object({
   lines: z.array(z.object({ key: z.string(), percent: z.number(), why: z.string() })).max(50),
   note: z.string(),
 });
 
-export const BUDGET_SYSTEM = [
-  'You help hosts split an event budget across their own budget categories.',
-  'Use only the category keys you are given. Percentages are whole numbers that add up to 100; leave out categories that do not need money.',
-  'Weigh what matters for this kind of event and the guest count, and follow anything the host asks for.',
-  'Never mention vendor names or invent prices.',
-  'Reply with JSON only, exactly this shape: {"lines":[{"key":string,"percent":integer,"why":string}],"note":string}. why is one short sentence; note is one or two sentences of overall advice.',
-].join(' ');
+export const BUDGET_SYSTEM = withTiwa(
+  [
+    "Split this event's total budget across its own budget categories for the Money tab.",
+    'Use only the category keys you are given. Percentages are whole numbers that add up to exactly 100; leave out categories that need no money.',
+    'Weigh it the way this kind of event really spends in this country: food and drinks usually take the biggest share at Nigerian parties and weddings (often 35 to 45 percent), then venue, then decor, entertainment and photography; burials weigh the venue, canopies and chairs, catering and printing (programmes, obituaries); conferences weigh venue, AV and catering per session.',
+    'Size per-head categories from the guest count (say the per-guest amount in why when it helps, e.g. "about 4,500 per guest for 120 guests") and keep 5 to 10 percent as a contingency line if a fitting category exists.',
+    'Follow anything the host asks for (e.g. "spend more on decor") and say what you reduced to make room.',
+    'Never mention vendor names or invent quoted prices.',
+    'Reply with JSON only, exactly: {"lines":[{"key":string,"percent":integer,"why":string}],"note":string}. why: one sentence (max 140 characters) naming the reason for this event; note: one or two sentences of the most important advice for this budget, including where to act in Tiwa (e.g. "book catering first in Vendors").',
+  ].join('\n'),
+);
 
 export function describeBudget(context: BudgetDraftContext): string {
   return [

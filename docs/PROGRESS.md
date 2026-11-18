@@ -279,3 +279,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X91: QR passes are links any camera opens; staff check guests in from them; iPhone scanner fallback, continuous scanning (unit tests pass; e2e pending)
 - D-X92: guest programme (host editor, premium guest page, venue QR); unit tests pass, browser check pending
 - D-X93: custom programme heading and custom item types
+- D-X94: Tiwa-specific AI briefing for every feature; planner uses the event's real state
