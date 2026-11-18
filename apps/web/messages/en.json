@@ -3144,7 +3144,7 @@
     "counter": "{tin} tickets in · {gin} guests in · {expected} expected",
     "startScanning": "Start scanning",
     "manual": "Manual check-in",
-    "manualPlaceholder": "Paste a QR value or ticket ID",
+    "manualPlaceholder": "Paste a pass link or code",
     "checkIn": "Check in",
     "welcome": "Welcome, {name}",
     "alreadyIn": "Already checked in at {at}",
@@ -3159,7 +3159,9 @@
     "searchPlaceholder": "Type a ticket holder or guest name",
     "searchAction": "Search",
     "kindTicket": "Ticket",
-    "kindGuest": "Guest invite"
+    "kindGuest": "Guest invite",
+    "stopScanning": "Stop camera",
+    "cameraBlocked": "Camera blocked. Allow camera access, or search the guest by name."
   },
   "day": {
     "title": "Event day",
@@ -3853,5 +3855,23 @@
     "editBody": "Clients and planners reach you here. Booking updates and receipts go to this email.",
     "saved": "Saved.",
     "saveEdit": "Save"
+  },
+  "passLink": {
+    "brand": "Tiwa",
+    "invalidTitle": "This pass isn’t valid",
+    "invalidBody": "The code is damaged or has expired. Ask the host to send the pass again.",
+    "passTitle": "Your entry pass for {event}",
+    "passBody": "Show this QR code at the gate. The door team scans it to check you in.",
+    "staffHint": "On the door team?",
+    "staffSignIn": "Sign in to check guests in",
+    "inTitle": "{name} is in",
+    "inBody": "Checked in. Wave them through.",
+    "dupTitle": "{name} is already in",
+    "dupBody": "This pass was used at {at}. Check their ID before letting them in again.",
+    "badTitle": "Not valid for this event",
+    "badBody": "Don’t let them in on this pass. Search their name on the scanner instead.",
+    "guest": "Guest",
+    "count": "{in} of {expected} in",
+    "openScanner": "Open the scanner"
   }
 }

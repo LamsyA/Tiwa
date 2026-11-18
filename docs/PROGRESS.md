@@ -276,3 +276,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X88: planner staff notified on assignment, branded invite, scoped workspace; e2e passing desktop and mobile
 - D-X89: host-only guest count, decline undoes it, planner told; daily task-deadline digest (unit tests pass; guest-change e2e pending)
 - D-X90: planners and vendors must add a business phone and email (unit tests pass; e2e pending)
+- D-X91: QR passes are links any camera opens; staff check guests in from them; iPhone scanner fallback, continuous scanning (unit tests pass; e2e pending)

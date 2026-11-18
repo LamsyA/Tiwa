@@ -34,6 +34,19 @@ function deviceId(): string {
   return id;
 }
 
+/** D-X91: passes are links (`…/k/<code>`); the scanner works on the code inside. */
+function codeFrom(value: string): string {
+  const trimmed = value.trim();
+  const at = trimmed.indexOf('/k/');
+  if (at === -1) return trimmed;
+  const tail = trimmed.slice(at + 3).split(/[?#]/)[0] ?? '';
+  try {
+    return decodeURIComponent(tail);
+  } catch {
+    return tail;
+  }
+}
+
 /** Door scanner (P11-T06/T07, UF-23): manual entry + camera, live counter, offline queue. */
 export function CheckinClient({ eventId, initial }: { eventId: string; initial: string }) {
   const t = useTranslations('checkin');
@@ -93,7 +106,7 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
   };
 
   const submit = async (qrValue: string) => {
-    const trimmed = qrValue.trim();
+    const trimmed = codeFrom(qrValue);
     if (!trimmed || pending) return;
     setPending(true);
     try {
@@ -200,9 +213,22 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
     }
   };
 
+  // D-X91: keep scanning guest after guest; iPhones have no BarcodeDetector, so fall back to jsQR.
+  const lastScan = useRef<{ code: string; at: number } | null>(null);
+  const stopCamera = () => {
+    const video = videoRef.current;
+    const stream = video?.srcObject as MediaStream | null;
+    stream?.getTracks().forEach((track) => track.stop());
+    if (video) video.srcObject = null;
+    setScanning(false);
+  };
+  useEffect(() => () => stopCamera(), []);
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setScanning(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       const video = videoRef.current;
       if (!video) {
         stream.getTracks().forEach((track) => track.stop());
@@ -210,8 +236,7 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
       }
       video.srcObject = stream;
       await video.play();
-      setScanning(true);
-      const detector =
+      const native =
         'BarcodeDetector' in window
           ? new (
               window as unknown as {
@@ -221,25 +246,42 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
               }
             ).BarcodeDetector({ formats: ['qr_code'] })
           : null;
-      if (!detector) return; // manual entry stays available; no extra deps for one format
+      const jsQR = native ? null : (await import('jsqr')).default;
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      const read = async (): Promise<string | null> => {
+        if (native) return (await native.detect(video))[0]?.rawValue ?? null;
+        if (!jsQR || !context || !video.videoWidth) return null;
+        // Downscale for speed: a 640px frame is plenty for a phone held at the door.
+        const scale = Math.min(1, 640 / video.videoWidth);
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frame = context.getImageData(0, 0, canvas.width, canvas.height);
+        return jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'dontInvert' })?.data ?? null;
+      };
       const tick = async () => {
         if (!videoRef.current?.srcObject) return;
         try {
-          const codes = await detector.detect(video);
-          if (codes[0]?.rawValue) {
-            stream.getTracks().forEach((track) => track.stop());
-            setScanning(false);
-            await submit(codes[0].rawValue);
-            return;
+          const raw = await read();
+          if (raw) {
+            const code = codeFrom(raw);
+            const last = lastScan.current;
+            // The same pass held in front of the camera counts once, not every frame.
+            if (!last || last.code !== code || Date.now() - last.at > 4000) {
+              lastScan.current = { code, at: Date.now() };
+              await submit(code);
+            }
           }
         } catch {
           /* keep scanning */
         }
-        requestAnimationFrame(() => void tick());
+        setTimeout(() => void tick(), native ? 120 : 200);
       };
       void tick();
     } catch {
-      show('bad', t('notValid'));
+      setScanning(false);
+      show('bad', t('cameraBlocked'));
     }
   };
 
@@ -305,9 +347,13 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
         </ul>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={() => void startCamera()}>
-          {t('startScanning')}
-        </Button>
+        {scanning ? (
+          <Button variant="secondary" onClick={stopCamera}>
+            {t('stopScanning')}
+          </Button>
+        ) : (
+          <Button onClick={() => void startCamera()}>{t('startScanning')}</Button>
+        )}
         <Button variant="secondary" onClick={() => void downloadOffline()}>
           {t('offline')}
         </Button>
@@ -318,16 +364,13 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
         )}
       </div>
       {storedCount != null && <p className="text-muted text-sm">{t('offlineReady', { count: storedCount })}</p>}
-      {scanning && (
-        <video
-          ref={videoRef}
-          className="aspect-video w-full rounded-lg bg-black"
-          muted
-          playsInline
-          aria-label={t('startScanning')}
-        />
-      )}
-      {!scanning && <video ref={videoRef} className="hidden" muted playsInline />}
+      <video
+        ref={videoRef}
+        className={scanning ? 'aspect-[3/4] w-full rounded-2xl bg-black object-cover sm:aspect-video' : 'hidden'}
+        muted
+        playsInline
+        aria-label={t('startScanning')}
+      />
     </div>
   );
 }

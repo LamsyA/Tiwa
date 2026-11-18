@@ -15,6 +15,34 @@ import { verifyTicketQr } from '../tickets/tokens.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
+/**
+ * D-X91: a pass QR is a link (`<app>/k/<code>`) so any phone camera opens it.
+ * Door staff who open it check the guest in; anyone else sees the pass.
+ */
+export function passLink(appUrl: string, code: string): string {
+  return `${appUrl.replace(/\/$/, '')}/k/${encodeURIComponent(code)}`;
+}
+
+/** The signed code inside a pass link, or the value itself if it is already a code. */
+export function passCode(value: string): string {
+  const trimmed = value.trim();
+  const at = trimmed.indexOf('/k/');
+  if (at === -1) return trimmed;
+  const tail = trimmed.slice(at + 3).split(/[?#]/)[0] ?? '';
+  try {
+    return decodeURIComponent(tail);
+  } catch {
+    return tail;
+  }
+}
+
+/** The event a pass code belongs to (unverified: checkIn verifies the signature). */
+export function passEventId(code: string): string | null {
+  const parts = code.split(':');
+  if (parts.length !== 5 || (parts[0] !== 'ticket' && parts[0] !== 'checkin')) return null;
+  return /^[0-9a-f-]{36}$/i.test(parts[2] ?? '') ? (parts[2] as string) : null;
+}
+
 export const checkInSchema = z.object({
   eventId: z.string().uuid(),
   qrValue: z.string().min(8).max(500),
@@ -72,7 +100,9 @@ export async function checkIn(
   secret: string,
   scannedAt?: Date,
 ): Promise<CheckInOutcome> {
-  const input = checkInSchema.parse(raw);
+  const parsed = checkInSchema.parse(raw);
+  // Scanners may read the full pass link; check in on the code inside it (D-X91).
+  const input = { ...parsed, qrValue: passCode(parsed.qrValue) };
   await requireEventAccess(actor, input.eventId, 'checkin.scan');
   const now = scannedAt ?? new Date();
 
@@ -493,4 +523,25 @@ export async function syncOfflineCheckins(actor: UserActor, raw: z.input<typeof 
     duplicates: results.filter((r) => r.result === 'DUPLICATE').length,
     invalid: results.filter((r) => r.result === 'INVALID').length,
   };
+}
+
+/**
+ * D-X91: a pass link opened by someone signed in. Door staff (anyone allowed
+ * to scan for that event) check the guest in; everyone else gets null and
+ * the page shows the pass instead.
+ */
+export async function checkInFromLink(
+  actor: UserActor,
+  link: string,
+  secret: string,
+): Promise<{ eventId: string; outcome: CheckInOutcome } | null> {
+  const code = passCode(link);
+  const eventId = passEventId(code);
+  if (!eventId) return null;
+  try {
+    const outcome = await checkIn(actor, { eventId, qrValue: code, deviceId: 'phone-camera' }, secret);
+    return { eventId, outcome };
+  } catch {
+    return null;
+  }
 }

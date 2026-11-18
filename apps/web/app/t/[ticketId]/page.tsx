@@ -1,4 +1,5 @@
-import { ticketView } from '@tiwa/core';
+import { env } from '@tiwa/config';
+import { passLink, ticketView } from '@tiwa/core';
 import { Card, DateText, GuestShell, QRCode } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -16,7 +17,7 @@ export default async function TicketPage({ params }: { params: Promise<{ ticketI
           {t('holder')}: {data.ticket.holderName}
         </p>
         <QRCode
-          value={data.qr}
+          value={passLink(env.APP_URL, data.qr)}
           size={224}
           label={data.event.name}
           className="text-text max-w-60 rounded-xl border p-2"

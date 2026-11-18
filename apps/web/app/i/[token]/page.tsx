@@ -1,5 +1,5 @@
 import { env } from '@tiwa/config';
-import { UNDO_WINDOW_MS_PUBLIC, answerRsvp, checkinQrValue, invitePage } from '@tiwa/core';
+import { UNDO_WINDOW_MS_PUBLIC, answerRsvp, checkinQrValue, invitePage, passLink } from '@tiwa/core';
 import { QRCode, buttonClasses } from '@tiwa/ui';
 import { CalendarPlus, Check, Download, ListChecks, MapPin, PartyPopper, Shirt, X } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
@@ -83,7 +83,9 @@ export default async function InvitePage({
 
   const base = env.APP_URL.replace(/\/$/, '');
   const checkin =
-    env.AUTH_SECRET && page.guest.rsvp === 'YES' ? checkinQrValue(page.guest.id, page.event.id, env.AUTH_SECRET) : '';
+    env.AUTH_SECRET && page.guest.rsvp === 'YES'
+      ? passLink(env.APP_URL, checkinQrValue(page.guest.id, page.event.id, env.AUTH_SECRET))
+      : '';
   const calendar = page.event.startsAt
     ? googleCalendarUrl({
         title: page.event.name,

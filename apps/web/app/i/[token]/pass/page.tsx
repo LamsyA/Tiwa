@@ -1,6 +1,6 @@
 import { GuestEnquiries } from '@/components/chat/guest-enquiries.js';
 import { env } from '@tiwa/config';
-import { checkinQrValue, galleryCodeForEvent, invitePage } from '@tiwa/core';
+import { checkinQrValue, galleryCodeForEvent, invitePage, passLink } from '@tiwa/core';
 import { GuestShell, QRCode } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -13,7 +13,7 @@ export default async function InvitePassPage({ params }: { params: Promise<{ tok
   const page = await invitePage(decodeURIComponent(token)).catch(() => null);
   if (!page) notFound();
   const secret = env.AUTH_SECRET;
-  const checkin = secret ? checkinQrValue(page.guest.id, page.event.id, secret) : '';
+  const checkin = secret ? passLink(env.APP_URL, checkinQrValue(page.guest.id, page.event.id, secret)) : '';
   const base = env.APP_URL.replace(/\/$/, '');
   const calendar = page.event.startsAt
     ? googleCalendarUrl({
@@ -39,20 +39,37 @@ export default async function InvitePassPage({ params }: { params: Promise<{ tok
         <QRCode value={checkin} size={224} label={t('passQr')} className="text-text max-w-60 rounded-xl border p-2" />
         <div className="flex flex-col gap-2">
           {calendar && (
-            <a href={calendar} target="_blank" rel="noopener noreferrer" className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
+            <a
+              href={calendar}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline"
+            >
               {t('googleCal')}
             </a>
           )}
-          <a href={`${base}/api/ics/${page.token}?kind=invite`} download className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
+          <a
+            href={`${base}/api/ics/${page.token}?kind=invite`}
+            download
+            className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline"
+          >
             {t('icsDownload')}
           </a>
           {mapsUrl && (
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline"
+            >
               {t('directions')}
             </a>
           )}
           {momentsActive && galleryCode && (
-            <a href={`${base}/m/${galleryCode}?guest=${page.token}`} className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline">
+            <a
+              href={`${base}/m/${galleryCode}?guest=${page.token}`}
+              className="text-brand-strong text-sm font-semibold underline-offset-4 hover:underline"
+            >
               {t('moments')}
             </a>
           )}
