@@ -1,7 +1,8 @@
-import { getFlagsFor, listMyOrgs, notificationUnreadCount, unreadTotal } from '@tiwa/core';
+import { getFlagsFor, listMyOrgs, missingBusinessContact, notificationUnreadCount, unreadTotal } from '@tiwa/core';
 import { BellButton } from './notifications/bell.js';
 import { prisma } from '@tiwa/db';
 import { AppShell, type AppRole } from '@tiwa/ui';
+import { BusinessContactForm } from './business/contact-form.js';
 import type * as React from 'react';
 import { cache } from 'react';
 import { getTranslations } from 'next-intl/server';
@@ -103,6 +104,8 @@ export async function AppFrame({
   children: React.ReactNode;
 }) {
   const { role, flags, unread, bell, hide, account } = await frameData(userId);
+  // D-X90: planners and vendors must add a business phone and email first.
+  const missing = role === 'host' ? null : await missingBusinessContact(userId);
   const t = await getTranslations('account');
   return (
     <FlagsProvider flags={flags}>
@@ -119,7 +122,17 @@ export async function AppFrame({
         accountCompact={<AccountMenu account={account} compact />}
         search={role === 'planner' ? <CommandPalette /> : undefined}
       >
-        {children}
+        {missing ? (
+          <BusinessContactForm
+            orgId={missing.orgId}
+            name={missing.name}
+            phone={missing.phone}
+            email={missing.email}
+            required
+          />
+        ) : (
+          children
+        )}
       </AppShell>
     </FlagsProvider>
   );

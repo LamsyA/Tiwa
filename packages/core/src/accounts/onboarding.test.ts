@@ -1,7 +1,9 @@
 import { prisma } from '@tiwa/db';
 import { afterAll, describe, expect, it } from 'vitest';
-import { ConflictError } from '../shared/errors.js';
+import { ConflictError, ValidationError } from '../shared/errors.js';
 import {
+  missingBusinessContact,
+  updateBusinessContact,
   businessSchema,
   completeBusinessOnboarding,
   completeHostProfile,
@@ -70,7 +72,7 @@ describe('schemas', () => {
       name: ['businessNameTooShort'],
       city: ['cityTooShort'],
     });
-    expect(businessSchema.safeParse({ kind: 'NOPE', name: 'Xy', city: 'Lagos' }).success).toBe(false);
+    expect(businessSchema.safeParse({ kind: 'NOPE', name: 'Xy', city: 'Lagos', ...CONTACT }).success).toBe(false);
   });
 });
 
@@ -81,10 +83,17 @@ describe('completeHostProfile', () => {
   });
 });
 
+const CONTACT = { phone: '0803 123 4567', email: 'Hello@Example.com' };
+
 describe('completeBusinessOnboarding', () => {
   it('creates an org with the caller as OWNER (UF-01-3)', async () => {
     const user = await makeUser({ name: 'Planner Pam' });
-    const { orgId } = await completeBusinessOnboarding(user.id, { kind: 'PLANNER', name: 'Pam Events', city: 'Lagos' });
+    const { orgId } = await completeBusinessOnboarding(user.id, {
+      kind: 'PLANNER',
+      name: 'Pam Events',
+      city: 'Lagos',
+      ...CONTACT,
+    });
     const org = await prisma.organization.findUniqueOrThrow({ where: { id: orgId } });
     expect(org).toMatchObject({ kind: 'PLANNER', countryCode: 'NG', city: 'Lagos' });
     expect(org.slug.startsWith('pam-events-')).toBe(true);
@@ -99,15 +108,50 @@ describe('completeBusinessOnboarding', () => {
 
   it('sets the owner name when given (phone users)', async () => {
     const user = await makeUser({ name: '+2348000000001', phone: '+2348000000001' });
-    await completeBusinessOnboarding(user.id, { kind: 'VENDOR', name: 'Bisi Foods', city: 'Lagos', ownerName: 'Bisi' });
+    await completeBusinessOnboarding(user.id, {
+      kind: 'VENDOR',
+      name: 'Bisi Foods',
+      city: 'Lagos',
+      ...CONTACT,
+      ownerName: 'Bisi',
+    });
     expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe('Bisi');
   });
 
   it('refuses a second business of the same kind (double submit)', async () => {
     const user = await makeUser({ name: 'Vee' });
-    await completeBusinessOnboarding(user.id, { kind: 'VENDOR', name: 'Vee DJ', city: 'Lagos' });
+    await completeBusinessOnboarding(user.id, { kind: 'VENDOR', name: 'Vee DJ', city: 'Lagos', ...CONTACT });
     await expect(
-      completeBusinessOnboarding(user.id, { kind: 'VENDOR', name: 'Vee DJ', city: 'Lagos' }),
+      completeBusinessOnboarding(user.id, { kind: 'VENDOR', name: 'Vee DJ', city: 'Lagos', ...CONTACT }),
     ).rejects.toBeInstanceOf(ConflictError);
+  });
+});
+
+describe('business contact (D-X90)', () => {
+  it('refuses a business without a valid phone', async () => {
+    const user = await makeUser({ name: 'No Phone' });
+    await expect(
+      completeBusinessOnboarding(user.id, {
+        kind: 'VENDOR',
+        name: 'No Phone DJ',
+        city: 'Lagos',
+        phone: '12',
+        email: 'a@b.co',
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('flags a business with no contact until the owner adds it', async () => {
+    const user = await makeUser({ name: 'Old Biz' });
+    const { orgId } = await completeBusinessOnboarding(user.id, {
+      kind: 'VENDOR',
+      name: 'Old Biz',
+      city: 'Lagos',
+      ...CONTACT,
+    });
+    await prisma.organization.update({ where: { id: orgId }, data: { contactPhone: null, contactEmail: null } });
+    expect(await missingBusinessContact(user.id)).toMatchObject({ orgId, phone: null, email: null });
+    await updateBusinessContact({ kind: 'user', userId: user.id, isAdmin: false }, { orgId, ...CONTACT });
+    expect(await missingBusinessContact(user.id)).toBeNull();
   });
 });

@@ -14,6 +14,7 @@ import { Check, Circle, Users } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { AppFrame } from '@/components/app-frame.js';
+import { BusinessContactForm } from '@/components/business/contact-form.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import { privateStorage } from '@/lib/storage.js';
 import { AvailabilityManager } from './availability-manager.js';
@@ -63,9 +64,11 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
     payoutAccount(ctx.actor, current.org.id).catch(() => null),
   ]);
   const country = current.org.countryCode;
-  const hasLogo = Boolean(
-    (await prisma.organization.findUnique({ where: { id: current.org.id }, select: { logoKey: true } }))?.logoKey,
-  );
+  const orgRow = await prisma.organization.findUnique({
+    where: { id: current.org.id },
+    select: { logoKey: true, contactPhone: true, contactEmail: true },
+  });
+  const hasLogo = Boolean(orgRow?.logoKey);
   const numberPattern = ACCOUNT_NUMBER_PATTERN[country]?.source.match(/\{(\d+)\}/)?.[1];
   const storage = privateStorage();
   const photos = await Promise.all(
@@ -205,6 +208,15 @@ export default async function BusinessProfilePage({ searchParams }: { searchPara
               publishable={checklist.publishable}
               verificationStatus={verification?.status ?? null}
             />
+            {/* D-X90: business phone and email, editable here. */}
+            {current.role !== 'STAFF' && (
+              <BusinessContactForm
+                orgId={current.org.id}
+                name={current.org.name}
+                phone={orgRow?.contactPhone ?? null}
+                email={orgRow?.contactEmail ?? null}
+              />
+            )}
             <ProfileForm
               orgId={current.org.id}
               kind={current.org.kind === 'PLANNER' ? 'PLANNER' : 'VENDOR'}

@@ -22,6 +22,7 @@
     "migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
     "seed": "dotenv -e ../../.env -- prisma db seed",
     "seed:load": "dotenv -e ../../.env -- tsx prisma/seed-load.ts",
+    "demo:contacts": "dotenv -e ../../.env -- tsx prisma/demo-contacts.ts",
     "build": "prisma generate && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",

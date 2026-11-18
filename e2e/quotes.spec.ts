@@ -50,6 +50,8 @@ async function newCateringVendor(page: Page, suffix = ''): Promise<string> {
     .catch(() => undefined);
   await page.getByLabel('Business name').fill(name);
   await page.getByLabel('City').first().fill('Lagos');
+  await page.getByLabel('Business phone (WhatsApp)').fill('0803 000 0000');
+  await page.getByLabel('Business email').fill('hello@e2e-business.com');
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/home/);
 

@@ -141,7 +141,11 @@
       "cityTooShort": "Which city are you based in?",
       "cityTooLong": "That city name is too long",
       "alreadySetUp": "You already have a business of this kind.",
-      "generic": "We couldn't save that. Please try again."
+      "generic": "We couldn't save that. Please try again.",
+      "phoneRequired": "Add a phone number.",
+      "emailRequired": "Add an email address.",
+      "invalidPhone": "That phone number doesn’t look right.",
+      "invalidEmail": "That email address doesn’t look right."
     },
     "stepOf": "Step {step} of {total}",
     "roleEyebrow": "Welcome to Tiwa",
@@ -153,7 +157,11 @@
     "roleLater": "Hosting and running a business? Start with one; you can add the other later.",
     "hostBody": "So your guests, vendors and co-hosts know who's planning.",
     "plannerBody": "Clients, events, vendors and invoices in one place.",
-    "vendorBody": "Get found by hosts and planners, send quotes and manage bookings."
+    "vendorBody": "Get found by hosts and planners, send quotes and manage bookings.",
+    "phoneLabel": "Business phone (WhatsApp)",
+    "phoneHint": "Clients and your team reach you here. Include the country code if outside Nigeria.",
+    "emailLabel": "Business email",
+    "emailHint": "Booking updates, invoices and payment receipts go here."
   },
   "settings": {
     "title": "Settings",
@@ -3834,5 +3842,16 @@
     "noNumber": "No WhatsApp number saved for {name}: pick them in WhatsApp.",
     "plannerTag": "Your planner",
     "noNumberTag": "No number saved"
+  },
+  "contactGate": {
+    "eyebrow": "One more step",
+    "title": "Add your business phone and email",
+    "body": "{name} needs a phone number and an email so clients, planners and Tiwa can reach you: WhatsApp approvals, booking updates and payment receipts.",
+    "save": "Save and continue",
+    "saving": "Saving…",
+    "editTitle": "Business contact",
+    "editBody": "Clients and planners reach you here. Booking updates and receipts go to this email.",
+    "saved": "Saved.",
+    "saveEdit": "Save"
   }
 }

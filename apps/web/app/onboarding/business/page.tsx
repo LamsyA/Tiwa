@@ -1,4 +1,5 @@
 import { safeNextPath } from '@tiwa/core';
+import { isPlaceholderEmail } from '@tiwa/messaging';
 import { prisma } from '@tiwa/db';
 import { getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
@@ -18,7 +19,7 @@ export default async function BusinessPage({
   if (!session?.user) redirect(`/login?next=${encodeURIComponent('/onboarding')}`);
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id as string },
-    select: { name: true, phone: true },
+    select: { name: true, phone: true, email: true },
   });
   // Phone sign-ups still carry their number as a name; ask for a real one here.
   const askName = !user.name.trim() || user.name === user.phone;
@@ -31,7 +32,13 @@ export default async function BusinessPage({
       title={t(vendor ? 'vendorTitle' : 'plannerTitle')}
       body={t(vendor ? 'vendorBody' : 'plannerBody')}
     >
-      <BusinessForm kind={vendor ? 'VENDOR' : 'PLANNER'} next={safeNextPath(next, '/home')} askName={askName} />
+      <BusinessForm
+        kind={vendor ? 'VENDOR' : 'PLANNER'}
+        next={safeNextPath(next, '/home')}
+        askName={askName}
+        defaultPhone={user.phone ?? ''}
+        defaultEmail={isPlaceholderEmail(user.email) ? '' : (user.email ?? '')}
+      />
     </OnboardingFrame>
   );
 }

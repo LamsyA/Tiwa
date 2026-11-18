@@ -56,6 +56,8 @@ test.describe('UF-01 sign up and onboarding', () => {
     await page.getByLabel('Your name').fill('Bisi Adeyemi');
     await page.getByLabel('Business name').fill('Bisi Small Chops');
     await page.getByLabel('City').fill('Lagos');
+    await page.getByLabel('Business phone (WhatsApp)').fill('0803 000 0000');
+    await page.getByLabel('Business email').fill('hello@e2e-business.com');
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page).toHaveURL(/\/home$/);
 
@@ -97,6 +99,8 @@ test.describe('UF-01 sign up and onboarding', () => {
     await page.getByLabel('Your name').fill('Tola Planner');
     await page.getByLabel('Business name').fill('Tola Events');
     await page.getByLabel('City').fill('Lagos');
+    await page.getByLabel('Business phone (WhatsApp)').fill('0803 000 0000');
+    await page.getByLabel('Business email').fill('hello@e2e-business.com');
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page).toHaveURL(/\/home$/);
 

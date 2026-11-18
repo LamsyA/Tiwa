@@ -3,6 +3,7 @@ import { deflateSync } from 'node:zlib';
 import { EVENT_TYPES, TIMEFRAME_DAYS_BEFORE, getEventType } from '@tiwa/config';
 import { eventName, plannerName, vendorName } from './names.js';
 import { prisma } from '../src/index.js';
+import { fillDemoContacts } from './demo-contacts.js';
 
 /** 32 random bytes, base64url, no padding — mirrors core generateToken(32). */
 function guestToken(): string {
@@ -1278,6 +1279,8 @@ async function seedMarketplace() {
     await portfolioFor(org.id, 6);
   }
   console.log('[seed] marketplace: 40 vendors, 8 venues with spaces, 5 planners.');
+  // D-X90: demo businesses need a phone and email like real ones.
+  console.log(`[seed] demo contacts: ${await fillDemoContacts()} businesses.`);
 }
 
 await main()

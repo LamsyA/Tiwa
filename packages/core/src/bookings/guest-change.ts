@@ -211,6 +211,10 @@ export async function applyGuestChange(
       },
     });
     const booking = await prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, select: { vendorOrgId: true } });
+    const vendorOrg = await prisma.organization.findUnique({
+      where: { id: booking.vendorOrgId },
+      select: { contactPhone: true },
+    });
     // D-X89: the business's WhatsApp is the first member with a phone, owner first.
     const members = await prisma.membership.findMany({
       where: { orgId: booking.vendorOrgId, user: { phone: { not: null } } },
@@ -222,7 +226,8 @@ export async function applyGuestChange(
       bookingId,
       versionId: result.versionId,
       vendorName: row.vendorName,
-      vendorPhone: owner?.user.phone ?? null,
+      // D-X90: the business number first, then a member's phone.
+      vendorPhone: vendorOrg?.contactPhone ?? owner?.user.phone ?? null,
       diffMinor: row.diffMinor,
       newBalanceMinor: row.newBalanceMinor,
       currency: row.currency,
@@ -250,7 +255,11 @@ async function tellPlanner(
 ): Promise<{ name: string; phone: string | null } | null> {
   const rows = await prisma.eventParticipant.findMany({
     where: { eventId, role: 'PLANNER', removedAt: null, userId: { not: null } },
-    select: { userId: true, user: { select: { name: true, phone: true } } },
+    select: {
+      userId: true,
+      orgId: true,
+      user: { select: { name: true, phone: true } },
+    },
   });
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { name: true } });
   const vendors = sent.map((row) => row.vendorName).join(', ');
@@ -268,8 +277,12 @@ async function tellPlanner(
       },
     ).catch(() => undefined);
   }
-  const first = rows[0]?.user;
-  return first ? { name: first.name, phone: first.phone } : null;
+  const first = rows[0];
+  if (!first?.user) return null;
+  const org = first.orgId
+    ? await prisma.organization.findUnique({ where: { id: first.orgId }, select: { contactPhone: true } })
+    : null;
+  return { name: first.user.name, phone: org?.contactPhone ?? first.user.phone };
 }
 
 // ───────────── Signed approve link (stateless, like the headcount link) ─────────────

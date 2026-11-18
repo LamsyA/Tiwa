@@ -109,13 +109,28 @@ export function HostProfileForm({ next, defaultName = '' }: { next: string; defa
   );
 }
 
-export function BusinessForm({ kind, next, askName }: { kind: 'PLANNER' | 'VENDOR'; next: string; askName: boolean }) {
+export function BusinessForm({
+  kind,
+  next,
+  askName,
+  defaultPhone = '',
+  defaultEmail = '',
+}: {
+  kind: 'PLANNER' | 'VENDOR';
+  next: string;
+  askName: boolean;
+  defaultPhone?: string;
+  defaultEmail?: string;
+}) {
   const t = useTranslations('onboarding');
   const [ownerName, setOwnerName] = React.useState('');
   const [name, setName] = React.useState('');
   const [city, setCity] = React.useState('');
+  // D-X90: every planner and vendor gives a business phone (WhatsApp) and email.
+  const [phone, setPhone] = React.useState(defaultPhone);
+  const [email, setEmail] = React.useState(defaultEmail);
   const { errors, saving, submit } = useSubmit(
-    () => saveBusinessProfile({ kind, name, city, ...(askName ? { ownerName } : {}) }),
+    () => saveBusinessProfile({ kind, name, city, phone, email, ...(askName ? { ownerName } : {}) }),
     next,
   );
 
@@ -163,6 +178,34 @@ export function BusinessForm({ kind, next, askName }: { kind: 'PLANNER' | 'VENDO
               autoComplete="address-level2"
               value={city}
               onChange={(event) => setCity(event.target.value)}
+            />
+          )}
+        </FieldShell>
+        <FieldShell id="business-phone" label={t('phoneLabel')} hint={t('phoneHint')} error={errors.phone}>
+          {(describedBy) => (
+            <Input
+              id="business-phone"
+              type="tel"
+              required
+              aria-describedby={describedBy}
+              aria-invalid={Boolean(errors.phone)}
+              autoComplete="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
+          )}
+        </FieldShell>
+        <FieldShell id="business-email" label={t('emailLabel')} hint={t('emailHint')} error={errors.email}>
+          {(describedBy) => (
+            <Input
+              id="business-email"
+              type="email"
+              required
+              aria-describedby={describedBy}
+              aria-invalid={Boolean(errors.email)}
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
             />
           )}
         </FieldShell>

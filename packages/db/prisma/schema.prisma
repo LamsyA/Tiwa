@@ -86,6 +86,8 @@ model Organization {
   countryCode   String
   city          String?
   logoKey       String?
+  contactPhone  String? // D-X90: business WhatsApp/phone, required for planners and vendors
+  contactEmail  String? // D-X90: business email
   verification  VerificationStatus @default(NONE) // cache of the latest BusinessVerification decision (for fast search filters)
   verifiedUntil DateTime? // cache, same source
   createdAt     DateTime           @default(now())
