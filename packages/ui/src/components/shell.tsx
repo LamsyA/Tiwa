@@ -318,8 +318,9 @@ export function AppShell({
         </header>
 
         <div className="flex min-w-0 flex-1">
-          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-4 pb-8 lg:px-10 lg:py-10">
-            <div className="mb-4 flex items-end justify-between gap-4 pt-4 lg:mb-8 lg:pt-0">
+          <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 overflow-x-clip px-4 pt-3 pb-8 lg:px-10 lg:py-10">
+            {/* Desktop title row; on phones the title lives in the bar, so this takes no space (D-X96). */}
+            <div className="flex items-end justify-between gap-4 lg:mb-8">
               <h1 className="font-display sr-only text-3xl font-bold tracking-[-0.02em] lg:not-sr-only">{title}</h1>
               {headerAction && <div className="hidden shrink-0 lg:block">{headerAction}</div>}
             </div>

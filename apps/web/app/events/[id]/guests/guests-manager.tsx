@@ -119,7 +119,8 @@ export function GuestsManager(props: GuestsManagerProps) {
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="font-display text-xl font-bold">{t('title')}</h2>
         {canManage && (
-          <div className="ml-auto flex flex-wrap gap-2">
+          // D-X96: three equal buttons on phones, one row from sm up.
+          <div className="grid w-full grid-cols-3 gap-2 sm:ml-auto sm:flex sm:w-auto [&_button]:w-full [&_button]:px-2 sm:[&_button]:px-4 [&_button_svg]:hidden sm:[&_button_svg]:inline">
             <AddGuestDialog eventId={eventId} groups={groups} />
             <PasteDialog eventId={eventId} />
             <CsvDialog eventId={eventId} total={counts.total} />
@@ -128,12 +129,19 @@ export function GuestsManager(props: GuestsManagerProps) {
       </div>
       {!canManage && <Banner tone="info">{t('readOnly')}</Banner>}
 
-      <div className="grid grid-cols-5 gap-2">
-        {counters.map((counter) => (
-          <Card key={counter.label} className="p-3 text-center">
-            <p className="font-display text-xl font-bold">{counter.value}</p>
-            <p className="text-muted text-xs">{counter.label}</p>
-          </Card>
+      {/* D-X96: one summary strip instead of five cramped cards. */}
+      <div className="border-border/70 bg-surface divide-border/60 grid grid-cols-5 divide-x overflow-hidden rounded-2xl border shadow-[var(--shadow-1)]">
+        {counters.map((counter, index) => (
+          <div key={counter.label} className="flex min-w-0 flex-col items-center px-1 py-3 text-center">
+            <p
+              className={`font-display text-xl font-bold tabular-nums ${
+                index === 1 ? 'text-success' : index === 4 ? 'text-brand-strong' : ''
+              }`}
+            >
+              {counter.value}
+            </p>
+            <p className="text-muted w-full truncate text-[11px] leading-tight font-medium">{counter.label}</p>
+          </div>
         ))}
       </div>
 

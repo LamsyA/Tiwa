@@ -491,15 +491,16 @@ export default async function EventOverviewPage({
               action={{ href: `/events/${id}/settings/members`, label: t('overview.manageTeam') }}
             >
               <ul className="flex flex-col gap-2.5">
-                {team.map((member) => (
+                {/* D-X96: first six, then "+N more"; blank names fall back to the role. */}
+                {team.slice(0, 6).map((member) => (
                   <li key={member.userId} className="flex items-center gap-2.5">
                     <Avatar
                       size="sm"
-                      name={member.name ?? t(`roles.${member.role}`)}
+                      name={member.name || t(`roles.${member.role}`)}
                       {...(member.image ? { src: member.image } : {})}
                     />
                     <span className="min-w-0 text-sm">
-                      <span className="block truncate font-medium">{member.name ?? t(`roles.${member.role}`)}</span>
+                      <span className="block truncate font-medium">{member.name || t(`roles.${member.role}`)}</span>
                       <span className="text-muted block text-xs">
                         {t(`roles.${member.role}`)}
                         {!member.joined && ` · ${t('overview.teamPending')}`}
@@ -507,6 +508,16 @@ export default async function EventOverviewPage({
                     </span>
                   </li>
                 ))}
+                {team.length > 6 && (
+                  <li>
+                    <Link
+                      href={`/events/${id}/settings/members`}
+                      className="text-brand-strong text-sm font-semibold hover:underline"
+                    >
+                      {t('overview.teamMore', { count: team.length - 6 })}
+                    </Link>
+                  </li>
+                )}
               </ul>
               {['HOST', 'CO_HOST', 'PLANNER', 'PLANNER_STAFF'].includes(overview.myRole) && (
                 <div className="border-border/60 flex flex-col gap-2 border-t pt-3">

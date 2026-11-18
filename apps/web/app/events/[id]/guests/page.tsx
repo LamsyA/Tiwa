@@ -86,7 +86,7 @@ export default async function GuestsPage({
       title={event.name}
     >
       {(impactOn || canChangeCount) && (
-        <div className="flex flex-wrap justify-end gap-2 pt-2">
+        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pt-1 sm:mx-0 sm:justify-end sm:px-0 [&_button]:shrink-0">
           {/* D-X84: turn a new guest count into vendor changes they approve on WhatsApp. */}
           {canChangeCount && (
             <GuestChangeFlow eventId={id} eventName={event.name} currentCount={event.expectedGuests ?? null} />

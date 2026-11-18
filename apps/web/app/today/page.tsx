@@ -68,7 +68,7 @@ export default async function TodayPage() {
             body={t('clearBody')}
           />
         ) : (
-          <div className="grid items-start gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
             <Column
               icon={CheckSquare}
               title={t('tasksHeading')}

@@ -232,7 +232,7 @@ export default async function EventVendorsPage({ params }: { params: Promise<{ i
             )}
           </div>
           {/* D-X79: compact status rows (planner workspace style) instead of 15 photo tiles. */}
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {[...categories]
               .map((row, index) => ({ row, index, stage: stageByCategory.get(row.category) }))
               .sort((a, b) => {

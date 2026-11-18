@@ -255,39 +255,35 @@ export function DayEditor(props: {
           </Button>
         )}
       </div>
-      <div className="flex gap-2" role="tablist" aria-label={t('title')}>
-        <Button
-          variant={tab === 'timeline' ? 'primary' : 'secondary'}
-          onClick={() => setTab('timeline')}
-          role="tab"
-          aria-selected={tab === 'timeline'}
-        >
-          {t('timeline')}
-        </Button>
-        <Button
-          variant={tab === 'mine' ? 'primary' : 'secondary'}
-          onClick={() => setTab('mine')}
-          role="tab"
-          aria-selected={tab === 'mine'}
-        >
-          {t('myTasksTab')} ({mine.length})
-        </Button>
-        <Button
-          variant={tab === 'incidents' ? 'primary' : 'secondary'}
-          onClick={() => setTab('incidents')}
-          role="tab"
-          aria-selected={tab === 'incidents'}
-        >
-          {t('incidents')}
-        </Button>
-        <Button
-          variant={tab === 'contacts' ? 'primary' : 'secondary'}
-          onClick={() => setTab('contacts')}
-          role="tab"
-          aria-selected={tab === 'contacts'}
-        >
-          {t('contacts')}
-        </Button>
+      {/* D-X96: one scrollable row of pills on phones (never wraps or overflows). */}
+      <div
+        className="scrollbar-none -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
+        role="tablist"
+        aria-label={t('title')}
+      >
+        {(
+          [
+            ['timeline', t('timeline')],
+            ['mine', `${t('myTasksTab')} · ${mine.length}`],
+            ['incidents', t('incidents')],
+            ['contacts', t('contacts')],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`h-9 shrink-0 rounded-full px-4 text-sm font-semibold whitespace-nowrap transition ${
+              tab === key
+                ? 'bg-text text-bg shadow-[var(--shadow-1)]'
+                : 'bg-surface text-muted ring-border ring-1 hover:text-text'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       {tab === 'incidents' && (
         <IncidentsPanel

@@ -281,3 +281,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X93: custom programme heading and custom item types
 - D-X94: Tiwa-specific AI briefing for every feature; planner uses the event's real state
 - D-X95: AI progress panel, no Moments talk, redesigned offline payment modal
+- D-X96: mobile polish (no top gap, no sideways scroll, Guests/Event day/Team tidy)
