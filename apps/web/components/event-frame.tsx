@@ -20,6 +20,7 @@ export type EventSection =
   | 'vendors'
   | 'tickets'
   | 'day'
+  | 'programme'
   | 'close'
   | 'settings';
 
@@ -48,6 +49,8 @@ const SECTIONS: {
   // the host has them on.
   { key: 'tickets', path: '/tickets', needs: 'event.view', needsTickets: true },
   // Run-of-show (P12): every event gets a day timeline.
+  // D-X92: the guest programme (order of the day guests read on their phones).
+  { key: 'programme', path: '/programme', needs: 'event.view' },
   { key: 'day', path: '/day', needs: 'event.view' },
   // Close (P14): only the host (event.close) sees it.
   { key: 'close', path: '/close', needs: 'event.close' },

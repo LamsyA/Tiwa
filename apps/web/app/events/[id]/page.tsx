@@ -23,6 +23,7 @@ import {
   Flag,
   Images,
   LayoutDashboard,
+  ListMusic,
   Mail,
   MapPin,
   Settings,
@@ -49,6 +50,7 @@ const SECTION_ICONS: Record<EventSection, typeof Users> = {
   vendors: Store,
   tickets: Ticket,
   day: CalendarClock,
+  programme: ListMusic,
   close: Flag,
   settings: Settings,
 };

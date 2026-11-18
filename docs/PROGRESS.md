@@ -277,3 +277,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X89: host-only guest count, decline undoes it, planner told; daily task-deadline digest (unit tests pass; guest-change e2e pending)
 - D-X90: planners and vendors must add a business phone and email (unit tests pass; e2e pending)
 - D-X91: QR passes are links any camera opens; staff check guests in from them; iPhone scanner fallback, continuous scanning (unit tests pass; e2e pending)
+- D-X92: guest programme (host editor, premium guest page, venue QR); unit tests pass, browser check pending

@@ -32,43 +32,43 @@ datasource db {
 // ───────────── Accounts & organisations (Backend.md §3) ─────────────
 
 model User {
-  id                  String             @id @default(uuid(7))
-  name                String
-  email               String?            @unique @db.Citext
-  emailVerified       Boolean            @default(false)
-  phone               String?            @unique // E.164 — canonical contact number (Tiwa flows)
-  phoneVerified       Boolean            @default(false)
+  id                     String                  @id @default(uuid(7))
+  name                   String
+  email                  String?                 @unique @db.Citext
+  emailVerified          Boolean                 @default(false)
+  phone                  String?                 @unique // E.164 — canonical contact number (Tiwa flows)
+  phoneVerified          Boolean                 @default(false)
   // Better Auth phone-number plugin columns (plugin-managed; mirrored to
   // phone/phoneVerified by our verify wrappers — see apps/web/lib/auth.ts).
-  phoneNumber         String?            @unique
-  phoneNumberVerified Boolean            @default(false)
+  phoneNumber            String?                 @unique
+  phoneNumberVerified    Boolean                 @default(false)
   // Better Auth username plugin (D-X50): lowercased handle for sign-in, and
   // the casing the user typed for display.
-  username            String?            @unique
-  displayUsername     String?
-  image               String?
-  locale              String             @default("en")
-  countryCode         String             @default("NG")
-  isAdmin             Boolean            @default(false)
-  adminRole           AdminRole?
-  suspendedAt         DateTime?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  deletedAt           DateTime?
-  memberships         Membership[]
-  participants        EventParticipant[]
-  createdEvents       Event[]
-  ownedTasks          Task[]             @relation("TaskOwner")
-  sessions            Session[]
-  accounts            Account[]
-  notifications       Notification[]
+  username               String?                 @unique
+  displayUsername        String?
+  image                  String?
+  locale                 String                  @default("en")
+  countryCode            String                  @default("NG")
+  isAdmin                Boolean                 @default(false)
+  adminRole              AdminRole?
+  suspendedAt            DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  deletedAt              DateTime?
+  memberships            Membership[]
+  participants           EventParticipant[]
+  createdEvents          Event[]
+  ownedTasks             Task[]                  @relation("TaskOwner")
+  sessions               Session[]
+  accounts               Account[]
+  notifications          Notification[]
   notificationPreference NotificationPreference?
-  pushSubscriptions   PushSubscription[]
+  pushSubscriptions      PushSubscription[]
   // D-X51: set when the user finishes onboarding (picks host, or creates a
   // business). Having a name no longer counts: Google and password sign-ups
   // arrive with one and were skipping the role step.
-  onboardedAt         DateTime?
-  lastSeenAt  DateTime? // presence: refreshed while the app is open (chat "online" / "last seen", D-X37)
+  onboardedAt            DateTime?
+  lastSeenAt             DateTime? // presence: refreshed while the app is open (chat "online" / "last seen", D-X37)
 }
 
 enum AdminRole {
@@ -275,19 +275,23 @@ model EventDay {
 // One model for the event's programme: ceremony segments, conference sessions, performances.
 // Created from the event-type template. `isPublic` items appear on guest/public pages (the agenda).
 model ProgrammeItem {
-  id        String    @id @default(uuid(7))
-  eventId   String
-  dayId     String?
-  key       String? // template key, e.g. "reception", "keynote"
-  title     String
-  startsAt  DateTime?
-  endsAt    DateTime?
-  room      String?
-  speakers  String[]
-  isPublic  Boolean   @default(true)
-  sortOrder Int       @default(0)
-  event     Event     @relation(fields: [eventId], references: [id])
-  day       EventDay? @relation(fields: [dayId], references: [id])
+  id          String    @id @default(uuid(7))
+  eventId     String
+  dayId       String?
+  key         String? // template key, e.g. "reception", "keynote"
+  title       String
+  startsAt    DateTime?
+  endsAt      DateTime?
+  room        String?
+  speakers    String[]
+  /// D-X92: what the item is (speech, prayer, music, meal…) for its icon on the guest programme.
+  kind        String?
+  /// D-X92: a line or two guests read under the title.
+  description String?
+  isPublic    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  event       Event     @relation(fields: [eventId], references: [id])
+  day         EventDay? @relation(fields: [dayId], references: [id])
 
   @@index([eventId, startsAt])
 }
@@ -892,20 +896,20 @@ model WaitlistEntry {
 // RunItems are created from it (or from scratch) with owners and links.
 
 model RunItem {
-  id          String    @id @default(uuid(7))
+  id          String          @id @default(uuid(7))
   eventId     String
   dayId       String?
   title       String
   startsAt    DateTime
-  durationMin Int       @default(15)
+  durationMin Int             @default(15)
   ownerUserId String?
   ownerOrgId  String?
-  status      RunStatus @default(PLANNED)
-  lateByMin   Int       @default(0)
-  sortOrder   Int       @default(0)
+  status      RunStatus       @default(PLANNED)
+  lateByMin   Int             @default(0)
+  sortOrder   Int             @default(0)
   /// Shown to guests on the event's live agenda page (/e/{slug}/agenda) on the day.
-  isPublic    Boolean   @default(false)
-  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  isPublic    Boolean         @default(false)
+  event       Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
   dependents  RunDependency[] @relation("RunDependents")
   dependsOn   RunDependency[] @relation("RunDependsOn")
 
@@ -1032,18 +1036,18 @@ enum DaySlot {
 }
 
 model PortfolioItem {
-  id        String    @id @default(uuid(7))
-  orgId     String
-  kind      MediaKind
-  key       String
-  thumbKey  String?
-  caption   String?
-  sortOrder Int       @default(0)
+  id           String    @id @default(uuid(7))
+  orgId        String
+  kind         MediaKind
+  key          String
+  thumbKey     String?
+  caption      String?
+  sortOrder    Int       @default(0)
   // T04: Moments photos tagged to a verified event (if from Moments).
   // mediaItemId links the source; approvedAt is set by the event host (null = pending).
-  mediaItemId String?   @unique
-  eventId     String?
-  approvedAt  DateTime?
+  mediaItemId  String?   @unique
+  eventId      String?
+  approvedAt   DateTime?
   approvedById String?
 
   @@index([orgId])
@@ -1157,18 +1161,18 @@ enum QuoteRequestStatus {
 }
 
 model Quote {
-  id                String      @id @default(uuid(7))
+  id                String          @id @default(uuid(7))
   requestId         String?
   eventId           String
   vendorOrgId       String
   spaceId           String? // venue quotes: the space, date and slot offered
-  serviceDate       DateTime?   @db.Date
+  serviceDate       DateTime?       @db.Date
   slot              DaySlot?
-  status            QuoteStatus @default(DRAFT)
+  status            QuoteStatus     @default(DRAFT)
   items             Json // [{name, qty, unitMinor}]
-  taxBps            Int         @default(0)
-  serviceBps        Int         @default(0)
-  travelFeeMinor    BigInt      @default(0)
+  taxBps            Int             @default(0)
+  serviceBps        Int             @default(0)
+  travelFeeMinor    BigInt          @default(0)
   subtotalMinor     BigInt
   totalMinor        BigInt
   currency          String
@@ -1181,14 +1185,14 @@ model Quote {
   // or planner can see what to revise; revision counts resends after it.
   changeRequest     String?
   changeRequestedAt DateTime?
-  revision          Int         @default(1)
-  createdAt         DateTime    @default(now())
-  event             Event       @relation(fields: [eventId], references: [id])
+  revision          Int             @default(1)
+  createdAt         DateTime        @default(now())
+  event             Event           @relation(fields: [eventId], references: [id])
+  revisions         QuoteRevision[]
 
   @@index([eventId, status])
   @@index([vendorOrgId, status])
   @@index([requestId])
-  revisions         QuoteRevision[]
 }
 
 enum QuoteStatus {
@@ -1641,8 +1645,8 @@ model PushSubscription {
 // five 1–5 scores (REV-02). photoIds reference Moments media of the event.
 
 model Review {
-  id            String   @id @default(uuid(7))
-  bookingId     String   @unique
+  id            String    @id @default(uuid(7))
+  bookingId     String    @unique
   vendorOrgId   String
   authorId      String
   quality       Int
@@ -1655,8 +1659,8 @@ model Review {
   photoIds      String[]
   reply         String?
   repliedAt     DateTime?
-  hidden        Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  hidden        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
 
   @@index([vendorOrgId, createdAt])
 }
