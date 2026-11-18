@@ -62,6 +62,8 @@ export const draftPlanSchema = z.object({
 
 const DAY_MS = 86_400_000;
 const MAX_SUGGESTIONS = 25;
+const MOMENTS_TALK =
+  /\bmoments\b|photo gallery|\bgallery\b|guest (photo|upload)|upload(ed|ing)? (photos|pictures)|share (the )?(photos|pictures)/i;
 
 function canSeeMoney(actor: UserActor, eventId: string, access: Awaited<ReturnType<typeof requireEventAccess>>) {
   try {
@@ -200,6 +202,8 @@ export async function draftPlan(
         .trim()
         .slice(0, 300),
     }))
+    // D-X95: the assistant never brings up Moments / the photo gallery.
+    .filter((row) => !MOMENTS_TALK.test(`${row.title} ${row.why}`))
     .filter((row) => row.title.length > 0 && !seen.has(row.title.toLowerCase()) && seen.add(row.title.toLowerCase()))
     .slice(0, MAX_SUGGESTIONS)
     .map((row) => ({

@@ -3,6 +3,19 @@
 import { compressImage } from '@/components/uploads/resize-image.js';
 
 import { Banner, Button, Card, Input, MoneyText, ResponsiveDialog, StatusPill, Textarea } from '@tiwa/ui';
+import {
+  Banknote,
+  CalendarDays,
+  CheckCircle2,
+  CreditCard,
+  FileText,
+  Landmark,
+  Loader2,
+  ShieldCheck,
+  Upload,
+  Wallet,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -194,61 +207,169 @@ function RecordDialog({ milestone, onClose }: { milestone: MilestoneRow; onClose
     router.refresh();
   }
 
+  const icons = { bank_transfer: Landmark, cash: Banknote, pos: CreditCard, other: Wallet } as const;
+  const preview = React.useMemo(
+    () => (file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null),
+    [file],
+  );
+  React.useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview]);
+  const due = milestone.dueAt
+    ? new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric' }).format(
+        new Date(milestone.dueAt),
+      )
+    : null;
+
   return (
-    <ResponsiveDialog open onOpenChange={(open) => !open && onClose()} title={t('recordTitle')}>
-      <div className="flex flex-col gap-3 p-4 text-sm">
+    <ResponsiveDialog
+      open
+      onOpenChange={(open) => !open && !working && onClose()}
+      title={t('recordTitle')}
+      description={t('recordLead')}
+    >
+      <div className="flex flex-col gap-5">
         {error && <Banner tone="danger">{error}</Banner>}
-        <p>
-          {milestone.label} ·{' '}
-          {milestone.amountMinor == null ? (
-            t('hiddenByPlanner')
-          ) : (
-            <MoneyText value={milestone.amountMinor} currency={milestone.currency} />
+
+        {/* What is being paid (D-X95) */}
+        <section className="from-brand-strong relative isolate overflow-hidden rounded-3xl bg-gradient-to-br to-[#2a1210] p-5 text-white shadow-[var(--shadow-2)]">
+          <div aria-hidden className="absolute -top-12 -right-8 -z-10 size-40 rounded-full bg-white/10 blur-2xl" />
+          <p className="text-xs font-semibold tracking-[0.16em] text-white/70 uppercase">{milestone.label}</p>
+          <p className="font-display mt-1 text-3xl font-bold tracking-tight tabular-nums">
+            {milestone.amountMinor == null ? (
+              <span className="text-base font-medium text-white/80">{t('hiddenByPlanner')}</span>
+            ) : (
+              <MoneyText value={milestone.amountMinor} currency={milestone.currency} />
+            )}
+          </p>
+          {due && (
+            <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-white/75">
+              <CalendarDays aria-hidden className="size-4" />
+              {t('due', { date: due })}
+            </p>
           )}
-        </p>
-        <label className="flex flex-col gap-1">
-          {t('paidOnLabel')}
+        </section>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-sm font-semibold">{t('methodLabel')}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            {METHODS.map((option) => {
+              const Icon = icons[option];
+              const on = method === option;
+              return (
+                <label
+                  key={option}
+                  className={`relative flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition ${
+                    on
+                      ? 'border-brand bg-brand-soft/50 ring-brand/30 shadow-[var(--shadow-1)] ring-2'
+                      : 'border-border/80 bg-surface hover:bg-surface-2'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="offline-method"
+                    className="sr-only"
+                    checked={on}
+                    onChange={() => setMethod(option)}
+                  />
+                  <span
+                    className={`grid size-9 shrink-0 place-items-center rounded-xl ${
+                      on ? 'bg-brand text-white' : 'bg-surface-2 text-muted'
+                    }`}
+                  >
+                    <Icon aria-hidden className="size-4.5" />
+                  </span>
+                  <span className="text-sm font-medium">{t(`method.${option}`)}</span>
+                  {on && <CheckCircle2 aria-hidden className="text-brand absolute top-2 right-2 size-4" />}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">{t('paidOnLabel')}</span>
           <Input
             type="date"
             value={paidOn}
             max={new Date().toISOString().slice(0, 10)}
             onChange={(e) => setPaidOn(e.target.value)}
+            className="h-11 rounded-xl"
           />
         </label>
-        <fieldset className="flex flex-col gap-2">
-          <legend className="font-medium">{t('methodLabel')}</legend>
-          {METHODS.map((option) => (
-            <label key={option} className="flex items-center gap-2">
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">{t('receiptLabel')}</span>
+          {file ? (
+            <div className="border-border/80 bg-surface flex items-center gap-3 rounded-2xl border p-3">
+              {preview ? (
+                <img src={preview} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
+              ) : (
+                <span className="bg-surface-2 text-muted grid size-14 shrink-0 place-items-center rounded-xl">
+                  <FileText aria-hidden className="size-6" />
+                </span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{file.name}</span>
+                <span className="text-muted text-xs">{Math.max(1, Math.round(file.size / 1024))} KB</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setFile(null)}
+                aria-label={t('removeReceipt')}
+                className="text-muted hover:bg-surface-2 hover:text-text grid size-9 place-items-center rounded-xl transition"
+              >
+                <X aria-hidden className="size-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="border-border hover:border-brand/60 hover:bg-brand-soft/20 flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition">
+              <span className="bg-brand-soft text-brand-strong grid size-11 place-items-center rounded-2xl">
+                <Upload aria-hidden className="size-5" />
+              </span>
+              <span className="text-sm font-medium">{t('receiptCta')}</span>
+              <span className="text-muted text-xs">{t('receiptHint')}</span>
               <input
-                type="radio"
-                name="offline-method"
-                checked={method === option}
-                onChange={() => setMethod(option)}
+                type="file"
+                className="sr-only"
+                accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
+                onChange={(e) => {
+                  const picked = e.target.files?.[0];
+                  // D-X81: receipts as images are compressed to ≤ 800 KB at 95% quality.
+                  if (picked) void compressImage(picked).then(setFile);
+                  else setFile(null);
+                }}
               />
-              {t(`method.${option}`)}
             </label>
-          ))}
-        </fieldset>
-        <label className="flex flex-col gap-1">
-          {t('receiptLabel')}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
-            onChange={(e) => {
-              const picked = e.target.files?.[0];
-              // D-X81: receipts as images are compressed to ≤ 800 KB at 95% quality.
-              if (picked) void compressImage(picked).then(setFile);
-              else setFile(null);
-            }}
+          )}
+        </div>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-semibold">{t('noteLabel')}</span>
+          <Textarea
+            value={note}
+            rows={2}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t('notePlaceholder')}
+            className="rounded-xl"
           />
         </label>
-        <label className="flex flex-col gap-1">
-          {t('noteLabel')}
-          <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('notePlaceholder')} />
-        </label>
-        <p className="text-muted">{t('recordBody')}</p>
-        <Button disabled={working || !paidOn} onClick={() => void onSave()}>
-          {t('recordSubmit')}
+
+        <p className="bg-surface-2/70 text-muted flex items-start gap-2.5 rounded-2xl px-4 py-3 text-sm">
+          <ShieldCheck aria-hidden className="text-success mt-0.5 size-4 shrink-0" />
+          {t('recordBody')}
+        </p>
+
+        <Button disabled={working || !paidOn} onClick={() => void onSave()} className="h-12 rounded-2xl text-base">
+          {working ? (
+            <>
+              <Loader2 aria-hidden className="size-4 animate-spin" />
+              {file ? t('uploadingReceipt') : t('recording')}
+            </>
+          ) : (
+            <>
+              <CheckCircle2 aria-hidden className="size-4" />
+              {t('recordSubmit')}
+            </>
+          )}
         </Button>
       </div>
     </ResponsiveDialog>

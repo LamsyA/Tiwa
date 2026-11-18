@@ -280,3 +280,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X92: guest programme (host editor, premium guest page, venue QR); unit tests pass, browser check pending
 - D-X93: custom programme heading and custom item types
 - D-X94: Tiwa-specific AI briefing for every feature; planner uses the event's real state
+- D-X95: AI progress panel, no Moments talk, redesigned offline payment modal

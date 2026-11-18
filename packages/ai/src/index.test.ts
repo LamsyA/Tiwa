@@ -62,7 +62,7 @@ describe('MuseAssistant', () => {
         usage.push(row);
       }).draftTasks({ ...context, request: 'Call me on 08031234567 or ada@example.com' });
       expect(usage).toEqual([
-        expect.objectContaining({ feature: 'plan', inputTokens: 10, outputTokens: 20, promptVersion: 'plan-draft@4' }),
+        expect.objectContaining({ feature: 'plan', inputTokens: 10, outputTokens: 20, promptVersion: 'plan-draft@5' }),
       ]);
       const sent = JSON.stringify(calls[0]?.body);
       expect(sent).not.toContain('08031234567');
@@ -144,6 +144,7 @@ describe('Tiwa-specific prompts (D-X94)', () => {
     }
     expect(TIWA_CONTEXT).toContain('Programme tab');
     expect(TIWA_CONTEXT).toContain('Guest count changed');
+    expect(TIWA_CONTEXT).not.toMatch(/Moments:|shares photos/);
     expect(PLAN_SYSTEM).toContain('daysBefore must be between 0 and the days until the event');
   });
 
@@ -168,6 +169,7 @@ describe('Tiwa-specific prompts (D-X94)', () => {
     expect(text).toContain('Already booked: Venue');
     expect(text).toContain('Shortlisted or waiting on quotes (not booked yet): Catering');
     expect(text).toContain('80 invited, 50 attending, 30 not replied');
-    expect(text).toContain('Switched on in Tiwa: invites, moments (photo gallery)');
+    expect(text).toContain('Switched on in Tiwa: invites');
+    expect(text.toLowerCase()).not.toContain('moment');
   });
 });

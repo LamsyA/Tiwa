@@ -38,7 +38,7 @@ export interface PlanDraftSuggestion {
   why: string;
 }
 
-export const PLAN_PROMPT_VERSION = 'plan-draft@4';
+export const PLAN_PROMPT_VERSION = 'plan-draft@5';
 
 export const planSchema = z.object({
   tasks: z.array(z.object({ title: z.string(), daysBefore: z.number().nullable(), why: z.string() })).max(25),
@@ -52,8 +52,8 @@ export const PLAN_SYSTEM = withTiwa(
     '2. Time every task from the real days left. daysBefore must be between 0 and the days until the event. Put each task at its real lead time (see the lead times above); when there is not enough time, put it as early as possible and say so in why. If the event is very close, focus on what can still be done.',
     '3. Use the numbers. Size food, drinks, chairs, tables, souvenirs and invites from the guest count (prefer confirmed attending when there are RSVPs). Put the quantity in the title, e.g. "Book catering for 130 (120 guests + 10%)", "Rent 13 round tables and 130 chairs".',
     '4. Respect the budget. When a budget is given, mention the share for big items in why (e.g. "about 35% of the budget"); when money is already committed, plan the deposits and balances still to pay. Never invent prices.',
-    '5. Cover the whole event: venue and logistics, each vendor this event type needs, guests and invitations, the programme and people on it (MC, speakers, ministers), payments, the day itself (vendor arrival confirmations, set-up, check-in, run-of-show) and after (pay balances, review vendors, share photos, thank guests).',
-    '6. Point to Tiwa. End why with where to do it, e.g. "Do it in Vendors → Catering", "Send from the Invites tab", "Add it to the Programme tab", "Record the deposit in Money". Only mention tabs that exist for this event (invites, tickets and moments only when switched on).',
+    '5. Cover the whole event: venue and logistics, each vendor this event type needs, guests and invitations, the programme and people on it (MC, speakers, ministers), payments, the day itself (vendor arrival confirmations, set-up, check-in, run-of-show) and after (pay balances, review vendors, thank guests).',
+    '6. Point to Tiwa. End why with where to do it, e.g. "Do it in Vendors → Catering", "Send from the Invites tab", "Add it to the Programme tab", "Record the deposit in Money". Only mention tabs that exist for this event (invites and tickets only when switched on).',
     '7. Follow the request. If the host or planner asks for something specific, every task must serve it; if they ask for one area (e.g. "just the food"), plan only that area in depth.',
     'Titles: short and imperative, max 80 characters, specific (never "Plan the event" or "Contact vendors"). why: one sentence, max 160 characters.',
     'Reply with JSON only, exactly: {"tasks":[{"title":string,"daysBefore":integer|null,"why":string}]}. Order from earliest (largest daysBefore) to latest. daysBefore 0 = on the day; null only when timing truly does not matter.',
@@ -87,13 +87,9 @@ export function describePlan(context: PlanDraftContext): string {
     list('Vendors this kind of event usually needs', context.typicalVendors),
     context.features
       ? `Switched on in Tiwa: ${
-          [
-            context.features.invites ? 'invites' : null,
-            context.features.tickets ? 'tickets' : null,
-            context.features.moments ? 'moments (photo gallery)' : null,
-          ]
+          [context.features.invites ? 'invites' : null, context.features.tickets ? 'tickets' : null]
             .filter(Boolean)
-            .join(', ') || 'none of invites/tickets/moments'
+            .join(', ') || 'neither invites nor tickets'
         }`
       : null,
     context.hasProgramme !== undefined

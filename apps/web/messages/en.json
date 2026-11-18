@@ -825,13 +825,22 @@
       "aiIdea2": "Traditional wedding: families, aso-ebi, MC and live band",
       "aiIdea3": "Company end-of-year party with awards and dinner",
       "aiDraft": "Draft my plan",
-      "aiThinking": "Drafting a plan for your event…",
+      "aiThinking": "Tiwa is drafting your plan",
       "aiNothing": "No new tasks came back — try describing your event in more detail.",
       "aiTryAgain": "Try again",
       "aiRefine": "Change request",
       "plannerNoteTitle": "{planner} is planning this event with you.",
       "plannerNoteBody": "You can still add and edit tasks; everything you change is visible to {planner}, and theirs to you.",
-      "editTask": "Edit {title}"
+      "editTask": "Edit {title}",
+      "aiStep1": "Reading your event and request",
+      "aiStep2": "Checking what’s already booked and on your list",
+      "aiStep3": "Sizing things for your guest count and budget",
+      "aiStep4": "Timing each task from your event date",
+      "aiStep5": "Finishing your checklist",
+      "aiSeconds": "{seconds}s",
+      "aiSlow": "Detailed plans can take up to a minute. You can keep this open, it’s still working.",
+      "aiCancel": "Cancel",
+      "aiAdding": "Adding to your plan…"
     },
     "documents": {
       "heading": "Documents",
@@ -2600,7 +2609,7 @@
     "receiptLabel": "Receipt or transfer screenshot (optional)",
     "noteLabel": "Note for the vendor (optional)",
     "notePlaceholder": "Transfer reference or who paid",
-    "recordBody": "The vendor will be asked to confirm they received it.",
+    "recordBody": "The vendor gets a notification to confirm they received it. Until then it shows as “Awaiting vendor confirmation”.",
     "recordSubmit": "Record payment",
     "toConfirmHeading": "Payments to confirm",
     "confirmReceived": "Confirm received",
@@ -2637,7 +2646,13 @@
       "uploadFailed": "The receipt didn't upload. Try again."
     },
     "bookingsHeading": "Your bookings",
-    "hiddenByPlanner": "Hidden by planner"
+    "hiddenByPlanner": "Hidden by planner",
+    "recordLead": "Paid the vendor by transfer, cash or POS? Record it here so everyone sees the same balance.",
+    "receiptCta": "Add a receipt or transfer screenshot",
+    "receiptHint": "Photo or PDF · optional, but it helps the vendor confirm faster",
+    "removeReceipt": "Remove receipt",
+    "uploadingReceipt": "Uploading receipt…",
+    "recording": "Recording…"
   },
   "planner": {
     "title": "Planner workspace",

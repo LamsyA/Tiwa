@@ -12,7 +12,7 @@ import {
   Textarea,
   cn,
 } from '@tiwa/ui';
-import { CalendarDays, Check, ChevronRight, Flag, Pencil, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react';
+import { CalendarDays, Check, ChevronRight, Flag, Loader2, Pencil, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -476,6 +476,76 @@ interface Draft {
   dueAt: string | null;
 }
 
+/**
+ * D-X95: what the host sees while the AI works (it can take 10–60 s): a live
+ * badge, the step it is on, a progress bar that eases toward the end, the
+ * seconds so far, reassurance after 20 s, and a way to stop.
+ */
+function AiWorking({ onCancel }: { onCancel: () => void }) {
+  const t = useTranslations('events.plan');
+  const steps = [t('aiStep1'), t('aiStep2'), t('aiStep3'), t('aiStep4'), t('aiStep5')];
+  const [seconds, setSeconds] = React.useState(0);
+  React.useEffect(() => {
+    const timer = setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const step = Math.min(steps.length - 1, Math.floor(seconds / 4));
+  // Eases toward 92% so it never looks finished before it is.
+  const progress = Math.round(92 * (1 - Math.exp(-seconds / 14)));
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="border-brand/20 from-brand-soft/60 to-surface relative overflow-hidden rounded-3xl border bg-gradient-to-br p-5"
+    >
+      <div className="flex items-center gap-3">
+        <span className="relative grid size-11 shrink-0 place-items-center">
+          <span className="bg-brand/25 absolute inset-0 animate-ping rounded-full" />
+          <span className="bg-brand relative grid size-11 place-items-center rounded-full text-white shadow-[var(--shadow-2)]">
+            <Wand2 className="size-5 animate-pulse" aria-hidden />
+          </span>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-base font-bold">{t('aiThinking')}</p>
+          <p key={step} className="text-muted tiwa-fade-up text-sm">
+            {steps[step]}
+          </p>
+        </div>
+        <span className="text-muted shrink-0 text-xs tabular-nums">{t('aiSeconds', { seconds })}</span>
+      </div>
+      <div className="bg-surface-2 mt-4 h-1.5 overflow-hidden rounded-full">
+        <div
+          className="bg-brand h-full rounded-full transition-[width] duration-1000 ease-out"
+          style={{ width: `${Math.max(6, progress)}%` }}
+        />
+      </div>
+      <ol className="mt-4 flex flex-col gap-1.5">
+        {steps.map((label, index) => (
+          <li
+            key={label}
+            className={`flex items-center gap-2 text-sm transition ${index > step ? 'text-muted/60' : index === step ? 'font-medium' : 'text-muted'}`}
+          >
+            {index < step ? (
+              <Check className="text-success size-4" aria-hidden />
+            ) : index === step ? (
+              <Loader2 className="text-brand size-4 animate-spin" aria-hidden />
+            ) : (
+              <span className="border-border size-4 rounded-full border" aria-hidden />
+            )}
+            {label}
+          </li>
+        ))}
+      </ol>
+      {seconds >= 20 && <p className="text-muted tiwa-fade-up mt-3 text-xs">{t('aiSlow')}</p>}
+      <div className="mt-3 flex justify-end">
+        <Button variant="ghost" size="sm" onClick={onCancel}>
+          {t('aiCancel')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** Describe the event → AI drafts tasks → pick → add (AI-06: nothing saved until "Add"). */
 function AiPlanner({ eventId, timezone, onClose }: { eventId: string; timezone: string; onClose: () => void }) {
   const t = useTranslations('events.plan');
@@ -487,12 +557,17 @@ function AiPlanner({ eventId, timezone, onClose }: { eventId: string; timezone: 
   const [adding, setAdding] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const ideas = [t('aiIdea1'), t('aiIdea2'), t('aiIdea3')];
+  // D-X95: a cancelled draft's late answer is ignored.
+  const run = React.useRef(0);
 
   async function draft() {
+    const mine = ++run.current;
     setLoading(true);
     setError(null);
-    const result = await draftPlanAction({ eventId, request });
+    const result = await draftPlanAction({ eventId, request }).catch(() => null);
+    if (mine !== run.current) return;
     setLoading(false);
+    if (!result) return setError(t('errors.aiFailed'));
     if (!result.ok) {
       const key = result.fieldErrors ? Object.values(result.fieldErrors).flat()[0] : result.code;
       return setError(key && t.has(`errors.${key}`) ? t(`errors.${key}`) : t('errors.aiFailed'));
@@ -524,6 +599,7 @@ function AiPlanner({ eventId, timezone, onClose }: { eventId: string; timezone: 
               <Textarea
                 autoFocus
                 rows={4}
+                disabled={loading}
                 value={request}
                 placeholder={t('aiPlaceholder')}
                 onChange={(event) => setRequest(event.target.value)}
@@ -535,6 +611,7 @@ function AiPlanner({ eventId, timezone, onClose }: { eventId: string; timezone: 
                 <button
                   key={idea}
                   type="button"
+                  disabled={loading}
                   onClick={() => setRequest(idea)}
                   className="bg-surface text-muted hover:text-text rounded-full px-3 py-1.5 text-left text-xs font-medium transition-colors"
                 >
@@ -543,15 +620,12 @@ function AiPlanner({ eventId, timezone, onClose }: { eventId: string; timezone: 
               ))}
             </div>
             {loading ? (
-              <div className="flex flex-col gap-2" role="status" aria-label={t('aiThinking')}>
-                {[0, 1, 2].map((row) => (
-                  <div key={row} className="tiwa-shimmer h-12 rounded-xl" />
-                ))}
-                <p className="text-muted flex items-center gap-2 text-sm">
-                  <Wand2 className="size-4 animate-pulse" aria-hidden />
-                  {t('aiThinking')}
-                </p>
-              </div>
+              <AiWorking
+                onCancel={() => {
+                  run.current += 1;
+                  setLoading(false);
+                }}
+              />
             ) : (
               <Button disabled={request.trim().length < 3} onClick={() => void draft()}>
                 <Sparkles className="size-4" aria-hidden />
@@ -606,7 +680,14 @@ function AiPlanner({ eventId, timezone, onClose }: { eventId: string; timezone: 
                 {t('aiRefine')}
               </Button>
               <Button className="flex-1" disabled={adding || picked.size === 0} onClick={() => void add()}>
-                {t('addSelected', { count: picked.size })}
+                {adding ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                    {t('aiAdding')}
+                  </>
+                ) : (
+                  t('addSelected', { count: picked.size })
+                )}
               </Button>
             </div>
           </>
