@@ -1,6 +1,13 @@
 'use server';
 
-import { deleteProgrammeItem, deleteProgrammeItemSchema, programmeItemSchema, saveProgrammeItem } from '@tiwa/core';
+import {
+  deleteProgrammeItem,
+  deleteProgrammeItemSchema,
+  programmeItemSchema,
+  programmeTitleSchema,
+  saveProgrammeItem,
+  setProgrammeTitle,
+} from '@tiwa/core';
 import { revalidatePath } from 'next/cache';
 import { userAction } from '@/lib/ctx.js';
 
@@ -13,5 +20,11 @@ export const saveProgrammeAction = userAction(programmeItemSchema, async (input,
 
 export const deleteProgrammeAction = userAction(deleteProgrammeItemSchema, async (input, ctx) => {
   await deleteProgrammeItem(ctx.actor, input);
+  revalidatePath(`/events/${input.eventId}/programme`);
+});
+
+/** D-X93: the host's own programme heading. */
+export const setProgrammeTitleAction = userAction(programmeTitleSchema, async (input, ctx) => {
+  await setProgrammeTitle(ctx.actor, input);
   revalidatePath(`/events/${input.eventId}/programme`);
 });

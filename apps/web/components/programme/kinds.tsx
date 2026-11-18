@@ -63,6 +63,11 @@ export const KIND_TINT: Record<Kind, string> = {
   other: 'bg-surface-2 text-muted',
 };
 
+/** D-X93: the host's own type name for `custom:<label>` kinds, else null. */
+export function customLabel(kind: string | null | undefined): string | null {
+  return kind?.startsWith('custom:') ? kind.slice('custom:'.length) : null;
+}
+
 export function asKind(value: string | null | undefined): Kind {
   return (PROGRAMME_KIND_LIST as readonly string[]).includes(value ?? '') ? (value as Kind) : 'other';
 }

@@ -165,6 +165,8 @@ model Event {
   hostCanSeeVendorPrices Boolean            @default(true)
   /// D-X73: the host decides whether a hired planner may add and edit guests.
   plannerManagesGuests   Boolean            @default(false)
+  /// D-X93: the host's own heading for the guest programme ("Order of Service", "Programme of Events").
+  programmeTitle         String?
   // Planner engagement (D-X47): the CRM client this event is for, and the
   // planner's fee agreement — a share of the budget (bps) and/or a fixed fee.
   clientId               String?

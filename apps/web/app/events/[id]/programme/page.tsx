@@ -32,6 +32,7 @@ export default async function ProgrammePage({ params }: { params: Promise<{ id: 
       <ProgrammeEditor
         eventId={id}
         eventName={view.event.name}
+        programmeTitle={view.event.programmeTitle}
         isDraft={view.event.status === 'DRAFT'}
         days={view.days}
         items={view.items}

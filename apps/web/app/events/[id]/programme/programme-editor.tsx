@@ -12,13 +12,16 @@ import {
   KindIcon,
   PROGRAMME_KIND_LIST,
   asKind,
+  customLabel,
   type Kind,
 } from '@/components/programme/kinds.js';
-import { deleteProgrammeAction, saveProgrammeAction } from './actions.js';
+import { deleteProgrammeAction, saveProgrammeAction, setProgrammeTitleAction } from './actions.js';
 
 interface Draft {
   itemId?: string;
   kind: Kind;
+  /** D-X93: the host's own type name; when set it replaces `kind`. */
+  custom: string | null;
   title: string;
   date: string;
   startTime: string;
@@ -35,6 +38,7 @@ interface Draft {
 export function ProgrammeEditor({
   eventId,
   eventName,
+  programmeTitle,
   isDraft,
   days,
   items,
@@ -43,6 +47,7 @@ export function ProgrammeEditor({
 }: {
   eventId: string;
   eventName: string;
+  programmeTitle: string | null;
   isDraft: boolean;
   days: string[];
   items: ProgrammeRow[];
@@ -56,6 +61,17 @@ export function ProgrammeEditor({
   const [error, setError] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [showQr, setShowQr] = React.useState(false);
+  // D-X93: the host names the programme ("Order of Service") and its own item types.
+  const [heading, setHeading] = React.useState(programmeTitle ?? '');
+  const [editingHeading, setEditingHeading] = React.useState(false);
+  const usedCustom = [...new Set(items.map((row) => customLabel(row.kind)).filter((v): v is string => Boolean(v)))];
+
+  async function saveHeading() {
+    setEditingHeading(false);
+    if ((programmeTitle ?? '') === heading.trim()) return;
+    await setProgrammeTitleAction({ eventId, title: heading.trim() });
+    router.refresh();
+  }
 
   const firstDay = days[0] ?? '';
   const multiDay = days.length > 1;
@@ -82,6 +98,7 @@ export function ProgrammeEditor({
     }
     return {
       kind: 'speech',
+      custom: null,
       title: '',
       date: last?.date ?? firstDay,
       startTime: start,
@@ -96,6 +113,7 @@ export function ProgrammeEditor({
     setDraft({
       itemId: row.id,
       kind: asKind(row.kind),
+      custom: customLabel(row.kind),
       title: row.title,
       date: row.date ?? firstDay,
       startTime: row.startTime ?? '12:00',
@@ -108,13 +126,14 @@ export function ProgrammeEditor({
   async function save() {
     if (!draft) return;
     if (!draft.title.trim()) return setError(t('titleRequired'));
+    if (draft.custom !== null && !draft.custom.trim()) return setError(t('customRequired'));
     setSaving(true);
     setError(null);
     const result = await saveProgrammeAction({
       eventId,
       ...(draft.itemId ? { itemId: draft.itemId } : {}),
       title: draft.title,
-      kind: draft.kind,
+      kind: draft.custom?.trim() ? `custom:${draft.custom.trim().slice(0, 40)}` : draft.kind,
       ...(draft.date ? { date: draft.date } : {}),
       startTime: draft.startTime,
       endTime: draft.endTime,
@@ -210,7 +229,43 @@ export function ProgrammeEditor({
       {/* Timeline */}
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display text-xl font-bold tracking-tight">{t('orderOfDay')}</h2>
+          {editingHeading ? (
+            <input
+              aria-label={t('headingLabel')}
+              value={heading}
+              maxLength={60}
+              autoFocus
+              placeholder={t('orderOfDay')}
+              onChange={(event) => setHeading(event.target.value)}
+              onBlur={() => void saveHeading()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void saveHeading();
+                if (event.key === 'Escape') {
+                  setHeading(programmeTitle ?? '');
+                  setEditingHeading(false);
+                }
+              }}
+              className="font-display border-brand/40 bg-surface min-w-0 flex-1 rounded-xl border px-3 py-1.5 text-xl font-bold tracking-tight outline-none"
+            />
+          ) : (
+            <button
+              type="button"
+              disabled={!canEdit}
+              onClick={() => setEditingHeading(true)}
+              className="group/h flex min-w-0 items-center gap-2 text-left disabled:cursor-default"
+              aria-label={canEdit ? t('renameHeading') : undefined}
+            >
+              <h2 className="font-display truncate text-xl font-bold tracking-tight">
+                {heading.trim() || t('orderOfDay')}
+              </h2>
+              {canEdit && (
+                <Pencil
+                  aria-hidden
+                  className="text-muted size-4 shrink-0 opacity-60 transition group-hover/h:opacity-100"
+                />
+              )}
+            </button>
+          )}
           {canEdit && items.length > 0 && (
             <Button
               className="rounded-full"
@@ -262,6 +317,11 @@ export function ProgrammeEditor({
                     </div>
                     <KindIcon kind={row.kind} />
                     <div className="min-w-0 flex-1">
+                      {customLabel(row.kind) && (
+                        <p className="text-brand-strong text-[11px] font-semibold tracking-wide uppercase">
+                          {customLabel(row.kind)}
+                        </p>
+                      )}
                       <p className="leading-snug font-semibold">{row.title}</p>
                       {row.who && (
                         <p className="text-muted mt-0.5 flex items-center gap-1 text-sm">
@@ -327,13 +387,13 @@ export function ProgrammeEditor({
               <div className="flex flex-wrap gap-1.5">
                 {PROGRAMME_KIND_LIST.map((k) => {
                   const Icon = KIND_ICON[k];
-                  const on = draft.kind === k;
+                  const on = draft.custom === null && draft.kind === k;
                   return (
                     <button
                       key={k}
                       type="button"
                       aria-pressed={on}
-                      onClick={() => setDraft({ ...draft, kind: k })}
+                      onClick={() => setDraft({ ...draft, kind: k, custom: null })}
                       className={cn(
                         'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ring-1 transition',
                         on ? 'bg-text text-bg ring-transparent' : 'bg-surface ring-border hover:bg-surface-2',
@@ -346,14 +406,55 @@ export function ProgrammeEditor({
                     </button>
                   );
                 })}
+                {usedCustom.map((label) => {
+                  const on = draft.custom === label;
+                  return (
+                    <button
+                      key={`custom-${label}`}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setDraft({ ...draft, custom: label })}
+                      className={cn(
+                        'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ring-1 transition',
+                        on ? 'bg-text text-bg ring-transparent' : 'bg-surface ring-border hover:bg-surface-2',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  aria-pressed={draft.custom !== null && !usedCustom.includes(draft.custom)}
+                  onClick={() => setDraft({ ...draft, custom: '' })}
+                  className={cn(
+                    'inline-flex h-9 items-center gap-1.5 rounded-full border border-dashed px-3 text-sm font-medium transition',
+                    draft.custom !== null && !usedCustom.includes(draft.custom)
+                      ? 'border-brand bg-brand-soft text-brand-strong'
+                      : 'border-border text-muted hover:text-text',
+                  )}
+                >
+                  <Plus aria-hidden className="size-3.5" />
+                  {t('customKind')}
+                </button>
               </div>
+              {draft.custom !== null && !usedCustom.includes(draft.custom) && (
+                <Input
+                  aria-label={t('customKindLabel')}
+                  placeholder={t('customKindPlaceholder')}
+                  maxLength={40}
+                  value={draft.custom}
+                  onChange={(event) => setDraft({ ...draft, custom: event.target.value })}
+                  autoFocus
+                />
+              )}
             </fieldset>
             <FieldShell id="prog-title" label={t('titleLabel')}>
               {(describedBy) => (
                 <Input
                   id="prog-title"
                   aria-describedby={describedBy}
-                  placeholder={t(`placeholder.${draft.kind}`)}
+                  placeholder={draft.custom !== null ? t('placeholder.other') : t(`placeholder.${draft.kind}`)}
                   value={draft.title}
                   onChange={(event) => setDraft({ ...draft, title: event.target.value })}
                   autoFocus

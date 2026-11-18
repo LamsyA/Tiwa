@@ -3947,6 +3947,12 @@
       "photos": "Family photos",
       "break": "Short break",
       "other": "What’s happening?"
-    }
+    },
+    "customKind": "Your own",
+    "customKindLabel": "Name your own type",
+    "customKindPlaceholder": "e.g. Chairman's remarks, Thanksgiving",
+    "customRequired": "Name your own type, or pick one above.",
+    "headingLabel": "Programme heading",
+    "renameHeading": "Rename the programme heading (e.g. Order of Service)"
   }
 }

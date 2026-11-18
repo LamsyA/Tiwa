@@ -2,7 +2,7 @@ import { prisma } from '@tiwa/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createEventDraft } from '../events/commands.js';
 import { publicAgenda } from './agenda.js';
-import { deleteProgrammeItem, getProgramme, saveProgrammeItem } from './programme.js';
+import { deleteProgrammeItem, getProgramme, saveProgrammeItem, setProgrammeTitle } from './programme.js';
 
 const users: string[] = [];
 const events: string[] = [];
@@ -66,6 +66,16 @@ describe('guest programme (D-X92)', () => {
 
     await deleteProgrammeItem(host, { eventId, itemId });
     expect((await getProgramme(host, eventId)).items).toHaveLength(1);
+
+    // D-X93: the host's own item type and heading.
+    await saveProgrammeItem(host, { eventId, title: 'Remarks', kind: "custom:Chairman's remarks", startTime: '17:00' });
+    await setProgrammeTitle(host, { eventId, title: 'Order of Service' });
+    const custom = await getProgramme(host, eventId);
+    expect(custom.event.programmeTitle).toBe('Order of Service');
+    expect(custom.items.find((row) => row.title === 'Remarks')?.kind).toBe("custom:Chairman's remarks");
+    expect((await publicAgenda(event.slug, new Date('2031-02-01T12:00:00Z'))).event.programmeTitle).toBe(
+      'Order of Service',
+    );
   });
 
   it('only the event team can edit it', async () => {

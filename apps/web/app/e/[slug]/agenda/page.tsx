@@ -5,7 +5,7 @@ import { CalendarDays, Check, MapPin, Radio, Sparkles, Users } from 'lucide-reac
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { KindIcon } from '@/components/programme/kinds.js';
+import { KindIcon, customLabel } from '@/components/programme/kinds.js';
 import { getCtx } from '@/lib/ctx.js';
 import { AutoRefresh } from './auto-refresh.js';
 
@@ -163,7 +163,9 @@ export default async function AgendaPage({ params }: { params: Promise<{ slug: s
                 <div className="mb-5 flex items-center gap-3">
                   <span aria-hidden className="bg-border h-px flex-1" />
                   <h2 className="font-display text-center text-sm font-bold tracking-[0.18em] uppercase">
-                    {multiDay && date ? dayLabel(date) : open ? t('fullAgenda') : t('orderOfDay')}
+                    {multiDay && date
+                      ? dayLabel(date)
+                      : (event.programmeTitle ?? (open ? t('fullAgenda') : t('orderOfDay')))}
                   </h2>
                   <span aria-hidden className="bg-border h-px flex-1" />
                 </div>
@@ -277,6 +279,9 @@ function AgendaRow({
             {lateLabel && <span className="text-danger font-medium">{lateLabel}</span>}
             {isDone && live && row.state === 'done' && <Check aria-hidden className="text-success size-3.5" />}
           </p>
+        )}
+        {customLabel(row.kind) && (
+          <p className="text-brand-strong text-[11px] font-semibold tracking-wide uppercase">{customLabel(row.kind)}</p>
         )}
         <p className={cn('leading-snug font-semibold', row.state === 'skipped' && 'line-through')}>{row.title}</p>
         {row.who.length > 0 && (

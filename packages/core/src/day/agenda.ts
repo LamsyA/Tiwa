@@ -34,6 +34,8 @@ export interface PublicAgenda {
     themeColor: string | null;
     startsAt: Date | null;
     venue: string | null;
+    /** D-X93: the host's heading ("Order of Service"), or null for the default. */
+    programmeTitle: string | null;
   };
   /** Event-local date the agenda opens (YYYY-MM-DD), or null when the event has no date yet. */
   opensOn: string | null;
@@ -100,6 +102,7 @@ export async function publicAgenda(
       status: true,
       timezone: true,
       themeColor: true,
+      programmeTitle: true,
       startsAt: true,
       days: { orderBy: { date: 'asc' }, select: { date: true, venueName: true } },
     },
@@ -118,6 +121,7 @@ export async function publicAgenda(
     themeColor: event.themeColor,
     startsAt: event.startsAt,
     venue: event.days[0]?.venueName ?? null,
+    programmeTitle: event.programmeTitle,
   };
   // D-X92: the host's programme is what guests read, any time before or on the
   // day; public run-of-show items stand in only when there is no programme.

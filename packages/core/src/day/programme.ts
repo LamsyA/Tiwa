@@ -29,13 +29,23 @@ export const PROGRAMME_KINDS = [
 ] as const;
 export type ProgrammeKind = (typeof PROGRAMME_KINDS)[number];
 
+/** D-X93: a host-named type, stored as `custom:<label>` (e.g. "custom:Chairman's remarks"). */
+export const CUSTOM_KIND_PREFIX = 'custom:';
+const kindSchema = z.union([
+  z.enum(PROGRAMME_KINDS),
+  z
+    .string()
+    .trim()
+    .regex(/^custom:.{1,40}$/, 'invalidKind'),
+]);
+
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'invalidTime');
 
 export const programmeItemSchema = z.object({
   eventId: z.string().uuid(),
   itemId: z.string().uuid().optional(),
   title: z.string().trim().min(1, 'titleRequired').max(140, 'titleTooLong'),
-  kind: z.enum(PROGRAMME_KINDS).default('other'),
+  kind: kindSchema.default('other'),
   /** Event-local date (YYYY-MM-DD); defaults to the event's first day. */
   date: z
     .string()
@@ -52,7 +62,8 @@ export const programmeItemSchema = z.object({
 export interface ProgrammeRow {
   id: string;
   title: string;
-  kind: ProgrammeKind;
+  /** A preset kind, or `custom:<label>` (D-X93). */
+  kind: string;
   date: string | null;
   startTime: string | null;
   endTime: string | null;
@@ -63,12 +74,13 @@ export interface ProgrammeRow {
 }
 
 export interface ProgrammeView {
-  event: { id: string; name: string; slug: string; timezone: string; status: string };
+  event: { id: string; name: string; slug: string; timezone: string; status: string; programmeTitle: string | null };
   days: string[];
   items: ProgrammeRow[];
 }
 
-function asKind(value: string | null): ProgrammeKind {
+function asKind(value: string | null): string {
+  if (value?.startsWith(CUSTOM_KIND_PREFIX)) return value;
   return (PROGRAMME_KINDS as readonly string[]).includes(value ?? '') ? (value as ProgrammeKind) : 'other';
 }
 
@@ -81,6 +93,7 @@ async function eventFor(eventId: string) {
       slug: true,
       timezone: true,
       status: true,
+      programmeTitle: true,
       startsAt: true,
       days: { orderBy: { date: 'asc' }, select: { id: true, date: true } },
     },
@@ -104,7 +117,14 @@ export async function getProgramme(actor: UserActor, eventId: string): Promise<P
     take: 300,
   });
   return {
-    event: { id: event.id, name: event.name, slug: event.slug, timezone: event.timezone, status: event.status },
+    event: {
+      id: event.id,
+      name: event.name,
+      slug: event.slug,
+      timezone: event.timezone,
+      status: event.status,
+      programmeTitle: event.programmeTitle,
+    },
     days: eventDays(event),
     items: rows.map((row) => {
       const start = row.startsAt ? utcToZoned(row.startsAt, event.timezone) : null;
@@ -201,4 +221,17 @@ export async function deleteProgrammeItem(
     targetId: input.eventId,
     data: { itemId: input.itemId },
   });
+}
+
+export const programmeTitleSchema = z.object({
+  eventId: z.string().uuid(),
+  /** Empty resets to the default heading. */
+  title: z.string().trim().max(60, 'titleTooLong'),
+});
+
+/** D-X93: the host's own heading for the guest programme. */
+export async function setProgrammeTitle(actor: UserActor, raw: z.input<typeof programmeTitleSchema>): Promise<void> {
+  const input = programmeTitleSchema.parse(raw);
+  await requireEventAccess(actor, input.eventId, 'event.edit');
+  await prisma.event.update({ where: { id: input.eventId }, data: { programmeTitle: input.title || null } });
 }
