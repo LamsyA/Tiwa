@@ -25,6 +25,8 @@ import {
   startThread,
   startThreadSchema,
   threadReceiptSchema,
+  proposalFromChat,
+  proposalFromChatSchema,
 } from '@tiwa/core';
 import { z } from 'zod';
 import { publishToThread } from '@/lib/chat-live.js';
@@ -127,3 +129,8 @@ export const loadChatMessages = userAction(
 export const blockChatParty = userAction(blockPartySchema, (input, ctx) => blockParty(ctx.actor, input));
 export const unblockChatParty = userAction(blockPartySchema, (input, ctx) => unblockParty(ctx.actor, input));
 export const reportChatMessage = userAction(reportMessageSchema, (input, ctx) => reportMessage(ctx.actor, input));
+
+/** D-X101: a planner turns a chat with a host into a proposal for that event. */
+export const proposalFromChatAction = userAction(proposalFromChatSchema, (input, ctx) =>
+  proposalFromChat(ctx.actor, input),
+);

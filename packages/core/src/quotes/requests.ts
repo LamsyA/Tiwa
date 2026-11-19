@@ -3,7 +3,7 @@ import { prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { requireEventAccess } from '../events/access.js';
 import type { Actor } from '../auth/authorize.js';
-import { ConflictError, LimitReachedError, ValidationError } from '../shared/errors.js';
+import { ConflictError, LimitReachedError, NotFoundError, ValidationError } from '../shared/errors.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { ensurePlannerClient } from '../planner/pipeline-sync.js';
 
@@ -181,5 +181,83 @@ export async function listEventQuoteRequests(actor: UserActor, input: z.infer<ty
     where: { eventId },
     orderBy: { createdAt: 'desc' },
     select: { id: true, category: true, vendorOrgId: true, status: true, createdAt: true },
+  });
+}
+
+export const proposalFromChatSchema = z.object({ threadId: z.string().uuid() });
+
+/**
+ * D-X101: chat first, then a proposal. A planner who has been talking with a
+ * host about an event opens a proposal straight from that conversation: Tiwa
+ * creates the planning request on the host's behalf (or reuses the one that
+ * exists) so the planner writes whatever scope they agreed — no fixed scope
+ * picked upfront. Returns the request the planner's proposal editor opens.
+ */
+export async function proposalFromChat(
+  actor: UserActor,
+  raw: z.input<typeof proposalFromChatSchema>,
+): Promise<{ requestId: string; created: boolean }> {
+  const input = proposalFromChatSchema.parse(raw);
+  const thread = await prisma.thread.findUnique({
+    where: { id: input.threadId },
+    select: {
+      kind: true,
+      eventId: true,
+      participants: { where: { leftAt: null }, select: { userId: true, orgId: true, side: true } },
+    },
+  });
+  if (!thread || thread.kind !== 'DIRECT') throw new NotFoundError('Conversation not found');
+  if (!thread.eventId) {
+    throw new ValidationError('Ask the host which event this is for first', { key: 'noEventInChat' });
+  }
+  const memberships = await prisma.membership.findMany({
+    where: { userId: actor.userId, role: { in: ['OWNER', 'ADMIN'] }, org: { kind: 'PLANNER', deletedAt: null } },
+    select: { orgId: true },
+  });
+  const plannerOrgId = thread.participants.find((p) => p.orgId && memberships.some((m) => m.orgId === p.orgId))?.orgId;
+  if (!plannerOrgId) throw new NotFoundError('Conversation not found');
+  const eventId = thread.eventId;
+  // The host side of the chat: a person (not a business) with host rights on the event.
+  const people = thread.participants.filter((p) => p.userId && !p.orgId).map((p) => p.userId as string);
+  const hostSeat = await prisma.eventParticipant.findFirst({
+    where: { eventId, userId: { in: people }, role: { in: ['HOST', 'CO_HOST'] }, removedAt: null },
+    select: { userId: true },
+  });
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { createdById: true } });
+  const hostUserId = hostSeat?.userId ?? (event && people.includes(event.createdById) ? event.createdById : null);
+  if (!hostUserId) throw new NotFoundError('Conversation not found');
+
+  const existing = await prisma.quoteRequest.findUnique({
+    where: { eventId_category_vendorOrgId: { eventId, category: PLANNING_CATEGORY, vendorOrgId: plannerOrgId } },
+    select: { id: true, status: true },
+  });
+  if (existing) {
+    if (existing.status === 'DECLINED_BY_VENDOR' || existing.status === 'CLOSED') {
+      await prisma.quoteRequest.update({ where: { id: existing.id }, data: { status: 'OPEN' } });
+    }
+    return { requestId: existing.id, created: false };
+  }
+  const prefill = await buildQuoteBrief(eventId);
+  return prisma.$transaction(async (tx) => {
+    const clientId = await ensurePlannerClient(tx, { orgId: plannerOrgId, hostUserId });
+    const row = await tx.quoteRequest.create({
+      data: {
+        eventId,
+        category: PLANNING_CATEGORY,
+        vendorOrgId: plannerOrgId,
+        brief: { ...prefill, notes: 'Scope agreed in chat. See your conversation.', fromThreadId: input.threadId },
+        createdById: hostUserId,
+        clientId,
+      },
+      select: { id: true },
+    });
+    await audit(tx, {
+      actor,
+      action: 'quote.request.fromChat',
+      targetType: 'QuoteRequest',
+      targetId: row.id,
+      data: { eventId, vendorOrgId: plannerOrgId, threadId: input.threadId },
+    });
+    return { requestId: row.id, created: true };
   });
 }

@@ -75,8 +75,10 @@ export default async function PlannerProfilePage({
         availabilityRows={availabilityRows}
         reviews={reviews.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))}
         signedIn={ctx.actor !== null}
+        chatFirst
         requestQuote={
           <ProposalRequestDialog
+            secondary
             plannerOrgId={profile.org.id}
             plannerName={profile.org.name}
             events={proposalEvents}

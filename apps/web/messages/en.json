@@ -2069,7 +2069,9 @@
       "FULL_DAY": "Full day"
     },
     "guestsPlaceholder": "How many?",
-    "moreFilters": "Filters"
+    "moreFilters": "Filters",
+    "chatFirstCta": "Chat about your event",
+    "chatFirstHint": "Talk it through with {name} first: what you want and how you want it. They send a proposal shaped to your conversation, and you accept when it fits."
   },
   "inbox": {
     "title": "Chat",
@@ -2125,7 +2127,8 @@
       "linkInFirstMessage": "For safety, new accounts can't include links in a first message.",
       "reasonTooShort": "Tell us a little more",
       "attachmentMismatch": "A file didn't match its type and wasn't sent.",
-      "attachmentBlocked": "A photo was blocked by our safety check."
+      "attachmentBlocked": "A photo was blocked by our safety check.",
+      "noEventInChat": "Ask the host which event this is for first."
     },
     "attach": "Attach photos or files",
     "uploadingFiles": "Uploading {count, plural, one {# file} other {# files}}…",
@@ -2184,7 +2187,11 @@
     "reply": "Reply",
     "them": "Them",
     "cancelReply": "Cancel reply",
-    "attachmentShort": "📎 Attachment"
+    "attachmentShort": "📎 Attachment",
+    "sendProposal": "Send a proposal",
+    "sendProposalHint": "Turn this conversation into a proposal for {event}",
+    "sendProposalShort": "Proposal",
+    "cardReview": "Review and accept →"
   },
   "quotes": {
     "categoryTitle": "{category} quotes",
@@ -3769,7 +3776,7 @@
           "body": "Expert advice sessions while you plan."
         }
       },
-      "notes": "Anything they should know?",
+      "notes": "What you have in mind",
       "notesPlaceholder": "e.g. Outdoor 40th for 150 guests, Yoruba and English programme, we already have a caterer.",
       "budget": "Budget for the planning fee (optional)",
       "briefNote": "The planner sees your event’s date, venue and guest count, never your guests’ contact details.",
@@ -3780,7 +3787,8 @@
       "close": "Close",
       "noEvents": "Create an event first, then ask planners for proposals.",
       "createEvent": "Create an event",
-      "alreadyAsked": "You’ve already asked this planner for a proposal for this event."
+      "alreadyAsked": "You’ve already asked this planner for a proposal for this event.",
+      "scopeOptional": "Any idea of the help you want? (optional, you can decide together)"
     },
     "builder": {
       "itemsHeading": "Scope of work",

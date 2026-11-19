@@ -2,7 +2,7 @@
 
 import type { MessageView } from '@tiwa/core';
 import { Banner, Button, DropdownMenu, ResponsiveDialog, Textarea } from '@tiwa/ui';
-import { ArrowLeft, MoreVertical, Reply, X } from 'lucide-react';
+import { ArrowLeft, FileSignature, MoreVertical, Reply, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import {
   markChatDelivered,
   markChatRead,
   muteChat,
+  proposalFromChatAction,
 } from '@/app/inbox/actions.js';
 import { useChatSender, useInboxStream } from '@/hooks/use-chat.js';
 import type { PendingAttachment } from '@/lib/chat-outbox.js';
@@ -40,6 +41,8 @@ export interface ThreadHeader {
   blockTarget: { userId: string } | { orgId: string } | null;
   /** Speaking for this business in the thread, if not myself. */
   asOrgId: string | null;
+  /** D-X101: a planner talking with a host about an event can send a proposal from here. */
+  canPropose?: boolean;
 }
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -280,6 +283,7 @@ export function ChatThread({
             </p>
           ) : null}
         </div>
+        {header.canPropose && <ProposeButton threadId={header.threadId} eventName={header.eventName} />}
         <DropdownMenu
           align="end"
           trigger={
@@ -326,7 +330,7 @@ export function ChatThread({
             if (m.kind === 'CARD' && !m.deleted) {
               return (
                 <li key={m.id}>
-                  <ChatCard card={m.card as ChatCardData} />
+                  <ChatCard card={m.card as ChatCardData} mine={m.mine} />
                 </li>
               );
             }
@@ -531,5 +535,42 @@ export function ChatThread({
         </ResponsiveDialog>
       )}
     </section>
+  );
+}
+
+/** D-X101: turn this conversation into a proposal (planner side). */
+function ProposeButton({ threadId, eventName }: { threadId: string; eventName: string | null }) {
+  const t = useTranslations('inbox');
+  const router = useRouter();
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  return (
+    <div className="flex flex-col items-end">
+      <button
+        type="button"
+        disabled={busy}
+        title={eventName ? t('sendProposalHint', { event: eventName }) : undefined}
+        onClick={() => {
+          setBusy(true);
+          setError(null);
+          void proposalFromChatAction({ threadId })
+            .then((result) => {
+              if (result.ok) router.push(`/quotes/${result.data.requestId}`);
+              else setError(result.reason === 'noEventInChat' ? t('errors.noEventInChat') : t('errors.generic'));
+            })
+            .finally(() => setBusy(false));
+        }}
+        className="bg-brand-strong text-on-brand inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold shadow-[var(--shadow-1)] transition hover:brightness-110 disabled:opacity-60"
+      >
+        <FileSignature aria-hidden className="size-4" />
+        <span className="hidden sm:inline">{t('sendProposal')}</span>
+        <span className="sm:hidden">{t('sendProposalShort')}</span>
+      </button>
+      {error && (
+        <p role="alert" className="text-danger mt-1 max-w-48 text-right text-xs">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

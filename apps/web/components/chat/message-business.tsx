@@ -25,12 +25,15 @@ export function MessageBusiness({
   orgName,
   guestEventId,
   variant = 'primary',
+  label: buttonLabel,
 }: {
   orgId: string;
   orgName: string;
   /** Guest enquiry after an event (GUEST_ENQUIRY context, fixed event). */
   guestEventId?: string;
   variant?: 'primary' | 'secondary';
+  /** Button text override (planners: "Chat about your event", D-X101). */
+  label?: string;
 }) {
   const t = useTranslations('inbox');
   const router = useRouter();
@@ -116,7 +119,7 @@ export function MessageBusiness({
         onClick={() => void begin()}
         iconLeft={<MessageCircle aria-hidden className="size-5" />}
       >
-        {t('messageCta')}
+        {buttonLabel ?? t('messageCta')}
       </Button>
       {open && context && (
         <ResponsiveDialog

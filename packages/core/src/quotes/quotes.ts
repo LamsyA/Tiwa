@@ -10,7 +10,7 @@ import { syncPipelineForRequest } from '../planner/pipeline-sync.js';
 import { authorize } from '../auth/authorize.js';
 import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { checkVenueAvailability } from '../bookings/venue.js';
-import { mirrorToEventTeam } from '../chat/cards.js';
+import { mirrorToEventTeam, postCard } from '../chat/cards.js';
 import { assertQuoteTransition } from './state.js';
 import { calcQuoteTotals, quoteItemSchema } from './totals.js';
 
@@ -198,6 +198,27 @@ export async function sendQuote(actor: UserActor, raw: z.infer<typeof quoteIdSch
           totalMinor: quote.totalMinor.toString(),
           currency: quote.currency,
         });
+        // D-X101: a proposal that grew out of a chat lands back in that chat.
+        if (quote.requestId) {
+          const request = await prisma.quoteRequest.findUnique({
+            where: { id: quote.requestId },
+            select: { brief: true },
+          });
+          const threadId = (request?.brief as { fromThreadId?: unknown } | null)?.fromThreadId;
+          if (typeof threadId === 'string') {
+            await postCard(actor, {
+              threadId,
+              type: 'quote',
+              refId: quoteId,
+              snapshot: {
+                vendorName: vendor?.name ?? '',
+                totalMinor: quote.totalMinor.toString(),
+                currency: quote.currency,
+                href: `/events/${quote.eventId}/vendors/${PLANNING_CATEGORY}`,
+              },
+            });
+          }
+        }
       } catch {
         // Best-effort mirror; the send already succeeded.
       }

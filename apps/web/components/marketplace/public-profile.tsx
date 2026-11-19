@@ -22,6 +22,7 @@ export async function PublicProfileView({
   instantBook,
   siteVisit,
   requestQuote,
+  chatFirst = false,
   reviews,
   signedIn,
   eventDate,
@@ -34,6 +35,8 @@ export async function PublicProfileView({
   siteVisit?: React.ReactNode;
   /** "Request a quote" (D-X39); the page decides who may send one. */
   requestQuote?: React.ReactNode;
+  /** D-X101: planners — talk it through first, then they send a proposal. */
+  chatFirst?: boolean;
   reviews: {
     id: string;
     overall: number;
@@ -335,11 +338,23 @@ export async function PublicProfileView({
                   <MoneyText value={profile.profile.startingPriceMinor} currency={profile.profile.currency} />
                 </p>
               )}
-              {requestQuote}
-              {instantBook}
-              <React.Suspense fallback={null}>
-                <MessageBusiness orgId={profile.org.id} orgName={profile.org.name} />
-              </React.Suspense>
+              {chatFirst ? (
+                <>
+                  <React.Suspense fallback={null}>
+                    <MessageBusiness orgId={profile.org.id} orgName={profile.org.name} label={t('chatFirstCta')} />
+                  </React.Suspense>
+                  <p className="text-muted text-xs leading-relaxed">{t('chatFirstHint', { name: profile.org.name })}</p>
+                  {requestQuote}
+                </>
+              ) : (
+                <>
+                  {requestQuote}
+                  {instantBook}
+                  <React.Suspense fallback={null}>
+                    <MessageBusiness orgId={profile.org.id} orgName={profile.org.name} />
+                  </React.Suspense>
+                </>
+              )}
               {siteVisit}
             </div>
           </Card>

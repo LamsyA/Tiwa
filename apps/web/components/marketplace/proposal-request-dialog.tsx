@@ -9,10 +9,10 @@ import * as React from 'react';
 import { requestQuoteAction } from './actions.js';
 import type { QuoteEventOption } from './quote-request-dialog.js';
 
-// "Request a proposal" on a planner's profile (D-X64). The host picks the
-// event and the kind of help they need; Tiwa sends the planner a brief built
-// from the event (date, venue, guests) and the planner replies with a
-// proposal the host can accept to hire them.
+// "Request a proposal" on a planner's profile (D-X64). D-X101: the scope is
+// not fixed upfront — chatting first is the main path, and here the host may
+// optionally hint at the kind of help; the planner shapes the proposal to
+// what they discuss. Tiwa sends a brief built from the event.
 
 const SCOPES = ['full', 'partial', 'dayOf', 'consultation'] as const;
 type Scope = (typeof SCOPES)[number];
@@ -23,18 +23,21 @@ export function ProposalRequestDialog({
   events,
   defaultEventId,
   signInHref,
+  secondary = false,
 }: {
   plannerOrgId: string;
   plannerName: string;
   events: QuoteEventOption[];
   defaultEventId?: string | undefined;
   signInHref?: string | undefined;
+  /** Shown under "Chat about your event" on planner pages (D-X101). */
+  secondary?: boolean;
 }) {
   const t = useTranslations('proposals.request');
   const te = useTranslations('quotes.errors');
   const [open, setOpen] = React.useState(false);
   const [eventId, setEventId] = React.useState(defaultEventId ?? events[0]?.id ?? '');
-  const [scope, setScope] = React.useState<Scope>('full');
+  const [scope, setScope] = React.useState<Scope | null>(null);
   const [notes, setNotes] = React.useState('');
   const [budget, setBudget] = React.useState('0');
   const [error, setError] = React.useState<string | null>(null);
@@ -44,7 +47,10 @@ export function ProposalRequestDialog({
 
   if (signInHref) {
     return (
-      <Link href={signInHref} className={buttonClasses({ className: 'w-full rounded-full' })}>
+      <Link
+        href={signInHref}
+        className={buttonClasses({ variant: secondary ? 'secondary' : 'primary', className: 'w-full rounded-full' })}
+      >
         <FileSignature aria-hidden className="size-4" />
         {t('cta')}
       </Link>
@@ -55,7 +61,9 @@ export function ProposalRequestDialog({
     setError(null);
     setSending(true);
     try {
-      const brief = [`${t('scopeLabel')}: ${t(`scope.${scope}.title`)}`, notes.trim()].filter(Boolean).join('\n\n');
+      const brief = [scope ? `${t('scopeLabel')}: ${t(`scope.${scope}.title`)}` : '', notes.trim()]
+        .filter(Boolean)
+        .join('\n\n');
       const result = await requestQuoteAction({
         eventId,
         vendorOrgId: plannerOrgId,
@@ -86,7 +94,7 @@ export function ProposalRequestDialog({
         }
       }}
       trigger={
-        <Button className="w-full rounded-full">
+        <Button variant={secondary ? 'secondary' : 'primary'} className="w-full rounded-full">
           <FileSignature aria-hidden className="size-4" />
           {t('cta')}
         </Button>
@@ -148,7 +156,7 @@ export function ProposalRequestDialog({
           />
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-medium">{t('scopeLabel')}</legend>
+            <legend className="mb-1 text-sm font-medium">{t('scopeOptional')}</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {SCOPES.map((key) => (
                 <label
@@ -160,11 +168,11 @@ export function ProposalRequestDialog({
                 >
                   <span className="flex items-center gap-2">
                     <input
-                      type="radio"
+                      type="checkbox"
                       name="proposal-scope"
                       className="accent-brand-strong"
                       checked={scope === key}
-                      onChange={() => setScope(key)}
+                      onChange={() => setScope(scope === key ? null : key)}
                     />
                     <span className="text-sm font-semibold">{t(`scope.${key}.title`)}</span>
                   </span>

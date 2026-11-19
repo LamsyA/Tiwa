@@ -13,10 +13,11 @@ export interface ChatCardData {
   version?: number;
   diffMinor?: string;
   date?: string;
+  href?: string;
 }
 
 /** Booking timeline card (P7-T12): a quote, booking, change or visit rendered inline. */
-export function ChatCard({ card }: { card: ChatCardData }) {
+export function ChatCard({ card, mine = false }: { card: ChatCardData; mine?: boolean }) {
   const t = useTranslations('inbox');
   const total =
     card.totalMinor !== undefined && card.currency ? (
@@ -37,6 +38,12 @@ export function ChatCard({ card }: { card: ChatCardData }) {
       {total && <p className="text-muted">{total}</p>}
       {diff && card.type === 'change' && <p className="text-muted">±{diff}</p>}
       {card.type === 'site_visit' && card.date && <p className="text-muted">{new Date(card.date).toLocaleString()}</p>}
+      {/* D-X101: the host opens the proposal from the chat it grew out of. */}
+      {card.href && !mine && (
+        <a href={card.href} className="text-brand-strong mt-1 text-sm font-semibold hover:underline">
+          {t('cardReview')}
+        </a>
+      )}
     </div>
   );
 }

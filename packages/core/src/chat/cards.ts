@@ -60,6 +60,8 @@ export type CardSnapshot = {
   version?: number;
   diffMinor?: string;
   date?: string;
+  /** D-X101: where the host opens it (shown to the other side only). */
+  href?: string;
 };
 
 export async function postCard(

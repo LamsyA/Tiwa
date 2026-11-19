@@ -286,3 +286,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X98: removed hiding vendor prices from the host; host always sees every amount
 - D-X99: new canopy logo applied across the app, icons and emails
 - D-X100: one venue per event day (event venue follows the booking), planner pays vendors, "not received" shown clearly
+- D-X101: planner hiring is chat first; planner sends a proposal from the chat

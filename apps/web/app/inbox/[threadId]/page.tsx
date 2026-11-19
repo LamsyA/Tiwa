@@ -35,6 +35,15 @@ export default async function ThreadPage({
     listInbox(ctx.actor, { archived: true }),
   ]);
   const row = [...active, ...archived].find((candidate) => candidate.threadId === threadId);
+  // D-X101: a planner in a 1:1 chat about an event can send a proposal from it.
+  const canPropose = await (async () => {
+    if (!mine.orgId) return false;
+    const [org, thread] = await Promise.all([
+      prisma.organization.findUnique({ where: { id: mine.orgId }, select: { kind: true } }),
+      prisma.thread.findUnique({ where: { id: threadId }, select: { kind: true, eventId: true } }),
+    ]);
+    return org?.kind === 'PLANNER' && thread?.kind === 'DIRECT' && Boolean(thread.eventId);
+  })();
   return (
     <InboxLayout ctx={ctx} filter={parseFilter(filter)} q={q} activeId={threadId}>
       <ChatThread
@@ -50,6 +59,7 @@ export default async function ThreadPage({
           archived: row?.archived ?? false,
           blockTarget: other ? (other.orgId ? { orgId: other.orgId } : { userId: other.userId as string }) : null,
           asOrgId: mine.orgId,
+          canPropose,
         }}
         initial={{
           messages: initial.messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() })),
