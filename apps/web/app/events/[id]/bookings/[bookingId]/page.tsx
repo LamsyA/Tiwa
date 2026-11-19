@@ -1,4 +1,6 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import {
+  hasActivePlanner,
   bookingMoney,
   describeChange,
   getBooking,
@@ -58,6 +60,11 @@ export default async function BookingPage({
   if (!data || data.booking.eventId !== eventId) notFound();
   const { booking, vendor, event } = data;
   const pricesHidden = 'pricesHidden' in booking;
+  // D-X100: on a planner-run event the planner pays vendors; the host only watches.
+  const plannerPays =
+    (access.role === 'HOST' || access.role === 'CO_HOST') &&
+    booking.category !== PLANNING_CATEGORY &&
+    (await hasActivePlanner(eventId));
 
   const current =
     booking.versions.find((row) => row.status === 'ACCEPTED') ?? booking.versions[booking.versions.length - 1]!;
@@ -270,7 +277,10 @@ export default async function BookingPage({
         {active === 'payments' && (
           <PaymentsPanel
             currency={booking.currency}
-            canRecord={data.viewer === 'host' && booking.paymentMode !== 'HELD' && !closed && !pricesHidden}
+            canRecord={
+              data.viewer === 'host' && booking.paymentMode !== 'HELD' && !closed && !pricesHidden && !plannerPays
+            }
+            plannerPays={plannerPays}
             money={{
               securedMinor: pricesHidden ? null : money.securedMinor.toString(),
               awaitingMinor: pricesHidden ? null : money.awaitingMinor.toString(),

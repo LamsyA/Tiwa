@@ -1,3 +1,4 @@
+import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma, type MilestoneState } from '@tiwa/db';
 import { sniffMime, type Storage } from '@tiwa/storage';
 import { z } from 'zod';
@@ -63,6 +64,18 @@ async function loadForPayer(actor: UserActor, milestoneId: string) {
   const access = await loadEventAccess(actor.userId, milestone.booking.eventId);
   if (!access || access.role === 'VENDOR' || access.role === 'PHOTOGRAPHER') {
     throw new NotFoundError('Milestone not found');
+  }
+  // D-X100: once a planner runs the event, the planner pays the vendors; the
+  // host pays the planner (their own booking) and sees every vendor payment.
+  if (
+    (access.role === 'HOST' || access.role === 'CO_HOST') &&
+    milestone.booking.category !== PLANNING_CATEGORY &&
+    (await hasActivePlanner(milestone.booking.eventId))
+  ) {
+    throw new ForbiddenError('Your planner pays the vendors on this event', {
+      reason: 'plannerPays',
+      key: 'plannerPays',
+    });
   }
   authorize(actor, 'payment.make', {
     eventId: milestone.booking.eventId,
@@ -338,4 +351,13 @@ export async function listPendingOfflinePayments(actor: UserActor, raw: z.input<
     paidAt: row.paidAt?.toISOString() ?? null,
     hasReceipt: !!receiptKey,
   }));
+}
+
+/** D-X100: an event a planner is running (an active PLANNER seat). */
+export async function hasActivePlanner(eventId: string): Promise<boolean> {
+  const seat = await prisma.eventParticipant.findFirst({
+    where: { eventId, role: 'PLANNER', removedAt: null },
+    select: { id: true },
+  });
+  return seat !== null;
 }

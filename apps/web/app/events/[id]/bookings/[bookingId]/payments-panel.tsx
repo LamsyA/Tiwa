@@ -61,12 +61,15 @@ function tone(state: string): 'success' | 'brand' | 'neutral' {
 export function PaymentsPanel({
   currency,
   canRecord,
+  plannerPays = false,
   money,
   milestones,
   payments,
 }: {
   currency: string;
   canRecord: boolean;
+  /** D-X100: a planner runs this event and pays its vendors. */
+  plannerPays?: boolean;
   money: MoneySummary;
   milestones: MilestoneRow[];
   payments: PaymentRow[];
@@ -107,6 +110,9 @@ export function PaymentsPanel({
         <ul className="divide-border flex flex-col divide-y text-sm">
           {milestones.map((row) => {
             const payment = payments.find((item) => item.milestoneId === row.id && item.status !== 'FAILED');
+            // D-X100: the newest record for this step was refused by the vendor.
+            const latest = payments.find((item) => item.milestoneId === row.id);
+            const refused = row.state === 'SCHEDULED' && latest?.status === 'FAILED';
             return (
               <li key={row.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center">
                 <div className="flex flex-1 flex-col gap-0.5">
@@ -119,11 +125,16 @@ export function PaymentsPanel({
                     )}
                     {row.dueAt && ` · ${t('due', { date: new Date(row.dueAt).toLocaleDateString() })}`}
                   </span>
+                  {refused && <span className="text-danger text-xs font-medium">{t('notReceivedHint')}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill tone={tone(row.state)}>
-                    {t.has(`state.${row.state}`) ? t(`state.${row.state}`) : row.state}
-                  </StatusPill>
+                  {refused ? (
+                    <StatusPill tone="danger">{t('notReceivedPill')}</StatusPill>
+                  ) : (
+                    <StatusPill tone={tone(row.state)}>
+                      {t.has(`state.${row.state}`) ? t(`state.${row.state}`) : row.state}
+                    </StatusPill>
+                  )}
                   {payment?.hasReceipt && (
                     <Button variant="ghost" size="sm" onClick={() => void openReceipt(payment.id)}>
                       {t('viewReceipt')}
@@ -140,7 +151,7 @@ export function PaymentsPanel({
           })}
         </ul>
       </Card>
-      <p className="text-muted text-xs">{t('offlineNote')}</p>
+      <p className="text-muted text-xs">{plannerPays ? t('plannerPaysNote') : t('offlineNote')}</p>
       {recording && <RecordDialog milestone={recording} onClose={() => setRecording(null)} />}
     </div>
   );

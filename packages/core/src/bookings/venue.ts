@@ -1,3 +1,4 @@
+import { assertNoOtherVenue, syncEventVenue } from './venue-guard.js';
 import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import { requireEventAccess } from '../events/access.js';
@@ -154,6 +155,14 @@ export async function instantBook(actor: UserActor, raw: z.infer<typeof instantB
         spaceId: input.spaceId ?? null,
         date,
         slot: input.slot,
+      });
+      // D-X100: one venue per event day; the booked venue becomes the event's venue.
+      await assertNoOtherVenue(tx, { eventId: input.eventId, vendorOrgId: input.vendorOrgId, serviceDate: date });
+      await syncEventVenue(tx, {
+        eventId: input.eventId,
+        vendorOrgId: input.vendorOrgId,
+        spaceId: input.spaceId ?? null,
+        serviceDate: date,
       });
       const booking = await tx.booking.create({
         data: {

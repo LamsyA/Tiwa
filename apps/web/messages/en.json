@@ -634,7 +634,8 @@
       "state": {
         "paid": "Paid",
         "awaiting": "Awaiting confirmation",
-        "due": "Due"
+        "due": "Due",
+        "notReceived": "Not received"
       },
       "kinds": {
         "family": "Family",
@@ -753,7 +754,8 @@
         "pos": "POS / card",
         "other": "other",
         "online": "online"
-      }
+      },
+      "notReceivedLine": "Vendor says this payment did not arrive · {date}"
     },
     "plan": {
       "heading": "Plan",
@@ -1934,7 +1936,8 @@
       "VALIDATION": "Check the highlighted fields.",
       "FORBIDDEN": "You don't have access to do that.",
       "CONFLICT": "That clashes with something already saved.",
-      "NOT_FOUND": "That item no longer exists."
+      "NOT_FOUND": "That item no longer exists.",
+      "venueAlreadyBooked": "This event already has a venue booked for that day. Cancel that booking first if you want to switch venues."
     },
     "searchVenuesTitle": "Find a venue",
     "dateLabel": "Date",
@@ -2252,7 +2255,8 @@
       "LIMIT_REACHED": "Quote requests are limited to 5 vendors per category.",
       "INVALID_TRANSITION": "That action is not available for this quote right now.",
       "FEATURE_DISABLED": "Held payments are not enabled.",
-      "slotTaken": "This vendor is already booked on that date. Ask them about another date, or choose someone else."
+      "slotTaken": "This vendor is already booked on that date. Ask them about another date, or choose someone else.",
+      "venueAlreadyBooked": "This event already has a venue booked for that day. Cancel that booking first if you want to switch venues."
     },
     "percentLabel": "Share %",
     "dueLabel": "Due",
@@ -2662,7 +2666,8 @@
       "typeNotAllowed": "Upload a photo or PDF.",
       "tooLarge": "That file is too large (1 MB max).",
       "emptyFile": "That file is empty.",
-      "uploadFailed": "The receipt didn't upload. Try again."
+      "uploadFailed": "The receipt didn't upload. Try again.",
+      "plannerPays": "Your planner pays the vendors on this event."
     },
     "bookingsHeading": "Your bookings",
     "hiddenByPlanner": "Hidden by planner",
@@ -2671,7 +2676,10 @@
     "receiptHint": "Photo or PDF · optional, but it helps the vendor confirm faster",
     "removeReceipt": "Remove receipt",
     "uploadingReceipt": "Uploading receipt…",
-    "recording": "Recording…"
+    "recording": "Recording…",
+    "plannerPaysNote": "Your planner pays the vendors on this event. You see every payment here as it happens, and when the vendor confirms it.",
+    "notReceivedPill": "Vendor says not received",
+    "notReceivedHint": "The vendor says this payment did not reach them. Check the transfer, then record it again."
   },
   "planner": {
     "title": "Planner workspace",

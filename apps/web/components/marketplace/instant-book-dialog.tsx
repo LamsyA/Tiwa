@@ -47,7 +47,8 @@ export function InstantBookDialog({
         paymentMode: 'OFFLINE',
         terms,
       });
-      if (!result.ok) setError(te(result.code as 'VALIDATION'));
+      if (!result.ok)
+        setError(result.reason === 'venueAlreadyBooked' ? te('venueAlreadyBooked') : te(result.code as 'VALIDATION'));
       else {
         setOpen(false);
         router.push(`/events/${eventId}/bookings/${result.data.bookingId}`);

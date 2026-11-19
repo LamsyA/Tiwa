@@ -33,10 +33,16 @@ export async function listPaymentSchedule(
       booking: { select: { id: true, category: true, vendorOrgId: true } },
       // D-X97: who paid, how and when (latest non-failed payment).
       payments: {
-        where: { status: { not: 'FAILED' } },
         orderBy: { createdAt: 'desc' },
         take: 1,
-        select: { paidAt: true, offlineMethod: true, recordedById: true, createdAt: true },
+        select: {
+          status: true,
+          paidAt: true,
+          offlineMethod: true,
+          recordedById: true,
+          createdAt: true,
+          confirmedAt: true,
+        },
       },
     },
   });
@@ -67,9 +73,14 @@ export async function listPaymentSchedule(
     bookingId: row.booking.id,
     category: row.booking.category,
     vendorName: names.get(row.booking.vendorOrgId) ?? '',
+    // D-X100: the vendor said "not received" and nobody has paid again since.
+    declinedAt:
+      row.payments[0]?.status === 'FAILED' && row.state === 'SCHEDULED'
+        ? (row.payments[0].confirmedAt ?? row.payments[0].createdAt).toISOString()
+        : null,
     paidBy: (() => {
       const pay = row.payments[0];
-      if (!pay?.recordedById) return null;
+      if (!pay?.recordedById || pay.status === 'FAILED') return null;
       return {
         name: payerName.get(pay.recordedById) ?? '',
         role: payerRole.get(pay.recordedById) ?? null,

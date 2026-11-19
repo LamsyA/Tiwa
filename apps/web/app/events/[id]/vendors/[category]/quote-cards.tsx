@@ -109,9 +109,9 @@ function QuoteCard({
     if (!agreed) return;
     setWorking(true);
     const result = await acceptQuoteAction({ quoteId: quote.id, paymentMode: mode, declineOthers });
-    if (!result.ok && result.reason === 'slotTaken') {
+    if (!result.ok && (result.reason === 'slotTaken' || result.reason === 'venueAlreadyBooked')) {
       setWorking(false);
-      return setError(te('slotTaken'));
+      return setError(te(result.reason));
     }
     setWorking(false);
     if (!result.ok) setError(te(errorKey(result.code)));

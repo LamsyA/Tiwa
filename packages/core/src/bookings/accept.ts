@@ -1,3 +1,4 @@
+import { assertNoOtherVenue, syncEventVenue } from './venue-guard.js';
 import { isDateExclusive, PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma, Prisma } from '@tiwa/db';
 import { z } from 'zod';
@@ -126,6 +127,16 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
 
   return prisma
     .$transaction(async (tx) => {
+      // D-X100: one venue per event day; the booked venue becomes the event's venue.
+      if (category === 'venue') {
+        await assertNoOtherVenue(tx, { eventId: quote.eventId, vendorOrgId: quote.vendorOrgId, serviceDate });
+        await syncEventVenue(tx, {
+          eventId: quote.eventId,
+          vendorOrgId: quote.vendorOrgId,
+          spaceId: quote.spaceId,
+          serviceDate,
+        });
+      }
       const booking = await tx.booking.create({
         data: {
           eventId: quote.eventId,

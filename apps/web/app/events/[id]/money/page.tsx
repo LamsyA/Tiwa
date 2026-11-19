@@ -327,6 +327,11 @@ export default async function EventMoneyPage({
                     <span className="font-medium">{row.vendorName}</span>
                     <span className="text-muted"> · {row.label}</span>
                     {/* D-X97: everyone on the event sees who paid, how and when. */}
+                    {row.declinedAt && (
+                      <span className="text-danger mt-0.5 block text-xs font-medium">
+                        {t('notReceivedLine', { date: new Date(row.declinedAt).toLocaleDateString() })}
+                      </span>
+                    )}
                     {row.paidBy && (
                       <span className="text-muted mt-0.5 block text-xs">
                         {t('paidBy', {
@@ -348,11 +353,15 @@ export default async function EventMoneyPage({
                     {row.dueAt ? t('dueOn', { date: new Date(row.dueAt).toLocaleDateString() }) : ''}
                   </span>
                   <span className="font-medium">{money(row.amountMinor)}</span>
-                  <StatusPill tone={SECURED.includes(row.state) ? 'success' : 'neutral'}>
-                    {t(
-                      `state.${SECURED.includes(row.state) ? 'paid' : row.state === 'RECORDED_OFFLINE' ? 'awaiting' : 'due'}`,
-                    )}
-                  </StatusPill>
+                  {row.declinedAt ? (
+                    <StatusPill tone="danger">{t('state.notReceived')}</StatusPill>
+                  ) : (
+                    <StatusPill tone={SECURED.includes(row.state) ? 'success' : 'neutral'}>
+                      {t(
+                        `state.${SECURED.includes(row.state) ? 'paid' : row.state === 'RECORDED_OFFLINE' ? 'awaiting' : 'due'}`,
+                      )}
+                    </StatusPill>
+                  )}
                 </li>
               ))}
             </ul>
