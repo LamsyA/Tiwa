@@ -300,3 +300,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X108 done: chat restyle, typing dots at the bottom, day separators, header avatar
 - D-X109 done: tickets work on link-shared events too (not only Public)
 - D-X110 done: ticket selling part 1, no more 404 on unpublished ticket pages, check-in camera first, chat full screen on phones; tickets + check-in e2e passing
+- D-X111 done: fix intermittent Vercel build failures (db build no longer cached)

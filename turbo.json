@@ -22,7 +22,7 @@
     "test": {},
     "@tiwa/db#build": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "cache": false
     }
   }
 }
