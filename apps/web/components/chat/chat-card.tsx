@@ -1,7 +1,16 @@
 'use client';
 
 import { MoneyText, cn } from '@tiwa/ui';
-import { AlertCircle, CheckCircle2, MessageSquareWarning, Receipt, XCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  CalendarCheck,
+  CheckCircle2,
+  FileText,
+  MessageSquareWarning,
+  Receipt,
+  RefreshCw,
+  XCircle,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export interface ChatCardData {
@@ -72,6 +81,14 @@ function DecisionCard({ card }: { card: ChatCardData }) {
 export function ChatCard({ card, mine = false }: { card: ChatCardData; mine?: boolean }) {
   const t = useTranslations('inbox');
   if (card.type === 'decision') return <DecisionCard card={card} />;
+  const Icon =
+    card.type === 'booking'
+      ? CalendarCheck
+      : card.type === 'change'
+        ? RefreshCw
+        : card.type === 'site_visit'
+          ? CalendarCheck
+          : FileText;
   const total =
     card.totalMinor !== undefined && card.currency ? (
       <MoneyText value={card.totalMinor} currency={card.currency} />
@@ -81,22 +98,33 @@ export function ChatCard({ card, mine = false }: { card: ChatCardData; mine?: bo
       <MoneyText value={card.diffMinor} currency={card.currency} />
     ) : null;
   return (
-    <div className="border-border bg-surface-2 flex max-w-xs flex-col gap-0.5 rounded-2xl border px-3 py-2 text-sm">
-      <p className="font-medium">
-        {card.type === 'quote' && t('cardQuote', { vendor: card.vendorName ?? '' })}
-        {card.type === 'booking' && t('cardBooking', { category: card.category ?? '' })}
-        {card.type === 'change' && t('cardChange', { version: card.version ?? 0 })}
-        {card.type === 'site_visit' && t('cardVisit')}
-      </p>
-      {total && <p className="text-muted">{total}</p>}
-      {diff && card.type === 'change' && <p className="text-muted">±{diff}</p>}
-      {card.type === 'site_visit' && card.date && <p className="text-muted">{new Date(card.date).toLocaleString()}</p>}
-      {/* D-X101: the host opens the proposal from the chat it grew out of. */}
-      {card.href && !mine && (
-        <a href={card.href} className="text-brand-strong mt-1 text-sm font-semibold hover:underline">
-          {t('cardReview')}
-        </a>
-      )}
+    <div className="tiwa-bubble-in flex w-full max-w-xs items-start gap-3 rounded-2xl px-3.5 py-3 text-sm">
+      <span className="bg-brand-soft text-brand-strong grid size-9 shrink-0 place-items-center rounded-xl">
+        <Icon aria-hidden className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">
+          {card.type === 'quote' && t('cardQuote', { vendor: card.vendorName ?? '' })}
+          {card.type === 'booking' &&
+            (card.category ? t('cardBooking', { category: card.category }) : t('cardBookingPlain'))}
+          {card.type === 'change' && t('cardChange', { version: card.version ?? 0 })}
+          {card.type === 'site_visit' && t('cardVisit')}
+        </p>
+        {total && <p className="text-muted font-medium tabular-nums">{total}</p>}
+        {diff && card.type === 'change' && <p className="text-muted tabular-nums">±{diff}</p>}
+        {card.type === 'site_visit' && card.date && (
+          <p className="text-muted">{new Date(card.date).toLocaleString()}</p>
+        )}
+        {/* D-X101: the host opens the proposal from the chat it grew out of. */}
+        {card.href && !mine && (
+          <a
+            href={card.href}
+            className="bg-brand-strong mt-2 inline-flex rounded-full px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+          >
+            {t('cardReview')}
+          </a>
+        )}
+      </div>
     </div>
   );
 }

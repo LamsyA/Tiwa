@@ -163,6 +163,12 @@ export function ChatThread({
     bottom.current?.scrollIntoView({ block: 'end' });
   }, [messages.length, mine.length]);
 
+  // The typing bubble sits at the bottom: keep it in view when it appears.
+  const isTyping = typing !== null;
+  React.useEffect(() => {
+    if (isTyping) bottom.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  }, [isTyping]);
+
   async function loadOlder() {
     const oldest = messages.at(-1);
     if (!oldest) return;
@@ -250,6 +256,15 @@ export function ChatThread({
         >
           <ArrowLeft aria-hidden className="size-5" />
         </Link>
+        <span
+          aria-hidden
+          className="relative grid size-10 shrink-0 place-items-center rounded-full bg-[linear-gradient(140deg,var(--brand),var(--brand-strong))] text-sm font-bold text-white shadow-sm"
+        >
+          {initials(header.title)}
+          {presence?.online && (
+            <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-[var(--chat-panel)]" />
+          )}
+        </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-[15px] font-semibold">{header.title}</h2>
           {header.eventName && !header.isTeam && (
@@ -257,16 +272,7 @@ export function ChatThread({
               {header.guestEnquiry ? t('metAt', { event: header.eventName }) : t('about', { event: header.eventName })}
             </p>
           )}
-          {typing ? (
-            <p className="flex items-center gap-1 text-xs font-medium text-[var(--chat-accent)]" role="status">
-              <span aria-hidden className="flex gap-0.5">
-                <span className="tiwa-dot size-1 rounded-full bg-current" />
-                <span className="tiwa-dot size-1 rounded-full bg-current [animation-delay:150ms]" />
-                <span className="tiwa-dot size-1 rounded-full bg-current [animation-delay:300ms]" />
-              </span>
-              {typing.name ? t('typing', { name: typing.name }) : t('someoneTyping')}
-            </p>
-          ) : presence?.online ? (
+          {presence?.online ? (
             <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--chat-accent)]">
               <span aria-hidden className="size-2 rounded-full bg-[var(--chat-accent)]" />
               {t('online')}
@@ -326,16 +332,29 @@ export function ChatThread({
         <ol className="flex flex-col gap-1">
           {ordered.map((m, index) => {
             const previous = ordered[index - 1];
+            const day = new Date(m.createdAt).toDateString();
+            const newDay = !previous || new Date(previous.createdAt).toDateString() !== day;
+            const separator = newDay ? (
+              <div className="my-3 flex justify-center" aria-hidden>
+                <span className="rounded-full bg-[var(--chat-panel)]/90 px-3 py-1 text-[11px] font-semibold tracking-wide text-[var(--chat-meta)] shadow-sm backdrop-blur">
+                  {dayLabel(m.createdAt, t('today'), t('yesterday'))}
+                </span>
+              </div>
+            ) : null;
             const canEdit = m.mine && !m.deleted && now - new Date(m.createdAt).getTime() < EDIT_WINDOW_MS;
             if (m.kind === 'CARD' && !m.deleted) {
               return (
-                <li key={m.id}>
-                  <ChatCard card={m.card as ChatCardData} mine={m.mine} />
+                <li key={m.id} className={m.card && (m.card as ChatCardData).type === 'decision' ? 'my-1.5' : ''}>
+                  {separator}
+                  <div className={(m.card as ChatCardData).type === 'decision' ? 'flex justify-center' : ''}>
+                    <ChatCard card={m.card as ChatCardData} mine={m.mine} />
+                  </div>
                 </li>
               );
             }
             return (
               <li key={m.id}>
+                {separator}
                 <MessageBubble
                   message={m}
                   {...(m.mine ? { status: statusOf(m) } : {})}
@@ -368,6 +387,23 @@ export function ChatThread({
               <MessageBubble message={m} status="pending" showAuthor={false} canEdit={false} canDecide={false} />
             </li>
           ))}
+          {typing && (
+            <li className="mt-1 flex" role="status">
+              <span className="sr-only">{typing.name ? t('typing', { name: typing.name }) : t('someoneTyping')}</span>
+              <span
+                aria-hidden
+                className="tiwa-bubble-in flex items-center gap-1 rounded-2xl rounded-tl-md px-3.5 py-3"
+              >
+                {[0, 1, 2].map((dot) => (
+                  <span
+                    key={dot}
+                    className="tiwa-dot size-1.5 rounded-full"
+                    style={{ animationDelay: `${dot * 0.15}s`, backgroundColor: 'var(--chat-meta)' }}
+                  />
+                ))}
+              </span>
+            </li>
+          )}
         </ol>
         <div ref={bottom} />
       </div>
@@ -573,4 +609,24 @@ function ProposeButton({ threadId, eventName }: { threadId: string; eventName: s
       )}
     </div>
   );
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '·';
+}
+
+function dayLabel(iso: string, today: string, yesterday: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) return today;
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  if (date.toDateString() === y.toDateString()) return yesterday;
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  }).format(date);
 }

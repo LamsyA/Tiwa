@@ -2208,7 +2208,7 @@
     "verifyPhoneToMessage": "Verify your phone to message",
     "metAt": "Met at: {event}",
     "cardQuote": "Quote from {vendor}",
-    "cardBooking": "Booking · {category}",
+    "cardBooking": "Booking confirmed · {category}",
     "cardChange": "Change request v{version}",
     "cardVisit": "Site visit confirmed",
     "newChat": "New chat",
@@ -2227,7 +2227,10 @@
     "sendProposal": "Send a proposal",
     "sendProposalHint": "Turn this conversation into a proposal for {event}",
     "sendProposalShort": "Proposal",
-    "cardReview": "Review and accept →"
+    "cardReview": "Review and accept →",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "cardBookingPlain": "Booking confirmed"
   },
   "quotes": {
     "categoryTitle": "{category} quotes",
