@@ -84,7 +84,7 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   await host.getByRole('button', { name: 'Request a proposal' }).first().click();
   const dialog = host.getByRole('dialog');
   await dialog.getByText('Day-of coordination').click();
-  await dialog.getByLabel('Anything they should know?').fill(`Outdoor party ${RUN}`);
+  await dialog.getByLabel('What you have in mind').fill(`Outdoor party ${RUN}`);
   await dialog.getByRole('button', { name: 'Send request' }).click();
   await expect(dialog.getByText('Request sent')).toBeVisible({ timeout: 30_000 });
 
@@ -166,6 +166,11 @@ test('D-X64: request a proposal, planner replies, host accepts and hires', async
   // The planner is now on the event.
   await gotoSettled(host, `/events/${eventId}/vendors`);
   await expect(host.getByRole('heading', { name: /Occasions by Temi is planning this event/ })).toBeVisible();
+
+  // The host pays their planner (D-X100 only moves *vendor* payments to the planner).
+  const payLink = host.locator(`a[href*="/events/${eventId}/bookings/"][href*="tab=payments"]`).first();
+  await payLink.click();
+  await expect(host.getByRole('button', { name: 'I paid outside Tiwa' }).first()).toBeVisible({ timeout: 20_000 });
   await planner.goto(`/events/${eventId}`);
   await expect(planner.getByRole('heading', { name: eventName, level: 1 })).toBeVisible();
 
