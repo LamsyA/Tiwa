@@ -11,6 +11,7 @@ import { authorize } from '../auth/authorize.js';
 import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { checkVenueAvailability } from '../bookings/venue.js';
 import { mirrorToEventTeam, postCard } from '../chat/cards.js';
+import { notify } from '../messaging/notify.js';
 import { assertQuoteTransition } from './state.js';
 import { calcQuoteTotals, quoteItemSchema } from './totals.js';
 
@@ -349,6 +350,23 @@ export async function declineEnquiry(actor: UserActor, raw: unknown) {
     targetId: requestId,
     data: { eventId: request.eventId },
   });
+  // Tell the host (D-X102): the request leaves their list, so say why.
+  const org = await prisma.organization.findUnique({
+    where: { id: request.vendorOrgId },
+    select: { name: true, kind: true },
+  });
+  const what = org?.kind === 'PLANNER' ? 'proposal request' : 'quote request';
+  await notify(
+    { kind: 'system' },
+    {
+      userId: request.createdById,
+      type: 'quote.requestDeclined',
+      title: `${org?.name ?? 'A business'} declined your ${what}`,
+      body: 'They can’t take this one. Browse others on Tiwa and send a new request.',
+      url: `/events/${request.eventId}/vendors/${request.category}`,
+      data: { requestId, eventId: request.eventId },
+    },
+  ).catch(() => undefined);
   return { status: 'DECLINED_BY_VENDOR' as const };
 }
 

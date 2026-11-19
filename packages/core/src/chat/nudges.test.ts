@@ -63,7 +63,7 @@ afterAll(async () => {
 });
 
 describe('findNudgeCandidates (P13-T05)', () => {
-  it('pushes after 2 min unread and summarizes after 15', async () => {
+  it('nudges once a message is 7 min unread, never before (D-X102)', async () => {
     const { host, cohost, threadId } = await makeTeam();
     const { messageId } = await sendMessage(host, { threadId, clientMessageId: `n-${Date.now()}`, body: 'Cake time?' });
     const sentAt = (await prisma.message.findUniqueOrThrow({ where: { id: messageId } })).createdAt;
@@ -71,14 +71,16 @@ describe('findNudgeCandidates (P13-T05)', () => {
     const ours = (rows: Awaited<ReturnType<typeof findNudgeCandidates>>) =>
       rows.filter((row) => row.threadId === threadId);
 
-    expect(ours(await findNudgeCandidates(new Date(sentAt.getTime() + 60_000)))).toEqual([]);
-    const push = ours(await findNudgeCandidates(new Date(sentAt.getTime() + 3 * 60_000)));
+    expect(ours(await findNudgeCandidates(new Date(sentAt.getTime() + 3 * 60_000)))).toEqual([]);
+    const push = ours(await findNudgeCandidates(new Date(sentAt.getTime() + 8 * 60_000)));
     expect(push).toHaveLength(1);
-    expect(push[0]).toMatchObject({ userId: cohost.userId, kind: 'push', unreadCount: 1, senderName: 'Nudge Host' });
-
-    const summary = ours(await findNudgeCandidates(new Date(sentAt.getTime() + 16 * 60_000)));
-    expect(summary).toHaveLength(1);
-    expect(summary[0]).toMatchObject({ userId: cohost.userId, kind: 'summary' });
+    expect(push[0]).toMatchObject({
+      userId: cohost.userId,
+      kind: 'push',
+      unreadCount: 1,
+      senderName: 'Nudge Host',
+      since: sentAt.toISOString(),
+    });
 
     await markRead(cohost, { threadId, upToMessageId: messageId });
     expect(ours(await findNudgeCandidates(new Date(sentAt.getTime() + 30 * 60_000)))).toEqual([]);

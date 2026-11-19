@@ -328,7 +328,7 @@ export async function PublicProfileView({
         )}
       </div>
 
-      <aside className="md:w-80 md:shrink-0">
+      <aside className="order-first md:order-none md:w-80 md:shrink-0">
         <div className="md:sticky md:top-4">
           <Card>
             <div className="flex flex-col gap-2 p-4">

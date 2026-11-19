@@ -61,15 +61,20 @@ describe('chat/unread-nudges (P13-T05)', () => {
     const { messageId } = await sendMessage(host, { threadId, clientMessageId: `nj-${Date.now()}`, body: 'Ping?' });
     const sentAt = (await prisma.message.findUniqueOrThrow({ where: { id: messageId } })).createdAt;
     const threeMin = new Date(sentAt.getTime() + 3 * 60_000);
+    const eightMin = new Date(sentAt.getTime() + 8 * 60_000);
 
     const before = await prisma.notification.count({ where: { userId: cohost.userId, type: 'chat.nudge' } });
-    const first = await handleChatNudges(log, threeMin);
+    // Too early: nothing within the first 7 minutes (D-X102).
+    await handleChatNudges(log, threeMin);
+    expect(await prisma.notification.count({ where: { userId: cohost.userId, type: 'chat.nudge' } })).toBe(before);
+    const first = await handleChatNudges(log, eightMin);
     expect(first.push).toBeGreaterThanOrEqual(1);
     const rows = await prisma.notification.findMany({ where: { userId: cohost.userId, type: 'chat.nudge' } });
     expect(rows).toHaveLength(before + 1);
-    expect(rows[0]!.readAt).not.toBeNull(); // nudges skip the bell; the inbox badge is the surface
+    expect(rows[0]!.readAt).toBeNull(); // the one nudge lands in the bell
 
-    const second = await handleChatNudges(log, threeMin);
+    // Still unread an hour later: no second nudge for the same stretch.
+    const second = await handleChatNudges(log, new Date(sentAt.getTime() + 70 * 60_000));
     expect(second.push).toBe(0);
     expect(second.skipped).toBeGreaterThanOrEqual(1);
 

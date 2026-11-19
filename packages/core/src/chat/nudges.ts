@@ -1,8 +1,9 @@
 import { prisma } from '@tiwa/db';
 
-// Unread chat nudges (P13-T05, Backend.md §9a.5): push after 2 minutes
-// unread, one email/WhatsApp summary after 15 minutes (max one per thread
-// per hour). There is no SSE presence registry, so the operative condition
+// Unread chat nudges (P13-T05, D-X102): no notification per message. If a
+// message sits unread for 7 minutes, the recipient gets ONE nudge for that
+// unanswered stretch (keyed by the oldest unread message), and nothing more
+// until they read the thread and a new stretch starts. There is no SSE presence registry, so the operative condition
 // is "read": clients with a live connection mark threads read on view,
 // which suppresses the nudge naturally. Muted/archived threads never nudge.
 
@@ -11,13 +12,15 @@ export interface NudgeCandidate {
   userId: string;
   kind: 'push' | 'summary';
   unreadCount: number;
+  /** Oldest unread message: one nudge per unread stretch. */
+  since: string;
   senderName: string;
   snippet: string;
   url: string;
 }
 
-const PUSH_AFTER_MS = 2 * 60 * 1000;
-const SUMMARY_AFTER_MS = 15 * 60 * 1000;
+export const NUDGE_AFTER_MS = 7 * 60 * 1000;
+const PUSH_AFTER_MS = NUDGE_AFTER_MS;
 const SCAN_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export async function findNudgeCandidates(now: Date = new Date()): Promise<NudgeCandidate[]> {
@@ -76,7 +79,8 @@ export async function findNudgeCandidates(now: Date = new Date()): Promise<Nudge
       out.push({
         threadId: row.threadId,
         userId,
-        kind: ageMs >= SUMMARY_AFTER_MS ? 'summary' : 'push',
+        kind: 'push',
+        since: oldest.toISOString(),
         unreadCount: unread.length,
         senderName: author?.name ?? 'Someone',
         snippet: (latest.maskedBody ?? latest.body ?? '').slice(0, 100),

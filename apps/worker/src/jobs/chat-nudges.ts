@@ -4,16 +4,11 @@ import { prisma } from '@tiwa/db';
 type Log = ReturnType<typeof createLogger>;
 
 /** `chat/unread-nudges` (P13-T05, Backend.md §9a.5 + P6-T18): every minute,
- * push threads unread for 2+ minutes, and one email/WhatsApp summary per
- * thread per hour after 15 minutes. Keys dedupe across runs and replicas. */
+ * one nudge per unanswered stretch once a message is 7+ minutes unread (D-X102). Keys dedupe across runs and replicas. */
 export const CHAT_NUDGES_JOB = 'chat/unread-nudges' as const;
 export const CHAT_NUDGES_EVERY_MS = 60 * 1000;
 
 const SYSTEM = { kind: 'system' } as const;
-
-function hourBucket(now: Date): string {
-  return now.toISOString().slice(0, 13);
-}
 
 export async function handleChatNudges(
   log: Log,
@@ -25,7 +20,7 @@ export async function handleChatNudges(
   let skipped = 0;
   for (const candidate of dedupeCandidates(candidates)) {
     const type = candidate.kind === 'push' ? 'chat.nudge' : 'chat.summary';
-    const key = `${candidate.kind}:${candidate.threadId}:${candidate.userId}:${hourBucket(now)}`;
+    const key = `${candidate.kind}:${candidate.threadId}:${candidate.userId}:${candidate.since}`;
     if (await alreadyNotified(candidate.userId, type, key)) {
       skipped += 1;
       continue;
@@ -41,11 +36,13 @@ export async function handleChatNudges(
     }
     const title =
       candidate.kind === 'push'
-        ? candidate.senderName
+        ? candidate.senderName.trim() || 'New message'
         : `${candidate.unreadCount} new message${candidate.unreadCount === 1 ? '' : 's'}`;
     const body =
       candidate.kind === 'push'
-        ? candidate.snippet || 'New message'
+        ? candidate.unreadCount > 1
+          ? `${candidate.unreadCount} unread messages. Latest: ${candidate.snippet || 'New message'}`
+          : candidate.snippet || 'New message'
         : `${candidate.senderName} sent you ${candidate.unreadCount} message${candidate.unreadCount === 1 ? '' : 's'}`;
     await notify(SYSTEM, {
       userId: candidate.userId,

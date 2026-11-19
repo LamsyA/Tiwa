@@ -127,6 +127,11 @@ describe('vendor quoting', () => {
     await declineEnquiry(vendorB, { requestId: req.requests[0]!.id });
     const declined = await prisma.quoteRequest.findUniqueOrThrow({ where: { id: req.requests[0]!.id } });
     expect(declined.status).toBe('DECLINED_BY_VENDOR');
+    // D-X102: the host hears about it.
+    const note = await prisma.notification.findFirst({
+      where: { userId: host.userId, type: 'quote.requestDeclined' },
+    });
+    expect(note?.url).toBe(`/events/${eventId}/vendors/catering`);
   });
 
   it('expires past-due quotes (UF-15-3 will hold at accept time)', async () => {

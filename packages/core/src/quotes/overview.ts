@@ -59,7 +59,8 @@ export async function getCategoryOverview(actor: UserActor, raw: z.infer<typeof 
   });
 
   const requests = await prisma.quoteRequest.findMany({
-    where: { eventId: input.eventId, category: input.category },
+    // Declined requests drop off the host's list (D-X102); the host was notified.
+    where: { eventId: input.eventId, category: input.category, status: { not: 'DECLINED_BY_VENDOR' } },
     orderBy: { createdAt: 'desc' },
     select: { id: true, vendorOrgId: true, status: true, createdAt: true },
   });
