@@ -71,7 +71,7 @@ describe('chat/unread-nudges (P13-T05)', () => {
     expect(first.push).toBeGreaterThanOrEqual(1);
     const rows = await prisma.notification.findMany({ where: { userId: cohost.userId, type: 'chat.nudge' } });
     expect(rows).toHaveLength(before + 1);
-    expect(rows[0]!.readAt).toBeNull(); // the one nudge lands in the bell
+    expect(rows[0]!.readAt).not.toBeNull(); // D-X106: the follow-up is email only, the bell had the instant one
 
     // Still unread an hour later: no second nudge for the same stretch.
     const second = await handleChatNudges(log, new Date(sentAt.getTime() + 70 * 60_000));

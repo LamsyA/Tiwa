@@ -1,8 +1,8 @@
 import { prisma } from '@tiwa/db';
 import { notify } from '../messaging/notify.js';
 
-// New-message notifications (D-X37). Every recipient gets a bell entry (and
-// push, per their preferences) when a message lands, so a reply is never
+// New-message notifications (D-X37, D-X106). Every recipient gets a bell
+// entry and an instant push when a message lands, so a reply is never
 // missed. One unread entry per conversation: further messages while it is
 // still unread don't stack up. Muted conversations stay quiet. The preview
 // uses the masked text, so contact details never leak through the bell.

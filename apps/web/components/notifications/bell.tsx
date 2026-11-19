@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
-/** In-app bell (P13-T03): unread count, refreshed on mount, on focus and every minute. */
+/** In-app bell (P13-T03): unread count, refreshed on mount, on focus and every 10 seconds (D-X106). */
 export function BellButton({ initialUnread }: { initialUnread: number }) {
   const t = useTranslations('notifications');
   const [unread, setUnread] = useState(initialUnread);
@@ -22,7 +22,9 @@ export function BellButton({ initialUnread }: { initialUnread: number }) {
   useEffect(() => {
     // First paint uses the server-rendered count; refresh on a timer and
     // whenever the tab regains focus (same pattern as live-refresh).
-    const timer = setInterval(() => void refresh(), 60_000);
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh();
+    }, 10_000);
     const onFocus = () => void refresh();
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);

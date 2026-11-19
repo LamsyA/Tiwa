@@ -21,6 +21,8 @@ export function absoluteUrl(url: string, base: string = env.APP_URL): string {
 interface NotifyPayload {
   notificationId?: unknown;
   urgent?: unknown;
+  /** D-X106: the web app already pushed this one instantly. */
+  pushSent?: unknown;
 }
 
 export async function handleNotify(
@@ -47,7 +49,7 @@ export async function handleNotify(
   const { email, sms, whatsapp, push } = providers();
   const link = absoluteUrl(resolved.url);
 
-  if (channels.push) {
+  if (channels.push && payload.pushSent !== true) {
     const subs = await prisma.pushSubscription.findMany({ where: { userId: resolved.userId } });
     if (subs.length === 0) {
       skipped.push('push:no-subscription');

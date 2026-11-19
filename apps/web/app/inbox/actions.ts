@@ -1,6 +1,7 @@
 'use server';
 
 import {
+  notifyNewMessage,
   blockParty,
   blockPartySchema,
   reportMessage,
@@ -46,6 +47,7 @@ export const startChat = userAction(startThreadSchema, async (input, ctx) => {
     authorUserId: ctx.actor.userId,
     at: Date.now(),
   });
+  if (result.messageId) await notifyNewMessage(result.messageId).catch(() => undefined);
   return result;
 });
 
@@ -64,7 +66,8 @@ export const sendChatMessage = userAction(sendMessageSchema, async (input, ctx) 
       authorUserId: ctx.actor.userId,
       at: Date.now(),
     });
-    // No per-message bell (D-X102): the worker nudges once after 7 minutes unread.
+    // Instant bell + push for the other side (D-X106). Never fails the send.
+    await notifyNewMessage(result.messageId).catch(() => undefined);
   }
   return result;
 });

@@ -41,10 +41,10 @@ export const NOTIFY_TYPES: Record<string, NotifyTypeDef> = {
     channels: { inApp: true, push: true, email: false, sms: false, whatsapp: false },
     urgent: false,
   },
-  // D-X102: chat no longer notifies per message. One nudge (bell, push,
-  // email) per unanswered stretch after 7 minutes unread — see findNudgeCandidates.
+  // D-X106: every message notifies instantly (bell + push, 'chat.message');
+  // the 7-minute unread follow-up is email only, once per unanswered stretch.
   'chat.nudge': {
-    channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
+    channels: { inApp: false, push: false, email: true, sms: false, whatsapp: false },
     urgent: false,
   },
   'chat.summary': {
@@ -163,6 +163,17 @@ export const notifySchema = z.object({
   urgent: z.boolean().optional(),
 });
 
+/** D-X106: the web app registers a sender so push goes out the moment a
+ * notification is created, without waiting for the background worker (which
+ * may be asleep on a free host). The worker still sends email/SMS/WhatsApp
+ * and skips push for rows already delivered here. */
+type InstantPush = (notificationId: string) => Promise<void>;
+// On globalThis: Next.js can load this module twice (instrumentation + app).
+const instantSlot = globalThis as unknown as { __tiwaInstantPush?: InstantPush | null };
+export function setInstantPush(sender: InstantPush | null): void {
+  instantSlot.__tiwaInstantPush = sender;
+}
+
 /** Fan a notification out (P13-T03). Called with the system actor from
  * worker jobs and server code paths that already authorized the trigger.
  * Always records the in-app row (history); `inApp: false` marks it read so
@@ -196,11 +207,19 @@ export async function notify(
       },
       select: { id: true },
     });
-    if (channels.push || channels.email || channels.sms || channels.whatsapp) {
-      await enqueue(tx, 'messaging/notify', { notificationId: created.id, urgent: input.urgent ?? false });
+    const instantPush = instantSlot.__tiwaInstantPush ?? null;
+    const instant = channels.push && instantPush !== null;
+    if ((channels.push && !instant) || channels.email || channels.sms || channels.whatsapp) {
+      await enqueue(tx, 'messaging/notify', {
+        notificationId: created.id,
+        urgent: input.urgent ?? false,
+        ...(instant ? { pushSent: true } : {}),
+      });
     }
     return created;
   });
+  const sender = instantSlot.__tiwaInstantPush;
+  if (channels.push && sender) await sender(row.id).catch(() => undefined);
   return { notificationId: row.id, channels };
 }
 
