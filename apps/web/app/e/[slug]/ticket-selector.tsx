@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@tiwa/ui';
+import { Button, MoneyText } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
@@ -43,7 +43,7 @@ export function TicketSelector(props: {
             <div className="min-w-0 flex-1">
               <p className="font-medium">{row.name}</p>
               <p className="text-muted">
-                {row.priceMinor === '0' ? t('free') : `${row.priceMinor} ${props.currency}`} ·{' '}
+                {row.priceMinor === '0' ? t('free') : <MoneyText value={row.priceMinor} currency={props.currency} />} ·{' '}
                 {row.onSale ? t('left', { count: row.available }) : t('notOnSale')}
               </p>
             </div>

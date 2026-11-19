@@ -1,10 +1,15 @@
 'use client';
 
-import { Button, Input } from '@tiwa/ui';
+import { Button, Input, MoneyText } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { reserveAction } from './actions.js';
 
+/**
+ * Buyer details + confirm. Fields are read from the form when Confirm is
+ * tapped (not only from React state), so typing or autofill before the page
+ * finishes loading on a slow phone still works; anything missing is named.
+ */
 export function RegisterForm(props: {
   slug: string;
   currency: string;
@@ -12,30 +17,37 @@ export function RegisterForm(props: {
   questions: { key: string; label: string; required: boolean }[];
 }) {
   const t = useTranslations('register');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [promo, setPromo] = useState('');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const form = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const total = props.selection.reduce((sum, row) => sum + BigInt(row.priceMinor) * BigInt(row.qty), 0n);
 
-  const submit = () => {
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
+    const data = new FormData(form.current ?? undefined);
+    const field = (key: string) => String(data.get(key) ?? '').trim();
+    const name = field('name');
+    const email = field('email');
+    if (!name) return setError(t('missingName'));
+    if (!email) return setError(t('missingEmail'));
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError(t('badEmail'));
+    const answers: Record<string, string> = {};
     for (const question of props.questions) {
-      if (question.required && !answers[question.key]?.trim()) {
-        setError(question.label);
-        return;
-      }
+      const value = field(`q:${question.key}`);
+      if (question.required && !value) return setError(question.label);
+      if (value) answers[question.key] = value;
     }
+    const phone = field('phone');
+    const promo = field('promo');
     start(async () => {
       const result = await reserveAction({
         eventSlug: props.slug,
         items: props.selection.map((row) => ({ ticketTypeId: row.typeId, qty: row.qty })),
-        buyerName: name.trim(),
-        buyerEmail: email.trim(),
-        buyerPhone: phone.trim() || undefined,
-        promoCode: promo.trim() || undefined,
+        buyerName: name,
+        buyerEmail: email,
+        buyerPhone: phone || undefined,
+        promoCode: promo || undefined,
         answers,
       });
       if (!result.ok) {
@@ -53,57 +65,50 @@ export function RegisterForm(props: {
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {props.selection.map((row) => (
-        <p key={row.typeId} className="flex justify-between text-sm">
-          <span>
-            {row.name} × {row.qty}
-          </span>
-          <span>
-            {row.priceMinor === '0' ? 'Free' : `${BigInt(row.priceMinor) * BigInt(row.qty)} ${props.currency}`}
-          </span>
-        </p>
-      ))}
-      <Input
-        aria-label={t('name')}
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        placeholder={t('name')}
-      />
-      <Input
-        aria-label={t('email')}
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        placeholder={t('email')}
-        inputMode="email"
-      />
-      <Input
-        aria-label={t('phone')}
-        value={phone}
-        onChange={(event) => setPhone(event.target.value)}
-        placeholder={t('phone')}
-        inputMode="tel"
-      />
-      <Input
-        aria-label={t('promo')}
-        value={promo}
-        onChange={(event) => setPromo(event.target.value)}
-        placeholder={t('promo')}
-      />
+    <form ref={form} onSubmit={submit} noValidate className="flex flex-col gap-3">
+      <ul className="border-border/70 bg-surface flex flex-col gap-2 rounded-2xl border p-4 text-sm">
+        {props.selection.map((row) => (
+          <li key={row.typeId} className="flex justify-between gap-3">
+            <span>
+              {row.name} × {row.qty}
+            </span>
+            <span className="font-medium tabular-nums">
+              {row.priceMinor === '0' ? (
+                'Free'
+              ) : (
+                <MoneyText value={(BigInt(row.priceMinor) * BigInt(row.qty)).toString()} currency={props.currency} />
+              )}
+            </span>
+          </li>
+        ))}
+        {total > 0n && (
+          <li className="border-border/60 flex justify-between gap-3 border-t pt-2 font-semibold">
+            <span>{t('total')}</span>
+            <MoneyText value={total.toString()} currency={props.currency} />
+          </li>
+        )}
+      </ul>
+      <Input name="name" aria-label={t('name')} placeholder={t('name')} autoComplete="name" />
+      <Input name="email" aria-label={t('email')} placeholder={t('email')} inputMode="email" autoComplete="email" />
+      <Input name="phone" aria-label={t('phone')} placeholder={t('phone')} inputMode="tel" autoComplete="tel" />
+      <Input name="promo" aria-label={t('promo')} placeholder={t('promo')} />
       {props.questions.map((question) => (
         <Input
           key={question.key}
+          name={`q:${question.key}`}
           aria-label={question.label}
-          value={answers[question.key] ?? ''}
-          onChange={(event) => setAnswers((prev) => ({ ...prev, [question.key]: event.target.value }))}
           placeholder={`${question.label}${question.required ? ' *' : ''}`}
         />
       ))}
-      {error && <p className="text-danger text-sm">{error}</p>}
-      <Button disabled={pending || !name.trim() || !email.trim()} onClick={submit}>
+      {error && (
+        <p role="alert" className="text-danger text-sm">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={pending}>
         {t('pay')}
       </Button>
       <p className="text-muted text-xs">{t('freeNote')}</p>
-    </div>
+    </form>
   );
 }

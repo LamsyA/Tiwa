@@ -61,14 +61,14 @@ async function newTicketedEvent(page: Page, name: string): Promise<string> {
 
 async function addTypesAndPublish(page: Page, eventId: string): Promise<string> {
   await gotoSettled(page, `/events/${eventId}/tickets`);
-  await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible();
   await page.getByLabel('Name', { exact: true }).fill('General');
-  await page.getByLabel('Price', { exact: true }).fill('0');
+  await page.getByLabel('Price (₦, 0 for free)', { exact: true }).fill('0');
   await page.getByLabel('Quantity', { exact: true }).fill('100');
   await page.getByRole('button', { name: 'Add ticket type' }).click();
   await expect(page.getByText('General', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
   await page.getByLabel('Name', { exact: true }).fill('VIP');
-  await page.getByLabel('Price', { exact: true }).fill('500000');
+  await page.getByLabel('Price (₦, 0 for free)', { exact: true }).fill('500000');
   await page.getByLabel('Quantity', { exact: true }).fill('20');
   await page.getByRole('button', { name: 'Add ticket type' }).click();
   await expect(page.getByText('VIP', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
@@ -126,7 +126,7 @@ test('UF-22 organiser adds types and publishes; guest buys free + paid-pending',
   await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
   await page.getByRole('button', { name: 'Confirm' }).click();
   await expect(page).toHaveURL(/\/register\/pending/, { timeout: 30_000 });
-  await expect(page.getByText('Pay the organiser directly')).toBeVisible();
+  await expect(page.getByText(/Pay the organiser using the details below/)).toBeVisible();
 
   // Organiser confirms the paid order → PAID.
   await gotoSettled(page, `/events/${eventId}/tickets`);
@@ -134,5 +134,5 @@ test('UF-22 organiser adds types and publishes; guest buys free + paid-pending',
   await expect(row).toBeVisible({ timeout: 60_000 });
   await row.getByRole('button', { name: /Mark as paid/ }).click();
   await expect(row.getByRole('button', { name: /Mark as paid/ })).toHaveCount(0, { timeout: 30_000 });
-  await expect(row.getByText(/PAID ·/)).toBeVisible();
+  await expect(row.getByText(/Paid ·/)).toBeVisible();
 });

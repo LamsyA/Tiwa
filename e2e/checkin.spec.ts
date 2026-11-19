@@ -56,10 +56,10 @@ test('UF-23-1 ticket checks in once, then reports the duplicate', async ({ page 
 
   // One free ticket type, published.
   await gotoSettled(page, `/events/${eventId}/tickets`);
-  await expect(page.getByRole('heading', { name: 'Tickets' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible();
   await page.getByLabel('Name', { exact: true }).fill('General');
-  await page.getByLabel('Price').fill('0');
-  await page.getByLabel('Quantity').fill('50');
+  await page.getByLabel('Price (₦, 0 for free)', { exact: true }).fill('0');
+  await page.getByLabel('Quantity', { exact: true }).fill('50');
   await page.getByRole('button', { name: 'Add ticket type' }).click();
   await expect(page.getByText('General', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
   const switches = page.getByRole('switch');

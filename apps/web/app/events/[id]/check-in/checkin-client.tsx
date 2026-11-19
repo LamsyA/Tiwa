@@ -1,5 +1,6 @@
 'use client';
 
+import { ScanLine } from 'lucide-react';
 import { Button, Card, Input } from '@tiwa/ui';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -292,9 +293,33 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
           {count}
         </p>
       )}
+      {/* The camera comes first on phones: tap, point, next guest. */}
+      {scanning ? (
+        <Button variant="secondary" onClick={stopCamera} className="w-full">
+          {t('stopScanning')}
+        </Button>
+      ) : (
+        <Button onClick={() => void startCamera()} className="h-14 w-full text-base">
+          <ScanLine aria-hidden className="size-5" />
+          {t('startScanning')}
+        </Button>
+      )}
+      <div className={scanning ? 'relative' : 'hidden'}>
+        <video
+          ref={videoRef}
+          className="aspect-[3/4] max-h-[60dvh] w-full rounded-2xl bg-black object-cover sm:aspect-video"
+          muted
+          playsInline
+          aria-label={t('startScanning')}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-[18%] rounded-3xl border-4 border-white/80 shadow-[0_0_0_9999px_rgb(0_0_0/0.25)]"
+        />
+      </div>
       {result && (
         <Card
-          className={`p-4 text-center font-medium ${result.tone === 'ok' ? 'bg-success-soft text-success' : result.tone === 'warn' ? 'bg-warning-soft text-warning' : 'bg-danger-soft text-danger'}`}
+          className={`p-5 text-center text-lg font-semibold ${result.tone === 'ok' ? 'bg-success-soft text-success' : result.tone === 'warn' ? 'bg-warning-soft text-warning' : 'bg-danger-soft text-danger'}`}
           role={result.tone === 'ok' ? 'status' : 'alert'}
         >
           {result.text}
@@ -347,13 +372,6 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
         </ul>
       )}
       <div className="flex flex-wrap gap-2">
-        {scanning ? (
-          <Button variant="secondary" onClick={stopCamera}>
-            {t('stopScanning')}
-          </Button>
-        ) : (
-          <Button onClick={() => void startCamera()}>{t('startScanning')}</Button>
-        )}
         <Button variant="secondary" onClick={() => void downloadOffline()}>
           {t('offline')}
         </Button>
@@ -364,13 +382,6 @@ export function CheckinClient({ eventId, initial }: { eventId: string; initial: 
         )}
       </div>
       {storedCount != null && <p className="text-muted text-sm">{t('offlineReady', { count: storedCount })}</p>}
-      <video
-        ref={videoRef}
-        className={scanning ? 'aspect-[3/4] w-full rounded-2xl bg-black object-cover sm:aspect-video' : 'hidden'}
-        muted
-        playsInline
-        aria-label={t('startScanning')}
-      />
     </div>
   );
 }

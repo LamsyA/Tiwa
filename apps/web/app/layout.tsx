@@ -1,5 +1,5 @@
 import { resolveTheme, themeNoFlashScript, parseThemeChoice } from '@tiwa/ui/theme';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Fraunces, Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { ToastProvider } from '@tiwa/ui';
 import { NextIntlClientProvider } from 'next-intl';
@@ -39,6 +39,9 @@ const brand = Fraunces({
   display: 'swap',
   preload: false,
 });
+
+/** viewportFit 'cover' lets full-screen views (chat on phones) pad for the notch and home bar. */
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export const metadata: Metadata = {
   title: `${en.app.name} — ${en.app.tagline.toLowerCase()}`,

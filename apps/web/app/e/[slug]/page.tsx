@@ -1,6 +1,6 @@
-import { getPublicEvent } from '@tiwa/core';
+import { getPublicEvent, publicEventPreview } from '@tiwa/core';
 import { Banner, Card, DateText, GuestShell } from '@tiwa/ui';
-import { CalendarDays, MapPin } from 'lucide-react';
+import { CalendarDays, Clock, MapPin } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { privateStorage } from '@/lib/storage.js';
@@ -14,7 +14,30 @@ export default async function PublicEventPage({ params }: { params: Promise<{ sl
   const { slug } = await params;
   const t = await getTranslations('publicEvent');
   const data = await getPublicEvent(slug).catch(() => null);
-  if (!data) notFound();
+  if (!data) {
+    // Not live yet: say so instead of a bare 404 (private events stay hidden).
+    const preview = await publicEventPreview(slug).catch(() => null);
+    if (!preview) notFound();
+    return (
+      <GuestShell title={preview.name}>
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <span className="bg-brand-soft text-brand-strong grid size-14 place-items-center rounded-2xl">
+            <Clock aria-hidden className="size-7" />
+          </span>
+          <h1 className="font-display text-2xl font-bold">{preview.name}</h1>
+          {preview.startsAt && (
+            <p className="text-muted text-sm">
+              <DateText value={preview.startsAt} format="datetime" timeZone={preview.timezone} />
+            </p>
+          )}
+          <p className="font-semibold">{preview.reason === 'ended' ? t('endedTitle') : t('notOnSaleTitle')}</p>
+          <p className="text-muted max-w-sm text-sm">
+            {preview.reason === 'ended' ? t('endedBody') : t('notOnSaleBody')}
+          </p>
+        </div>
+      </GuestShell>
+    );
+  }
   const { event, types } = data;
   const venue = event.days[0]?.venueName ?? null;
   const coverUrl = event.coverKey

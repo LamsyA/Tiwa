@@ -1,6 +1,7 @@
+import { env, ticketsVisibility } from '@tiwa/config';
 import { authorize, isEnabled, listTicketOrders, ticketSales } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
-import { Banner, Card, DateText, MoneyText, buttonClasses } from '@tiwa/ui';
+import { Card, DateText, MoneyText, buttonClasses } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
@@ -47,6 +48,7 @@ export default async function TicketsPage({ params }: { params: Promise<{ id: st
       currency: true,
       countryCode: true,
       timezone: true,
+      status: true,
     },
   });
   const payoutsOn = await isEnabled('payments.payouts', event.countryCode).catch(() => false);
@@ -77,15 +79,11 @@ export default async function TicketsPage({ params }: { params: Promise<{ id: st
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="font-display text-xl font-bold">{t('title')}</h2>
           <div className="ml-auto flex gap-2">
-            <Link href={`/e/${event.slug}`} className={buttonClasses({ variant: 'secondary' })} target="_blank">
-              {t('viewPublic')}
-            </Link>
             <Link href={`/events/${id}/check-in`} className={buttonClasses({ variant: 'secondary' })}>
               {t('openCheckin')}
             </Link>
           </div>
         </div>
-        {event.visibility !== 'PUBLIC' && <Banner tone="warning">{t('needsPublic')}</Banner>}
         {/* P11-T09: organiser payouts stay behind `payments.payouts` (D-M03/Q-005). */}
         <Card className="flex flex-col gap-2 p-4">
           <h3 className="font-display text-base font-bold tracking-tight">{t('payouts')}</h3>
@@ -137,6 +135,10 @@ export default async function TicketsPage({ params }: { params: Promise<{ id: st
           canManage={canManage}
           ticketsEnabled={event.ticketsEnabled}
           ticketsPublished={event.ticketsPublished}
+          eventName={event.name}
+          publicUrl={`${env.APP_URL.replace(/\/$/, '')}/e/${event.slug}`}
+          eventReady={event.status === 'ACTIVE'}
+          visibilityOk={ticketsVisibility(event.visibility)}
           registrationQuestions={
             (event.registrationQuestions ?? []) as { key: string; label: string; required: boolean }[]
           }

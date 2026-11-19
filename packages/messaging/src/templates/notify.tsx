@@ -1,3 +1,4 @@
+import { render } from '@react-email/render';
 /** @jsxRuntime automatic @jsxImportSource react */
 import { Button, Heading, Hr, Link, Text } from '@react-email/components';
 import { EMAIL, EmailLayout } from './layout.js';
@@ -72,4 +73,11 @@ export function NotifyEmail({ name, title, body, url }: NotifyEmailProps) {
       </Text>
     </EmailLayout>
   );
+}
+
+/** Rendered HTML + text for senders that take strings (web app senders). */
+export async function renderNotifyEmail(props: NotifyEmailProps): Promise<{ html: string; text: string }> {
+  const element = <NotifyEmail {...props} />;
+  const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);
+  return { html, text };
 }

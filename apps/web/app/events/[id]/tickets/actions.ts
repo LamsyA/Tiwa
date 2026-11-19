@@ -18,7 +18,9 @@ import {
   ticketsSettingsSchema,
 } from '@tiwa/core';
 import { env } from '@tiwa/config';
+import { renderNotifyEmail } from '@tiwa/messaging';
 import { revalidatePath } from 'next/cache';
+import { emailSender } from '@/lib/auth.js';
 import { userAction } from '@/lib/ctx.js';
 
 function revalidate(eventId: string) {
@@ -79,12 +81,30 @@ export const saveTicketsSettings = userAction(ticketsSettingsSchema, async (inpu
 
 export const confirmOrderOfflineAction = userAction(orderIdSchema, async (input, ctx) => {
   const result = await confirmTicketOrderOffline(ctx.actor, input.orderId, env.AUTH_SECRET || 'dev-secret');
-  const eventId = (
-    await import('@tiwa/db').then((m) =>
-      m.prisma.ticketOrder.findUniqueOrThrow({ where: { id: input.orderId }, select: { eventId: true } }),
-    )
-  ).eventId;
-  revalidate(eventId);
+  const { prisma } = await import('@tiwa/db');
+  const order = await prisma.ticketOrder.findUniqueOrThrow({
+    where: { id: input.orderId },
+    select: { eventId: true, buyerName: true, buyerEmail: true, event: { select: { name: true } } },
+  });
+  revalidate(order.eventId);
+  // D-X110: the buyer gets their ticket link the moment the organiser confirms. Never fails the action.
+  const first = result.tickets[0];
+  if (first && order.buyerEmail) {
+    const url = `${env.APP_URL.replace(/\/$/, '')}/t/${first}`;
+    await renderNotifyEmail({
+      name: order.buyerName,
+      title: `Your tickets for ${order.event.name} are confirmed`,
+      body:
+        result.tickets.length > 1
+          ? `Payment received. You have ${result.tickets.length} tickets. Open the link and show each QR code at the door.`
+          : 'Payment received. Open your ticket and show the QR code at the door.',
+      url,
+    })
+      .then((message) =>
+        emailSender.send({ to: order.buyerEmail, subject: `Your tickets for ${order.event.name}`, ...message }),
+      )
+      .catch(() => undefined);
+  }
   return result;
 });
 

@@ -139,3 +139,81 @@ export async function ticketIncome(eventId: string): Promise<bigint> {
   });
   return paid._sum.totalMinor ?? 0n;
 }
+
+/**
+ * What a visitor sees when the ticket page isn't live yet (instead of a bare
+ * 404): the event's name and date, and why. Private events stay hidden.
+ */
+export async function publicEventPreview(slug: string) {
+  const event = await prisma.event.findUnique({
+    where: { slug },
+    select: {
+      name: true,
+      startsAt: true,
+      timezone: true,
+      status: true,
+      visibility: true,
+      ticketsEnabled: true,
+      ticketsPublished: true,
+    },
+  });
+  if (!event || !ticketsVisibility(event.visibility) || event.status === 'CANCELLED') return null;
+  return {
+    name: event.name,
+    startsAt: event.startsAt,
+    timezone: event.timezone,
+    reason: event.status === 'COMPLETED' ? ('ended' as const) : ('notOnSale' as const),
+  };
+}
+
+/**
+ * D-X110: where a buyer sends money for a paid ticket order: the planner
+ * running the event, else a business the organiser owns, else nothing.
+ * Bank-confirmed accounts only show the full number (D-X103).
+ */
+export async function ticketOrderPayee(orderId: string) {
+  const order = await prisma.ticketOrder.findUnique({
+    where: { id: orderId },
+    select: { id: true, eventId: true, status: true, totalMinor: true, reservedUntil: true, buyerName: true },
+  });
+  if (!order) return null;
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: order.eventId },
+    select: { name: true, slug: true, currency: true, countryCode: true, createdById: true },
+  });
+  const planner = await prisma.eventParticipant.findFirst({
+    where: { eventId: order.eventId, role: 'PLANNER', removedAt: null, orgId: { not: null } },
+    select: { orgId: true },
+  });
+  const owned = planner?.orgId
+    ? null
+    : await prisma.membership.findFirst({
+        where: {
+          userId: event.createdById,
+          role: 'OWNER',
+          org: { kind: { in: ['PLANNER', 'VENDOR'] }, deletedAt: null },
+        },
+        select: { orgId: true },
+      });
+  const orgId = planner?.orgId ?? owned?.orgId ?? null;
+  const account = orgId
+    ? await prisma.bankAccount.findFirst({
+        where: { orgId, isDefault: true, accountNumber: { not: null } },
+        select: { bankCode: true, accountNumber: true, accountName: true, verifiedAt: true },
+      })
+    : null;
+  const org = orgId ? await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } }) : null;
+  return {
+    order: { ...order, totalMinor: order.totalMinor.toString(), reference: order.id.slice(-8).toUpperCase() },
+    event,
+    payee: account
+      ? {
+          orgName: org?.name ?? '',
+          bankCode: account.bankCode,
+          accountNumber: account.accountNumber as string,
+          accountName: account.accountName,
+          verified: account.verifiedAt !== null,
+        }
+      : null,
+  };
+}

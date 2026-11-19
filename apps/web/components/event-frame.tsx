@@ -1,3 +1,4 @@
+import { FORMAT_RULES } from '@tiwa/config';
 import { authorize, loadEventAccess, type Action, type EventAccess } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { EmptyState, buttonClasses, cn } from '@tiwa/ui';
@@ -81,7 +82,7 @@ export async function loadEventPage(eventId: string, path: string, needs: Action
   const [event] = await Promise.all([
     prisma.event.findUniqueOrThrow({
       where: { id: eventId },
-      select: { invitesEnabled: true, momentsEnabled: true, ticketsEnabled: true },
+      select: { invitesEnabled: true, momentsEnabled: true, ticketsEnabled: true, format: true },
     }),
     access.role !== 'HOST' ? markAccepted(eventId, ctx.actor.userId) : Promise.resolve(),
   ]);
@@ -91,7 +92,8 @@ export async function loadEventPage(eventId: string, path: string, needs: Action
     allowed: can(access, ctx.actor.userId, needs),
     invitesOn: event.invitesEnabled,
     momentsOn: event.momentsEnabled,
-    ticketsOn: event.ticketsEnabled,
+    // The Tickets tab shows on every ticketable event, so organisers can find where to start selling.
+    ticketsOn: event.ticketsEnabled || FORMAT_RULES[event.format].ticketsAllowed,
   };
 }
 

@@ -22,6 +22,8 @@ import { ticketQrValue } from './tokens.js';
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
 export const RESERVATION_MINUTES = 10;
+/** Paid orders wait for a transfer and the organiser's confirmation: hold them a day. */
+export const PAID_RESERVATION_MINUTES = 24 * 60;
 
 const itemSchema = z.object({
   ticketTypeId: z.string().uuid(),
@@ -116,7 +118,8 @@ export async function reserveTickets(raw: z.input<typeof reserveTicketsSchema>) 
   // Lean: no provider fee (fee arrives with online checkout, P8-T07).
   const total = subtotal - discount;
 
-  const reservedUntil = new Date(Date.now() + RESERVATION_MINUTES * 60_000);
+  const holdMinutes = total > 0n ? PAID_RESERVATION_MINUTES : RESERVATION_MINUTES;
+  const reservedUntil = new Date(Date.now() + holdMinutes * 60_000);
   const answers = (input.answers ?? {}) as Prisma.InputJsonValue;
   const order = await prisma.$transaction(async (tx) => {
     // Lock the type rows in id order so concurrent checkouts serialise.
