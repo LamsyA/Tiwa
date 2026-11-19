@@ -91,6 +91,14 @@ export class SmtpEmail implements EmailProvider {
     // Placeholder addresses are not mailboxes; skip instead of bouncing (D-X56).
     if (isPlaceholderEmail(message.to)) return { id: 'skipped-placeholder' };
     const [html, text] = await Promise.all([render(message.react), render(message.react, { plainText: true })]);
-    return { id: await sendSmtp(this.config, { to: message.to, subject: message.subject, html, text }) };
+    // Emails sent by a local dev server carry localhost links; label them so
+    // they're never mistaken for production mail.
+    const subject = isLocalAppUrl(process.env.APP_URL) ? `[Local test] ${message.subject}` : message.subject;
+    return { id: await sendSmtp(this.config, { to: message.to, subject, html, text }) };
   }
+}
+
+/** True when the app URL points at this machine (localhost and friends). */
+export function isLocalAppUrl(url: string | undefined): boolean {
+  return !!url && /\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|\/|$)/.test(url);
 }

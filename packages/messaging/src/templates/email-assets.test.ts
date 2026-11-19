@@ -10,3 +10,12 @@ describe('emailAssetBase', () => {
     expect(emailAssetBase('https://tiwa.app/')).toBe('https://tiwa.app');
   });
 });
+
+describe('isLocalAppUrl', () => {
+  it('flags local servers only', async () => {
+    const { isLocalAppUrl } = await import('../smtp.js');
+    expect(isLocalAppUrl('http://localhost:3000')).toBe(true);
+    expect(isLocalAppUrl('https://tiwa-events.vercel.app')).toBe(false);
+    expect(isLocalAppUrl(undefined)).toBe(false);
+  });
+});
