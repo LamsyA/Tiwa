@@ -22,6 +22,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { receiptUrlAction, recordOfflineAction, startReceiptAction } from '../actions.js';
+import { HeroDecor } from '@/components/hero-decor.js';
 
 const METHODS = ['bank_transfer', 'cash', 'pos', 'other'] as const;
 type Method = (typeof METHODS)[number];
@@ -194,8 +195,9 @@ function PayToCard({ account }: { account: PayToView }) {
   return (
     <section
       aria-label={t('heading')}
-      className="overflow-hidden rounded-2xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_85%,black),#140b07)] p-5 text-white shadow-[0_18px_40px_-22px_rgb(0_0_0/0.6)]"
+      className="relative isolate overflow-hidden rounded-2xl bg-[linear-gradient(140deg,color-mix(in_oklab,var(--brand-strong)_92%,black)_0%,color-mix(in_oklab,var(--brand-strong)_55%,#1c1917)_55%,#1c1917_100%)] p-5 text-white shadow-[0_18px_40px_-22px_rgb(0_0_0/0.6)]"
     >
+      <HeroDecor markSize={150} />
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-white/60 uppercase">{t('heading')}</p>

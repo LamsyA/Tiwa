@@ -11,6 +11,7 @@ import { AppFrame } from '@/components/app-frame.js';
 import { OrdersBoard } from '@/components/orders/orders-board.js';
 import { requirePageUser } from '@/lib/ctx.js';
 import type * as React from 'react';
+import { HeroDecor } from '@/components/hero-decor.js';
 
 /** Whole days from now until `date`. */
 function daysUntil(date: Date): number {
@@ -32,13 +33,12 @@ async function RoleHero({
   const tone = ROLE_TONE[role];
   return (
     <section
-      className="relative overflow-hidden rounded-3xl px-5 py-4 text-white shadow-[var(--shadow-2)] sm:px-6 sm:py-5"
+      className="relative isolate overflow-hidden rounded-3xl px-5 py-4 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:px-6 sm:py-5"
       style={{
-        background: `linear-gradient(120deg, color-mix(in oklab, ${tone} 90%, black 6%) 0%, color-mix(in oklab, ${tone} 60%, black 32%) 100%)`,
+        background: `linear-gradient(140deg, color-mix(in oklab, ${tone} 92%, black) 0%, color-mix(in oklab, ${tone} 55%, #1c1917) 55%, #1c1917 100%)`,
       }}
     >
-      <div aria-hidden className="tiwa-grid-bg absolute inset-0 opacity-15" />
-      <span aria-hidden className="absolute -right-10 -bottom-16 size-48 rounded-full bg-[#14b8a6]/35 blur-3xl" />
+      <HeroDecor markSize={150} />
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
           <span className="mb-1.5 inline-flex w-fit rounded-full bg-white/90 px-0.5 py-0.5">

@@ -111,7 +111,7 @@ export function BrandedDocument({
           </tbody>
         </table>
 
-        <div className="flex items-center justify-between rounded-2xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_90%,black),#140b07)] px-5 py-4 text-white print:[print-color-adjust:exact]">
+        <div className="flex items-center justify-between rounded-2xl bg-[linear-gradient(140deg,color-mix(in_oklab,var(--brand-strong)_92%,black)_0%,color-mix(in_oklab,var(--brand-strong)_55%,#1c1917)_55%,#1c1917_100%)] px-5 py-4 text-white print:[print-color-adjust:exact]">
           <span className="text-sm font-medium text-white/80">{labels.total}</span>
           <MoneyText value={totalMinor} currency={currency} className="font-display text-2xl font-bold" />
         </div>

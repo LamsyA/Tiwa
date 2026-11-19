@@ -2,6 +2,7 @@ import type { EarningsSummary } from '@tiwa/core';
 import { MoneyText, cn } from '@tiwa/ui';
 import { AlertCircle, CalendarClock, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import { HeroDecor } from '@/components/hero-decor.js';
 
 /** Vendor earnings at a glance (D-X46): this month, upcoming, overdue, six-month bars. */
 export async function EarningsPanel({ summary }: { summary: EarningsSummary }) {
@@ -17,12 +18,9 @@ export async function EarningsPanel({ summary }: { summary: EarningsSummary }) {
   return (
     <section
       aria-labelledby="earnings-heading"
-      className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_88%,black)_0%,#140b07_100%)] p-5 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:p-5"
+      className="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(140deg,color-mix(in_oklab,var(--brand-strong)_92%,black)_0%,color-mix(in_oklab,var(--brand-strong)_55%,#1c1917)_55%,#1c1917_100%)] p-5 text-white shadow-[0_24px_60px_-28px_rgb(0_0_0/0.55)] sm:p-5"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 -right-20 -z-10 size-72 rounded-full bg-white/10 blur-3xl"
-      />
+      <HeroDecor />
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-end">
         <div>
           <p id="earnings-heading" className="inline-flex items-center gap-2 text-sm font-medium text-white/70">

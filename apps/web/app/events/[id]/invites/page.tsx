@@ -14,6 +14,7 @@ import { InvitesSwitch } from './invites-switch.js';
 import { PolicyToggles } from './policy-toggles.js';
 import { ShareSection } from './share-section.js';
 import { TrackingSection } from './tracking-table.js';
+import { HERO_GRADIENT, HERO_SHADOW, HeroDecor } from '@/components/hero-decor.js';
 
 /** P4-T05–T07: invitations switch + Share section + composer + live tracking. */
 export default async function InvitesPage({
@@ -127,13 +128,9 @@ export default async function InvitesPage({
     >
       <div className="flex flex-col gap-6 py-2">
         <section
-          className="relative overflow-hidden rounded-3xl p-6 text-white shadow-[var(--shadow-2)] sm:p-6"
-          style={{
-            background:
-              'linear-gradient(135deg, color-mix(in oklab, var(--brand) 88%, black 6%), color-mix(in oklab, var(--accent) 60%, var(--brand)))',
-          }}
+          className={`relative isolate overflow-hidden rounded-3xl p-6 text-white sm:p-7 ${HERO_GRADIENT} ${HERO_SHADOW}`}
         >
-          <div aria-hidden className="tiwa-grid-bg absolute inset-0 opacity-20" />
+          <HeroDecor />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-white/80">{t('title')}</p>

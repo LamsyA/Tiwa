@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { removePayoutAccount, resolvePayoutAccount, savePayoutAccount } from './actions.js';
+import { HeroDecor } from '@/components/hero-decor.js';
 
 export interface PayoutAccountView {
   id: string;
@@ -129,7 +130,8 @@ export function PayoutAccount({
       )}
 
       {account && !editing && (
-        <div className="mt-5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_85%,black),#140b07)] p-5 text-white shadow-[0_18px_40px_-22px_rgb(0_0_0/0.6)]">
+        <div className="relative isolate mt-5 overflow-hidden rounded-2xl bg-[linear-gradient(140deg,color-mix(in_oklab,var(--brand-strong)_92%,black)_0%,color-mix(in_oklab,var(--brand-strong)_55%,#1c1917)_55%,#1c1917_100%)] p-5 text-white shadow-[0_18px_40px_-22px_rgb(0_0_0/0.6)]">
+          <HeroDecor markSize={150} />
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm font-semibold text-white/80">{account.bankName}</p>
             <StatusPill tone={account.verified ? 'success' : 'neutral'}>

@@ -42,6 +42,7 @@ import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import type { ActionResult } from '@/lib/action.js';
 import { createEvent, saveWizardStep, startEventDraft } from './actions.js';
+import { HERO_GRADIENT, HeroDecor } from '@/components/hero-decor.js';
 
 type Step = 'type' | 'basics' | 'venue' | 'guests' | 'features';
 const STEPS: Step[] = ['type', 'basics', 'venue', 'guests', 'features'];
@@ -844,14 +845,8 @@ function Preview({ draft }: { draft: WizardDraft }) {
       <div className="sticky top-32">
         <p className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">{t('previewHeading')}</p>
         <div className="border-border/70 bg-surface overflow-hidden rounded-3xl border shadow-[var(--shadow-2)]">
-          <div
-            className="relative h-36"
-            style={{
-              background:
-                'linear-gradient(135deg, color-mix(in oklab, var(--brand) 85%, black 5%), color-mix(in oklab, var(--accent) 70%, var(--brand)))',
-            }}
-          >
-            <div className="tiwa-grid-bg absolute inset-0 opacity-30" />
+          <div className={`relative isolate h-36 overflow-hidden ${HERO_GRADIENT}`}>
+            <HeroDecor markSize={130} />
             <span className="absolute bottom-3 left-4 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
               {draft.typeLabel}
             </span>

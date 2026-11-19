@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server';
 import { EventFrame, Forbidden, loadEventPage } from '@/components/event-frame.js';
 import { CopyLink } from './copy-link.js';
 import { DayEditor } from './day-editor.js';
+import { HERO_GRADIENT, HERO_SHADOW, HeroDecor } from '@/components/hero-decor.js';
 
 /** Request time, outside render so the purity lint is satisfied. */
 function currentTime(): number {
@@ -188,13 +189,9 @@ export default async function DayPage({ params }: { params: Promise<{ id: string
         </section>
         {items.length > 0 && (
           <section
-            className="relative overflow-hidden rounded-3xl p-5 text-white shadow-[var(--shadow-2)] sm:p-5"
-            style={{
-              background:
-                'linear-gradient(135deg, color-mix(in oklab, var(--brand) 80%, black 25%), color-mix(in oklab, var(--brand-strong) 60%, #0b0b10))',
-            }}
+            className={`relative isolate overflow-hidden rounded-3xl p-5 text-white sm:p-6 ${HERO_GRADIENT} ${HERO_SHADOW}`}
           >
-            <div aria-hidden className="tiwa-grid-bg absolute inset-0 opacity-15" />
+            <HeroDecor />
             <div className="relative grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-md">
                 <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-white/75 uppercase">

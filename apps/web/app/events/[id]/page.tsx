@@ -38,6 +38,7 @@ import Link from 'next/link';
 import type * as React from 'react';
 import { ReadinessCard } from './readiness-card.js';
 import { EventFrame, loadEventPage, visibleSections, type EventSection } from '@/components/event-frame.js';
+import { HeroDecor } from '@/components/hero-decor.js';
 
 const SECTION_ICONS: Record<EventSection, typeof Users> = {
   overview: LayoutDashboard,
@@ -154,13 +155,10 @@ export default async function EventOverviewPage({
         <header
           className="relative isolate overflow-hidden rounded-3xl px-4 py-4 text-white shadow-[0_20px_50px_-24px_rgb(0_0_0/0.45)] sm:px-6 sm:py-5"
           style={{
-            background: `radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, ${event.themeColor ?? 'var(--brand)'} 70%, white 0%) 0%, transparent 55%), linear-gradient(135deg, color-mix(in oklab, ${event.themeColor ?? 'var(--brand-strong)'} 85%, black) 0%, #1a0f0a 100%)`,
+            background: `radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, ${event.themeColor ?? 'var(--brand)'} 70%, white 0%) 0%, transparent 55%), linear-gradient(140deg, color-mix(in oklab, ${event.themeColor ?? 'var(--brand-strong)'} 92%, black) 0%, color-mix(in oklab, ${event.themeColor ?? 'var(--brand-strong)'} 55%, #1c1917) 55%, #1c1917 100%)`,
           }}
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-24 -right-16 -z-10 size-72 rounded-full bg-white/10 blur-3xl"
-          />
+          <HeroDecor />
           <div className="flex flex-wrap items-center gap-2">
             {typeLabel && (
               <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold ring-1 ring-white/20 backdrop-blur-md">
