@@ -10,7 +10,7 @@ import { syncPipelineForRequest } from '../planner/pipeline-sync.js';
 import { authorize } from '../auth/authorize.js';
 import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
 import { checkVenueAvailability } from '../bookings/venue.js';
-import { mirrorToEventTeam, postCard } from '../chat/cards.js';
+import { mirrorToEventTeam, postCard, postDecision } from '../chat/cards.js';
 import { notify } from '../messaging/notify.js';
 import { assertQuoteTransition } from './state.js';
 import { calcQuoteTotals, quoteItemSchema } from './totals.js';
@@ -367,6 +367,12 @@ export async function declineEnquiry(actor: UserActor, raw: unknown) {
       data: { requestId, eventId: request.eventId },
     },
   ).catch(() => undefined);
+  await postDecision(actor, {
+    eventId: request.eventId,
+    orgId: request.vendorOrgId,
+    refId: requestId,
+    snapshot: { decision: 'declined', subject: 'request', vendorName: org?.name ?? '' },
+  });
   return { status: 'DECLINED_BY_VENDOR' as const };
 }
 

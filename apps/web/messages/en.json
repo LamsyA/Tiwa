@@ -2113,7 +2113,38 @@
     "unmute": "Unmute",
     "archive": "Archive",
     "unarchive": "Move back to chats",
-    "decision": "Decision",
+    "decision": {
+      "approved": {
+        "proposal": "Proposal accepted",
+        "quote": "Quote accepted",
+        "change": "Change v{version} approved",
+        "request": "Request accepted",
+        "payment": "Payment approved"
+      },
+      "declined": {
+        "proposal": "Proposal declined",
+        "quote": "Quote declined",
+        "change": "Change v{version} declined",
+        "request": "{vendor} declined the request",
+        "payment": "Payment declined"
+      },
+      "changes": {
+        "proposal": "Changes requested on the proposal",
+        "quote": "Changes requested on the quote",
+        "change": "Changes requested",
+        "request": "Changes requested",
+        "payment": "Changes requested"
+      },
+      "recorded": {
+        "payment": "Payment recorded: {label}"
+      },
+      "received": {
+        "payment": "Payment received: {label}"
+      },
+      "not_received": {
+        "payment": "Payment not received: {label}"
+      }
+    },
     "markDecision": "Mark as decision",
     "edit": "Edit",
     "delete": "Delete",

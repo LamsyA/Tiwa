@@ -2,6 +2,7 @@ import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma, type MilestoneState } from '@tiwa/db';
 import { sniffMime, type Storage } from '@tiwa/storage';
 import { z } from 'zod';
+import { postDecision } from '../chat/cards.js';
 import { authorize, type Actor } from '../auth/authorize.js';
 import { assertBookingTransition } from '../bookings/state.js';
 import { loadEventAccess } from '../events/access.js';
@@ -149,7 +150,7 @@ export async function recordOfflinePayment(
     }
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // Conditional update: two hosts recording at once leaves exactly one Payment.
     const moved = await tx.paymentMilestone.updateMany({
       where: { id: milestone.id, state: { in: PAYABLE } },
@@ -191,6 +192,21 @@ export async function recordOfflinePayment(
     });
     return { paymentId: id };
   });
+  // D-X107: the record shows in the two sides' conversation.
+  await postDecision(actor, {
+    eventId: milestone.booking.eventId,
+    orgId: milestone.booking.vendorOrgId,
+    bookingId: milestone.bookingId,
+    refId: result.paymentId,
+    snapshot: {
+      decision: 'recorded',
+      subject: 'payment',
+      label: milestone.label,
+      totalMinor: milestone.amountMinor.toString(),
+      currency: milestone.currency,
+    },
+  });
+  return result;
 }
 
 export async function confirmOfflinePayment(
@@ -213,7 +229,7 @@ export async function confirmOfflinePayment(
   if (confirmsBooking) assertBookingTransition(booking.status, 'CONFIRMED');
 
   const now = new Date();
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const moved = await tx.payment.updateMany({
       where: { id: payment.id, status: 'PENDING' },
       data: { status: 'SUCCEEDED', confirmedById: actor.userId, confirmedAt: now },
@@ -241,6 +257,20 @@ export async function confirmOfflinePayment(
     });
     return { bookingStatus: confirmsBooking ? ('CONFIRMED' as const) : booking.status };
   });
+  await postDecision(actor, {
+    eventId: booking.eventId,
+    orgId: booking.vendorOrgId,
+    bookingId: booking.id,
+    refId: payment.id,
+    snapshot: {
+      decision: 'received',
+      subject: 'payment',
+      label: milestone.label,
+      totalMinor: milestone.amountMinor.toString(),
+      currency: milestone.currency,
+    },
+  });
+  return result;
 }
 
 /** "Not received": the record was wrong; the milestone goes back to SCHEDULED for the host to try again. */
@@ -254,7 +284,7 @@ export async function declineOfflinePayment(
   if (payment.status !== 'PENDING' || milestone.state !== 'RECORDED_OFFLINE') {
     throw new ConflictError('This payment is not waiting for confirmation', { key: 'notAwaiting' });
   }
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const moved = await tx.payment.updateMany({
       where: { id: payment.id, status: 'PENDING' },
       data: { status: 'FAILED', confirmedById: actor.userId, confirmedAt: new Date() },
@@ -272,6 +302,20 @@ export async function declineOfflinePayment(
     await enqueue(tx, 'payment.offline_declined', { paymentId: payment.id, bookingId: booking.id });
     return { ok: true as const };
   });
+  await postDecision(actor, {
+    eventId: booking.eventId,
+    orgId: booking.vendorOrgId,
+    bookingId: booking.id,
+    refId: payment.id,
+    snapshot: {
+      decision: 'not_received',
+      subject: 'payment',
+      label: milestone.label,
+      totalMinor: milestone.amountMinor.toString(),
+      currency: milestone.currency,
+    },
+  });
+  return result;
 }
 
 /** Offline payments on one booking, for the booking page (caller has already passed `getBooking`). */

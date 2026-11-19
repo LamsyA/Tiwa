@@ -10,7 +10,7 @@ import { mulBps } from '../shared/money.js';
 import { audit, enqueue } from '../shared/outbox.js';
 import { syncPipelineForRequest } from '../planner/pipeline-sync.js';
 import { attachVenueToEvent, checkVenueAvailability } from './venue.js';
-import { ensureBookingThread, mirrorToEventTeam, postCard } from '../chat/cards.js';
+import { ensureBookingThread, mirrorToEventTeam, postCard, postDecision } from '../chat/cards.js';
 import { createLogger } from '../shared/logger.js';
 
 const log = createLogger('bookings');
@@ -364,6 +364,23 @@ export async function acceptQuote(actor: UserActor, raw: z.input<typeof acceptQu
           },
         });
         await mirrorToEventTeam(actor, quote.eventId, 'booking', result.bookingId);
+        // D-X107: the acceptance also lands in the chat it grew out of.
+        const vendorKind = await prisma.organization.findUnique({
+          where: { id: quote.vendorOrgId },
+          select: { kind: true },
+        });
+        await postDecision(actor, {
+          eventId: quote.eventId,
+          orgId: quote.vendorOrgId,
+          directOnly: true,
+          refId: quote.id,
+          snapshot: {
+            decision: 'approved',
+            subject: vendorKind?.kind === 'PLANNER' ? 'proposal' : 'quote',
+            totalMinor: quote.totalMinor.toString(),
+            currency: quote.currency,
+          },
+        });
       } catch (error) {
         log.warn(
           { err: error instanceof Error ? error.message : String(error), bookingId: result.bookingId },

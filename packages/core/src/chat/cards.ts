@@ -10,7 +10,7 @@ import { audit } from '../shared/outbox.js';
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
-export type CardType = 'quote' | 'booking' | 'change' | 'site_visit';
+export type CardType = 'quote' | 'booking' | 'change' | 'site_visit' | 'decision';
 
 export async function ensureBookingThread(bookingId: string): Promise<string> {
   const existing = await prisma.thread.findFirst({
@@ -62,6 +62,11 @@ export type CardSnapshot = {
   date?: string;
   /** D-X101: where the host opens it (shown to the other side only). */
   href?: string;
+  /** D-X107 decision cards: what was decided, and about what. */
+  decision?: 'approved' | 'declined' | 'changes' | 'received' | 'not_received' | 'recorded';
+  subject?: 'proposal' | 'quote' | 'request' | 'change' | 'payment';
+  label?: string;
+  note?: string;
 };
 
 export async function postCard(
@@ -100,4 +105,52 @@ export async function mirrorToEventTeam(
   const threadId = await findEventTeamThread(eventId);
   if (!threadId) return;
   await postCard(actor, snapshot ? { threadId, type, refId, snapshot } : { threadId, type, refId });
+}
+
+/**
+ * D-X107: the conversation a host and a business actually use for an event:
+ * their direct chat about it (chat-first hiring) if there is one, otherwise
+ * the booking's chat (created on demand when a booking exists).
+ */
+export async function conversationFor(input: {
+  eventId: string;
+  orgId: string;
+  bookingId?: string | null;
+  /** Only the direct chat (the booking chat already got its own card). */
+  directOnly?: boolean;
+}): Promise<string[]> {
+  const direct = await prisma.thread.findMany({
+    where: {
+      kind: 'DIRECT',
+      eventId: input.eventId,
+      participants: { some: { orgId: input.orgId, leftAt: null } },
+    },
+    orderBy: { lastMessageAt: 'desc' },
+    select: { id: true },
+    take: 1,
+  });
+  if (direct[0]) return [direct[0].id];
+  if (input.directOnly || !input.bookingId) return [];
+  return [await ensureBookingThread(input.bookingId)];
+}
+
+/** D-X107: an approval or rejection between the two sides, posted into their chat. Never fails the action. */
+export async function postDecision(
+  actor: UserActor,
+  input: {
+    eventId: string;
+    orgId: string;
+    bookingId?: string | null;
+    directOnly?: boolean;
+    refId: string;
+    snapshot: CardSnapshot;
+  },
+): Promise<void> {
+  try {
+    for (const threadId of await conversationFor(input)) {
+      await postCard(actor, { threadId, type: 'decision', refId: input.refId, snapshot: input.snapshot });
+    }
+  } catch {
+    // The decision stands; the chat card is a courtesy.
+  }
 }

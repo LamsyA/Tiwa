@@ -1,6 +1,6 @@
 // D-X46/D-X103: payout bank account — owner only, name from the bank lookup, one default, owners alerted.
 import { prisma } from '@tiwa/db';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Actor } from '../auth/authorize.js';
 import { payoutAccount, removeBankAccount, setupBankAccount } from './bank.js';
 
@@ -19,6 +19,20 @@ async function makeUser(name: string): Promise<UserActor> {
 }
 
 beforeAll(async () => {
+  // Never call a real bank: answer like Monnify/Paystack would (login + name lookup).
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        requestSuccessful: true,
+        status: true,
+        responseBody: { accessToken: 'test-token', expiresIn: 3600, accountName: 'BANK ORG LTD' },
+        data: { account_name: 'BANK ORG LTD' },
+      }),
+    })),
+  );
   const org = await prisma.organization.create({
     data: { kind: 'VENDOR', name: 'Bank Org', slug: `bank-org-${RUN}`, countryCode: 'NG' },
   });
@@ -31,6 +45,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  vi.unstubAllGlobals();
   await prisma.bankAccount.deleteMany({ where: { orgId } });
   await prisma.membership.deleteMany({ where: { orgId } });
   await prisma.auditLog.deleteMany({ where: { targetId: orgId } });

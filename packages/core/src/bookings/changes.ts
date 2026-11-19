@@ -7,7 +7,7 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '.
 import { audit, enqueue } from '../shared/outbox.js';
 import { calcQuoteTotals, quoteItemSchema } from '../quotes/totals.js';
 import { checkVenueAvailability } from './venue.js';
-import { ensureBookingThread, mirrorToEventTeam, postCard } from '../chat/cards.js';
+import { ensureBookingThread, mirrorToEventTeam, postCard, postDecision } from '../chat/cards.js';
 import { createLogger } from '../shared/logger.js';
 
 const log = createLogger('bookings');
@@ -225,6 +225,18 @@ export async function respondBookingChange(
         'change card failed',
       );
     }
+    await postDecision(actor, {
+      eventId: version.booking.eventId,
+      orgId: version.booking.vendorOrgId,
+      directOnly: true,
+      refId: version.id,
+      snapshot: {
+        decision: 'declined',
+        subject: 'change',
+        version: version.version,
+        ...(version.reason ? { note: version.reason } : {}),
+      },
+    });
     await undoGuestCountIfAllDeclined(version.booking.eventId, version.reason, version.createdAt);
     return { status: 'DECLINED' as const };
   }
@@ -334,6 +346,19 @@ export async function respondBookingChange(
             },
           });
           await mirrorToEventTeam(actor, version.booking.eventId, 'change', version.id);
+          await postDecision(actor, {
+            eventId: version.booking.eventId,
+            orgId: version.booking.vendorOrgId,
+            directOnly: true,
+            refId: version.id,
+            snapshot: {
+              decision: 'approved',
+              subject: 'change',
+              version: version.version,
+              diffMinor: (version.totalMinor - version.booking.totalMinor).toString(),
+              currency: version.booking.currency,
+            },
+          });
         } catch (error) {
           log.warn(
             { err: error instanceof Error ? error.message : String(error), versionId: version.id },

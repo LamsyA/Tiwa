@@ -161,6 +161,38 @@ describe('booking change requests', () => {
     expect((await prisma.booking.findUniqueOrThrow({ where: { id: second } })).totalMinor).toBe(1_000_000n);
   });
 
+  it("posts approvals and rejections into the two sides' direct chat (D-X107)", async () => {
+    const direct = await prisma.thread.create({
+      data: {
+        kind: 'DIRECT',
+        context: 'PROFILE',
+        eventId,
+        createdById: host.userId,
+        lastMessageAt: new Date(),
+        participants: {
+          create: [
+            { userId: host.userId, side: 'CLIENT' },
+            { orgId, side: 'VENDOR' },
+          ],
+        },
+      },
+    });
+    const booking = await makeBooking();
+    const proposed = await requestBookingChange(host, {
+      bookingId: booking,
+      scope: changedScope,
+      reason: 'More guests',
+    });
+    await respondBookingChange(vendor, { versionId: proposed.versionId, accept: false });
+    const cards = await prisma.message.findMany({ where: { threadId: direct.id, kind: 'CARD' } });
+    expect(cards.map((row) => row.card)).toContainEqual(
+      expect.objectContaining({ type: 'decision', decision: 'declined', subject: 'change', note: 'More guests' }),
+    );
+    await prisma.message.deleteMany({ where: { threadId: direct.id } });
+    await prisma.threadParticipant.deleteMany({ where: { threadId: direct.id } });
+    await prisma.thread.delete({ where: { id: direct.id } });
+  });
+
   it('rejects a second pending proposal while one waits', async () => {
     const third = await makeBooking();
     await requestBookingChange(host, { bookingId: third, scope: changedScope, reason: 'First' });

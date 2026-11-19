@@ -1,6 +1,7 @@
 import { PLANNING_CATEGORY } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { z } from 'zod';
+import { postDecision } from '../chat/cards.js';
 import { authorize } from '../auth/authorize.js';
 import { loadEventAccess, requireEventAccess } from '../events/access.js';
 import { pricesHiddenFor, priceVisibilityFor, redactQuote } from '../events/prices.js';
@@ -145,6 +146,13 @@ export async function requestQuoteChanges(actor: UserActor, raw: z.infer<typeof 
     vendorOrgId: quote.vendorOrgId,
     message: input.message,
   });
+  // D-X107: the ask shows in their conversation too.
+  await postDecision(actor, {
+    eventId: quote.eventId,
+    orgId: quote.vendorOrgId,
+    refId: quote.id,
+    snapshot: { decision: 'changes', subject: await offerKind(quote.vendorOrgId), note: input.message.slice(0, 280) },
+  });
   return { status: updated.status };
 }
 
@@ -176,5 +184,22 @@ export async function declineQuote(actor: UserActor, raw: z.infer<typeof decline
     eventId: quote.eventId,
     vendorOrgId: quote.vendorOrgId,
   });
+  await postDecision(actor, {
+    eventId: quote.eventId,
+    orgId: quote.vendorOrgId,
+    refId: quote.id,
+    snapshot: {
+      decision: 'declined',
+      subject: await offerKind(quote.vendorOrgId),
+      totalMinor: quote.totalMinor.toString(),
+      currency: quote.currency,
+    },
+  });
   return { status: updated.status };
+}
+
+/** D-X107: planners send proposals, vendors send quotes. */
+async function offerKind(orgId: string): Promise<'proposal' | 'quote'> {
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { kind: true } });
+  return org?.kind === 'PLANNER' ? 'proposal' : 'quote';
 }
