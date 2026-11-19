@@ -292,3 +292,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X104 done: Monnify account-name lookup
 - Rename the "Money" section to "Funds" in navigation and page titles (labels only; URLs stay /money)
 - Email logo loads from the public site, never localhost (mail apps cannot fetch it)
+- Planner Today page redesign: brand-coloured summary card, long lists collapse to 5 with "Show N more", empty sections become a compact "All clear" strip

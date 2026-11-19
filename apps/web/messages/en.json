@@ -2868,7 +2868,10 @@
       "paymentsHeading": "Payments due this week",
       "paymentsEmpty": "No payments due.",
       "overdueTag": "Overdue",
-      "lateTag": "Late"
+      "lateTag": "Late",
+      "showMore": "Show {count} more",
+      "allClear": "All clear",
+      "greeting": "Here’s your day across every event."
     },
     "downloadPdf": "Download PDF",
     "proposalWord": "Proposal",
