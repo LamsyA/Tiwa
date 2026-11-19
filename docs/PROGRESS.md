@@ -291,3 +291,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X103 done: NUBAN name lookup, full payout account shown to payers, email alerts on account changes
 - D-X104 done: Monnify account-name lookup
 - Rename the "Money" section to "Funds" in navigation and page titles (labels only; URLs stay /money)
+- Email logo loads from the public site, never localhost (mail apps cannot fetch it)

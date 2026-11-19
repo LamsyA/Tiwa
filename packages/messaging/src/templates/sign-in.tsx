@@ -16,6 +16,7 @@ import {
   Text,
 } from '@react-email/components';
 import { render } from '@react-email/render';
+import { emailAssetBase } from './layout.js';
 
 // Sign-in link email (D-X49). Table-based via react-email so it renders the
 // same in Gmail, Outlook and Apple Mail: brand wordmark, one clear button,
@@ -78,7 +79,7 @@ export function SignInEmail({
                       <td style={{ width: '36px', height: '36px', verticalAlign: 'middle' }}>
                         {/* D-X99: the Tiwa mark, hosted (email clients drop inline SVG). */}
                         <Img
-                          src={`${appUrl.replace(/\/$/, '')}/icons/logo-email.png`}
+                          src={`${emailAssetBase(appUrl)}/icons/logo-email.png`}
                           width="36"
                           height="36"
                           alt="Tiwa"

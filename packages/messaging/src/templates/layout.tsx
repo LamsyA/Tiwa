@@ -10,6 +10,18 @@ import type * as React from 'react';
 /** Where the hosted logo lives; the worker and web app both set APP_URL. */
 const APP_URL = (process.env.APP_URL ?? 'https://tiwa-events.vercel.app').replace(/\/$/, '');
 
+/** Where email images load from. Mail apps fetch images over the internet,
+ * so a localhost APP_URL can never work: fall back to the public site.
+ * EMAIL_ASSET_URL overrides both. */
+export function emailAssetBase(appUrl: string = APP_URL): string {
+  const explicit = process.env.EMAIL_ASSET_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, '');
+  const base = appUrl.replace(/\/$/, '');
+  return /\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|\/|$)/.test(base) ? 'https://tiwa-events.vercel.app' : base;
+}
+
+export const EMAIL_LOGO_URL = () => `${emailAssetBase()}/icons/logo-email.png`;
+
 export const EMAIL = {
   brand: '#b83a17',
   bright: '#e5532d',
@@ -47,7 +59,7 @@ export function EmailLayout({ preheader, accent = EMAIL.brand, children, footer 
                   <td style={{ width: '34px', height: '34px', verticalAlign: 'middle' }}>
                     {/* D-X99: the Tiwa mark, hosted (email clients drop inline SVG). */}
                     <Img
-                      src={`${APP_URL}/icons/logo-email.png`}
+                      src={EMAIL_LOGO_URL()}
                       width="34"
                       height="34"
                       alt="Tiwa"
