@@ -1,5 +1,6 @@
 'use client';
 
+import { ticketsVisibility } from '@tiwa/config';
 import { compressImage } from '@/components/uploads/resize-image.js';
 
 import { UPLOAD_MAX_BYTES } from '@tiwa/core/shared/upload-limit.js';
@@ -271,7 +272,7 @@ function FeaturesForm({ eventId, canEdit, features, allowedVisibilities, tickets
   const [invites, setInvites] = React.useState(features.invites);
   const [moments, setMoments] = React.useState(features.moments);
   const [tickets, setTickets] = React.useState(features.tickets);
-  const ticketsDisabled = !canEdit || visibility !== 'PUBLIC' || !ticketsAllowed;
+  const ticketsDisabled = !canEdit || !ticketsVisibility(visibility) || !ticketsAllowed;
 
   return (
     <Card>
@@ -285,7 +286,7 @@ function FeaturesForm({ eventId, canEdit, features, allowedVisibilities, tickets
               visibility,
               invites,
               moments,
-              tickets: visibility === 'PUBLIC' && ticketsAllowed ? tickets : false,
+              tickets: ticketsVisibility(visibility) && ticketsAllowed ? tickets : false,
             }),
           );
         }}

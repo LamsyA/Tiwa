@@ -76,3 +76,9 @@ export function suggestEventName(template: EventTypeTemplate, firstName: string)
   if (!name) return template.label;
   return template.nameSuggestion.replace('{name}', name);
 }
+
+/** D-X109: tickets can be sold on a public event or one shared by link
+ * (a conference selling through its own link without being listed). */
+export function ticketsVisibility(visibility: string): boolean {
+  return visibility === 'PUBLIC' || visibility === 'LINK_ONLY';
+}

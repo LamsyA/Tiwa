@@ -159,13 +159,19 @@ describe('saveEventStep', () => {
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it('turns tickets off when a public event goes private', async () => {
+  it('keeps tickets on a link-shared event, turns them off when it goes private (D-X109)', async () => {
     const host = await makeUser();
     const { eventId } = await createEventDraft(host, { type: 'concert' });
     await saveEventStep(host, {
       eventId,
       step: 'guests',
       data: { expectedGuests: 500, budgetMinor: '0', visibility: 'LINK_ONLY' },
+    });
+    expect((await prisma.event.findUniqueOrThrow({ where: { id: eventId } })).ticketsEnabled).toBe(true);
+    await saveEventStep(host, {
+      eventId,
+      step: 'guests',
+      data: { expectedGuests: 500, budgetMinor: '0', visibility: 'PRIVATE' },
     });
     expect((await prisma.event.findUniqueOrThrow({ where: { id: eventId } })).ticketsEnabled).toBe(false);
   });

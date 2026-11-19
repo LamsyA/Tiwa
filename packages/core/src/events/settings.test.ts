@@ -58,7 +58,7 @@ describe('event settings (P3-T10)', () => {
     expect(event.startsAt?.toISOString()).toBe('2031-03-01T15:00:00.000Z');
   });
 
-  it('features follow format rules: tickets only when public', async () => {
+  it('features follow format rules: tickets only when public or link-shared (D-X109)', async () => {
     const host = await makeUser();
     const { eventId: concert } = await createEventDraft(host, { type: 'concert' });
     await updateEventFeatures(host, {
@@ -68,10 +68,17 @@ describe('event settings (P3-T10)', () => {
       moments: true,
       tickets: true,
     });
+    await updateEventFeatures(host, {
+      eventId: concert,
+      visibility: 'LINK_ONLY',
+      invites: false,
+      moments: true,
+      tickets: true,
+    });
     await expect(
       updateEventFeatures(host, {
         eventId: concert,
-        visibility: 'LINK_ONLY',
+        visibility: 'PRIVATE',
         invites: false,
         moments: true,
         tickets: true,

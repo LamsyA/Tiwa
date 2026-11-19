@@ -298,3 +298,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X106 done: instant push from the web app, instant chat notifications, email-only 7-min chat follow-up, bell refresh every 10 s
 - D-X107 done: approvals/rejections show as cards in the host–planner/vendor chat
 - D-X108 done: chat restyle, typing dots at the bottom, day separators, header avatar
+- D-X109 done: tickets work on link-shared events too (not only Public)

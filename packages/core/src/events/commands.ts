@@ -7,6 +7,7 @@ import {
   getEventType,
   timezoneForCountry,
   type Timeframe,
+  ticketsVisibility,
 } from '@tiwa/config';
 import { prisma, type Prisma } from '@tiwa/db';
 import { z } from 'zod';
@@ -123,7 +124,7 @@ export async function createEventDraft(actor: UserActor, input: z.infer<typeof c
         timezone: timezoneForCountry(user.countryCode),
         invitesEnabled: template.features.invites,
         momentsEnabled: template.features.moments,
-        ticketsEnabled: template.features.tickets && rules.defaultVisibility === 'PUBLIC',
+        ticketsEnabled: template.features.tickets && rules.ticketsAllowed && ticketsVisibility(rules.defaultVisibility),
         wizardStep: 'basics',
         createdById: actor.userId,
       },
@@ -204,15 +205,15 @@ export async function saveEventStep(actor: UserActor, input: z.infer<typeof save
             expectedGuests: input.data.expectedGuests,
             plannedBudgetMinor: BigInt(input.data.budgetMinor),
             visibility: input.data.visibility,
-            // Tickets need a public event (UF-03-4).
-            ...(input.data.visibility !== 'PUBLIC' ? { ticketsEnabled: false } : {}),
+            // Tickets need a public or link-shared event (UF-03-4, D-X109).
+            ...(!ticketsVisibility(input.data.visibility) ? { ticketsEnabled: false } : {}),
             ...advance,
           },
         });
         break;
       }
       case 'features': {
-        if (input.data.tickets && (event.visibility !== 'PUBLIC' || !rules.ticketsAllowed)) {
+        if (input.data.tickets && (!ticketsVisibility(event.visibility) || !rules.ticketsAllowed)) {
           throw new ValidationError('Tickets need a public event', { field: 'tickets', key: 'ticketsNeedPublic' });
         }
         await tx.event.update({

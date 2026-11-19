@@ -1,4 +1,5 @@
 // Public + organiser reads for tickets (P11-T03/T05; Frontend.md §6.2).
+import { ticketsVisibility } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import type { Actor } from '../auth/authorize.js';
 import { requireEventAccess } from '../events/access.js';
@@ -42,7 +43,7 @@ export async function getPublicEvent(slug: string) {
   if (
     !event ||
     event.status !== 'ACTIVE' ||
-    event.visibility !== 'PUBLIC' ||
+    !ticketsVisibility(event.visibility) ||
     !event.ticketsEnabled ||
     !event.ticketsPublished
   ) {

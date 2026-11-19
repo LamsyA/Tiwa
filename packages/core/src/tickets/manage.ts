@@ -2,6 +2,7 @@
 // Organiser creates ticket types, promo codes, registration questions and
 // publishes the public page. All writes need `tickets.manage`; reads need
 // `event.view` (sales) or are public (published page, in queries.ts).
+import { ticketsVisibility } from '@tiwa/config';
 import { prisma, type Prisma } from '@tiwa/db';
 import { z } from 'zod';
 import type { Actor } from '../auth/authorize.js';
@@ -188,7 +189,7 @@ export async function updateTicketsSettings(actor: UserActor, raw: z.input<typeo
       key: 'publishNeedsEnabled',
     });
   }
-  if (input.ticketsEnabled && event.visibility !== 'PUBLIC') {
+  if (input.ticketsEnabled && !ticketsVisibility(event.visibility)) {
     // Tickets are a public-event feature (UF-03-4): keep the rule with the wizard.
     throw new ValidationError('Only public events can sell tickets', { field: 'ticketsEnabled', key: 'needsPublic' });
   }

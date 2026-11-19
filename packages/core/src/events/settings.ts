@@ -1,4 +1,4 @@
-import { FORMAT_RULES } from '@tiwa/config';
+import { FORMAT_RULES, ticketsVisibility } from '@tiwa/config';
 import { prisma } from '@tiwa/db';
 import { sniffMime, type Storage } from '@tiwa/storage';
 import { z } from 'zod';
@@ -88,7 +88,7 @@ export async function updateEventFeatures(actor: UserActor, input: z.infer<typeo
   if (!rules.visibilities.includes(input.visibility)) {
     throw new ValidationError('Visibility not allowed', { field: 'visibility', key: 'visibilityNotAllowed' });
   }
-  if (input.tickets && (input.visibility !== 'PUBLIC' || !rules.ticketsAllowed)) {
+  if (input.tickets && (!ticketsVisibility(input.visibility) || !rules.ticketsAllowed)) {
     throw new ValidationError('Tickets need a public event', { field: 'tickets', key: 'ticketsNeedPublic' });
   }
   await prisma.$transaction(async (tx) => {

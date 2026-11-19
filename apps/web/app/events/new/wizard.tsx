@@ -1,5 +1,6 @@
 'use client';
 
+import { ticketsVisibility } from '@tiwa/config';
 import type { EventFormat, Visibility } from '@tiwa/config/event-types';
 import {
   Banner,
@@ -771,8 +772,8 @@ function StepForm({ step, draft }: { step: Exclude<Step, 'type'>; draft: WizardD
               [
                 ['invites', t('featureInvites'), t('featureInvitesHelp'), Mail],
                 ['moments', t('featureMoments'), t('featureMomentsHelp'), Camera],
-                // Tickets only exist for public events (UF-03-4).
-                ...(state.ticketsAllowed && state.visibility === 'PUBLIC'
+                // Tickets need a public or link-shared event (UF-03-4, D-X109).
+                ...(state.ticketsAllowed && ticketsVisibility(state.visibility)
                   ? [['tickets', t('featureTickets'), t('featureTicketsHelp'), Ticket] as const]
                   : []),
               ] as const
