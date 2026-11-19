@@ -143,6 +143,9 @@ describe('booking change requests', () => {
     const milestones = await prisma.paymentMilestone.findMany({ where: { bookingId }, orderBy: { createdAt: 'asc' } });
     const sum = milestones.reduce((total, row) => total + row.amountMinor, 0n);
     expect(sum).toBe(2_000_000n);
+    // The extra goes on the balance; the agreed deposit doesn't move.
+    expect(milestones.find((row) => row.label === 'Deposit')?.amountMinor).toBe(500_000n);
+    expect(milestones.find((row) => row.label === 'Balance')?.amountMinor).toBe(1_500_000n);
   });
 
   it('proposer cannot accept their own request; decline keeps the old version', async () => {

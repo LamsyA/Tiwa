@@ -294,3 +294,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - Email logo loads from the public site, never localhost (mail apps cannot fetch it)
 - Planner Today page redesign: brand-coloured summary card, long lists collapse to 5 with "Show N more", empty sections become a compact "All clear" strip
 - Coloured hero cards app-wide use the Today look: brand gradient, gold glow, canopy watermark (shared HeroDecor)
+- D-X105 done: guest-count increases land on the balance, deposit unchanged; guest-change e2e now checks the schedule (passing)

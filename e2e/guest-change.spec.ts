@@ -143,6 +143,13 @@ test('D-X84: guest count 80 → 100, caterer approves from the WhatsApp link', a
   // Committed money is the booking's new total (the quote itself stays as sent).
   await go(host, `/events/${eventId}/money`);
   await expect(host.getByText(/300,000/).first()).toBeVisible({ timeout: 20_000 });
+  // The payment schedule follows: the +₦60,000 lands on the balance (₦120,000 → ₦180,000);
+  // the agreed ₦120,000 deposit doesn't move.
+  const bookingHref = await host.locator(`a[href*="/events/${eventId}/bookings/"]`).first().getAttribute('href');
+  await go(host, `${(bookingHref as string).split('?')[0]}?tab=payments`);
+  const schedule = host.getByRole('listitem');
+  await expect(schedule.filter({ hasText: 'Balance' }).getByText(/180,000/)).toBeVisible({ timeout: 20_000 });
+  await expect(schedule.filter({ hasText: 'Deposit' }).getByText(/120,000/)).toBeVisible();
   await go(host, `/events/${eventId}/guests`);
   await host.getByRole('button', { name: 'Guest count changed' }).click();
   const again = host.getByRole('dialog');

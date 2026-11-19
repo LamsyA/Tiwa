@@ -489,13 +489,16 @@ async function adjustMilestones(
 ) {
   const unpaid = await tx.paymentMilestone.findMany({
     where: { bookingId, state: { in: [...UNPAID] } },
-    orderBy: { createdAt: 'asc' },
+    // Schedule order; ids are time-ordered (uuid v7) when rows share a timestamp.
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     select: { id: true, amountMinor: true },
   });
   if (diff > 0n) {
-    const next = unpaid[0];
-    if (next) {
-      await tx.paymentMilestone.update({ where: { id: next.id }, data: { amountMinor: next.amountMinor + diff } });
+    // A bigger scope is owed on the balance (the last unpaid step), never on
+    // an unpaid deposit: the deposit stays what both sides agreed.
+    const last = unpaid[unpaid.length - 1];
+    if (last) {
+      await tx.paymentMilestone.update({ where: { id: last.id }, data: { amountMinor: last.amountMinor + diff } });
     } else {
       await tx.paymentMilestone.create({
         data: {
