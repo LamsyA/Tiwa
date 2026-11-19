@@ -44,7 +44,7 @@ test('tab navigation completes under the service worker', async ({ page }) => {
   const nav = page.getByRole('navigation', { name: 'Event sections' });
   const rounds: Array<[string, string]> = [
     ['Plan', 'Add task'],
-    ['Money', 'Planned, committed and paid'],
+    ['Funds', 'Planned, committed and paid'],
     ['Documents', 'Upload'],
     ['Settings', 'Event settings'],
     ['Overview', 'Progress'],

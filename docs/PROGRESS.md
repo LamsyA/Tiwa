@@ -290,3 +290,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X102 done: quiet chat notifications (one nudge after 7 min unread), host told when a request is declined, chat button first on mobile profiles
 - D-X103 done: NUBAN name lookup, full payout account shown to payers, email alerts on account changes
 - D-X104 done: Monnify account-name lookup
+- Rename the "Money" section to "Funds" in navigation and page titles (labels only; URLs stay /money)

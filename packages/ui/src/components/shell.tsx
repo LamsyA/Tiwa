@@ -108,7 +108,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
           item('home', 'Home', '/home', ICON.home),
           item('events', 'Events', '/events', ICON.events),
           item('inbox', 'Chat', '/inbox', ICON.inbox),
-          item('money', 'Money', '/money', ICON.money),
+          item('money', 'Funds', '/money', ICON.money),
           item('more', 'More', '/more', ICON.more),
         ],
         sidebar: [
@@ -118,7 +118,7 @@ export function navigationForRole(role: AppRole): { tabs: NavItem[]; sidebar: Na
           item('marketplace', 'Find vendors', '/vendors', ICON.vendors),
           item('orders', 'Vendor orders', '/orders', ICON.orders),
           item('inbox', 'Chat', '/inbox', ICON.inbox),
-          item('money', 'Money', '/money', ICON.money),
+          item('money', 'Funds', '/money', ICON.money),
           item('settings', 'Settings', '/settings', ICON.settings),
         ],
       };

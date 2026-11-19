@@ -316,7 +316,7 @@
     "tabs": {
       "overview": "Overview",
       "plan": "Plan",
-      "money": "Money",
+      "money": "Funds",
       "settings": "Settings",
       "sections": "Event sections",
       "documents": "Documents",
@@ -356,7 +356,7 @@
       "deadlinesHeading": "Next deadlines",
       "deadlinesEmpty": "No upcoming deadlines.",
       "openPlan": "Open the plan",
-      "moneyHeading": "Money",
+      "moneyHeading": "Funds",
       "moneyBudget": "Planned budget",
       "vendorsHeading": "Vendors",
       "vendorsComingSoon": "Find and book vendors for this event soon.",
@@ -388,7 +388,7 @@
         "guests": "Guests",
         "invites": "Invites",
         "vendors": "Vendors",
-        "money": "Money"
+        "money": "Funds"
       },
       "vendorsOpen": "Open",
       "vendorStage": {
@@ -699,7 +699,7 @@
       },
       "exportCsv": "Export CSV",
       "exportPdf": "Print or save as PDF",
-      "backToMoney": "Back to money",
+      "backToMoney": "Back to funds",
       "savePdf": "Print / Save as PDF",
       "csv": {
         "section": "Section",
@@ -3346,7 +3346,7 @@
     }
   },
   "moneyHub": {
-    "title": "Money",
+    "title": "Funds",
     "intro": "Budgets and payments across all your events. Open an event to add expenses, record payments or pay a vendor.",
     "planned": "Planned budget",
     "committed": "Committed",
