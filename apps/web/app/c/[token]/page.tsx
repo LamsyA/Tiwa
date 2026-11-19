@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { env } from '@tiwa/config';
 import { changeApprovalView, verifyChangeToken } from '@tiwa/core';
 import { MoneyText } from '@tiwa/ui';
@@ -152,7 +153,7 @@ function Shell({ children, brand }: { children: React.ReactNode; brand: string }
   return (
     <main className="bg-bg min-h-dvh">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 pt-5 pb-10">
-        <p className="font-display text-lg font-bold tracking-tight">{brand}</p>
+        <TiwaLogo size="sm" name={brand} />
         {children}
       </div>
     </main>

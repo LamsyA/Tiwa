@@ -112,7 +112,7 @@ describe('GuestShell', () => {
     expect(within(frame).getByRole('heading', { name: "You're invited" })).toBeInTheDocument();
     expect(within(frame).getByRole('img', { name: 'Party lights' })).toBeInTheDocument();
     expect(within(frame).getByRole('button', { name: 'RSVP now' })).toBeInTheDocument();
-    expect(within(frame).getByText('Tiwa')).toBeInTheDocument();
+    expect(within(frame).getByText('tiwa')).toBeInTheDocument();
     expect(within(frame).queryByRole('navigation')).not.toBeInTheDocument();
   });
 });

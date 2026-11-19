@@ -1,5 +1,6 @@
 'use client';
 
+import { TiwaLogo, TiwaMark } from './logo.js';
 import {
   Briefcase,
   CalendarDays,
@@ -195,9 +196,14 @@ export function AppShell({
         )}
       >
         <div className="flex h-16 items-center gap-2 px-4">
+          {collapsed && (
+            <a href="/home" aria-label="Tiwa home" className="flex size-9 items-center justify-center">
+              <TiwaMark size={28} />
+            </a>
+          )}
           {!collapsed && (
             <a href="/home" className="flex min-w-0 flex-1 flex-col leading-tight">
-              <span className="font-display text-xl font-bold tracking-tight">Tiwa</span>
+              <TiwaLogo size="md" />
               {roleLabel && <span className="text-muted truncate text-[11px] font-medium">{roleLabel}</span>}
             </a>
           )}

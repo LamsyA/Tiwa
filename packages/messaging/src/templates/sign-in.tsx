@@ -8,6 +8,7 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
   Row,
@@ -74,33 +75,27 @@ export function SignInEmail({
                 <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: '0 auto' }}>
                   <tbody>
                     <tr>
-                      <td
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '10px',
-                          backgroundColor: BRAND,
-                          color: '#ffffff',
-                          fontFamily: DISPLAY,
-                          fontSize: '20px',
-                          fontWeight: 700,
-                          textAlign: 'center',
-                          verticalAlign: 'middle',
-                        }}
-                      >
-                        T
+                      <td style={{ width: '36px', height: '36px', verticalAlign: 'middle' }}>
+                        {/* D-X99: the Tiwa mark, hosted (email clients drop inline SVG). */}
+                        <Img
+                          src={`${appUrl.replace(/\/$/, '')}/icons/logo-email.png`}
+                          width="36"
+                          height="36"
+                          alt="Tiwa"
+                          style={{ display: 'block', borderRadius: '10px' }}
+                        />
                       </td>
                       <td
                         style={{
                           paddingLeft: '10px',
                           fontFamily: DISPLAY,
                           fontSize: '24px',
-                          fontWeight: 700,
+                          fontWeight: 600,
                           color: INK,
                           letterSpacing: '-0.5px',
                         }}
                       >
-                        Tiwa
+                        tiwa
                       </td>
                     </tr>
                   </tbody>

@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { ThemeToggle, buttonClasses, cn } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
@@ -145,8 +146,8 @@ export async function MarketplaceFrame({
     <div className="bg-bg text-text min-h-dvh">
       <header className="bg-bg/80 border-border/70 sticky top-0 z-40 border-b backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="font-display text-xl font-bold tracking-tight">
-            {app('name')}
+          <Link href="/" aria-label={app('name')}>
+            <TiwaLogo size="md" name={app('name')} />
           </Link>
           <nav aria-label={t('nav')} className="ml-2 hidden items-center gap-1 sm:flex">
             {sections.map((section) => (

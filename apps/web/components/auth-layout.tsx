@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { ThemeToggle } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
@@ -30,8 +31,8 @@ export async function AuthLayout({ children }: { children: React.ReactNode }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40" />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-10">
-          <Link href="/" className="font-display text-2xl font-bold tracking-tight text-white">
-            {app('name')}
+          <Link href="/" aria-label={app('name')}>
+            <TiwaLogo size="lg" tone="light" name={app('name')} />
           </Link>
         </div>
         <div className="absolute inset-x-0 bottom-0 p-8 text-white xl:p-12">
@@ -64,11 +65,8 @@ export async function AuthLayout({ children }: { children: React.ReactNode }) {
             quality={90}
           />
           <div className="from-bg absolute inset-0 bg-gradient-to-t via-black/20 to-black/30" />
-          <Link
-            href="/"
-            className="font-display absolute top-4 left-5 text-xl font-bold tracking-tight text-white drop-shadow"
-          >
-            {app('name')}
+          <Link href="/" aria-label={app('name')} className="absolute top-4 left-5 drop-shadow">
+            <TiwaLogo size="md" tone="light" name={app('name')} />
           </Link>
         </div>
         <div className="absolute top-3 right-4 z-10 sm:top-6 sm:right-6">

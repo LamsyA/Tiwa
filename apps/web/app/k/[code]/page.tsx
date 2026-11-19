@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { env } from '@tiwa/config';
 import { checkInFromLink, checkinStats, passCode, passEventId, verifyCheckinQr, verifyTicketQr } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
@@ -142,7 +143,7 @@ function Shell({ children, brand }: { children: React.ReactNode; brand: string }
   return (
     <main className="bg-bg min-h-dvh">
       <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pt-5 pb-10">
-        <p className="font-display text-lg font-bold tracking-tight">{brand}</p>
+        <TiwaLogo size="sm" name={brand} />
         {children}
       </div>
     </main>

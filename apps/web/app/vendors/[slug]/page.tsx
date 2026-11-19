@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import type { Metadata } from 'next';
 import { VENDOR_CATEGORIES } from '@tiwa/config';
 import { authorize, listMyEvents, listVendorReviews, loadEventAccess, resolvePublicOrgId } from '@tiwa/core';
@@ -92,8 +93,8 @@ export default async function VendorProfilePage({
     <main>
       <header className="border-border border-b">
         <div className="mx-auto w-full max-w-5xl px-4 py-3">
-          <Link href="/" className="font-display text-lg font-bold">
-            {t('brandName')}
+          <Link href="/" aria-label={t('brandName')}>
+            <TiwaLogo size="sm" name={t('brandName')} />
           </Link>
         </div>
       </header>

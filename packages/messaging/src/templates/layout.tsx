@@ -1,11 +1,14 @@
 /** @jsxRuntime automatic @jsxImportSource react */
-import { Body, Container, Head, Html, Preview, Section, Text } from '@react-email/components';
+import { Body, Container, Head, Html, Img, Preview, Section, Text } from '@react-email/components';
 import type * as React from 'react';
 
 // Shared email shell (D-X87: same brand dress as the sign-in email): wordmark,
 // a gradient top bar, a rounded white card and a quiet footer. All copy
 // arrives as props — templates never hard-code event types, countries or
 // currencies (AGENTS.md rule 6). Table-based via react-email for Gmail/Outlook.
+
+/** Where the hosted logo lives; the worker and web app both set APP_URL. */
+const APP_URL = (process.env.APP_URL ?? 'https://tiwa-events.vercel.app').replace(/\/$/, '');
 
 export const EMAIL = {
   brand: '#b83a17',
@@ -41,33 +44,27 @@ export function EmailLayout({ preheader, accent = EMAIL.brand, children, footer 
             <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: '0 auto' }}>
               <tbody>
                 <tr>
-                  <td
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '10px',
-                      backgroundColor: accent,
-                      color: '#ffffff',
-                      fontFamily: EMAIL.display,
-                      fontSize: '19px',
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    T
+                  <td style={{ width: '34px', height: '34px', verticalAlign: 'middle' }}>
+                    {/* D-X99: the Tiwa mark, hosted (email clients drop inline SVG). */}
+                    <Img
+                      src={`${APP_URL}/icons/logo-email.png`}
+                      width="34"
+                      height="34"
+                      alt="Tiwa"
+                      style={{ display: 'block', borderRadius: '10px' }}
+                    />
                   </td>
                   <td
                     style={{
                       paddingLeft: '10px',
                       fontFamily: EMAIL.display,
                       fontSize: '23px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color: EMAIL.ink,
                       letterSpacing: '-0.5px',
                     }}
                   >
-                    Tiwa
+                    tiwa
                   </td>
                 </tr>
               </tbody>

@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { ThemeToggle } from '@tiwa/ui';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -37,8 +38,8 @@ export async function OnboardingFrame({
         }}
       />
       <header className="relative flex items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="font-display text-xl font-bold tracking-tight">
-          {app('name')}
+        <Link href="/" aria-label={app('name')}>
+          <TiwaLogo size="md" name={app('name')} />
         </Link>
         <div className="flex items-center gap-4">
           <p className="text-muted hidden text-sm sm:block">{t('stepOf', { step, total })}</p>

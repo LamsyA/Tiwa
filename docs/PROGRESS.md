@@ -284,3 +284,4 @@ Format per `AGENTS.md §3`: `## YYYY-MM-DD` + `- P<-T<>: done` lines and gate re
 - D-X96: mobile polish (no top gap, no sideways scroll, Guests/Event day/Team tidy)
 - D-X97: planner payments show up for the host (notification + who paid on Money → Payments)
 - D-X98: removed hiding vendor prices from the host; host always sees every amount
+- D-X99: new canopy logo applied across the app, icons and emails

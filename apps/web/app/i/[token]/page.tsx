@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { env } from '@tiwa/config';
 import { UNDO_WINDOW_MS_PUBLIC, answerRsvp, checkinQrValue, invitePage, passLink } from '@tiwa/core';
 import { QRCode, buttonClasses } from '@tiwa/ui';
@@ -378,7 +379,7 @@ export default async function InvitePage({
           {page.event.allowForwarding && <p className="text-muted px-2 text-center text-xs">{t('forwardHint')}</p>}
         </main>
         <footer className="text-muted flex flex-col items-center gap-1 px-4 pb-10 text-xs">
-          <span className="font-display text-text text-sm font-bold">Tiwa</span>
+          <TiwaLogo size="sm" />
           {t('poweredBy')}
         </footer>
       </div>

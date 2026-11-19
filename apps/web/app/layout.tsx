@@ -1,6 +1,6 @@
 import { resolveTheme, themeNoFlashScript, parseThemeChoice } from '@tiwa/ui/theme';
 import type { Metadata } from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { Fraunces, Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { ToastProvider } from '@tiwa/ui';
 import { NextIntlClientProvider } from 'next-intl';
 import { cookies } from 'next/headers';
@@ -30,6 +30,16 @@ const jakarta = Plus_Jakarta_Sans({
   preload: false,
 });
 
+// D-X99: the logo wordmark's serif. One weight, Latin only, not preloaded;
+// Georgia stands in until it lands, so it never blocks first paint.
+const brand = Fraunces({
+  subsets: ['latin'],
+  weight: ['600'],
+  variable: '--font-brand',
+  display: 'swap',
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: `${en.app.name} — ${en.app.tagline.toLowerCase()}`,
   description: en.app.description,
@@ -43,7 +53,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // suppressHydrationWarning: data-theme is managed by the inline script
     // above (pre-paint, from cookie or OS), not by React — the standard
     // pattern for no-flash theming (same as next-themes).
-    <html lang="en" data-theme={theme} suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
+    <html
+      lang="en"
+      data-theme={theme}
+      suppressHydrationWarning
+      className={`${inter.variable} ${jakarta.variable} ${brand.variable}`}
+    >
       <head>
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0f" />

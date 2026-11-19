@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import type { Metadata } from 'next';
 import { listMyEvents, listVendorReviews, resolvePublicOrgId } from '@tiwa/core';
 import { getTranslations } from 'next-intl/server';
@@ -63,8 +64,8 @@ export default async function PlannerProfilePage({
     <main>
       <header className="border-border border-b">
         <div className="mx-auto w-full max-w-5xl px-4 py-3">
-          <Link href="/" className="font-display text-lg font-bold">
-            {t('brandName')}
+          <Link href="/" aria-label={t('brandName')}>
+            <TiwaLogo size="sm" name={t('brandName')} />
           </Link>
         </div>
       </header>

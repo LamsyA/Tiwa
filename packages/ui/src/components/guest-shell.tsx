@@ -1,3 +1,4 @@
+import { TiwaLogo } from './logo.js';
 import type * as React from 'react';
 import { cn } from '../lib/cn.js';
 
@@ -46,7 +47,7 @@ export function GuestShell({ cover, coverAlt, title, action, footerNote, childre
         </div>
       )}
       <footer className="text-muted flex flex-col items-center gap-1 px-4 py-6 text-xs">
-        <span className="font-display text-sm font-bold text-text">Tiwa</span>
+        <TiwaLogo size="sm" />
         {footerNote}
       </footer>
     </div>

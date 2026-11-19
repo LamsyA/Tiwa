@@ -57,3 +57,4 @@ export { AppShell, navigationForRole, type AppRole, type NavItem } from './compo
 export { GuestShell, type GuestShellProps } from './components/guest-shell.js';
 export { cn } from './lib/cn.js';
 export { ThemeToggle } from './components/theme-toggle.js';
+export { TiwaLogo, TiwaMark, type TiwaLogoProps, type TiwaMarkProps } from './components/logo.js';

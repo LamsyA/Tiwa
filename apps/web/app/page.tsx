@@ -1,3 +1,4 @@
+import { TiwaLogo } from '@tiwa/ui';
 import { VENDOR_CATEGORIES, currencyForCountry, eventTypeCards } from '@tiwa/config';
 import { MoneyText, ThemeToggle, buttonClasses, cn } from '@tiwa/ui';
 import {
@@ -103,7 +104,7 @@ export default async function Home() {
 
       <footer className="border-border/60 border-t">
         <div className="text-muted mx-auto flex max-w-6xl flex-col gap-3 px-5 py-10 text-sm sm:flex-row sm:items-center sm:px-6">
-          <span className="font-display text-text text-lg font-bold">{app('name')}</span>
+          <TiwaLogo size="md" name={app('name')} />
           <span className="sm:mr-auto">{t('footer.tagline')}</span>
           <span>
             © {new Date().getFullYear()} {app('name')}. {t('footer.rights')}
