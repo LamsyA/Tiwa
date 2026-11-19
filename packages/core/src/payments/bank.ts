@@ -81,7 +81,7 @@ async function monnifyAuth(base: string): Promise<string> {
 async function monnifyLookup(bankCode: string, accountNumber: string): Promise<ResolvedAccount> {
   const base = (env.MONNIFY_BASE_URL ?? 'https://sandbox.monnify.com').replace(/\/$/, '');
   const token = await monnifyAuth(base);
-  const url = `${base}/api/v1/disbursements/account/validate?accountNumber=${encodeURIComponent(accountNumber)}&bankCode=${encodeURIComponent(bankCode)}`;
+  const url = `${base}/api/v2/disbursements/account/validate?accountNumber=${encodeURIComponent(accountNumber)}&bankCode=${encodeURIComponent(bankCode)}`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(10_000),
