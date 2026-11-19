@@ -31,7 +31,6 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
       coverKey: true,
       format: true,
       status: true,
-      hostCanSeeVendorPrices: true,
       plannerManagesGuests: true,
     },
   });
@@ -46,8 +45,6 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
   };
   const closed = event.status === 'CANCELLED' || event.status === 'COMPLETED';
   const canEdit = can('event.edit') && !closed;
-  const canChangePrices =
-    (access.role === 'PLANNER' || access.role === 'PLANNER_STAFF') && can('event.edit') && !closed;
   const rules = FORMAT_RULES[event.format];
   const start = event.startsAt ? utcToZoned(event.startsAt, event.timezone) : { date: '', time: '' };
   const end = event.endsAt ? utcToZoned(event.endsAt, event.timezone) : { date: '', time: '' };
@@ -96,8 +93,6 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
               ticketsAllowed={rules.ticketsAllowed}
               themeColor={event.themeColor}
               coverUrl={coverUrl}
-              pricesVisible={event.hostCanSeeVendorPrices}
-              canChangePrices={canChangePrices}
               plannerGuests={event.plannerManagesGuests}
             />
             <Card>

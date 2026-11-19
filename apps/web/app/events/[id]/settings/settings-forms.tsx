@@ -29,7 +29,6 @@ import {
   saveEventAppearance,
   saveEventDetails,
   saveEventFeatures,
-  savePriceVisibility,
   savePlannerGuests,
   startCover,
 } from './actions.js';
@@ -42,8 +41,6 @@ export interface SettingsFormsProps {
   isHost: boolean;
   status: string;
   eventName: string;
-  pricesVisible: boolean;
-  canChangePrices: boolean;
   plannerGuests: boolean;
   details: {
     name: string;
@@ -119,7 +116,6 @@ export function SettingsForms(props: SettingsFormsProps) {
     <div className="flex flex-col gap-4">
       <DetailsForm {...props} />
       <FeaturesForm {...props} />
-      <PricesForm {...props} />
       <PlannerGuestsForm {...props} />
       <AppearanceForm {...props} />
       {props.isHost && props.status !== 'CANCELLED' && props.status !== 'COMPLETED' && <DangerZone {...props} />}
@@ -367,45 +363,6 @@ function PlannerGuestsForm({ eventId, isHost, canEdit, plannerGuests }: Settings
 }
 
 /** Vendor-price visibility (EVT-12, D-P08): the planner decides; the host side sees a note when hidden. */
-function PricesForm({ eventId, pricesVisible, canChangePrices }: SettingsFormsProps) {
-  const t = useTranslations('events.settingsPage');
-  const { run, saving, error, saved } = useRun();
-  const [visible, setVisible] = React.useState(pricesVisible);
-  if (!canChangePrices && pricesVisible) return null;
-  return (
-    <Card>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void run(() => savePriceVisibility({ eventId, visible }));
-        }}
-      >
-        <h3 className="font-display text-base font-bold tracking-tight">{t('pricesHeading')}</h3>
-        <Feedback error={error} saved={saved} />
-        {canChangePrices ? (
-          <>
-            <FeatureRow
-              label={t('pricesShowLabel')}
-              help={t('pricesBody')}
-              checked={visible}
-              disabled={false}
-              onChange={setVisible}
-            />
-            <div>
-              <Button type="submit" loading={saving}>
-                {t('save')}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <p className="text-muted text-sm">{t('pricesHiddenNote')}</p>
-        )}
-      </form>
-    </Card>
-  );
-}
-
 const THEME_PRESETS = ['#e5532d', '#b83a17', '#15803d', '#2563eb', '#7c3aed', '#b45309', '#0f766e', '#be185d'];
 const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_COVER_BYTES = UPLOAD_MAX_BYTES;

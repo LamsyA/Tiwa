@@ -261,7 +261,7 @@ describe('planner proposals (D-X64)', () => {
     });
     expect((await prisma.event.findUniqueOrThrow({ where: { id: eventId } })).clientId).toBe(wonClient.id);
 
-    // D-X68: the hired planner hides vendor prices — but never their own fee from the host.
+    // D-X68/D-X98: the host sees every amount, including the planner's own fee.
     await prisma.event.update({ where: { id: eventId }, data: { hostCanSeeVendorPrices: false } });
     const seen = await compareQuotes(host, { eventId, category: PLANNING_CATEGORY });
     expect(seen.find((q) => q.id === quote.id)?.totalMinor).toBe('150000000');

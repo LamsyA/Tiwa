@@ -4,47 +4,24 @@ import type { Actor, EventAccess } from '../auth/authorize.js';
 import { ForbiddenError } from '../shared/errors.js';
 import { requireEventAccess } from './access.js';
 
-// Vendor-price visibility (EVT-12, D-P08, P10-T10). The planner decides
-// whether the host side sees vendor-level prices. When hidden, host-side
-// viewers (HOST, CO_HOST) get `pricesHidden: true` with every vendor amount
-// nulled on the server — nothing reaches the browser to inspect. Planner
-// roles, the vendor's own team and staff always see full figures.
+// Vendor-price visibility. D-X98 removed the planner's "hide prices from the
+// host" switch: everyone on the event's client side sees full figures.
 
 type UserActor = Extract<Actor, { kind: 'user' }>;
 
-export const setPriceVisibilitySchema = z.object({
-  eventId: z.string().uuid(),
-  visible: z.boolean(),
-});
-
-/** Host-side roles see redacted prices when the planner hides them. */
-export function pricesHiddenFor(access: EventAccess, hostCanSeeVendorPrices: boolean): boolean {
-  if (hostCanSeeVendorPrices) return false;
-  return access.role === 'HOST' || access.role === 'CO_HOST';
+/**
+ * D-X98: the host always sees every vendor price, quote line, booking total and
+ * payment amount — the host pays, so they can see what the money was used for.
+ * The old planner switch (EVT-12) is gone; this stays as the single rule every
+ * read path asks, and it never hides anything now.
+ */
+export function pricesHiddenFor(_access: EventAccess, _hostCanSeeVendorPrices?: boolean): boolean {
+  return false;
 }
 
-/** Only the hired planner team may flip the switch — never the host side. */
-export async function setVendorPriceVisibility(actor: UserActor, raw: z.input<typeof setPriceVisibilitySchema>) {
-  const input = setPriceVisibilitySchema.parse(raw);
-  const access = await requireEventAccess(actor, input.eventId, 'event.edit');
-  if (access.role !== 'PLANNER' && access.role !== 'PLANNER_STAFF') {
-    throw new ForbiddenError('Only the planner controls price visibility', { reason: 'planner-only' });
-  }
-  const event = await prisma.event.update({
-    where: { id: input.eventId },
-    data: { hostCanSeeVendorPrices: input.visible },
-    select: { id: true, hostCanSeeVendorPrices: true },
-  });
-  return event;
-}
-
-/** Load the flag for an event (one indexed read; callers batch it with their other reads). */
-export async function priceVisibilityFor(eventId: string): Promise<boolean> {
-  const event = await prisma.event.findUniqueOrThrow({
-    where: { id: eventId },
-    select: { hostCanSeeVendorPrices: true },
-  });
-  return event.hostCanSeeVendorPrices;
+/** Kept for callers that batch it with other reads; prices are always visible (D-X98). */
+export async function priceVisibilityFor(_eventId: string): Promise<boolean> {
+  return true;
 }
 
 // ── Server-side redaction (nothing hidden may reach the browser) ──

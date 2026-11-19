@@ -4,7 +4,6 @@ import type { Actor } from '../auth/authorize.js';
 import { budgetSummary } from '../budget/summary.js';
 import { getBooking, listEventBookings } from '../bookings/queries.js';
 import { compareQuotes } from '../quotes/decisions.js';
-import { setVendorPriceVisibility } from './prices.js';
 
 // EVT-12 (P10-T10): the planner's hide switch redacts vendor amounts for the
 // host side on the server — nothing reaches the browser. Real-DB test: one
@@ -129,52 +128,31 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe('vendor price visibility (EVT-12)', () => {
-  it('host sees full amounts while visible', async () => {
+describe('host sees every vendor amount (D-X98)', () => {
+  it('quotes, bookings, milestones and the budget carry full figures for the host', async () => {
+    // Even an event left with the old "hide prices" flag off shows everything now.
+    await prisma.event.update({ where: { id: eventId }, data: { hostCanSeeVendorPrices: false } });
     const quote = (await compareQuotes(host, { eventId }))[0]!;
     expect(quote.totalMinor).toBe(TOTAL.toString());
-    const booking = await getBooking(host, { bookingId });
-    expect((booking.booking as unknown as { totalMinor: string }).totalMinor).toBe(TOTAL.toString());
-  });
-
-  it('only the planner team may flip the switch', async () => {
-    await expect(setVendorPriceVisibility(host, { eventId, visible: false })).rejects.toThrow();
-    const updated = await setVendorPriceVisibility(planner, { eventId, visible: false });
-    expect(updated.hostCanSeeVendorPrices).toBe(false);
-  });
-
-  it('host payloads carry no vendor amounts once hidden', async () => {
-    const quotes = await compareQuotes(host, { eventId });
-    expect(quotes[0]).toMatchObject({ totalMinor: null, pricesHidden: true });
-    expect(JSON.stringify(quotes)).not.toContain(TOTAL.toString());
+    expect('pricesHidden' in quote).toBe(false);
 
     const booking = await getBooking(host, { bookingId });
     const view = booking.booking as unknown as {
       totalMinor: string | null;
-      versions: { totalMinor: string | null; scope: unknown }[];
       milestones: { amountMinor: string | null }[];
-      pricesHidden: true;
     };
-    expect(view.totalMinor).toBeNull();
-    expect(view.pricesHidden).toBe(true);
-    expect(view.versions[0]!.totalMinor).toBeNull();
-    expect(view.versions[0]!.scope).toBeNull();
-    expect(view.milestones[0]!.amountMinor).toBeNull();
-    expect(JSON.stringify(booking)).not.toContain(TOTAL.toString());
-    expect(JSON.stringify(booking)).not.toContain(MILESTONE.toString());
+    expect(view.totalMinor).toBe(TOTAL.toString());
+    expect(view.milestones[0]!.amountMinor).toBe(MILESTONE.toString());
 
     const list = await listEventBookings(host, { eventId });
-    expect(list[0]).toMatchObject({ totalMinor: null, pricesHidden: true });
+    expect(list[0]?.totalMinor).toBe(TOTAL.toString());
 
     const summary = await budgetSummary(host, { eventId });
-    expect('pricesHidden' in summary && summary.pricesHidden).toBe(true);
     const line = summary.lines.find((row) => row.bookings.length > 0)!;
-    expect(line.bookings[0]!.committedMinor).toBeNull();
-    // Aggregates stay: the host still sees their own total spend.
-    expect(summary.totals.committedMinor).toBe(TOTAL);
+    expect(line.bookings[0]!.committedMinor).not.toBeNull();
   });
 
-  it('planner and vendor teams still see full figures while hidden', async () => {
+  it('planner and vendor teams see the same figures', async () => {
     const quote = (await compareQuotes(planner, { eventId }))[0]!;
     expect(quote.totalMinor).toBe(TOTAL.toString());
     const vendorBooking = await getBooking(vendorOwner, { bookingId });

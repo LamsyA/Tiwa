@@ -6,10 +6,8 @@ import {
   completeCoverUpload,
   eventIdSchema,
   removeCover,
-  setVendorPriceVisibility,
   setPlannerManagesGuests,
   setPlannerGuestsSchema,
-  setPriceVisibilitySchema,
   startCoverSchema,
   startCoverUpload,
   updateEventAppearance,
@@ -38,11 +36,6 @@ export const saveEventFeatures = userAction(updateEventFeaturesSchema, async (in
 });
 
 /** EVT-12: planner-only (core enforces); revalidates money and vendor pages that show amounts. */
-export const savePriceVisibility = userAction(setPriceVisibilitySchema, async (input, ctx) => {
-  const result = await setVendorPriceVisibility(ctx.actor, input);
-  revalidate(input.eventId);
-  return result;
-});
 
 /** D-X73: host-only switch handing the guest list to the hired planner. */
 export const savePlannerGuests = userAction(setPlannerGuestsSchema, async (input, ctx) => {
