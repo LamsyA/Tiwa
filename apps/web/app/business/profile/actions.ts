@@ -23,6 +23,8 @@ import {
   savePackageSchema,
   setupBankAccount,
   setupBankAccountSchema,
+  resolveBankAccount,
+  resolveBankAccountSchema,
   startLogoUpload,
   startLogoUploadSchema,
   startPortfolioUpload,
@@ -125,6 +127,11 @@ export const savePayoutAccount = userAction(setupBankAccountSchema, async (input
   await setupBankAccount(ctx.actor, input);
   revalidatePath('/business/profile');
 });
+
+/** D-X103: NUBAN name lookup as the owner types. */
+export const resolvePayoutAccount = userAction(resolveBankAccountSchema, (input, ctx) =>
+  resolveBankAccount(ctx.actor, input),
+);
 
 export const removePayoutAccount = userAction(removeBankAccountSchema, async (input, ctx) => {
   await removeBankAccount(ctx.actor, input);

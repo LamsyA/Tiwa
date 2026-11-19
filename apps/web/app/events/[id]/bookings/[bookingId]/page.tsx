@@ -7,6 +7,7 @@ import {
   listBookingPayments,
   listPendingOfflinePayments,
   stageForBooking,
+  payeeBankAccount,
 } from '@tiwa/core';
 import { prisma } from '@tiwa/db';
 import { Banner, Card, MoneyText, StatusPill, buttonClasses } from '@tiwa/ui';
@@ -77,6 +78,9 @@ export default async function BookingPage({
     select: { id: true, name: true, mime: true, sizeBytes: true },
   });
   const payments = await listBookingPayments(booking.id);
+  // D-X103: whoever pays this booking (host, or the planner on a planner-run event) sees where to send it.
+  const payer = data.viewer === 'host' && !plannerPays && booking.paymentMode !== 'HELD';
+  const payTo = payer ? await payeeBankAccount(ctx.actor, { bookingId }).catch(() => null) : undefined;
   // The payee (vendor or a hired planner on their own booking) confirms offline payments here too (D-X74).
   const toConfirm =
     data.viewer === 'vendor'
@@ -281,6 +285,8 @@ export default async function BookingPage({
               data.viewer === 'host' && booking.paymentMode !== 'HELD' && !closed && !pricesHidden && !plannerPays
             }
             plannerPays={plannerPays}
+            payTo={payTo}
+            payeeName={vendor?.name ?? ''}
             money={{
               securedMinor: pricesHidden ? null : money.securedMinor.toString(),
               awaitingMinor: pricesHidden ? null : money.awaitingMinor.toString(),

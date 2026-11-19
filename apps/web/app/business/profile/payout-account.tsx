@@ -1,11 +1,11 @@
 'use client';
 
 import { Banner, Button, Input, Select, StatusPill } from '@tiwa/ui';
-import { Landmark, Lock, ShieldCheck, Trash2 } from 'lucide-react';
+import { BadgeCheck, Landmark, Loader2, Lock, ShieldCheck, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { removePayoutAccount, savePayoutAccount } from './actions.js';
+import { removePayoutAccount, resolvePayoutAccount, savePayoutAccount } from './actions.js';
 
 export interface PayoutAccountView {
   id: string;
@@ -36,11 +36,43 @@ export function PayoutAccount({
   const [bankCode, setBankCode] = React.useState('');
   const [bankText, setBankText] = React.useState('');
   const [number, setNumber] = React.useState('');
-  const [name, setName] = React.useState('');
+  const [lookup, setLookup] = React.useState<{
+    key: string;
+    name?: string;
+    verified?: boolean;
+    error?: string;
+  } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const numberOk = pattern ? number.length === pattern : number.length >= 6;
-  const ready = (banks.length > 0 ? bankCode : bankText.trim()) && numberOk && name.trim().length >= 2;
+  const code = banks.length > 0 ? bankCode : bankText.trim();
+  const lookupKey = code && numberOk ? `${code}:${number}` : null;
+  // Results only count for what's typed right now (D-X103).
+  const current = lookup && lookup.key === lookupKey ? lookup : null;
+  const looking = lookupKey !== null && current === null;
+  const resolved = current?.name ? { name: current.name, verified: current.verified === true } : null;
+  const lookupError = current?.error ?? null;
+  const ready = Boolean(code) && numberOk && resolved !== null;
+
+  // Once the bank and a full number are in, ask the bank for the name.
+  React.useEffect(() => {
+    if (!lookupKey) return;
+    let live = true;
+    void resolvePayoutAccount({ orgId, bankCode: code, accountNumber: number }).then((result) => {
+      if (!live) return;
+      if (result.ok) setLookup({ key: lookupKey, name: result.data.accountName, verified: result.data.verified });
+      else {
+        const key = result.reason ?? (result.fieldErrors ? Object.values(result.fieldErrors)[0]?.[0] : undefined);
+        setLookup({
+          key: lookupKey,
+          error: key && t.has(`errors.${key}`) ? t(`errors.${key}`) : t('errors.accountNotFound'),
+        });
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [orgId, code, number, lookupKey, t]);
 
   async function onSave(event: React.FormEvent) {
     event.preventDefault();
@@ -50,11 +82,10 @@ export function PayoutAccount({
       orgId,
       bankCode: banks.length > 0 ? bankCode : bankText.trim(),
       accountNumber: number,
-      accountName: name.trim(),
     });
     setSaving(false);
     if (!result.ok) {
-      const key = result.fieldErrors ? Object.values(result.fieldErrors)[0]?.[0] : undefined;
+      const key = result.reason ?? (result.fieldErrors ? Object.values(result.fieldErrors)[0]?.[0] : undefined);
       setError(key && t.has(`errors.${key}`) ? t(`errors.${key}`) : t('errors.generic'));
       return;
     }
@@ -165,10 +196,37 @@ export function PayoutAccount({
               }
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
+          <div className="flex flex-col gap-1 text-sm font-medium" aria-live="polite">
             {t('name')}
-            <Input value={name} onChange={(event) => setName(event.target.value)} autoComplete="off" />
-          </label>
+            <div
+              className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm ${
+                resolved
+                  ? 'border-success/40 bg-success/5'
+                  : lookupError
+                    ? 'border-danger/40 bg-danger/5 text-danger'
+                    : 'border-border bg-surface-2 text-muted'
+              }`}
+            >
+              {looking ? (
+                <>
+                  <Loader2 aria-hidden className="size-4 animate-spin" />
+                  {t('lookingUp')}
+                </>
+              ) : resolved ? (
+                <>
+                  <BadgeCheck aria-hidden className="text-success size-4 shrink-0" />
+                  <span className="text-fg font-semibold">{resolved.name}</span>
+                </>
+              ) : lookupError ? (
+                lookupError
+              ) : (
+                t('nameAuto')
+              )}
+            </div>
+            {resolved && !resolved.verified && (
+              <span className="text-muted text-xs font-normal">{t('demoLookup')}</span>
+            )}
+          </div>
           <p className="text-muted inline-flex items-start gap-2 text-xs sm:col-span-2">
             <Lock aria-hidden className="mt-0.5 size-3.5 shrink-0" />
             {t('privacy')}

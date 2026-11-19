@@ -1796,7 +1796,7 @@
       "bankPlaceholder": "Choose your bank",
       "number": "Account number",
       "name": "Account name",
-      "privacy": "We keep only the last 4 digits. The full number goes straight to our payment partner when online payouts switch on.",
+      "privacy": "The name comes straight from the bank. People paying you on Tiwa see these details; every change is emailed to your owners and admins.",
       "save": "Save account",
       "saving": "Saving…",
       "cancel": "Cancel",
@@ -1804,8 +1804,13 @@
         "generic": "Could not save the account. Try again.",
         "bankRequired": "Choose your bank from the list.",
         "accountNumberInvalid": "Check the account number: it should be 10 digits.",
-        "accountNameRequired": "Enter the name on the account."
-      }
+        "accountNameRequired": "Enter the name on the account.",
+        "accountNotFound": "No account with that number at this bank. Check both and try again.",
+        "lookupFailed": "We couldn’t reach the bank just now. Try again in a moment."
+      },
+      "lookingUp": "Checking with the bank…",
+      "nameAuto": "Shows here once you pick the bank and type the number",
+      "demoLookup": "Demo name: real bank lookups switch on once the Paystack key is set."
     },
     "checklistProgress": "{done} of {total} steps done",
     "logo": {
@@ -2686,7 +2691,15 @@
     "recording": "Recording…",
     "plannerPaysNote": "Your planner pays the vendors on this event. You see every payment here as it happens, and when the vendor confirms it.",
     "notReceivedPill": "Vendor says not received",
-    "notReceivedHint": "The vendor says this payment did not reach them. Check the transfer, then record it again."
+    "notReceivedHint": "The vendor says this payment did not reach them. Check the transfer, then record it again.",
+    "payTo": {
+      "heading": "Pay to",
+      "copy": "Copy",
+      "copied": "Copied",
+      "verified": "Name confirmed by the bank",
+      "note": "Pay into this account, then tap “I paid outside Tiwa” and add your receipt.",
+      "missing": "{name} hasn’t added a payout account yet. Ask them in chat."
+    }
   },
   "planner": {
     "title": "Planner workspace",

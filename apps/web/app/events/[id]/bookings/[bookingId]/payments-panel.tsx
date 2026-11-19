@@ -6,7 +6,9 @@ import { Banner, Button, Card, Input, MoneyText, ResponsiveDialog, StatusPill, T
 import {
   Banknote,
   CalendarDays,
+  BadgeCheck,
   CheckCircle2,
+  Copy,
   CreditCard,
   FileText,
   Landmark,
@@ -49,6 +51,15 @@ export interface MoneySummary {
   outstandingMinor: string | null;
 }
 
+/** D-X103: the payee's payout account, shown to whoever pays. */
+export interface PayToView {
+  payeeName: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  verified: boolean;
+}
+
 const SECURED = ['PAID_DIRECT', 'HELD', 'RELEASED', 'CONFIRMED_OFFLINE'];
 
 function tone(state: string): 'success' | 'brand' | 'neutral' {
@@ -65,9 +76,14 @@ export function PaymentsPanel({
   money,
   milestones,
   payments,
+  payTo,
+  payeeName = '',
 }: {
   currency: string;
   canRecord: boolean;
+  /** Undefined: viewer doesn't pay. Null: payee has no account yet. */
+  payTo?: PayToView | null | undefined;
+  payeeName?: string;
   /** D-X100: a planner runs this event and pays its vendors. */
   plannerPays?: boolean;
   money: MoneySummary;
@@ -106,6 +122,12 @@ export function PaymentsPanel({
           </Card>
         ))}
       </div>
+      {payTo !== undefined &&
+        (payTo ? (
+          <PayToCard account={payTo} />
+        ) : (
+          <Banner tone="warning">{t('payTo.missing', { name: payeeName })}</Banner>
+        ))}
       <Card>
         <ul className="divide-border flex flex-col divide-y text-sm">
           {milestones.map((row) => {
@@ -154,6 +176,53 @@ export function PaymentsPanel({
       <p className="text-muted text-xs">{plannerPays ? t('plannerPaysNote') : t('offlineNote')}</p>
       {recording && <RecordDialog milestone={recording} onClose={() => setRecording(null)} />}
     </div>
+  );
+}
+
+function PayToCard({ account }: { account: PayToView }) {
+  const t = useTranslations('payments.payTo');
+  const [copied, setCopied] = React.useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(account.accountNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* clipboard blocked: the number is on screen to copy by hand */
+    }
+  }
+  return (
+    <section
+      aria-label={t('heading')}
+      className="overflow-hidden rounded-2xl bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-strong)_85%,black),#140b07)] p-5 text-white shadow-[0_18px_40px_-22px_rgb(0_0_0/0.6)]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.14em] text-white/60 uppercase">{t('heading')}</p>
+          <p className="mt-1 text-sm font-semibold text-white/85">{account.bankName}</p>
+        </div>
+        <Landmark aria-hidden className="size-5 text-white/60" />
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <p className="font-display text-2xl tracking-[0.12em] tabular-nums">{account.accountNumber}</p>
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-white/90"
+        >
+          {copied ? <CheckCircle2 aria-hidden className="size-3.5" /> : <Copy aria-hidden className="size-3.5" />}
+          {copied ? t('copied') : t('copy')}
+        </button>
+      </div>
+      <p className="mt-2 text-sm font-medium">{account.accountName}</p>
+      {account.verified && (
+        <p className="mt-1 inline-flex items-center gap-1 text-xs text-white/70">
+          <BadgeCheck aria-hidden className="size-3.5" />
+          {t('verified')}
+        </p>
+      )}
+      <p className="mt-4 border-t border-white/15 pt-3 text-xs text-white/70">{t('note')}</p>
+    </section>
   );
 }
 

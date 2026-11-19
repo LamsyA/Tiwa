@@ -51,6 +51,11 @@ export const NOTIFY_TYPES: Record<string, NotifyTypeDef> = {
     channels: { inApp: false, push: false, email: true, sms: false, whatsapp: true },
     urgent: false,
   },
+  // D-X103: payout-account changes always reach owners/admins by email too.
+  'security.bankChanged': {
+    channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
+    urgent: false,
+  },
   'quote.requestDeclined': {
     channels: { inApp: true, push: true, email: true, sms: false, whatsapp: false },
     urgent: false,
