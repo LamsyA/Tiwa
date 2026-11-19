@@ -1810,7 +1810,7 @@
       },
       "lookingUp": "Checking with the bank…",
       "nameAuto": "Shows here once you pick the bank and type the number",
-      "demoLookup": "Demo name: real bank lookups switch on once the Paystack key is set."
+      "demoLookup": "Demo name: real bank lookups switch on once the Monnify keys are set."
     },
     "checklistProgress": "{done} of {total} steps done",
     "logo": {

@@ -44,6 +44,10 @@ const envSchema = z
     PAYSTACK_SECRET_KEY: optString(),
     PAYSTACK_PUBLIC_KEY: optString(),
     FLUTTERWAVE_SECRET_KEY: optString(),
+    // D-X104: Monnify for NUBAN account-name lookups (free sandbox and live keys).
+    MONNIFY_API_KEY: optString(),
+    MONNIFY_SECRET_KEY: optString(),
+    MONNIFY_BASE_URL: emptyToUndefined(z.string().url().optional()),
     FLUTTERWAVE_PUBLIC_KEY: optString(),
     FLUTTERWAVE_WEBHOOK_HASH: optString(),
     ESCROW_PROVIDER: provider(['fake'] as const, 'fake'),

@@ -10,8 +10,7 @@ import { notify } from '../messaging/notify.js';
 
 // Payout bank account (Backend.md §6 `setupBankAccount`, D-X46, D-X103).
 // Org OWNER only. The account name is never typed: it comes from a NUBAN
-// name lookup (Paystack's /bank/resolve when PAYSTACK_SECRET_KEY is set; a
-// clearly-labelled demo name otherwise). The full number is stored so payers
+// name lookup (Monnify, else Paystack, else a clearly-labelled demo name). The full number is stored so payers
 // can see where to send money. Every add, change or removal emails the
 // business's owners and admins (security alert).
 
@@ -43,30 +42,76 @@ export interface ResolvedAccount {
   verified: boolean;
 }
 
-/** NUBAN name lookup. Paystack when a secret key is configured; otherwise a
- * demo name so local and demo environments still work. Throws
- * `accountNotFound` when the bank says the number doesn't exist. */
+/** NUBAN name lookup (D-X103, D-X104). Monnify when its keys are set, then
+ * Paystack, otherwise a clearly-labelled demo name so local and demo
+ * environments still work. Throws `accountNotFound` when the bank says the
+ * number doesn't exist, `lookupFailed` when the provider can't be reached. */
 export async function lookupAccountName(bankCode: string, accountNumber: string): Promise<ResolvedAccount> {
-  const key = env.PAYSTACK_SECRET_KEY;
-  if (!key) return { accountName: `DEMO ACCOUNT ${accountNumber.slice(-4)}`, verified: false };
+  if (env.MONNIFY_API_KEY && env.MONNIFY_SECRET_KEY) return monnifyLookup(bankCode, accountNumber);
+  if (env.PAYSTACK_SECRET_KEY) return paystackLookup(bankCode, accountNumber);
+  return { accountName: `DEMO ACCOUNT ${accountNumber.slice(-4)}`, verified: false };
+}
+
+const lookupFailed = () => new ValidationError('Could not reach the bank. Try again.', { key: 'lookupFailed' });
+const notFound = () =>
+  new ValidationError('No account with that number at this bank', { field: 'accountNumber', key: 'accountNotFound' });
+
+// Monnify access tokens last about an hour; reuse one until shortly before expiry.
+let monnifyToken: { value: string; until: number } | null = null;
+
+async function monnifyAuth(base: string): Promise<string> {
+  if (monnifyToken && monnifyToken.until > Date.now()) return monnifyToken.value;
+  const basic = Buffer.from(`${env.MONNIFY_API_KEY}:${env.MONNIFY_SECRET_KEY}`).toString('base64');
+  const response = await fetch(`${base}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { Authorization: `Basic ${basic}` },
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  const body = (await response?.json().catch(() => null)) as {
+    requestSuccessful?: boolean;
+    responseBody?: { accessToken?: string; expiresIn?: number };
+  } | null;
+  const token = body?.responseBody?.accessToken;
+  if (!response?.ok || !token) throw lookupFailed();
+  const seconds = body?.responseBody?.expiresIn ?? 3000;
+  monnifyToken = { value: token, until: Date.now() + Math.max(60, seconds - 60) * 1000 };
+  return token;
+}
+
+async function monnifyLookup(bankCode: string, accountNumber: string): Promise<ResolvedAccount> {
+  const base = (env.MONNIFY_BASE_URL ?? 'https://sandbox.monnify.com').replace(/\/$/, '');
+  const token = await monnifyAuth(base);
+  const url = `${base}/api/v1/disbursements/account/validate?accountNumber=${encodeURIComponent(accountNumber)}&bankCode=${encodeURIComponent(bankCode)}`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  if (!response) throw lookupFailed();
+  if (response.status === 401) monnifyToken = null;
+  if (response.status >= 500 || response.status === 401) throw lookupFailed();
+  const body = (await response.json().catch(() => null)) as {
+    requestSuccessful?: boolean;
+    responseBody?: { accountName?: string };
+  } | null;
+  const name = body?.responseBody?.accountName?.trim();
+  if (!body?.requestSuccessful || !name) throw notFound();
+  return { accountName: name, verified: true };
+}
+
+async function paystackLookup(bankCode: string, accountNumber: string): Promise<ResolvedAccount> {
   const url = `https://api.paystack.co/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`;
-  let response: Response;
-  try {
-    response = await fetch(url, { headers: { Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(10_000) });
-  } catch {
-    throw new ValidationError('Could not reach the bank. Try again.', { key: 'lookupFailed' });
-  }
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}` },
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  if (!response) throw lookupFailed();
+  if (response.status >= 500) throw lookupFailed();
   const body = (await response.json().catch(() => null)) as {
     status?: boolean;
     data?: { account_name?: string };
   } | null;
   const name = body?.data?.account_name?.trim();
-  if (!response.ok || !body?.status || !name) {
-    throw new ValidationError('No account with that number at this bank', {
-      field: 'accountNumber',
-      key: response.status >= 500 ? 'lookupFailed' : 'accountNotFound',
-    });
-  }
+  if (!response.ok || !body?.status || !name) throw notFound();
   return { accountName: name, verified: true };
 }
 
